@@ -4,6 +4,7 @@
 use kalamu_core::{
     CacheKey, Job, JobId, JobSources, JobStatus, JobSummary, PieceRef, PieceState, PieceStatus,
     ProviderId, PrunedResults, SetupId, SourceId, StoreError, StoredResult, Timestamp,
+    UnusedResults,
 };
 use rusqlite::{Connection, OptionalExtension, params, params_from_iter};
 
@@ -399,15 +400,47 @@ pub(crate) fn spent(store: &SqliteStore, job: JobId) -> Result<f64, StoreError> 
         .map_err(db)
 }
 
-/// The stored answers no piece and no request made from the review names. One statement, so no
-/// piece takes up a key between the keys being read and the results being deleted.
-/// `pieces.cache_key` and the `cache_key` of each of [`crate::proposals::TABLES`] name results;
-/// a piece without a key yet keeps nothing, and its NULL must not empty the list (`NOT IN` a
-/// list holding NULL matches nothing).
-pub(crate) const PRUNE_RESULTS: &str = "DELETE FROM results WHERE cache_key NOT IN
+/// The stored answers no piece and no request made from the review names, as a condition on
+/// `results`. `pieces.cache_key` and the `cache_key` of each of [`crate::proposals::TABLES`]
+/// name results; a piece without a key yet keeps nothing, and its NULL must not empty the list
+/// (`NOT IN` a list holding NULL matches nothing). A macro, so both statements below hold the
+/// same words.
+macro_rules! unused_results {
+    () => {
+        "cache_key NOT IN
         (SELECT cache_key FROM pieces WHERE cache_key IS NOT NULL)
         AND cache_key NOT IN (SELECT cache_key FROM passages)
-        AND cache_key NOT IN (SELECT cache_key FROM region_readings)";
+        AND cache_key NOT IN (SELECT cache_key FROM region_readings)"
+    };
+}
+
+/// Deletes the unused answers. One statement, so no piece takes up a key between the keys
+/// being read and the results being deleted.
+pub(crate) const PRUNE_RESULTS: &str = concat!("DELETE FROM results WHERE ", unused_results!());
+
+/// Counts the unused answers, and what their rows hold in bytes: about what deleting them gives
+/// back once the database is compacted.
+pub(crate) const COUNT_UNUSED_RESULTS: &str = concat!(
+    "SELECT COUNT(*), COALESCE(SUM(LENGTH(CAST(cache_key AS BLOB))
+        + LENGTH(CAST(provider AS BLOB)) + LENGTH(CAST(model AS BLOB))
+        + LENGTH(CAST(output AS BLOB)) + COALESCE(LENGTH(CAST(request AS BLOB)), 0)), 0)
+     FROM results WHERE ",
+    unused_results!()
+);
+
+/// What clearing the unused answers would remove, without removing anything.
+pub(crate) fn unused_results(store: &SqliteStore) -> Result<UnusedResults, StoreError> {
+    let (results, bytes): (i64, i64) = store
+        .conn()
+        .query_row(COUNT_UNUSED_RESULTS, [], |row| {
+            Ok((row.get(0)?, row.get(1)?))
+        })
+        .map_err(db)?;
+    Ok(UnusedResults {
+        results: u64::try_from(results).unwrap_or_default(),
+        bytes: u64::try_from(bytes).unwrap_or_default(),
+    })
+}
 
 pub(crate) fn prune_results(store: &SqliteStore) -> Result<PrunedResults, StoreError> {
     let conn = store.conn();

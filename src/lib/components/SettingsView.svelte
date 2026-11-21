@@ -11,6 +11,7 @@
 	import { osNames } from '#lib/platform.js';
 	import { ask } from '#lib/dialogs.js';
 	import { api } from '#lib/tauri.js';
+	import type { UnusedResults } from '#lib/bindings/UnusedResults.js';
 	import {
 		app,
 		applyLanguage,
@@ -104,17 +105,30 @@
 	/** Clearing unused results, busy meanwhile, what went wrong said in an error toast. */
 	const clear = new Action({ report: (message) => toast(message, { kind: 'error' }) });
 
+	/** Counts what would be removed first: nothing is said without asking, anything is named
+	 *  with its size in the question. */
 	async function clearUnused() {
-		const agreed = await ask(m.settings.clearUnusedConfirm, {
-			ok: m.settings.clearUnusedOk,
-			cancel: m.common.cancel
-		});
+		const format = (n: number) => new Intl.NumberFormat(m.locale.tag).format(n);
+		const counted: { found?: UnusedResults } = {};
+		const read = await clear.run(
+			() => api.unusedResults(),
+			(found) => (counted.found = found)
+		);
+		const found = counted.found;
+		if (!read || !found) return;
+		if (found.results === 0) {
+			toast(m.settings.clearUnusedNothing);
+			return;
+		}
+		const agreed = await ask(
+			m.settings.clearUnusedAsk(found.results, format(found.results), found.bytes),
+			{ ok: m.settings.clearUnusedOk, cancel: m.common.cancel }
+		);
 		if (!agreed) return;
 		await clear.run(
 			() => api.clearUnusedResults(),
 			({ results, bytes }) => {
-				const count = new Intl.NumberFormat(m.locale.tag).format(results);
-				toast(m.settings.clearUnusedDone(results, count, m.settings.size(bytes)));
+				toast(m.settings.clearUnusedDone(results, format(results), m.settings.size(bytes)));
 			}
 		);
 	}

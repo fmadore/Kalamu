@@ -181,6 +181,11 @@ export function installMock(): void {
 					: null;
 			case 'clear_unused_results':
 				return { results: 1284, bytes: 48_620_000 };
+			// `?unused=0`: nothing to clear, said without asking.
+			case 'unused_results':
+				return new URLSearchParams(location.search).get('unused') === '0'
+					? { results: 0, bytes: 0 }
+					: { results: 1284, bytes: 48_620_000 };
 			case 'offline_status':
 				return {
 					models: catalog.models

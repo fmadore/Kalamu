@@ -2883,7 +2883,19 @@ export const fr: Messages = {
 				? 'Aucune réponse inutilisée à supprimer.'
 				: `${answers} ${count === 1 ? 'réponse supprimée' : 'réponses supprimées'}, ${size} libérés.`,
 		setAside: (path: string) =>
-			`Vos paramètres n’ont pas pu être lus : Kalamu a démarré avec ses réglages par défaut. L’ancien fichier est conservé sous ${path}.`
+			`Vos paramètres n’ont pas pu être lus : Kalamu a démarré avec ses réglages par défaut. L’ancien fichier est conservé sous ${path}.`,
+		clearUnusedNothing:
+			'Rien à supprimer : chaque réponse conservée appartient à un traitement que vous avez gardé.',
+		clearUnusedAsk: (count: number, answers: string, bytes: number) =>
+			`Supprimer ${answers} ${count === 1 ? 'réponse conservée' : 'réponses conservées'} de traitements supprimés (${
+				bytes < 1e6
+					? 'moins de 1 Mo'
+					: `environ ${
+							bytes >= 1e9
+								? `${new Intl.NumberFormat('fr', { maximumFractionDigits: 1, minimumFractionDigits: 1 }).format(bytes / 1e9)} Go`
+								: `${Math.round(bytes / 1e6)} Mo`
+						}`
+			}) ? Redemander les mêmes pages serait de nouveau payant.`
 	},
 	report: {
 		link: 'Signaler un problème',

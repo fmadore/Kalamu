@@ -27,6 +27,7 @@
     "allow-task-rules",
     "allow-newer-release",
     "allow-clear-unused-results",
+    "allow-unused-results",
     "allow-key-status",
     "allow-set-api-key",
     "allow-clear-api-key",

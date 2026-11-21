@@ -97,6 +97,7 @@ import type { SourceFile } from './bindings/SourceFile.js';
 import type { SourceMatch } from './bindings/SourceMatch.js';
 import type { ProgressEvent } from './bindings/ProgressEvent.js';
 import type { PrunedResults } from './bindings/PrunedResults.js';
+import type { UnusedResults } from './bindings/UnusedResults.js';
 import type { Release } from './bindings/Release.js';
 import type { Settings } from './bindings/Settings.js';
 import type { TagRenamed } from './bindings/TagRenamed.js';
@@ -152,6 +153,7 @@ export const api = {
 	newerRelease: () => invoke<Release | null>('newer_release'),
 	/** Deletes the answers no job refers to any more; refused while a job runs. */
 	clearUnusedResults: () => invoke<PrunedResults>('clear_unused_results'),
+	unusedResults: () => invoke<UnusedResults>('unused_results'),
 	keyStatus: () => invoke<KeyStatus[]>('key_status'),
 	setApiKey: (provider: string, key: string) => invoke<void>('set_api_key', { provider, key }),
 	clearApiKey: (provider: string) => invoke<void>('clear_api_key', { provider }),

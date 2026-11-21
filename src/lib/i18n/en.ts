@@ -2441,7 +2441,16 @@ export const en = {
 				: `${answers} ${count === 1 ? 'answer' : 'answers'} removed, ${size} freed.`,
 		/** At start-up, when the settings file could not be read and was moved aside. */
 		setAside: (path: string) =>
-			`Your settings could not be read, so Kalamu started with its defaults. The old file is kept as ${path}.`
+			`Your settings could not be read, so Kalamu started with its defaults. The old file is kept as ${path}.`,
+		/** Clear unused results, when counting found none: said without asking. */
+		clearUnusedNothing: 'Nothing to remove: every stored answer belongs to a job you kept.',
+		/** Clear unused results, asked once counted. */
+		clearUnusedAsk: (count: number, answers: string, bytes: number) =>
+			`Remove ${answers} ${count === 1 ? 'answer' : 'answers'} kept from deleted jobs (${
+				bytes < 1e6
+					? 'less than 1 MB'
+					: `about ${bytes >= 1e9 ? `${(bytes / 1e9).toFixed(1)} GB` : `${Math.round(bytes / 1e6)} MB`}`
+			})? Asking for the same pages again would be paid for again.`
 	},
 	report: {
 		/** Bugs and feedback; also the way Store policy 11.16 asks for to flag harmful output,

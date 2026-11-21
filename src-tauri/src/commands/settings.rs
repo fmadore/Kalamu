@@ -1,8 +1,8 @@
 //! App information, settings and the model catalogue.
 
 use kalamu_catalog::{Catalog, Release};
-use kalamu_core::{ProviderId, PrunedResults};
-use kalamu_engine::TaskRules;
+use kalamu_core::{ProviderId, PrunedResults, UnusedResults};
+use kalamu_engine::{EngineError, TaskRules};
 use tauri::State;
 
 use super::{AppInfo, AppState, INTERRUPTED, SETTINGS_SET_ASIDE};
@@ -44,6 +44,15 @@ pub fn newer_release(state: State<'_, AppState>) -> Option<Release> {
         .engine
         .catalog()
         .newer_release(env!("CARGO_PKG_VERSION"))
+}
+
+/// What [`clear_unused_results`] would remove: how many stored answers no job refers to any
+/// more, and about how much space they take, so Settings can say "nothing to remove" without
+/// asking, or say what it will remove before asking. Only reads, so allowed while jobs run.
+#[tauri::command]
+pub async fn unused_results(state: State<'_, AppState>) -> CmdResult<UnusedResults> {
+    let cache = state.result_cache.clone();
+    super::off_thread(move || Ok(cache.unused_results().map_err(EngineError::from)?)).await
 }
 
 /// Deletes the stored answers no job refers to any more, those of deleted jobs above all, and

@@ -49,6 +49,9 @@ pub struct AppState {
     pub dictionary: kalamu_dictionary::Dictionary,
     /// A project saved as one file and opened again, by the same database.
     pub archive: Arc<dyn kalamu_core::ProjectArchive>,
+    /// The same database, read for what clearing the unused results would remove; clearing
+    /// them goes through the engine.
+    pub result_cache: Arc<kalamu_store::SqliteStore>,
     /// Project search, over the same database and an index of its own.
     pub search: Arc<kalamu_search::Search>,
     /// The search by meaning and the map, where they call a model: preparation runs and
