@@ -82,7 +82,7 @@ parle et à quel moment : [Vérifier une analyse](review.md#verifier-une-analyse
 la vérifier. À côté de la transcription, Kalamu écrit une note en Markdown (chaque citation avec
 qui parle et à quel moment), un fichier JSON et deux tableaux : la réponse dans `.analysis.csv`
 et `.analysis.quotations.csv`, une ligne par citation, avec une colonne qui dit si vous l’avez
-ajoutée.
+ajoutée. Les formats choisis dans les Paramètres sont écrits aussi.
 
 ### Un registre ou un annuaire en tableau
 

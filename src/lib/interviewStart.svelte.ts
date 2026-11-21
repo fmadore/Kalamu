@@ -44,9 +44,15 @@ export const INTERVIEW_PRESET = 'analysis.interview';
  * `.csv`). The dialog offers no choice of formats, so these are what it promises. */
 export const INTERVIEW_FORMATS: ExportFormat[] = ['markdown', 'json', 'csv'];
 
-/** The interview's formats the task can write; its first format should none be. */
-export function interviewFormats(offered: ExportFormat[]): ExportFormat[] {
-	const formats = INTERVIEW_FORMATS.filter((f) => offered.includes(f));
+/** The interview's formats the task can write, then the researcher's usual ones (Settings) it
+ * can write too; its first format should none be. */
+export function interviewFormats(
+	offered: ExportFormat[],
+	usual: readonly ExportFormat[] = []
+): ExportFormat[] {
+	const formats = [...INTERVIEW_FORMATS, ...usual].filter(
+		(f, i, all) => offered.includes(f) && all.indexOf(f) === i
+	);
 	return formats.length > 0 ? formats : offered.slice(0, 1);
 }
 
@@ -221,7 +227,10 @@ export class InterviewAnalysis {
 				pagesPerCall: pagesPerCallOf(this.rule, 'one', 1)
 			}),
 			output: {
-				formats: interviewFormats(offeredFormats(this.catalog, this.rule, [draft], sources)),
+				formats: interviewFormats(
+					offeredFormats(this.catalog, this.rule, [draft], sources),
+					app.settings!.text_formats
+				),
 				destination: { kind: 'beside_sources' },
 				options: $state.snapshot(app.settings!.export_options)
 			}

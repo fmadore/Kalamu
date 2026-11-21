@@ -19,6 +19,17 @@ describe('the files an interview analysis writes', () => {
 		expect(interviewFormats(['txt', 'docx'])).toEqual(['txt']);
 		expect(interviewFormats([])).toEqual([]);
 	});
+
+	it("add the researcher's usual formats the task can write, once each", () => {
+		const analysis = ['txt', 'markdown', 'docx', 'json', 'csv', 'xlsx'] as const;
+		expect(interviewFormats([...analysis], ['txt', 'docx', 'json'])).toEqual([
+			'markdown',
+			'json',
+			'csv',
+			'txt',
+			'docx'
+		]);
+	});
 });
 
 const catalog = JSON.parse(readFileSync('crates/catalog/catalog.json', 'utf8')) as Catalog;
