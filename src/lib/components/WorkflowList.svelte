@@ -9,7 +9,7 @@
 	import type { SourceFile } from '#lib/bindings/SourceFile.js';
 	import type { Workflow } from '#lib/bindings/Workflow.js';
 	import { Action } from '#lib/action.svelte.js';
-	import { formatDateTime, messages } from '#lib/i18n/index.js';
+	import { formatDateTime, messages, shownName } from '#lib/i18n/index.js';
 	import { app, go, hasKey, toast, type FromProject } from '#lib/state.svelte.js';
 	import { pickPresetFile } from '#lib/dialogs.js';
 	import { api } from '#lib/tauri.js';
@@ -107,10 +107,10 @@
 						<button class="row" onclick={() => open(workflow.id)} disabled={!fits(workflow)}>
 							<span class="name">
 								<Icon name="workflow" size={16} />
-								<span class="ellipsis">{workflow.name}</span>
+								<span class="ellipsis">{shownName(workflow.name)}</span>
 							</span>
 							<span class="steps">
-								{workflow.steps.map((s) => s.pipeline.name).join(' → ')}
+								{workflow.steps.map((s) => shownName(s.pipeline.name)).join(' → ')}
 							</span>
 							<span class="meta num">
 								{w.steps(workflow.steps.length)} · {w.version(workflow.version)}
@@ -162,11 +162,11 @@
 					<li>
 						<button class="row" onclick={() => go({ name: 'workflows', runId: run.id })}>
 							<span class="name">
-								<span class="ellipsis">{run.name}</span>
+								<span class="ellipsis">{shownName(run.name)}</span>
 								<span class="chip {tone(status)}">{w.runStatus[status]}</span>
 							</span>
 							<span class="meta num">
-								{w.runOf(run.workflow_name, run.version)} · {w.files(run.sources.length)} ·
+								{w.runOf(shownName(run.workflow_name), run.version)} · {w.files(run.sources.length)} ·
 								{w.started(formatDateTime(run.created_at))}
 							</span>
 						</button>

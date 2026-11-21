@@ -38,6 +38,10 @@ test.describe('in French', () => {
 		}
 		await expect(answers.getByRole('heading', { name: 'Themes' })).toHaveCount(0);
 		await expect(answers.getByRole('group', { name: 'Thèmes', exact: true })).toBeVisible();
+		// The prompt's name in the review's header, stored in English, is shown in French too.
+		const header = page.getByRole('main');
+		await expect(header.getByText(/^Entretien\s:\sthèmes et citations$/)).toBeVisible();
+		await expect(header.getByText('Interview: themes and quotations')).toHaveCount(0);
 
 		await open(page, 'review-records');
 		const main = page.getByRole('main');

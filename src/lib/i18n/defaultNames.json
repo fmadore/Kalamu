@@ -1,0 +1,22 @@
+{
+	"text_extraction.printed": "Printed or typed document",
+	"text_extraction.newspaper": "Newspaper or magazine",
+	"text_extraction.handwritten": "Handwritten document or manuscript",
+	"audio_transcription.interview": "Interview or recording, transcribed",
+	"audio_transcription.translate_english": "Interview or recording, translated into English",
+	"analysis.summary_research": "Summary and keywords",
+	"analysis.summary_publication": "Scholarly publication, social sciences",
+	"analysis.entities": "People, places and organisations",
+	"analysis.tone": "Tone of the document",
+	"analysis.image_description": "Image description and keywords",
+	"analysis.directory": "Directory or list, one row per entry",
+	"analysis.register": "Register, one row per entry",
+	"analysis.interview": "Interview: themes and quotations",
+	"analysis.screening": "Does it speak of my question?",
+	"contents.periodical": "Newspaper or magazine issue",
+	"contents.archival_file": "Archival file, item by item",
+	"contents.book": "Book, report or thesis",
+	"text_correction.general": "Printed document or newspaper",
+	"translation.research": "Translation for research",
+	"dictionary.merges": "Dictionary: proposed merges"
+}

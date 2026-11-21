@@ -5,7 +5,7 @@
 	// list item with its words, so the drawing is only decoration.
 	import Icon from './Icon.svelte';
 	import type { Task } from '#lib/bindings/Task.js';
-	import { messages } from '#lib/i18n/index.js';
+	import { messages, shownName } from '#lib/i18n/index.js';
 
 	type Shown = { task: Task; name: string; review: boolean };
 	let {
@@ -30,7 +30,7 @@
 	const stages = $derived<Stage[]>([
 		{ kind: 'files' },
 		...steps.flatMap((s, i): Stage[] => [
-			{ kind: 'step', task: s.task, caption: s.name, note: m.task[s.task] },
+			{ kind: 'step', task: s.task, caption: shownName(s.name), note: m.task[s.task] },
 			...(s.review && i < steps.length - 1 ? [{ kind: 'check' } as Stage] : [])
 		]),
 		{ kind: 'written' }
