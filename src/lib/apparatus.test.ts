@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import type { DiffSpan } from './bindings/DiffSpan.js';
-import { apparatus, lines, numbered, siglum, variants, witnessParts } from './apparatus.js';
+import {
+	apparatus,
+	headingOf,
+	lines,
+	numbered,
+	siglum,
+	variants,
+	witnessParts
+} from './apparatus.js';
 
 const same = (text: string): DiffSpan => ({ kind: 'same', text });
 const removed = (text: string): DiffSpan => ({ kind: 'removed', text });
@@ -51,6 +59,33 @@ describe('apparatus', () => {
 		expect(entries[0].readings).toEqual([
 			{ siglum: 'b', text: '5' },
 			{ siglum: 'a', text: '8' }
+		]);
+	});
+
+	it('finds a Markdown heading’s marks to hide, and leaves other lines alone', () => {
+		const text =
+			'# The Daily Nebraskan\nPrice 5 Cents.\n## AGRICULTURAL STUDENTS\n#5 on the list\n# ';
+		const [title, plain, sub, number, bare] = lines(text, []);
+		expect(headingOf(title)).toEqual({
+			mark: '# ',
+			parts: [{ text: 'The Daily Nebraskan', entry: null }]
+		});
+		expect(headingOf(sub)?.mark).toBe('## ');
+		expect(headingOf(plain)).toBeNull();
+		expect(headingOf(number)).toBeNull();
+		expect(headingOf(bare)).toBeNull();
+		// A difference running into the marks leaves the line as it is.
+		const marked = lines('# Title', [
+			{ id: 1, line: 1, start: 0, end: 3, lemma: '# T', readings: [] }
+		]);
+		expect(headingOf(marked[0])).toBeNull();
+		// A difference after them stays where it is.
+		const after = lines('# Daily Nebraskan', [
+			{ id: 1, line: 1, start: 2, end: 7, lemma: 'Daily', readings: [] }
+		]);
+		expect(headingOf(after[0])?.parts).toEqual([
+			{ text: 'Daily', entry: 1 },
+			{ text: ' Nebraskan', entry: null }
 		]);
 	});
 

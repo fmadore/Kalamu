@@ -20,6 +20,8 @@ player for a recording. The text is on the right.
   Mac).
 - Where the model placed its text on the page (Tesseract, Mistral OCR, LightOnOCR), you can
   show the regions over the scan and choose one to find its words in the text.
+- A title a model wrote as a Markdown heading (Mistral OCR writes "# The Daily Nebraskan") is
+  shown in bold without its `#`; the text and the files keep the marks as written.
 
 Every shortcut is listed in the **Glossary**, under *Keyboard*, written for your system.
 

@@ -5,7 +5,7 @@
 	// stands for them. A place pointed at is shown linked in both texts. Words searched for are
 	// marked in the reading text, the match gone to more strongly. The places are one tab stop
 	// between them, however many there are: ← and → (Home and End) go from one to the next.
-	import { numbered as numberedLine, type Entry, type Line } from '#lib/apparatus.js';
+	import { headingOf, numbered as numberedLine, type Entry, type Line } from '#lib/apparatus.js';
 	import { clearFound, markFound } from '#lib/found.js';
 	import { rovingStop, rovingTarget } from '#lib/keys.js';
 
@@ -96,12 +96,14 @@
 {#if lines}
 	<div class="text numbered" lang="" bind:this={root}>
 		{#each lines as line, li (li)}
+			<!-- A Markdown heading's marks stay in the text, hidden; the line is set as a heading. -->
+			{@const heading = headingOf(line)}
 			<div class="line" class:blank={line.number === 0}>
 				{#if numberedLine(line.number, entries)}<span class="n num" aria-hidden="true"
 						>{line.number}</span
 					>{/if}
 				<!-- prettier-ignore -->
-				<span class="t">{#each line.parts as part, k (k)}{@render text(part)}{/each}</span>
+				<span class="t" class:heading>{#if heading}<span class="heading-mark">{heading.mark}</span>{/if}{#each heading?.parts ?? line.parts as part, k (k)}{@render text(part)}{/each}</span>
 			</div>
 		{/each}
 	</div>
@@ -140,6 +142,14 @@
 		grid-column: 2;
 		white-space: pre-wrap;
 		overflow-wrap: anywhere;
+	}
+	/* A line written as a Markdown heading: set in bold, its marks ("# ") not shown, though
+	   they stay in the text that is stored, searched and exported. */
+	.t.heading {
+		font-weight: 600;
+	}
+	.heading-mark {
+		display: none;
 	}
 	.n {
 		grid-column: 1;
