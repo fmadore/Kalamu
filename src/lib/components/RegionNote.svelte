@@ -5,11 +5,14 @@
 	// of the researcher's own: what is written there, which they may type (saved when the field
 	// is left, or with Ctrl Enter; ⌘ on a Mac), *Move or resize* and *Remove*. While a box is
 	// drawn or adjusted, what to do and how to leave. On a page with no region, what to do
-	// instead. *Read this region again…* is offered where the review gives a way to.
+	// instead. *Read this region again…* is offered where the review gives a way to. When the
+	// card would cover the region it speaks of (one drawn near the top of the page), it goes to
+	// the foot of the scan.
 	import { tick } from 'svelte';
 	import Icon from './Icon.svelte';
 	import { messages } from '#lib/i18n/index.js';
 	import { isMac, primary, shortcut } from '#lib/platform.js';
+	import { noteCovers } from '#lib/regionBox.js';
 	import { focusDraw } from '#lib/regionEdit.svelte.js';
 	import type { Regions } from '#lib/regions.svelte.js';
 
@@ -40,6 +43,53 @@
 		return regions.drawable ? e.noneYet : '';
 	});
 
+	let note = $state<HTMLElement | null>(null);
+	/** Whether the card sits at the foot of the scan, clear of the region chosen. */
+	let atFoot = $state(false);
+
+	/** Puts the card under the pane's bar, or at the foot of the scan when it would cover the
+	 * region chosen there. */
+	function place() {
+		const pane = note?.closest<HTMLElement>('.pane');
+		const box = pane?.querySelector<HTMLElement>('.layer .region.chosen');
+		if (!note || !pane || !box) {
+			atFoot = false;
+			return;
+		}
+		const top =
+			pane.getBoundingClientRect().top +
+			(pane.querySelector<HTMLElement>('.pane-bar')?.offsetHeight ?? 0) +
+			12;
+		const b = box.getBoundingClientRect();
+		atFoot = noteCovers(b, { top, bottom: top + note.offsetHeight });
+	}
+
+	// Placed again when another region is chosen, a box is drawn or moved, and as the scan is
+	// zoomed, moved or the window resized.
+	$effect(() => {
+		void regions.chosen;
+		void region;
+		void edit.mode;
+		const pane = note?.closest<HTMLElement>('.pane');
+		if (!note || !pane) return;
+		const again = () => requestAnimationFrame(place);
+		again();
+		const watch = new ResizeObserver(again);
+		watch.observe(pane);
+		watch.observe(note);
+		pane.addEventListener('pointerup', again);
+		pane.addEventListener('wheel', again, { passive: true });
+		pane.addEventListener('keyup', again);
+		pane.addEventListener('scroll', again, true);
+		return () => {
+			watch.disconnect();
+			pane.removeEventListener('pointerup', again);
+			pane.removeEventListener('wheel', again);
+			pane.removeEventListener('keyup', again);
+			pane.removeEventListener('scroll', again, true);
+		};
+	});
+
 	/** Lets the choice go; the focus, lost with the card, goes to the regions' tab stop. */
 	async function close() {
 		regions.chosen = null;
@@ -59,7 +109,12 @@
 </script>
 
 {#if regions.shown && (edit.mode !== 'idle' || region || fallback)}
-	<div class="region-note" class:through={edit.mode !== 'idle'}>
+	<div
+		class="region-note"
+		class:through={edit.mode !== 'idle'}
+		class:foot={atFoot}
+		bind:this={note}
+	>
 		{#if edit.mode === 'drawing'}
 			<div class="actions row">
 				<p class="status">{e.drawing}</p>
@@ -148,6 +203,12 @@
 			0 0 0 1px var(--stage-line),
 			0 8px 24px rgba(0, 0, 0, 0.35);
 		color: var(--on-stage);
+	}
+	/* At the foot of the scan, above the zoom bar, when under the bar it would cover the region
+	   chosen. */
+	.region-note.foot {
+		top: auto;
+		bottom: calc(var(--space-4) + 3rem);
 	}
 	/* While a box is drawn or adjusted, a drag that starts over the card still reaches the page
 	   under it; only its buttons take the pointer. */
