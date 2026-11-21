@@ -132,10 +132,14 @@
 	.narrow {
 		max-width: 32rem;
 	}
+	/* A dialog of a set width keeps its content to that width, so a long select or table
+	   inside never pushes it past a small window's edge. */
 	.medium {
 		width: min(40rem, 100%);
+		grid-template-columns: minmax(0, 1fr);
 	}
 	.wide {
 		width: min(48rem, 100%);
+		grid-template-columns: minmax(0, 1fr);
 	}
 </style>

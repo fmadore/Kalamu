@@ -68,7 +68,11 @@
 
 	<label class="field">
 		<span>{m.projects.attach.job}</span>
-		<select bind:value={jobId} onchange={loadPlan}>
+		<select
+			bind:value={jobId}
+			onchange={loadPlan}
+			title={app.jobs.find((j) => j.id === jobId)?.name}
+		>
 			<option value="">{m.projects.attach.chooseJob}</option>
 			{#each app.jobs as job (job.id)}
 				<option value={job.id}
@@ -124,8 +128,22 @@
 </Dialog>
 
 <style>
-	td select {
+	/* A select is as wide as its longest choice, and a job's name with its task and date, or a
+	   document's long title, would push the dialog past a small window's edge: both keep to the
+	   dialog's width, the files' names wrapping and the choices cut short. */
+	.field {
+		min-width: 0;
+	}
+	select {
 		width: 100%;
+		min-width: 0;
+		text-overflow: ellipsis;
+	}
+	.data-table {
+		table-layout: fixed;
+	}
+	.data-table th:first-child {
+		width: 40%;
 	}
 	.file {
 		overflow-wrap: anywhere;
