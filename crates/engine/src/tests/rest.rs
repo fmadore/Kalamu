@@ -128,6 +128,8 @@ async fn the_rest_of_a_sample_pays_only_for_the_pages_it_did_not_read() {
     assert!(!whole_job.settings.sample_spread);
     assert_eq!(whole_job.setups[0].prompt, sample.setups[0].prompt);
     assert_ne!(whole_job.setups[0].id, setup);
+    // The whole document's files take over the sample's names, a first look at the same file.
+    assert!(!whole_job.output.labelled);
     assert_eq!(f.run(whole_job.id).await, JobStatus::Completed);
 
     // Only the 37 other pages were sent and paid; the sample's three came from the cache.
@@ -185,6 +187,9 @@ async fn another_model_on_a_sample_pays_only_for_that_model() {
         .unwrap_or_else(|e| panic!("{e}"));
     assert_eq!(whole.setups.len(), 1);
     assert_eq!(whole.setups[0].model, "priced-model");
+    // It continues the comparison, whose names are labelled; the first sample, with another
+    // model, wrote the plain ones and keeps them, so the whole document takes its label.
+    assert!(whole.output.labelled);
     assert_eq!(f.run(whole.id).await, JobStatus::Completed);
     assert_eq!(f.fake.calls(), 6 + 37);
 }

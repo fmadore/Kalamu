@@ -83,6 +83,11 @@ s’accompagne d’un fichier `provenance.json` qui indique le modèle, le promp
 vous pouvez ainsi citer exactement la façon dont le texte a été produit. Voir
 [Exporter et citer](export.md).
 
+Les fichiers portent le nom de l’original : `lettre.txt` pour `lettre.pdf`. Quand un autre
+traitement que vous avez gardé écrit déjà des fichiers pour le même original, ceux du nouveau
+traitement portent aussi le nom de son modèle, `lettre.lightonocr-3-1b.txt`, comme ceux d’une
+comparaison, et aucun ne remplace l’autre.
+
 ## Et ensuite ?
 
 - Pour un long document, Kalamu fait ce premier essai pour vous : quand un PDF a plus de

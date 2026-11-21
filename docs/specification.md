@@ -751,7 +751,11 @@ results together.
   reference for all of them, a correction before a text reviewed as it stands: each set-up's
   error rates are given side by side; without one, the highlighted differences show where
   they disagree.
-- **Every version is kept**, with the set-up in the file name.
+- **Every version is kept**, with the set-up in the file name. So is a later job of one
+  set-up whose plain names another job still kept writes for one of its sources: its files take
+  its set-up's label, as a comparison's do, while the first job keeps its plain names. This is
+  settled once, from the jobs kept (never from a file being there), when the job is recorded,
+  and kept with it (`OutputSettings::labelled`), so a resume or a new export never renames.
 - **Built on the cache.** Adding a third model to an existing comparison only runs the new one.
 
 ## Progress

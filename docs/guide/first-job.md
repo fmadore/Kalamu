@@ -71,6 +71,10 @@ Markdown, Word, an Excel spreadsheet, JSON, CSV, a searchable PDF, or ALTO and P
 with a `provenance.json` that records the model, the prompt and the settings, so you can cite
 exactly how the text was made. See [Exporting and citing](export.md).
 
+The files are named after the original: `letter.txt` for `letter.pdf`. When another job you
+kept already writes files for the same original, the new job's files carry its model's name
+as well, `letter.lightonocr-3-1b.txt`, as a comparison's do, so neither replaces the other.
+
 ## What to do next
 
 - For a long document, Kalamu does this first job for you: when a PDF has more than 15 pages,

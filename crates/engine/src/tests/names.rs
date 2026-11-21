@@ -90,6 +90,8 @@ fn job_of(
     into: Option<&str>,
 ) -> Job {
     let mut job = f.new_job(sources[..1].to_vec(), models);
+    // Each job made here is on the same first source: none takes another's names into account.
+    job.output.labelled = false;
     job.task = task;
     job.sources = sources;
     if let Some(folder) = into {

@@ -922,7 +922,12 @@ async fn a_page_that_keeps_failing_does_not_keep_the_document_from_disk() {
     f.fake.fail(2, vec![ProviderError::blocked("refused")]);
     let job = f.new_job(vec![source], &["fake-model"]);
     assert_eq!(f.run(job.id).await, JobStatus::CompletedWithErrors);
-    let read = |name: &str| std::fs::read_to_string(f.dir.path().join(name)).unwrap_or_default();
+    let read = |name: &str| {
+        std::fs::read_to_string(f.dir.path().join(name))
+            .unwrap_or_default()
+            .trim()
+            .to_string()
+    };
     let txt = read("bulletin.txt");
     assert!(txt.contains("fake-model page 1") && txt.contains("fake-model page 3"));
     assert!(
@@ -1472,6 +1477,81 @@ fn screening_is_priced_document_by_document_and_newspaper_pages_as_dense() {
         "newspaper: ${newspaper:.2}"
     );
     assert!(pages("text_extraction.printed") < newspaper / 2.5);
+}
+
+/// Two jobs on one file never write over each other's files (a Tesseract job then a
+/// LightOnOCR-3 job in the 1.10.0 test pass): the first keeps its plain names, a later job of
+/// one set-up takes its label as a comparison does. Settled when the job is recorded, from the
+/// jobs kept rather than from the files there, and kept through a resume and a new export.
+#[tokio::test]
+async fn a_second_job_on_a_file_takes_its_label_and_the_first_keeps_its_names() {
+    let f = fixture();
+    let source = f.pdf("letters.pdf", 1);
+    // The researcher's own file of the plain name claims nothing.
+    std::fs::write(f.dir.path().join("letters.md"), "my notes").unwrap_or_else(|_| panic!());
+    let first = f.new_job(vec![source.clone()], &["tesseract-like"]);
+    assert!(!first.output.labelled);
+    // Recorded before the first has written anything: the first still keeps the names.
+    let second = f.new_job(vec![source.clone()], &["lighton-like"]);
+    assert!(second.output.labelled);
+    assert!(
+        f.store.job(second.id).is_ok_and(|j| j.output.labelled),
+        "kept with the job"
+    );
+
+    assert_eq!(f.run(first.id).await, JobStatus::Completed);
+    // The first job deleted, the second keeps the names it was given: a resume or a new
+    // export never renames its files.
+    f.store
+        .delete_job(first.id)
+        .unwrap_or_else(|e| panic!("{e}"));
+    assert_eq!(f.run(second.id).await, JobStatus::Completed);
+    let read = |name: &str| {
+        std::fs::read_to_string(f.dir.path().join(name))
+            .unwrap_or_default()
+            .trim()
+            .to_string()
+    };
+    assert_eq!(read("letters.txt"), "tesseract-like page 1");
+    assert_eq!(read("letters.lighton-like.txt"), "lighton-like page 1");
+    assert!(
+        f.dir
+            .path()
+            .join("letters.lighton-like.provenance.json")
+            .is_file()
+    );
+    assert_eq!(read("letters.md"), "my notes");
+    let written = f
+        .engine
+        .write_outputs(
+            &f.store.job(second.id).unwrap_or_else(|e| panic!("{e}")),
+            second.setups[0].id,
+            source.id,
+        )
+        .unwrap_or_default();
+    assert!(
+        written.iter().all(|p| p.contains("letters.lighton-like.")),
+        "{written:?}"
+    );
+
+    // With no other job kept, a new job takes the plain names again.
+    f.store
+        .delete_job(second.id)
+        .unwrap_or_else(|e| panic!("{e}"));
+    let third = f.new_job(vec![source], &["tesseract-like"]);
+    assert!(!third.output.labelled);
+}
+
+/// A job recorded before its files could carry a label reads as it was: plain names.
+#[test]
+fn a_job_recorded_before_the_label_keeps_its_plain_names() {
+    let settings: OutputSettings =
+        serde_json::from_str(r#"{"formats":["txt"],"destination":{"kind":"beside_sources"}}"#)
+            .unwrap_or_else(|e| panic!("{e}"));
+    assert!(!settings.labelled);
+    // And a job that is not labelled writes the field as before: not at all.
+    let written = serde_json::to_value(&settings).unwrap_or_default();
+    assert!(written.get("labelled").is_none(), "{written}");
 }
 
 #[tokio::test]

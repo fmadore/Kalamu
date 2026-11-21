@@ -296,6 +296,61 @@ impl Engine {
 }
 
 impl Engine {
+    /// Settles, before a new job is recorded, whether its files carry its set-up's label
+    /// ([`kalamu_core::OutputSettings::labelled`]): a job of one set-up whose plain names
+    /// another job still kept writes, or will write, for one of its sources takes its label, as
+    /// a comparison does, so the two never write over each other's files (a Tesseract job then
+    /// a LightOnOCR-3 job on one PDF, in the 1.10.0 test pass). The first job keeps its plain
+    /// names; jobs already recorded never change theirs.
+    ///
+    /// Who writes a name is read from the store, every kept job's names worked out as its own
+    /// writes work them out, never from a file being there: that file may be the researcher's
+    /// own. `continues` is the job this one carries on (the sample whose rest it reads), whose
+    /// names it may take over.
+    pub(crate) fn settle_labels(
+        &self,
+        job: &mut Job,
+        continues: Option<JobId>,
+    ) -> Result<(), EngineError> {
+        job.output.labelled = false;
+        if job.is_comparison() {
+            return Ok(());
+        }
+        let names = OutputNames::of(job);
+        let mine: std::collections::HashSet<(String, String)> = job
+            .sources
+            .iter()
+            .flat_map(|source| job.setups.iter().map(|s| names.base(job, source, &s.label)))
+            .map(|(dir, base)| name_key(&dir, &base))
+            .collect();
+        if mine.is_empty() {
+            return Ok(());
+        }
+        for summary in self.store.list_jobs()? {
+            if summary.id == job.id || Some(summary.id) == continues {
+                continue;
+            }
+            let other = match self.store.job(summary.id) {
+                Ok(other) => other,
+                // Deleted meanwhile: it writes nothing.
+                Err(kalamu_core::StoreError::NotFound) => continue,
+                Err(e) => return Err(e.into()),
+            };
+            let theirs = OutputNames::of(&other);
+            let taken = other.sources.iter().any(|source| {
+                other.setups.iter().any(|setup| {
+                    let (dir, base) = theirs.base(&other, source, &setup.label);
+                    mine.contains(&name_key(&dir, &base))
+                })
+            });
+            if taken {
+                job.output.labelled = true;
+                return Ok(());
+            }
+        }
+        Ok(())
+    }
+
     /// A job's files out of date, written before they are listed or read. One that cannot be
     /// written is reported as the job's `SourceFailed` and listed as it is on disk.
     fn write_outdated_before_reading(&self, job_id: JobId) {
@@ -388,7 +443,7 @@ impl OutputNames {
                 (dir, numbered(stem, earlier))
             }
         };
-        let mut base = if job.is_comparison() {
+        let mut base = if job.is_comparison() || job.output.labelled {
             format!("{stem}.{setup_label}")
         } else {
             stem
