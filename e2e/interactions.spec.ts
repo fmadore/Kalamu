@@ -362,6 +362,22 @@ test('New job says why Start waits for the language to translate into', async ({
 	await expect(start).toHaveAccessibleDescription('Choose the language to translate into.');
 });
 
+test('New job names a text too long for the model chosen, and Start stays off', async ({
+	page
+}) => {
+	// B15: the engine would refuse the job (`job.text_too_long`), so it is said before Start.
+	await page.goto('/?mock&view=new&text-long');
+	await page.waitForLoadState('networkidle');
+	const main = page.getByRole('main');
+	await main.getByRole('button', { name: /^Analyse texts/ }).click();
+	await main.getByRole('button', { name: 'Add files' }).click();
+	const start = page.getByRole('button', { name: /^Start(?! over)/ });
+	await expect(start).toBeDisabled();
+	await expect(start).toHaveAccessibleDescription(
+		/is too long for .*: about 48,000 words, where it reads about 11,000 at once\. Choose another model, or split the text into shorter documents\./
+	);
+});
+
 test('New job offers a translation of text without times no subtitles, and says why', async ({
 	page
 }) => {

@@ -1,6 +1,7 @@
 // The long interviews of the browser preview (`?mock`): `interview-long` and
 // `interview-unbroken` for what the estimate says of a transcript too long to read at once, and
-// `interview-parts` for an analysis read in three parts, the last of which could not be read.
+// `interview-parts` for an analysis read in three parts, the last of which could not be read;
+// `text-long` for a text too long for any other analysis, which sends it whole.
 // Development builds only.
 
 import type { Catalog } from '../bindings/Catalog.js';
@@ -70,5 +71,20 @@ export function interviewLength(
 				most_words: roundDown(Math.floor((limit * 4) / 6))
 			}
 		]
+	};
+}
+
+/** What the estimate says of an analysis that cites nothing with `text-long`: its first source
+ * too long for the model, sent whole as such an analysis sends it (B15). */
+export function textLength(
+	request: EstimateRequest,
+	setup: SetupRequest
+): { too_long?: TextTooLong[] } {
+	const first = request.sources[0];
+	if (!new URLSearchParams(location.search).has('text-long')) return {};
+	const preset = setup.preset_id ?? '';
+	if (request.task !== 'analysis' || !first || preset.startsWith('analysis.interview')) return {};
+	return {
+		too_long: [{ source: first.id, file: first.file_name, words: 48_000, most_words: 11_000 }]
 	};
 }

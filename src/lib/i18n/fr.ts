@@ -1977,6 +1977,9 @@ export const fr: Messages = {
 		linkFolder:
 			'Une vidéo n’a pas de dossier à elle : ses transcriptions et ses fichiers de provenance en demandent un.',
 		needFolder: 'Choisissez un dossier pour les résultats avant de lancer le traitement.',
+		/** Said where Start is, which is off, when a text is too long for a model chosen. */
+		tooLong: (file: string, model: string, words: string, most: string, others: number) =>
+			`${file} est trop long pour ${model} : environ ${words} mots, alors qu’il en lit environ ${most} à la fois${others === 0 ? '' : others === 1 ? ', de même qu’un autre texte' : `, de même que ${others} autres textes`}. Choisissez un autre modèle, ou découpez le texte en documents plus courts.`,
 		estimateVideo:
 			'La durée d’une vidéo n’est connue qu’une fois que Gemini l’a lue : le coût s’affiche donc dans Traitements en cours d’exécution.'
 	},

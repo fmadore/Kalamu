@@ -1535,6 +1535,9 @@ export const en = {
 		linkFolder:
 			'A video has no folder of its own, so its transcripts and provenance files need one.',
 		needFolder: 'Choose a folder for the results before starting.',
+		/** Said where Start is, which is off, when a text is too long for a model chosen. */
+		tooLong: (file: string, model: string, words: string, most: string, others: number) =>
+			`${file} is too long for ${model}: about ${words} words, where it reads about ${most} at once${others === 0 ? '' : others === 1 ? ', and so is 1 other text' : `, and so are ${others} other texts`}. Choose another model, or split the text into shorter documents.`,
 		estimateVideo:
 			'A video’s length is known only once Gemini has read it, so the cost shows in Jobs as it runs.'
 	},

@@ -58,6 +58,15 @@ Dans **Prompts**, l’éditeur de champs vous permet d’écrire les vôtres : 
 indiquez le type de réponse attendu (un texte, une liste, un choix dans votre propre liste) et
 décrivez ce que vous voulez.
 
+Chaque texte est envoyé en entier : il doit tenir dans ce que le modèle lit d’un coup, environ
+11 000 mots pour les modèles hors ligne Gemma 4, bien davantage pour les modèles en ligne. Un
+texte trop long est nommé au-dessus de **Lancer** dans Nouveau traitement, et Lancer reste
+désactivé tant que vous n’avez pas choisi un autre modèle ou découpé le texte, par exemple :
+*long-text.txt est trop long pour Gemma 4 E2B : environ 48 000 mots, alors qu’il en lit environ
+11 000 à la fois. Choisissez un autre modèle, ou découpez le texte en documents plus courts.*
+Rien n’est envoyé et aucun traitement n’est créé. Un entretien, lui, est lu en plusieurs parties
+(ci-dessous).
+
 ![Une analyse : les champs avec leurs réponses, à côté du document](../../store/screenshots/windows/fr/07-analysis.png)
 *Une analyse, champ par champ, avec le document dont elle est tirée.*
 

@@ -1,6 +1,6 @@
 //! What a job will cost before it starts: each set-up's pages or minutes priced from the
 //! catalogue, a records analysis page by page, a table of contents' second step apart, and the
-//! totals at each pace; and, for a cited analysis, a text too long for its model.
+//! totals at each pace; and, for an analysis, a text too long for its model.
 
 use kalamu_catalog::CostEstimate;
 use kalamu_core::{InputKind, MergeModel, ProviderId, SourceFile, Task};
@@ -32,8 +32,9 @@ pub struct EstimateRow {
     pub estimate: CostEstimate,
     /// A table of contents' second step, which combines the pages.
     pub merge: bool,
-    /// A cited analysis's texts this model cannot read even in parts, one passage of each alone
-    /// too long, in the order given: a job holding one is refused when created
+    /// An analysis's texts this model cannot read, in the order given: a cited analysis's one
+    /// passage of which alone is too long even read in parts, any other's longer than the model
+    /// reads at once, being sent whole. A job holding one is refused when created
     /// ([`crate::Engine::check_length`]), so this row prices the other sources only, as a job
     /// that leaves them out would cost; absent when every text can be read.
     #[serde(skip_serializing_if = "Vec::is_empty")]
@@ -169,14 +170,11 @@ impl Engine {
         };
         let mut rows = Vec::new();
         for setup in &request.setups {
-            // A cited analysis's texts its model cannot read even in parts are left out of the
-            // price, as a job that leaves them out would cost.
+            // An analysis's texts its model cannot read (a cited one's even in parts) are left
+            // out of the price, as a job that leaves them out would cost.
             let cites = self.request_cites(request.task, setup).unwrap_or(false);
-            let unreadable = if cites {
-                self.too_long_at(&catalog, setup, &request.sources)
-            } else {
-                Vec::new()
-            };
+            let unreadable =
+                self.unreadable_texts(&catalog, request.task, setup, cites, &request.sources);
             let sources: Vec<SourceFile> = request
                 .sources
                 .iter()

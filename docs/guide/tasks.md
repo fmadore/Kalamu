@@ -53,6 +53,13 @@ Ready-made analyses cover common needs, among them:
 Under **Prompts**, the field editor lets you write your own: name each field, say what kind of
 answer it takes (a text, a list, a choice from your own list), and describe what you want.
 
+Each text is sent whole, so it must fit in what the model reads at once: about 11,000 words for
+the offline Gemma 4 models, far more for the cloud models. A text that does not fit is named
+above **Start** in New job, and Start stays off until you choose another model or split the
+text, for example: *long-text.txt is too long for Gemma 4 E2B: about 48,000 words, where it
+reads about 11,000 at once. Choose another model, or split the text into shorter documents.*
+Nothing is sent and no job is made. An interview is read in parts instead (below).
+
 ![An analysis: fields with their answers beside the document](../store/screenshots/windows/en/07-analysis.png)
 *An analysis, field by field, with the document it was read from.*
 

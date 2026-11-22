@@ -193,8 +193,10 @@ model cannot read even in parts is refused before Start**: one turn of it alone 
 lenient measure, so only what surely cannot fit is refused), named in place of the cost, *This
 transcript is too long for Gemma 4 E4B: about 12,000 words, where it reads about 11,000 at
 once*, with Start disabled until another model is chosen under *More choices*; the engine
-refuses such a job when it is created, before anything is sent, and New job shows that refusal
-as its other errors. A model the catalogue gives no limit is left to its provider's own refusal
+refuses such a job when it is created, before anything is sent, and New job names the text
+above Start, which stays off. Any other analysis sends each text whole, so a text longer than
+the model reads at once is refused and named the same way (*long-text.txt is too long for
+Gemma 4 E2B: about 48,000 words, where it reads about 11,000 at once*). A model the catalogue gives no limit is left to its provider's own refusal
 ([decision](decisions/2026-11-20-interview-windows-guide-themes.md)). **The researcher's own themes or interview
 guide.** Under *More choices*, never on the default path, a box takes the researcher's own
 themes or interview guide, one per line. They are sent with the question (and so enter the
@@ -1257,7 +1259,7 @@ workbook by default. The same table gives the same workbook, byte for byte
   or a page of an issue through the multimodal program. The answer is held to the analysis's
   fields as it is written (llama.cpp turns their schema into a grammar), then checked as every
   provider's is; decoding is greedy, thinking off. They read a text of up to about 11,000 words
-  at once (a context of 32K tokens) and say so when one is longer; a PDF is analysed once its
+  at once (a context of 32K tokens), and New job names a longer text above Start, which stays off; a PDF is analysed once its
   text is extracted. On a Mac they run on Metal; on Windows they follow the OCR models' graphics
   processor and Settings choice, with as many of their layers there as its memory holds and the
   rest on the processor, so a card with little memory of its own still helps. Snapdragon's
