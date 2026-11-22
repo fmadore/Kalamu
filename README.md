@@ -1,10 +1,10 @@
 # Kalamu: statistics
 
-Updated 2026-11-21 by the daily *Repository statistics* workflow (`.github/workflows/stats.yml` on the default branch). The figures are kept in [`data/`](data/) as CSV files, one row per day, for a spreadsheet or a dashboard.
+Updated 2026-11-22 by the daily *Repository statistics* workflow (`.github/workflows/stats.yml` on the default branch). The figures are kept in [`data/`](data/) as CSV files, one row per day, for a spreadsheet or a dashboard.
 
 | Downloads, versions | Downloads, all releases | Views, last 14 days |
 | ---: | ---: | ---: |
-| 402 | 799 | 43 |
+| 402 | 829 | 50 |
 
 ## Downloads per version
 
@@ -14,7 +14,7 @@ Every file of a release counts once each time it is downloaded from GitHub. "…
 | --- | --- | ---: | ---: | ---: |
 | [v1.9.0](https://github.com/fmadore/Kalamu/releases/tag/v1.9.0) | 2026-11-20 | 18 | 18 | 18 |
 | [v1.8.0](https://github.com/fmadore/Kalamu/releases/tag/v1.8.0) | 2026-11-17 | 31 | 31 | 31 |
-| [v1.7.0](https://github.com/fmadore/Kalamu/releases/tag/v1.7.0) | 2026-11-13 | 32 | 23 | 32 |
+| [v1.7.0](https://github.com/fmadore/Kalamu/releases/tag/v1.7.0) | 2026-11-13 | 32 | 22 | 32 |
 | [v1.6.0](https://github.com/fmadore/Kalamu/releases/tag/v1.6.0) | 2026-11-10 | 38 | 14 | 38 |
 | [v1.5.0](https://github.com/fmadore/Kalamu/releases/tag/v1.5.0) | 2026-11-07 | 36 | 11 | 36 |
 | [v1.4.1](https://github.com/fmadore/Kalamu/releases/tag/v1.4.1) | 2026-11-05 | 28 | 0 | 28 |
@@ -34,9 +34,9 @@ Every file of a release counts once each time it is downloaded from GitHub. "…
 
 | Release | Published | Downloads | Last 7 days | Last 30 days |
 | --- | --- | ---: | ---: | ---: |
-| [llama-b12110-2](https://github.com/fmadore/Kalamu/releases/tag/llama-b12110-2) (pre-release) | 2026-11-18 | 55 | 55 | 55 |
-| [ffmpeg-9.0.2-2](https://github.com/fmadore/Kalamu/releases/tag/ffmpeg-9.0.2-2) (pre-release) | 2026-11-13 | 78 | 57 | 78 |
-| [llama-b12110-1](https://github.com/fmadore/Kalamu/releases/tag/llama-b12110-1) (pre-release) | 2026-11-07 | 165 | 56 | 165 |
+| [llama-b12110-2](https://github.com/fmadore/Kalamu/releases/tag/llama-b12110-2) (pre-release) | 2026-11-18 | 75 | 75 | 75 |
+| [ffmpeg-9.0.2-2](https://github.com/fmadore/Kalamu/releases/tag/ffmpeg-9.0.2-2) (pre-release) | 2026-11-13 | 88 | 65 | 88 |
+| [llama-b12110-1](https://github.com/fmadore/Kalamu/releases/tag/llama-b12110-1) (pre-release) | 2026-11-07 | 165 | 51 | 165 |
 | [llama-b12110-3](https://github.com/fmadore/Kalamu/releases/tag/llama-b12110-3) (pre-release) | 2026-11-06 | 22 | 0 | 22 |
 | [ffmpeg-9.0.2-1](https://github.com/fmadore/Kalamu/releases/tag/ffmpeg-9.0.2-1) (pre-release) | 2026-10-25 | 77 | 0 | 77 |
 
@@ -47,8 +47,8 @@ Every file of a release counts once each time it is downloaded from GitHub. "…
 ```mermaid
 xychart-beta
     title "Downloads per day (all releases)"
-    x-axis ["11-09", "11-10", "11-11", "11-12", "11-13", "11-14", "11-15", "11-16", "11-17", "11-18", "11-19", "11-20", "11-21"]
-    bar [0, 0, 104, 38, 35, 79, 8, 18, 30, 86, 33, 8, 82]
+    x-axis ["11-09", "11-10", "11-11", "11-12", "11-13", "11-14", "11-15", "11-16", "11-17", "11-18", "11-19", "11-20", "11-21", "11-22"]
+    bar [0, 0, 104, 38, 35, 79, 8, 18, 30, 86, 33, 8, 82, 30]
 ```
 
 ## Files of v1.9.0
@@ -71,7 +71,7 @@ Bars are views, the line unique visitors (GitHub's daily figures, UTC; today is 
 ```mermaid
 xychart-beta
     title "Views and unique visitors"
-    x-axis ["10-25", "10-26", "10-27", "10-28", "10-29", "10-30", "10-31", "11-01", "11-02", "11-03", "11-04", "11-05", "11-06", "11-07", "11-08", "11-09", "11-10", "11-11", "11-12", "11-13", "11-14", "11-15", "11-16", "11-17", "11-18", "11-19"]
-    bar [0, 0, 5, 19, 19, 18, 1, 2, 26, 17, 18, 3, 15, 3, 0, 1, 5, 11, 2, 6, 3, 0, 6, 6, 1, 2]
-    line [0, 0, 5, 14, 14, 15, 1, 2, 14, 12, 14, 2, 11, 3, 0, 1, 5, 10, 2, 6, 2, 0, 4, 5, 1, 2]
+    x-axis ["10-25", "10-26", "10-27", "10-28", "10-29", "10-30", "10-31", "11-01", "11-02", "11-03", "11-04", "11-05", "11-06", "11-07", "11-08", "11-09", "11-10", "11-11", "11-12", "11-13", "11-14", "11-15", "11-16", "11-17", "11-18", "11-19", "11-20"]
+    bar [0, 0, 5, 19, 19, 18, 1, 2, 26, 17, 18, 3, 15, 3, 0, 1, 5, 11, 2, 6, 3, 0, 6, 6, 1, 2, 7]
+    line [0, 0, 5, 14, 14, 15, 1, 2, 14, 12, 14, 2, 11, 3, 0, 1, 5, 10, 2, 6, 2, 0, 4, 5, 1, 2, 5]
 ```

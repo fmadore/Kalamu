@@ -321,3 +321,12 @@ date,tag,asset,downloads
 2026-11-21,v1.9.0,Kalamu_1.9.0.msixbundle,1
 2026-11-21,v1.9.0,kalamu-samples.zip,5
 2026-11-21,v1.9.0,SHA256SUMS,1
+2026-11-22,ffmpeg-9.0.2-2,ffmpeg-9.0.2-aarch64-apple-darwin.zip,20
+2026-11-22,ffmpeg-9.0.2-2,ffmpeg-9.0.2-aarch64-pc-windows-msvc.zip,23
+2026-11-22,ffmpeg-9.0.2-2,ffmpeg-9.0.2-x86_64-pc-windows-msvc.zip,40
+2026-11-22,llama-b12110-2,llama-b12110-aarch64-apple-darwin.zip,10
+2026-11-22,llama-b12110-2,llama-b12110-aarch64-pc-windows-msvc.zip,10
+2026-11-22,llama-b12110-2,llama-b12110-x86_64-pc-windows-msvc.zip,17
+2026-11-22,llama-b12110-2,llama-opencl-b12110-aarch64-pc-windows-msvc.zip,11
+2026-11-22,llama-b12110-2,llama-vulkan-b12110-aarch64-pc-windows-msvc.zip,10
+2026-11-22,llama-b12110-2,llama-vulkan-b12110-x86_64-pc-windows-msvc.zip,17
