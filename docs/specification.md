@@ -110,7 +110,10 @@ workflow, an older window) is refused before anything is sent, for the reason ea
 have failed with ([decision](decisions/2026-11-11-translation-followups.md)). The app turns
 the fields into each provider's structured output, so the answer always has exactly these
 fields, and checks it again before storing it: an answer that breaks the fields is asked for
-again, never stored empty. Named entity recognition and sentiment analysis are analyses, not
+again, never stored empty. An answer that leaves every field empty for a text of more than 500
+words is refused the same way, and asked again with more thinking where the model has it (the
+next level up, to *High* at most), the answer kept recording the level it was sent at
+([decision](decisions/2026-11-22-empty-answer-more-thinking.md)). Named entity recognition and sentiment analysis are analyses, not
 separate tasks.
 
 **A detailed table of contents is read in two steps**, as iwac-ai-pipelines indexes magazine

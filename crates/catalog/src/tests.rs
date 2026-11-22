@@ -515,6 +515,23 @@ fn reasoning_suggests_the_lowest_for_reading_and_keeps_to_the_levels_a_model_has
         level(model("mistral-ocr-4-1"), Task::TextExtraction, Some("high")),
         None
     );
+    // More thinking: the next level the model has, never past the bound.
+    let sol = model("gpt-6.2-sol")
+        .reasoning
+        .as_ref()
+        .unwrap_or_else(|| panic!("GPT-6.2 Sol reasons"));
+    assert_eq!(sol.above("low", "high"), Some("medium"));
+    assert_eq!(sol.above("medium", "high"), Some("high"));
+    assert_eq!(sol.above("high", "high"), None);
+    assert_eq!(sol.above("low", "low"), None);
+    let medium_levels = medium
+        .reasoning
+        .as_ref()
+        .unwrap_or_else(|| panic!("reasons"));
+    assert_eq!(
+        medium_levels.above("none", "high"),
+        medium_levels.levels.get(1).map(String::as_str)
+    );
     // Where Mistral documents no output limit, none is set.
     assert_eq!(medium.limits.max_output_tokens, None);
 }

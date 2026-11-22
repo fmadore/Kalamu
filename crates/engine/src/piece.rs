@@ -99,6 +99,10 @@ pub(crate) fn accepted_inputs(
         .collect()
 }
 
+/// The most thinking an answer left empty is asked again with: `high`, past which a level costs
+/// far more for what it adds, and is the researcher's to choose.
+pub(crate) const MOST_THOUGHT_ASKED_AGAIN: &str = "high";
+
 impl Engine {
     /// What a request to `model` asks beyond the prompt: the reasoning level chosen for the
     /// set-up (the suggestion when none was, the nearest the model has when it lacks it) and
@@ -295,6 +299,13 @@ impl Engine {
     /// caller's `check` refuses (a passage of timed lines that does not give back every line
     /// once) is refused and asked again like any broken answer; one it passes is kept as the
     /// check gives it back.
+    ///
+    /// An analysis's answer that left every field empty for a long text
+    /// ([`crate::check::refuse_empty`]) is asked again with more thinking: the next level the
+    /// model has, up to [`MOST_THOUGHT_ASKED_AGAIN`] (GPT-6.2 Sol answered a 5,557-word issue
+    /// with nothing four times at `low` and fully at `medium`, in 1.10.0-rc2's test pass). The
+    /// answer kept records the level it was sent with, and the piece's failure names the levels
+    /// tried.
     #[allow(clippy::too_many_arguments)]
     pub(crate) async fn call(
         &self,
@@ -321,12 +332,15 @@ impl Engine {
             }
             None => user_prompt,
         };
-        let tuning = self.tuning(
+        let mut tuning = self.tuning(
             job.task,
             step.provider,
             step.model,
             options.reasoning.as_deref(),
         );
+        // The higher levels asked again at, in order, after answers left every field empty.
+        let mut more: Vec<String> = Vec::new();
+        let mut last_empty = false;
         let started = Instant::now();
         let mut last_error: Option<ProviderError> = None;
         for attempt in 0..self.config.max_attempts {
@@ -345,13 +359,20 @@ impl Engine {
             };
             let mut sent = provider.sent_settings(&request, false);
             sent.extend(check.map(|c| c.settings()).unwrap_or_default());
+            let mut empty = false;
             let answer = provider
                 .process(api_key, request)
                 .await
                 .and_then(|output| match check {
                     Some(check) => crate::check::checked(check, output),
-                    None => crate::check::refuse_empty(job.task, analysis, Some(input), output),
+                    None => {
+                        let kept =
+                            crate::check::refuse_empty(job.task, analysis, Some(input), output);
+                        empty = kept.is_err();
+                        kept
+                    }
                 });
+            last_empty = empty;
             if let Err(err) = &answer {
                 self.charge(state, step.provider, step.model, err, spent)?;
             }
@@ -374,6 +395,14 @@ impl Engine {
                         _ => backoff(self.config.base_delay, attempt, state.index),
                     };
                     tracing::info!(piece = state.index, ?delay, error = %err, "retrying");
+                    // The same request would leave every field empty again: more thinking.
+                    if empty
+                        && let Some(level) = self.more_thought(step, tuning.reasoning.as_deref())
+                    {
+                        tracing::info!(piece = state.index, %level, "asking again with more thinking");
+                        tuning.reasoning = Some(level.clone());
+                        more.push(level);
+                    }
                     last_error = Some(err);
                     // Paused or cancelled meanwhile: no further attempt, which would be paid
                     // for; the piece waits for the job to resume.
@@ -387,7 +416,31 @@ impl Engine {
                 }
             }
         }
+        // Left empty even with more thinking: the failure says which levels were tried.
+        if last_empty
+            && !more.is_empty()
+            && let Some(ProviderError::InvalidAnswer { usage, .. }) = &last_error
+        {
+            let words = crate::check::words_of(input).unwrap_or_default();
+            last_error = Some(ProviderError::InvalidAnswer {
+                reason: kalamu_core::structured::empty_reason(words, &more),
+                usage: usage.clone(),
+            });
+        }
         Ok(Called::Failed(last_error))
+    }
+
+    /// The level an answer left empty is asked again at: the next one the model has above
+    /// `level`, up to [`MOST_THOUGHT_ASKED_AGAIN`]; none for a model that does not reason, one
+    /// the catalogue lacks, or one already there.
+    fn more_thought(&self, step: Step<'_>, level: Option<&str>) -> Option<String> {
+        let catalog = self.current_catalog();
+        catalog
+            .model(step.provider, step.model)?
+            .reasoning
+            .as_ref()?
+            .above(level?, MOST_THOUGHT_ASKED_AGAIN)
+            .map(str::to_string)
     }
 
     /// Stores a piece's new state and reports it.

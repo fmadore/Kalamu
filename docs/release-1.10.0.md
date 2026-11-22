@@ -120,7 +120,8 @@ keys. Once 1.10.0 has opened your job database, an earlier version refuses it.
 - **GPT-6.2 Sol can leave text out, or answer nothing.** It replaced a chemistry lecture's
   description in a 1911 newspaper with a note that it had omitted it, and answered an analysis
   of that issue with every field empty. Kalamu now refuses an analysis left wholly empty for a
-  long text and asks again, then says so; a comparison of two models shows the gaps in a
+  long text and asks again with more thinking (*Medium*, then *High*, where the model has them),
+  then says which levels were tried; a comparison of two models shows the gaps in a
   transcription.
 - **A project file has not yet been carried from Windows to a Mac.** A project opened without
   its original files cannot yet be pointed at those files on the new computer; save it again

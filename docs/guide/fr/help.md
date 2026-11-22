@@ -24,6 +24,12 @@ habituelles sont une connexion perdue, un fournisseur surchargé (Kalamu attend 
 seul), ou une page que le fournisseur refuse. Relancez le traitement : seul ce qui a échoué est
 renvoyé.
 
+Une analyse qui ne répond rien du tout pour un long texte n’est pas conservée : Kalamu redemande,
+avec davantage de réflexion à chaque fois quand le modèle le permet (*Moyenne*, puis *Élevée*),
+et garde la première réponse complète, dont le relevé indique le niveau envoyé. Si toutes les
+réponses restent vides, la page le dit avec les niveaux essayés : choisissez un autre modèle
+plutôt que de relancer.
+
 Un traitement mis en pause, ou interrompu parce que l’application a été fermée, se trouve en bas
 de la barre latérale, sous *À reprendre*.
 

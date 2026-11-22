@@ -256,6 +256,16 @@ impl Reasoning {
             .min_by_key(|l| (rank(l).abs_diff(want), rank(l)))
             .cloned()
     }
+
+    /// The least level the model has above `level`, if one is no higher than `at_most`: what an
+    /// answer asked again with more thinking is sent.
+    pub fn above(&self, level: &str, at_most: &str) -> Option<&str> {
+        let (from, to) = (rank(level), rank(at_most));
+        self.levels
+            .iter()
+            .map(String::as_str)
+            .find(|l| rank(l) > from && rank(l) <= to)
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
