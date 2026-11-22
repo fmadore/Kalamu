@@ -27,7 +27,9 @@ Every shortcut is listed in the **Glossary**, under *Keyboard*, written for your
 
 ## Correct the text
 
-Correct the text where it stands, then save. Three things follow:
+Correct the text where it stands, then press **Save correction** (<kbd>Ctrl</kbd> <kbd>Enter</kbd>, <kbd>⌘</kbd> <kbd>Enter</kbd> on a
+Mac), which also marks the page reviewed; **Discard changes** leaves it as it was. Both stay
+at the foot of the text while you scroll it, however long the page. Three things follow:
 
 - the model's own text is **kept unchanged** underneath, and you can always see it again;
 - exports use your corrected text and record that it was corrected;

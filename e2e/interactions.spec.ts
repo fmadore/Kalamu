@@ -46,6 +46,36 @@ test('a correction is saved and found again on coming back to the page', async (
 	await expect(text).not.toContainText('deux cents fidèles');
 });
 
+test('the correction’s Save and Discard stay in view at 1280 × 720, the text scrolling under them', async ({
+	page
+}) => {
+	await page.setViewportSize({ width: 1280, height: 720 });
+	await open(page, 'review');
+	const main = page.getByRole('main');
+	const pane = main.getByRole('region', { name: 'Reading text' }).locator('.page');
+	await main.getByRole('button', { name: 'Correct', exact: true }).first().click();
+	const editor = main.getByRole('textbox', { name: /^Correct / });
+	await expect(editor).toBeFocused();
+	// A long correction, far taller than the pane.
+	await editor.fill(Array.from({ length: 80 }, (_, i) => `Ligne ${i + 1} du texte.`).join('\n'));
+	const save = main.getByRole('button', { name: /^Save correction/ });
+	const discard = main.getByRole('button', { name: 'Discard changes' });
+	for (const top of [0, 400]) {
+		await pane.evaluate((el, at) => el.scrollTo({ top: at }), top);
+		const area = await pane.boundingBox();
+		if (!area) throw new Error('not drawn');
+		for (const button of [save, discard]) {
+			const box = await button.boundingBox();
+			if (!box) throw new Error('not drawn');
+			expect(box.y, `scrolled to ${top}`).toBeGreaterThanOrEqual(area.y);
+			expect(box.y + box.height, `scrolled to ${top}`).toBeLessThanOrEqual(area.y + area.height);
+		}
+	}
+	await save.click();
+	await expect(editor).toBeHidden();
+	await expect(main.getByRole('region', { name: 'Reading text' })).toContainText('Ligne 80');
+});
+
 test('a PDF’s corrected text shows the text the model read beside it, the page a click away', async ({
 	page
 }) => {

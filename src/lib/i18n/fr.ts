@@ -2940,7 +2940,8 @@ export const fr: Messages = {
 			start: 'Lancer le traitement',
 			addLinks: 'Ajouter les liens YouTube collés',
 			newLine: 'Commencer une autre ligne de liens',
-			reviewed: 'Marquer la page comme relue, ou non relue ; pendant une correction, l’enregistrer',
+			reviewed:
+				'Marquer la page comme relue, ou non relue ; pendant une correction, l’enregistrer, ce qui marque la page comme relue, comme le fait Enregistrer la correction',
 			nextPage: 'Page ou partie suivante ; Pg suiv fait plutôt défiler un volet qui a le focus',
 			previousPage:
 				'Page ou partie précédente ; Pg préc fait plutôt défiler un volet qui a le focus',

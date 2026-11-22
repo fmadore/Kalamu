@@ -30,7 +30,10 @@ sur votre système.
 
 ## Corriger le texte
 
-Corrigez le texte directement, puis enregistrez. Trois choses en découlent :
+Corrigez le texte directement, puis cliquez sur **Enregistrer la correction** (<kbd>Ctrl</kbd> <kbd>Entrée</kbd>,
+<kbd>⌘</kbd> <kbd>Entrée</kbd> sur un Mac), ce qui marque aussi la page comme relue ; **Abandonner les
+modifications** la laisse telle qu’elle était. Les deux restent au pied du texte pendant que
+vous le faites défiler, quelle que soit la longueur de la page. Trois choses en découlent :
 
 - le texte du modèle est **gardé tel quel** en dessous, et vous pouvez toujours le revoir ;
 - les exports utilisent votre texte corrigé et indiquent qu’il a été corrigé ;

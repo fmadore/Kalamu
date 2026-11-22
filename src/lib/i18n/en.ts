@@ -2500,7 +2500,8 @@ export const en = {
 			start: 'Start the job',
 			addLinks: 'Add the YouTube links pasted',
 			newLine: 'Start another line among the links',
-			reviewed: 'Mark the page reviewed, or not reviewed; while correcting, save the correction',
+			reviewed:
+				'Mark the page reviewed, or not reviewed; while correcting, save the correction, which marks the page reviewed, as Save correction does',
 			nextPage: 'Next page or part; Page Down scrolls a pane instead when it has the focus',
 			previousPage: 'Previous page or part; Page Up scrolls a pane instead when it has the focus',
 			differenceSteps: 'On a difference in the text: the previous or next one',
