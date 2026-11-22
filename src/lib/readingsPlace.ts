@@ -23,11 +23,19 @@ export function tallest(visible: Band): number {
 	return Math.max(0, visible.bottom - visible.top - 2 * GAP);
 }
 
+/** Whether a line of the words is in the part of the pane that shows. */
+const shows = (line: Band, visible: Band) => line.bottom > visible.top && line.top < visible.bottom;
+
 /** The line of the words the readings belong to: the last one that shows, as a long paragraph
  * may run on past the pane's edge; the last line when none shows. */
 export function anchorLine<T extends Band>(lines: T[], visible: Band): T | null {
-	const shown = lines.filter((l) => l.bottom > visible.top && l.top < visible.bottom);
-	return shown.at(-1) ?? lines.at(-1) ?? null;
+	return lines.filter((l) => shows(l, visible)).at(-1) ?? lines.at(-1) ?? null;
+}
+
+/** Whether any line of the words shows: while one does, the readings follow them as the pane
+ * scrolls; once none does, they scroll away with them. */
+export function anyShown(lines: Band[], visible: Band): boolean {
+	return lines.some((l) => shows(l, visible));
 }
 
 /** The top of readings `height` tall, in the window's pixels: under the line when they fit

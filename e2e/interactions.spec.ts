@@ -513,6 +513,41 @@ test('a difference’s readings show whole in a short text pane, wherever its wo
 	}
 });
 
+test('a difference stepped to shows its readings whole at 1280 × 720, under the pane’s bar', async ({
+	page
+}) => {
+	// The Store's 1920 × 1080 at 150 %. Stepping scrolls the words into view after the readings
+	// are placed: they must end in the part of the pane that shows, not under its bar.
+	await page.setViewportSize({ width: 1280, height: 720 });
+	await open(page, 'review');
+	const text = page.getByRole('main').getByRole('region', { name: 'Reading text' });
+	const pane = text.locator('.page');
+	const readings = page.getByRole('dialog', { name: 'Choose the correct reading' });
+	const total = await text.locator('[data-entry]').count();
+	expect(total).toBeGreaterThan(1);
+	/** Whether the pane has stopped scrolling: its smooth scroll is over. */
+	let last = -1;
+	const still = async () => {
+		const top = await pane.evaluate((el) => el.scrollTop);
+		const done = top === last;
+		last = top;
+		return done;
+	};
+	// Round the differences and back to the first, the pane scrolling down and up again.
+	for (let i = 0; i <= total; i++) {
+		await page.getByRole('button', { name: 'Next difference' }).click();
+		await expect(readings).toBeVisible();
+		last = -1;
+		await expect.poll(still, { intervals: [150] }).toBe(true);
+		const [area, box] = [await pane.boundingBox(), await readings.boundingBox()];
+		if (!area || !box) throw new Error('not drawn');
+		expect(box.y, `step ${i + 1}: top`).toBeGreaterThanOrEqual(area.y - 1);
+		expect(box.y + box.height, `step ${i + 1}: bottom`).toBeLessThanOrEqual(
+			area.y + area.height + 1
+		);
+	}
+});
+
 test('Add an existing job fits a small window, its buttons in reach', async ({ page }) => {
 	await page.setViewportSize({ width: 560, height: 700 });
 	await open(page, 'project');

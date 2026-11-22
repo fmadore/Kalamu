@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { GAP, anchorLine, readingsTop, tallest, visibleBand } from './readingsPlace.js';
+import { GAP, anchorLine, anyShown, readingsTop, tallest, visibleBand } from './readingsPlace.js';
 
 // A text pane at 1536 × 864: from 120 to 800 in the window.
 const pane = { top: 120, bottom: 800 };
@@ -43,5 +43,22 @@ describe('readings placement', () => {
 		expect(anchorLine(lines, { top: 120, bottom: 864 })).toEqual(lines[1]);
 		expect(anchorLine(lines, { top: 0, bottom: 100 })).toEqual(lines[2]);
 		expect(anchorLine([], pane)).toBeNull();
+	});
+
+	it('follows the words while one of their lines shows in the pane', () => {
+		// A 1280 × 720 window: the pane from 227 to 560, under its two-line bar.
+		const shown = { top: 227, bottom: 560 };
+		expect(anyShown([{ top: 540, bottom: 570 }], shown)).toBe(true);
+		expect(
+			anyShown(
+				[
+					{ top: 120, bottom: 150 },
+					{ top: 150, bottom: 180 }
+				],
+				shown
+			)
+		).toBe(false);
+		expect(anyShown([{ top: 600, bottom: 630 }], shown)).toBe(false);
+		expect(anyShown([], shown)).toBe(false);
 	});
 });
