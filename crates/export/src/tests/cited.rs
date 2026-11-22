@@ -282,6 +282,27 @@ fn the_files_hold_only_what_the_transcript_says_and_the_researcher_kept() {
     assert_eq!(json["provenance"]["cited"][0]["left_out"], 1);
 }
 
+/// Without a guide, the model lists no guide theme left out: the memo prints no heading with
+/// nothing under it (the 1.10.0-rc2 test pass found an empty "Guide themes not found"), and
+/// keeps the other fields in their order.
+#[test]
+fn a_field_with_nothing_to_say_has_no_heading_in_the_memo() {
+    let mut doc = cited_interview();
+    for answer in &mut doc.parts[0].fields {
+        if answer.key == "guide_themes_not_found" {
+            answer.value = FieldValue::List(Vec::new());
+        }
+    }
+    let memo = run(ExportFormat::Markdown, &doc);
+    check("interview-analysis-no-guide.md", &memo);
+    let memo = String::from_utf8(memo).unwrap_or_default();
+    assert!(!memo.contains("Guide themes not found"), "{memo}");
+    assert!(
+        memo.contains("left out.*\n\n## Keywords\n\nport de pêche"),
+        "{memo}"
+    );
+}
+
 #[test]
 fn an_analysis_without_cited_fields_writes_one_csv_and_no_snapshot() {
     let doc = analysis();
