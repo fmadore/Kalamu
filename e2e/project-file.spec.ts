@@ -54,6 +54,10 @@ test('a project is saved to one file, its original files only when chosen', asyn
 test('a project file opens as a new project, said in a sentence', async ({ page }) => {
 	await open(page);
 	const main = page.getByRole('main');
+	const finished = page
+		.getByRole('navigation', { name: 'Jobs' })
+		.getByRole('heading', { level: 2, name: /^Finished \d+$/ });
+	const before = Number((await finished.textContent())?.match(/\d+/)?.[0]);
 	await main.getByRole('button', { name: 'Open a project file…' }).click();
 	const said = main.getByRole('status').filter({ hasText: 'is open' });
 	await expect(said).toContainText('“Mission letters” is open');
@@ -61,6 +65,8 @@ test('a project file opens as a new project, said in a sentence', async ({ page 
 	// Saved without its originals: what works, and how the pages come back.
 	await expect(said).toContainText('The original files were not saved in it');
 	await expect(main.getByRole('button', { name: /^Mission letters/ }).first()).toBeVisible();
+	// The jobs it brought are listed at once with the others, not at the next refresh.
+	await expect(finished).toHaveAccessibleName(`Finished ${before + 1}`);
 	await said.getByRole('button', { name: 'Mission letters' }).click();
 	await expect(main.getByRole('heading', { level: 1, name: 'Mission letters' })).toBeVisible();
 });

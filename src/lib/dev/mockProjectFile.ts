@@ -1,7 +1,9 @@
 // The pretend back end's project files (#213): what saving the sample project would write, the
 // save itself, and a file opened as a new project. The native dialogs answer with a path when
 // they ask for a Kalamu project file. `?damaged-file`: the file opened is refused as damaged.
+// The file opened brings a job with it, listed with the others from then on.
 
+import type { JobSummary } from '../bindings/JobSummary.js';
 import type { Project } from '../bindings/Project.js';
 import type { ProjectFileOpened } from '../bindings/ProjectFileOpened.js';
 import type { ProjectFilePlan } from '../bindings/ProjectFilePlan.js';
@@ -15,6 +17,8 @@ declare global {
 }
 
 const SAVED_AT = 'C:\\Users\\me\\Documents\\Letters from Kayes.kalamu';
+/** The jobs the project files opened brought, copied into the job database. */
+export const openedJobs: JobSummary[] = [];
 const OPENED_FROM = 'C:\\Users\\me\\Downloads\\Mission letters.kalamu';
 
 /** Answers a project file command, or `undefined` for any other. */
@@ -47,11 +51,29 @@ export function projectFileCommand(cmd: string, a: Record<string, unknown>): unk
 				name: 'Mission letters',
 				description: 'Letters of the mission, 1912–1960'
 			}) as Project;
+			const now = Date.now();
+			openedJobs.push({
+				id: `00000000-0000-0000-0000-00000000f${String(openedJobs.length).padStart(3, '0')}`,
+				name: 'Mission letters, text',
+				task: 'text_extraction',
+				status: 'completed',
+				created_at: now - 86_400_000,
+				updated_at: now,
+				source_count: 1,
+				setup_count: 1,
+				pieces_total: 2,
+				pieces_finished: 2,
+				pieces_failed: 0,
+				pieces_truncated: 0,
+				cost_usd: 0.004,
+				models: ['gemini-3.8-flash'],
+				workflow: null
+			});
 			return {
 				project_id: project.id,
 				name: project.name,
 				documents: 0,
-				jobs: 0,
+				jobs: 1,
 				originals: 0,
 				with_originals: false,
 				saved_at: Date.now()

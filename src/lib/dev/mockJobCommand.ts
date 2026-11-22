@@ -35,6 +35,7 @@ import {
 import { contentsJob, contentsPieces, correctionJob, correctionPieces } from './mockContents.js';
 import { editRows, recordsJob, recordsPieces } from './mockRecords.js';
 import { interviewPieces, interviewSummaries } from './mockInterview.js';
+import { openedJobs } from './mockProjectFile.js';
 
 /** Jobs deleted while looking at the mock, left out of the list from then on. */
 const deletedJobs = new Set<string>();
@@ -186,7 +187,8 @@ export function jobCommand(cmd: string, a: Record<string, unknown>): unknown {
 				},
 				...interviewSummaries(summaries[0]),
 				...archiveJobs.map(({ files: _, ...summary }) => summary),
-				...scanAnalysisListed(summaries[0])
+				...scanAnalysisListed(summaries[0]),
+				...openedJobs
 			].filter((j) => !deletedJobs.has(j.id));
 		case 'job_sources':
 			return [
