@@ -70,7 +70,10 @@ La **Recherche** trouve tous les passages des documents du projet qui contiennen
 le texte tel que vous l’avez corrigé. Elle ne tient pas compte des majuscules, des accents ni
 des voyelles brèves de l’arabe. Vous pouvez demander tous les mots n’importe où sur une page, ou
 à quelques mots les uns des autres, et limiter la recherche à une collection, une étiquette, une
-tâche ou un état de relecture. Chaque résultat ouvre sa source à l’endroit voulu.
+tâche ou un état de relecture. Chaque résultat ouvre sa source à l’endroit voulu. Quand la case
+**Chercher aussi ce que les modèles en ont écrit : analyses et tables des matières** est
+cochée, les résultats trouvés dans ces réponses sont marqués **Écrit par un modèle**, et un nom
+que vous avez ajouté vous-même à une liste d’une analyse **Écrit par vous**.
 
 La recherche se fait sur votre ordinateur ; rien n’est envoyé. À chaque recherche, Kalamu
 indique ce qui a été parcouru et ce qui ne l’a pas été (documents pas encore lus, pages en

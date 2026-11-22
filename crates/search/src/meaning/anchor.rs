@@ -103,5 +103,6 @@ pub(crate) fn hit(passage: &Passage, start: usize, end: usize) -> Hit {
         at_ms,
         reviewed: passage.reviewed,
         corrected: passage.corrected,
+        by_hand: false,
     }
 }

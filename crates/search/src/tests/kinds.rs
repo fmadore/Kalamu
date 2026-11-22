@@ -131,12 +131,34 @@ fn a_name_added_by_hand_is_found_once_its_passage_is_made_again() {
         .unwrap();
     let view = f.find(&generated);
     assert_eq!(view.matches, 1);
-    assert!(view.documents[0].results[0].hits[0].corrected);
-    assert_eq!(
-        f.find(&kankan).matches,
-        1,
-        "the model's name is still listed"
+    let siguiri = &view.documents[0].results[0].hits[0];
+    assert!(siguiri.corrected);
+    assert!(
+        siguiri.by_hand,
+        "the researcher's name is said to be theirs"
     );
+    let view = f.find(&kankan);
+    assert_eq!(view.matches, 1, "the model's name is still listed");
+    assert!(
+        !view.documents[0].results[0].hits[0].by_hand,
+        "and still said to be the model's"
+    );
+}
+
+#[test]
+fn the_names_written_by_hand_are_marked_where_the_list_shows_them() {
+    let items: Vec<String> = ["Kankan", "Siguiri", "Kouroussa Nord", "Kané"]
+        .map(String::from)
+        .to_vec();
+    let own = ["Siguiri".to_string(), "Kané".to_string()];
+    let text = FieldValue::List(items.clone()).joined();
+    let marks = crate::passages::items_written(&items, &own);
+    let chars: Vec<char> = text.chars().collect();
+    let shown: Vec<String> = marks
+        .iter()
+        .map(|&(a, b)| chars[a..b].iter().collect())
+        .collect();
+    assert_eq!(shown, own);
 }
 
 #[test]

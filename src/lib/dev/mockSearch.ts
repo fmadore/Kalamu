@@ -54,6 +54,8 @@ interface Part {
 	lines: [number, string][];
 	field: FieldRef | null;
 	reason: boolean;
+	/** The names the researcher listed by hand, `[start, end)` in the text, as `by_hand`. */
+	byHand: [number, number][];
 }
 
 interface Passage {
@@ -65,14 +67,29 @@ interface Passage {
 	parts: Part[];
 }
 
-/** An analysis's answers as parts, each field's answer and its reason, as `answer_parts`. */
-function answerParts(answers: FieldAnswer[], labels: Map<string, string>): Part[] {
+/** An analysis's answers as parts, each field's answer and its reason, as `answer_parts`; the
+ * items of a list the model's own answers did not hold marked as the researcher's. */
+function answerParts(
+	answers: FieldAnswer[],
+	labels: Map<string, string>,
+	model: FieldAnswer[]
+): Part[] {
 	return answers.flatMap((a) => {
 		const field = { key: a.key, label: labels.get(a.key) ?? a.key };
 		const value = Array.isArray(a.value) ? a.value.join('; ') : String(a.value ?? '');
+		const own = model.find((x) => x.key === a.key)?.value;
+		const byHand: [number, number][] = [];
+		if (Array.isArray(a.value)) {
+			let at = 0;
+			for (const item of a.value as string[]) {
+				if (!(Array.isArray(own) && (own as string[]).includes(item)))
+					byHand.push([at, at + item.length]);
+				at += item.length + 2;
+			}
+		}
 		return [
-			...(value.trim() ? [{ text: value, lines: [], field, reason: false }] : []),
-			...(a.reason?.trim() ? [{ text: a.reason, lines: [], field, reason: true }] : [])
+			...(value.trim() ? [{ text: value, lines: [], field, reason: false, byHand }] : []),
+			...(a.reason?.trim() ? [{ text: a.reason, lines: [], field, reason: true, byHand: [] }] : [])
 		];
 	});
 }
@@ -97,10 +114,15 @@ function passage(of: Job, v: PieceView): Passage {
 						text,
 						lines: v.segments.map((s) => [Number(s.start_ms), s.text]),
 						field: null,
-						reason: false
+						reason: false,
+						byHand: []
 					}
 				]
-			: answerParts((v.corrected_fields ?? v.ai_fields) as FieldAnswer[], labels)
+			: answerParts(
+					(v.corrected_fields ?? v.ai_fields) as FieldAnswer[],
+					labels,
+					v.corrected_fields ? (v.ai_fields as FieldAnswer[]) : []
+				)
 	};
 }
 
@@ -211,7 +233,8 @@ function passageHits(at: Passage, query: ParsedQuery, mode: MatchMode, near: num
 					})),
 					at_ms: first.atMs,
 					reviewed: at.reviewed,
-					corrected: at.corrected
+					corrected: at.corrected,
+					by_hand: part.byHand.some(([a, b]) => a <= span.start && span.end <= b)
 				}
 			});
 		};

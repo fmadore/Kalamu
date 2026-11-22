@@ -60,7 +60,10 @@ text, review status or analysis answers.
 **Search** finds every passage of the project's documents that holds your words, in the text as
 you corrected it. Capitals, accents and Arabic vowel marks are ignored. You can ask for all the
 words anywhere on a page, or within a few words of each other, and narrow the search by
-collection, tag, task or review state. Each match opens its source where it stands.
+collection, tag, task or review state. Each match opens its source where it stands. With
+**Also search what models wrote about them: analyses and tables of contents** ticked, matches in
+those answers are marked **Written by a model**, and a name you added to an analysis's list
+yourself **Written by you**.
 
 The search runs on your computer; nothing is sent. With every search, Kalamu says what was
 searched and what was not (documents not read yet, pages that failed), so that finding nothing

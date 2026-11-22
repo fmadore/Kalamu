@@ -637,6 +637,8 @@ export const en = {
 			'Finding nothing does not mean the documents never mention it: only the text read and kept is searched, and a model may have misread a name.',
 		preferred: 'Preferred',
 		generatedResult: 'Written by a model',
+		writtenByYou: 'Written by you',
+		writtenByYouHint: 'You added this name to the answers, or wrote it in your own form.',
 		stale: 'Out of date',
 		staleHint: 'The text this analysis read has been corrected since.',
 		reason: 'reason',

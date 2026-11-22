@@ -56,6 +56,10 @@ pub struct PassagePart {
     /// milliseconds, while the text is the model's own; empty once corrected.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub lines: Vec<(u64, String)>,
+    /// The stretches of `text` the researcher wrote rather than the model: the items of a list
+    /// answer they added by hand or renamed, each `[start, end)` in characters.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub by_hand: Vec<(usize, usize)>,
 }
 
 /// How big the index is, to show and to measure.

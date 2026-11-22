@@ -30,7 +30,8 @@
 		keepSearch,
 		lastSearch,
 		reviewFind,
-		searchableQuery
+		searchableQuery,
+		writtenByModel
 	} from '#lib/projectSearch.js';
 	import { go, toast } from '#lib/state.svelte.js';
 	import { keepFor, recallFor } from '#lib/stored.js';
@@ -330,7 +331,7 @@
 							<p class="result-name">
 								<span>{resultName(r)}</span>
 								{#if r.preferred}<span class="chip ok">{m.search.preferred}</span>{/if}
-								{#if r.generated}<span class="chip">{m.search.generatedResult}</span>{/if}
+								{#if writtenByModel(r)}<span class="chip">{m.search.generatedResult}</span>{/if}
 								{#if r.stale}
 									<span class="chip warn" title={m.search.staleHint}>{m.search.stale}</span>
 								{/if}
@@ -352,7 +353,11 @@
 														>{:else}{w.text}{/if}{/each}{h.after}
 											</span>
 											<span class="state">
-												{#if h.corrected}<span class="chip hand">{m.review.corrected}</span>{/if}
+												{#if h.by_hand}<span class="chip hand" title={m.search.writtenByYouHint}
+														>{m.search.writtenByYou}</span
+													>
+												{:else if h.corrected}<span class="chip hand">{m.review.corrected}</span
+													>{/if}
 												{#if h.reviewed}<span class="chip ok">{m.review.reviewed}</span>{/if}
 											</span>
 										</button>

@@ -12,7 +12,8 @@ import {
 	lastSearch,
 	reviewFind,
 	parseQuery,
-	searchableQuery
+	searchableQuery,
+	writtenByModel
 } from './projectSearch.js';
 import rules from './searchRules.json';
 
@@ -33,6 +34,7 @@ function hit(over: Partial<Hit> = {}): Hit {
 		at_ms: null,
 		reviewed: false,
 		corrected: false,
+		by_hand: false,
 		...over
 	};
 }
@@ -51,6 +53,13 @@ const result: ResultHits = {
 };
 
 describe('project search', () => {
+	it('says a result is written by a model unless every match in it is the researcher’s', () => {
+		const analysis = { ...result, task: 'analysis' as const, generated: true };
+		expect(writtenByModel({ ...analysis, hits: [hit(), hit({ by_hand: true })] })).toBe(true);
+		expect(writtenByModel({ ...analysis, hits: [hit({ by_hand: true })] })).toBe(false);
+		expect(writtenByModel({ ...result, hits: [hit()] })).toBe(false);
+	});
+
 	it('places a match on its page, or at the time of its line in a recording', () => {
 		expect(hitPlace(hit(), en)).toBe('Page 3');
 		const timed = hit({

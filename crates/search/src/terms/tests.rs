@@ -92,6 +92,7 @@ fn passage(texts: &[&str]) -> Passage {
                 reason: false,
                 text: (*t).into(),
                 lines: Vec::new(),
+                by_hand: Vec::new(),
             })
             .collect(),
     }

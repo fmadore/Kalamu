@@ -332,6 +332,10 @@ pub(crate) fn hits(
                 at_ms: first.at_ms,
                 reviewed: passage.reviewed,
                 corrected: passage.corrected,
+                by_hand: part
+                    .by_hand
+                    .iter()
+                    .any(|&(start, end)| start <= span.0 && span.1 <= end),
             },
             order: (p, span.0),
             text: text.clone(),

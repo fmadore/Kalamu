@@ -565,7 +565,7 @@ fn an_index_prepared_before_words_of_two_letters_is_made_again() {
         .find(&[vec!["bamako".to_string()]])
         .unwrap()
         .remove(0);
-    old.stamp = old.stamp.replacen("3:", "2:", 1);
+    old.stamp = old.stamp.replacen("4:", "2:", 1);
     let text = folded(&old.parts[0].text);
     f.index.put_passages(&[(old, text)]).unwrap();
     assert!(

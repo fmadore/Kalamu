@@ -10,6 +10,7 @@ use std::collections::{HashMap, HashSet};
 use kalamu_core::analysis::answer_text;
 use kalamu_core::contents::TITLE;
 use kalamu_core::fingerprint::sha256_hex;
+use kalamu_core::list_items::by_hand;
 use kalamu_core::speakers::{rename_segments, text_as_left};
 use kalamu_core::{
     Correction, FieldAnswer, FieldValue, Job, Passage, PassageKey, PassagePart, PieceRef,
@@ -21,8 +22,9 @@ use crate::{Search, SearchError};
 
 /// Raised whenever what a passage holds, or how it is folded, changes: every passage is then
 /// made again at the next search. 3: every mark that is not a letter, a digit or a space set
-/// between spaces, for words of two letters.
-const VERSION: u32 = 3;
+/// between spaces, for words of two letters. 4: the names a researcher listed by hand marked
+/// in their answer, so that a match in one is said to be theirs.
+const VERSION: u32 = 4;
 
 /// How many passages are indexed together, between which a newer search can stop this one and
 /// the review can use the store.
@@ -66,8 +68,14 @@ impl Stored {
 }
 
 /// The answers as parts: each field's answer and reason, and each field of a table of
-/// contents' entries under the entry's title.
-fn answer_parts(answers: &[FieldAnswer], entry: Option<(&str, u32)>, out: &mut Vec<PassagePart>) {
+/// contents' entries under the entry's title. `hand`: the items of each list answer the
+/// researcher wrote ([`by_hand`]), marked in their part.
+fn answer_parts(
+    answers: &[FieldAnswer],
+    entry: Option<(&str, u32)>,
+    hand: &[(String, Vec<String>)],
+    out: &mut Vec<PassagePart>,
+) {
     for answer in answers {
         let part = |text: String, reason: bool| PassagePart {
             field: Some(answer.key.clone()),
@@ -79,18 +87,30 @@ fn answer_parts(answers: &[FieldAnswer], entry: Option<(&str, u32)>, out: &mut V
             reason,
             text,
             lines: Vec::new(),
+            by_hand: Vec::new(),
         };
         match &answer.value {
             FieldValue::Entries(entries) => {
                 for (i, e) in entries.iter().enumerate() {
                     let title = answer_text(e, TITLE);
-                    answer_parts(e, Some((title.as_str(), i as u32 + 1)), out);
+                    answer_parts(e, Some((title.as_str(), i as u32 + 1)), &[], out);
                 }
             }
             value => {
                 let text = value.joined();
                 if !text.trim().is_empty() {
-                    out.push(part(text, false));
+                    let own = hand
+                        .iter()
+                        .find(|(key, _)| *key == answer.key)
+                        .map_or(&[][..], |(_, items)| items.as_slice());
+                    let by_hand = match value {
+                        FieldValue::List(items) => items_written(items, own),
+                        _ => Vec::new(),
+                    };
+                    out.push(PassagePart {
+                        by_hand,
+                        ..part(text, false)
+                    });
                 }
             }
         }
@@ -98,6 +118,22 @@ fn answer_parts(answers: &[FieldAnswer], entry: Option<(&str, u32)>, out: &mut V
             out.push(part(reason.clone(), true));
         }
     }
+}
+
+/// Where the items `own` stand in a list answer's text, as [`FieldValue::joined`] writes it,
+/// each `[start, end)` in characters.
+pub(crate) fn items_written(items: &[String], own: &[String]) -> Vec<(usize, usize)> {
+    const BETWEEN_ITEMS: usize = "; ".len();
+    let mut at = 0;
+    let mut out = Vec::new();
+    for item in items {
+        let end = at + item.chars().count();
+        if own.contains(item) {
+            out.push((at, end));
+        }
+        at = end + BETWEEN_ITEMS;
+    }
+    out
 }
 
 /// A passage's text as the index holds it: its parts folded, kept apart, and spaced
@@ -152,13 +188,14 @@ impl Search {
                 reason: false,
                 text: text_as_left(corrected, &result.output.text, names),
                 lines,
+                by_hand: Vec::new(),
             }]
         } else {
-            let answers = correction
-                .and_then(|c| c.fields.clone())
-                .unwrap_or(result.output.fields);
+            let corrected = correction.and_then(|c| c.fields.as_deref());
+            let hand = corrected.map_or_else(Vec::new, |c| by_hand(&result.output.fields, c));
+            let answers = corrected.map_or(result.output.fields, <[FieldAnswer]>::to_vec);
             let mut parts = Vec::new();
-            answer_parts(&answers, None, &mut parts);
+            answer_parts(&answers, None, &hand, &mut parts);
             parts
         };
         Ok(Some(Passage {

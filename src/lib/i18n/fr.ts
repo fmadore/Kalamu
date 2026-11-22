@@ -1070,6 +1070,9 @@ export const fr: Messages = {
 			'Ne rien trouver ne signifie pas que les documents n’en parlent jamais : seul le texte lu et conservé est cherché, et un modèle peut avoir mal lu un nom.',
 		preferred: 'Retenu',
 		generatedResult: 'Écrit par un modèle',
+		writtenByYou: 'Écrit par vous',
+		writtenByYouHint:
+			'Vous avez ajouté ce nom aux réponses, ou l’avez écrit sous votre propre forme.',
 		stale: 'Périmée',
 		staleHint: 'Le texte lu par cette analyse a été corrigé depuis.',
 		reason: 'justification',

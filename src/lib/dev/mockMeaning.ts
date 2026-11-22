@@ -280,7 +280,8 @@ function search(request: MeaningRequest): MeaningView {
 							marks: [],
 							at_ms: start,
 							reviewed: p.view.reviewed,
-							corrected: p.view.corrected_text !== null
+							corrected: p.view.corrected_text !== null,
+							by_hand: false
 						}
 					};
 				})
