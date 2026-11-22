@@ -82,9 +82,10 @@ once is read in parts, then brought together; Kalamu says so beside the cost.
 The answer gives a summary, themes, keywords and passages worth quoting, each with who speaks
 and when: [Check an analysis](review.md#check-an-analysis) says how to check it. Beside the
 transcript, Kalamu writes a Markdown memo (each quotation with its speaker and time), a JSON
-file, and two tables: the answer's `.analysis.csv` and `.analysis.quotations.csv`, one row per
-quotation, with a column saying whether you added it. The formats you chose in Settings are
-written as well.
+file, and two tables, each as a spreadsheet for Excel (`.xlsx`) and as a CSV: the answer's
+`.analysis.xlsx` and `.analysis.csv`, and `.analysis.quotations.xlsx` and
+`.analysis.quotations.csv`, one row per quotation, with a column saying whether you added it.
+The formats you chose in Settings are written as well.
 
 ### A register or a directory as a table
 

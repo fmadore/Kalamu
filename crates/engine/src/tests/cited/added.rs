@@ -127,3 +127,40 @@ async fn a_passage_selected_in_the_transcript_is_added_as_the_researchers_quotat
     ));
     assert!(before.is_empty());
 }
+
+/// An interview's analysis written in the formats its dialog sends writes both tables as Excel
+/// workbooks beside their CSV files, as every table is (the 1.10.0-rc2 test pass found no
+/// `.xlsx`).
+#[tokio::test]
+async fn an_interview_analysis_writes_each_table_as_a_workbook_beside_its_csv() {
+    let f = interviews();
+    let frozen = f.frozen().await;
+    f.model.script(&[answer()]);
+    let mut job = f
+        .analysis(vec![frozen], None)
+        .unwrap_or_else(|e| panic!("{e}"));
+    job.output.formats = vec![
+        ExportFormat::Markdown,
+        ExportFormat::Json,
+        ExportFormat::Xlsx,
+        ExportFormat::Csv,
+    ];
+    assert_eq!(f.run(job.id).await, JobStatus::Completed);
+    let written = f
+        .engine
+        .write_outputs(&job, job.setups[0].id, job.sources[0].id)
+        .unwrap_or_default();
+    for suffix in [
+        ".analysis.md",
+        ".analysis.json",
+        ".analysis.xlsx",
+        ".analysis.csv",
+        ".analysis.quotations.xlsx",
+        ".analysis.quotations.csv",
+    ] {
+        assert!(
+            written.iter().any(|p| p.ends_with(suffix)),
+            "{suffix} in {written:?}"
+        );
+    }
+}

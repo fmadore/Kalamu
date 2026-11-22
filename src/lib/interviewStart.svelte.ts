@@ -40,9 +40,10 @@ export const INTERVIEW_PRESET = 'analysis.interview';
 
 /** What an interview's analysis writes beside the transcript, whatever the usual formats in
  * Settings: a memo to read (Markdown, each quotation with its speaker and time), the JSON file,
- * and a table with one row per quotation (`.analysis.quotations.csv`, beside the answer's own
- * `.csv`). The dialog offers no choice of formats, so these are what it promises. */
-export const INTERVIEW_FORMATS: ExportFormat[] = ['markdown', 'json', 'csv'];
+ * and a table with one row per quotation (`.analysis.quotations.xlsx` and `.csv`, beside the
+ * answer's own `.xlsx` and `.csv`): every table Kalamu writes as CSV is also written as an Excel
+ * workbook. The dialog offers no choice of formats, so these are what it promises. */
+export const INTERVIEW_FORMATS: ExportFormat[] = ['markdown', 'json', 'xlsx', 'csv'];
 
 /** The interview's formats the task can write, then the researcher's usual ones (Settings) it
  * can write too; its first format should none be. */
