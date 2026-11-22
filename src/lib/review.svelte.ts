@@ -28,6 +28,13 @@ export function shownSetup(setup: Setup): Setup {
 	};
 }
 
+/** The set-ups in the order a review shows them: `lead` first when it is one of them, the
+ * others in the job's order. */
+export function leading<T extends { id: string }>(setups: T[], lead: string | undefined): T[] {
+	const first = setups.find((s) => s.id === lead);
+	return first ? [first, ...setups.filter((s) => s !== first)] : setups;
+}
+
 /** One source of a job under review. */
 export class Review {
 	readonly jobId: string;
@@ -41,18 +48,27 @@ export class Review {
 	/** The page of a scan on the lightbox: null while it loads. */
 	preview = $state<PagePreview | null>(null);
 	error = $state<string | null>(null);
+	readonly #lead: string | undefined;
 	readonly source = $derived(this.job?.sources.find((s) => s.id === this.sourceId));
-	/** The set-ups, a default prompt's fields shown in the interface language (`localiseFields`). */
-	readonly setups = $derived((this.job?.setups ?? []).map(shownSetup));
+	/** The set-ups, a default prompt's fields shown in the interface language (`localiseFields`),
+	 * the one the review was opened for first: it is the one shown, corrected and marked. */
+	readonly setups = $derived.by(() => leading(this.job?.setups ?? [], this.#lead).map(shownSetup));
 	/** A scan or images, shown page by page. */
 	readonly paged = $derived(this.source?.kind === 'pdf' || this.source?.kind === 'image');
 	readonly #scored: boolean;
 	#page = -1;
 
-	constructor(jobId: string, sourceId: string, { scored = false } = {}) {
+	/** `lead`: the set-up to show first, an item's from the list of what to check; the job's
+	 * first otherwise. */
+	constructor(
+		jobId: string,
+		sourceId: string,
+		{ scored = false, lead }: { scored?: boolean; lead?: string } = {}
+	) {
 		this.jobId = jobId;
 		this.sourceId = sourceId;
 		this.#scored = scored;
+		this.#lead = lead;
 	}
 
 	async load() {

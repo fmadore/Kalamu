@@ -77,6 +77,9 @@ export type View =
 			sourceId: string;
 			/** The piece to open on, from 0. */
 			index?: number;
+			/** The set-up to show, an item's from the list of what to check: shown first, as the
+			 * text read or the answers corrected, the others compared with it. */
+			setupId?: string;
 			find?: ReviewFind;
 			/** For a recording, the moment to play from, in milliseconds on its clock: where a
 			 * quotation of an interview analysis was said. */

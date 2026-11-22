@@ -134,7 +134,9 @@ réunir ces graphies en une seule entrée, sous le libellé de votre choix.
 **À vérifier** rassemble en une seule liste, pour tout le projet, les pages et les réponses qui
 ont besoin de vous : celles qui ont échoué ou ont été tronquées, celles que deux modèles ont lues
 différemment, les analyses faites sur un texte que vous avez corrigé depuis, et ce qui n’est pas
-encore relu. Chaque ligne ouvre sa relecture à la bonne page. Aucun modèle n’est sollicité pour
+encore relu. Chaque ligne ouvre sa relecture à la bonne page, sur la lecture du modèle qu’elle
+nomme : dans une comparaison, c’est elle qui s’affiche en premier, celle que vous corrigez et
+marquez comme relue, les autres comparées avec elle. Aucun modèle n’est sollicité pour
 construire cette liste.
 
 Pour un gros projet qu’on ne peut pas relire en entier, cliquez sur **Tirer au hasard** pour

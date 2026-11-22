@@ -685,6 +685,35 @@ test('what to check draws the same sample again from a seed typed by hand', asyn
 	await expect(seed).toHaveValue('');
 });
 
+test('an item of what to check opens on its own set-up, not the job’s first', async ({ page }) => {
+	await open(page, 'queue');
+	const main = page.getByRole('main');
+	const witness = main.locator('.pane.text .pane-bar .witness');
+	// Page 1 of the bulletin is listed for its second set-up's reading.
+	await main
+		.getByRole('button', { name: 'Open Bulletin, May 1957, Page 1, in the review' })
+		.click();
+	await expect(main.getByRole('combobox', { name: 'Review' }).locator('option:checked')).toHaveText(
+		/^Page 1(,|$)/
+	);
+	await expect(witness).toContainText('claude-opus-5-5');
+	await expect(main.getByRole('status').filter({ hasText: /of \d+ to check/ })).toContainText(
+		'claude-opus-5-5'
+	);
+
+	// The analysis is listed once per set-up: each opens on its own answers, and stepping from
+	// one to the other in the review changes the answers shown.
+	await main.getByRole('button', { name: 'Back to the list' }).click();
+	const whole = main.getByRole('button', {
+		name: 'Open Bulletin, May 1957, Whole document, in the review'
+	});
+	await expect(whole).toHaveCount(2);
+	await whole.nth(1).click();
+	await expect(witness).toContainText('claude-opus-5-5');
+	await main.getByRole('button', { name: 'Previous to check' }).click();
+	await expect(witness).toContainText('gemini-3.8-flash');
+});
+
 test('a result set aside from what to check stays aside on coming back, until brought back', async ({
 	page
 }) => {

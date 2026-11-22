@@ -25,6 +25,7 @@
 		grouped,
 		itemKey,
 		keyOf,
+		reviewOf,
 		sampleItems,
 		shownItems,
 		type QueueFilter
@@ -164,12 +165,7 @@
 			items: trail,
 			at: trail.findIndex((i) => itemKey(i) === itemKey(item))
 		};
-		go({
-			name: 'review',
-			jobId: item.job_id,
-			sourceId: item.source_id,
-			index: item.index ?? undefined
-		});
+		go(reviewOf(item));
 	}
 
 	$effect(() => {

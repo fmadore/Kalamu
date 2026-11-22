@@ -50,6 +50,7 @@
 		sourceId,
 		find: opening,
 		start,
+		lead: leadSetup,
 		at
 	}: {
 		jobId: string;
@@ -58,12 +59,14 @@
 		find?: ReviewFind;
 		/** The piece to open on, from 0: the one chosen in the list of what to check. */
 		start?: number;
+		/** The set-up to show first: an item's from the list of what to check. */
+		lead?: string;
 		/** A moment of the recording to play from, on its clock, once its pieces are read. */
 		at?: number;
 	} = $props();
 	const m = messages();
 	// svelte-ignore state_referenced_locally
-	const review = new Review(jobId, sourceId, { scored: true });
+	const review = new Review(jobId, sourceId, { scored: true, lead: leadSetup });
 
 	// svelte-ignore state_referenced_locally
 	let index = $state(start ?? 0);

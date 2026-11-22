@@ -117,7 +117,9 @@ you choose.
 **What to check** is one list, across the whole project, of the pages and answers that need
 you: those that failed or were cut off, those two models read differently, analyses read from
 a text you corrected since, and what is not yet reviewed. Each line opens its review at the
-right page. Nothing is sent to a model to build it.
+right page, on the model's reading it names: in a comparison, that reading is the one shown
+first, which you correct and mark as reviewed, the others compared with it. Nothing is sent to
+a model to build it.
 
 For a large project that cannot be reviewed in full, draw a **random sample** of pages to
 review, of a size you choose. The sample is drawn from a seed that Kalamu shows, so a

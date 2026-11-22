@@ -37,15 +37,19 @@
 <span class="mono">
 	{#if report && setups.length > 1}
 		{m.review.cer}{m.common.colon}
-		{#each report.scores as s, i (s.setup_id)}
-			<span
-				class="score"
-				title={s.wer !== null
-					? `${m.review.wer}${m.common.colon} ${formatPercent(s.wer)}`
-					: undefined}
-				>{siglum(i).toUpperCase()}
-				{#if s.cer !== null}{formatPercent(s.cer)}{:else}<Missing />{/if}</span
-			>
+		<!-- In the review's order, which puts first the set-up it was opened for. -->
+		{#each setups as setup, i (setup.id)}
+			{@const s = report.scores.find((x) => x.setup_id === setup.id)}
+			{#if s}
+				<span
+					class="score"
+					title={s.wer !== null
+						? `${m.review.wer}${m.common.colon} ${formatPercent(s.wer)}`
+						: undefined}
+					>{siglum(i).toUpperCase()}
+					{#if s.cer !== null}{formatPercent(s.cer)}{:else}<Missing />{/if}</span
+				>
+			{/if}
 		{/each}
 		{#if report.scores.some((s) => s.cer !== null)}<span class="hint"
 				>· {m.review.scoredPages(report.scores[0]?.scored_pages ?? 0)}</span

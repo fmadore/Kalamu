@@ -9,6 +9,7 @@ import lists from './coreLists.json';
 import type { Messages } from './i18n/index.js';
 import { fieldLabel, listNames } from './i18n/index.js';
 import { pieceLabel } from './pieces.js';
+import type { View } from './state.svelte.js';
 
 export type Reason = Signal['kind'];
 
@@ -71,6 +72,18 @@ export function keyOf(item: QueueItem): QueueItemKey {
 		setup_id: item.setup_id,
 		source_id: item.source_id,
 		index: item.index
+	};
+}
+
+/** The review an item opens: its own page, and its own set-up shown first, so that the answer
+ * listed is the one read, corrected and marked rather than the job's first set-up's. */
+export function reviewOf(item: QueueItem): Extract<View, { name: 'review' }> {
+	return {
+		name: 'review',
+		jobId: item.job_id,
+		sourceId: item.source_id,
+		index: item.index ?? undefined,
+		setupId: item.setup_id
 	};
 }
 
