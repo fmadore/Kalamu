@@ -4,8 +4,8 @@ A checklist for trying the packaged app on a Windows PC before a version is tagg
 roadmap's *Next* gathers as "to try by hand", what was written since the last pass, and the live
 runs that touch the researcher's own accounts. CI builds and tests everything here, but none of
 it has been opened in an installed copy. The first pass, before 1.8.0, is in
-[Results](#results); this is the second, for 1.10.0 on `v1.10.0-rc1`: what `main` holds after
-1.8.0, 1.9.0 having been published on GitHub without it. The Mac's share is
+[Results](#results); this is the second, for 1.10.0 on `v1.10.0-rc1` and then `v1.10.0-rc2`:
+what `main` holds after 1.8.0, 1.9.0 having been published on GitHub without it. The Mac's share is
 in [mac-test-day.md](mac-test-day.md).
 
 Each step has a letter and a number, which the results name. Tick each box, and write what went
@@ -142,9 +142,9 @@ At the end, summarise what failed, what you could not try, and what passed, in t
   shown. Close and reopen Kalamu: the same five. Type the seed by hand in a second project
   holding the same documents: the same five again.
 - [ ] **B5. What to check, kept aside and set aside**: keep one item aside with a note, and set
-  a result aside from the list. Both are still so after Kalamu is closed and reopened. Correct
-  the page of the item kept aside: it is listed again, marked as kept aside with an earlier
-  answer.
+  a result aside from the list. Both are still so after Kalamu is closed and reopened. Ask the
+  model again for the page of the item kept aside (a correction is not a new answer): it is
+  listed again, marked as kept aside with an earlier answer.
 - [ ] **B6. What to check, the manifest**: *Export the list* into the test folder. The JSON
   and the CSV hold every item in scope, the five drawn among them with the seed, and the note
   of B5.
@@ -164,8 +164,9 @@ At the end, summarise what failed, what you could not try, and what passed, in t
   estimate says it costs nothing, no consent is asked, and the progress shows. Pause it part
   way, close and reopen Kalamu, and go on: it goes on where it stopped. Ask in your own words
   for something a page speaks of without using its words, and once in French: passages are
-  listed with their documents, and each opens where it stands. *Words* is still what Search
-  opens on, and still works. Note how long preparing took.
+  listed with their documents, and each opens where it stands. Search opens on *Words* in a
+  project where *Meaning* was never chosen (it keeps the last choice per project), and *Words*
+  still works. Note how long preparing took.
 - [ ] **B11. The map**: the project's *Map* shows one point per document, grouped by collection
   or by tag; choosing a point lists its nearest documents beside it, and the list is reached
   and read from the keyboard. Before the text is prepared, the screen says what to do first.
@@ -182,10 +183,11 @@ At the end, summarise what failed, what you could not try, and what passed, in t
   the searchable PDF: your region and the block you moved are in them, where you put them, and
   the PDF's text is found there by searching it.
 - [ ] **B15. A text too long for the model**: with Gemma 4 E2B downloaded, New job → Analyse
-  texts with the long `.txt`, the prompt *Interview: themes and quotations* and Gemma 4 E2B.
-  Start is refused with a sentence that says the text is too long for the model chosen, and no
-  job is made; nothing ran. With a cloud model in its place the job starts (stop it at once,
-  or leave this half for Part C).
+  texts with the long `.txt`, the prompt *Summary and keywords* and Gemma 4 E2B. Where the cost
+  is, a sentence says the text is too long for the model chosen, Start is off, and no job is
+  made; nothing ran. With *Interview: themes and quotations* the text is read in parts instead
+  (the estimate says so). With a cloud model in its place the job starts (stop it at once, or
+  leave this half for Part C).
 
 ## Part C: with a Gemini or Mistral key (3 hours)
 
@@ -383,6 +385,48 @@ Chrome where you are signed in.
 
 One line per failure, and an issue for each real problem. The first pass's steps are named as
 that pass numbered them, in order within each part; its checklist is in the file's history.
+
+### 22 November 2026, 1.10.0-rc2 on the Snapdragon (Windows 11 ARM64)
+
+The `v1.10.0-rc2` validation build's ARM64 installer, checked against `SHA256SUMS` and
+installed silently through the Windows shell over rc1, driven by Claude with computer use on
+the laptop's screen (made the main display: the external screen cannot be seen from the
+session). The rc1 fixes were tried first, then the rest of the pass, in the maintainer's data
+and in the second data folder of the screenshots. About $0.80 of Gemini, OpenAI, Anthropic and
+Mistral calls in all, $0.34 of it GPT-6.2 Sol runs to provoke an empty answer.
+
+**Passed**: every rc1 fix tried: *Clear unused results* counts first; WebView2's absence
+reported by Kalamu's own message, in the system's language, naming the logs folder; a later
+job's files carry its set-up's label; *Download in Settings* brings the missing Tesseract
+language; Mistral's `#` hidden; the region card away from its region; the Undo toast still
+there at 10 s and taken by Ctrl+Z; *Add an existing job* within its width; the Map's close
+points spread; *Export the whole table*; the workflow's step names in French; an rc1 project
+file opened with each job finished and counted as the card counts them; the interview's
+Markdown memo and quotations table; Escape in the interview dialog closing the list first and
+the draft kept; GPT-6.2 Sol's wholly empty analysis refused with its reason instead of kept
+(it answers that issue at medium thinking). And A1, A10, B1, B4, B5 (in part), B6, B7, B10
+(EmbeddingGemma 2 prepared, paused, resumed after a restart, about 2½ minutes for 376
+passages on the processor), B11, B12, B13, C2 on print, C5, C6, C7, C9 in part, C11, C12, C14
+in part, D1, D3, E3, the readings of GPT-6.2 Sol and Gemini 4 Neon on the 1755 page and a
+newspaper page (F7, F14), and OpenAI's and Anthropic's batches collected within minutes.
+
+| Part | Step | What happened | Fix |
+| --- | --- | --- | --- |
+| B15 | Text too long, offline model | *Summary and keywords* on 47,621 words with Gemma 4 E2B: no warning, Start on; a job made whose piece failed, with Retry and Resume offered | To be written |
+| F2 | Mistral batch | Mistral OCR's batch refused (HTTP 400), its HTML error page shown as the message under each file | To be written |
+| C | Comparison | At 1280 × 720 the readings popover's top runs under the pane's sticky bar | To be written |
+| B, C, F | Estimates | Three models on a newspaper page and the 1755 page $0.27 against $0.12; the interview analysis $0.024 against $0.013; a strip read again with Claude priced as a whole page | To be written |
+| C3 | GPT-6.2 Sol | Its empty answer at low thinking asked again four times the same way (about $0.14), and the error says "Try again" | To be written |
+| — | Interface | *What to check* opened Claude's item on Gemini's entries; a name added by hand labelled as written by a model in search; the move hint over the region; "2 of 3 pieces" for 6 while running; a project file's jobs listed minutes late; no Save in view in the correction editor at 1280 × 720 | To be written |
+| C9, C10, C6 | Exports | The interview analysis writes no `.xlsx`; its memo prints an empty "Guide themes not found" heading; an `.srt` cue of 0.27 s | To be written |
+
+**Not tried**: A2, A3, A5, A7–A9, B3, C3, C4, C8 and E2 again (passed in rc1, unchanged); B2
+(touchpad); B8's saved pipeline; B9; B14's exports; C1's exports; C9's guide and French
+halves; C13; D2; D6 (Narrator); E1 (no such cell in the tables made); the deletion of batch
+files at the providers (F1, F3); F4–F6, F8–F13, F15–F21 (networking, another account, the
+maintainer's own interview and materials); F22 on the Mac. The five screenshots that no longer
+matched were retaken in both languages, at 1280 × 720 logical on the laptop's screen at 150 %
+(1920 × 1080).
 
 ### 21 November 2026, 1.10.0-rc1 on the Snapdragon (Windows 11 ARM64)
 
