@@ -27,6 +27,7 @@ fn the_defaults_keep_their_ids_in_their_order() {
             "contents.archival_file",
             "contents.book",
             "text_correction.general",
+            "text_correction.handwritten",
             "translation.research",
         ]
     );

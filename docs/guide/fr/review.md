@@ -111,7 +111,9 @@ PAGE XML et PDF interrogeable reprennent vos zones.
 
 Quand quelques lignes sont mal lues et que le reste est bon, sélectionnez-les dans le texte et
 faites un clic droit (ou utilisez **Corriger avec un modèle…**, qui apparaît dès qu’il y a une
-sélection). Choisissez un modèle et un prompt de correction. Kalamu vous dit ce qui sera envoyé
+sélection). Choisissez un modèle et un prompt de correction : **Document manuscrit** est
+proposé d’abord pour une page lue avec le prompt des manuscrits, **Document imprimé ou
+journal** sinon. Kalamu vous dit ce qui sera envoyé
 (le passage et un peu du texte qui l’entoure) et ce que cela devrait coûter. La réponse du
 modèle est une proposition, montrée face à votre sélection : acceptez-la, modifiez-la d’abord,
 ou écartez-la. L’accepter l’enregistre comme votre correction, que vous pouvez annuler ; rien ne

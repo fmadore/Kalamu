@@ -59,6 +59,17 @@ export const contentsPresets: Preset[] = [
 		modified: false
 	},
 	{
+		id: 'text_correction.handwritten',
+		task: 'text_correction',
+		name: 'Handwritten document or manuscript',
+		description:
+			'Corrects only the words misread, in any script; the writer’s spelling, abbreviations and the transcription’s marks kept.',
+		instructions: '# Correcting a transcription of handwriting…',
+		user_prompt: 'Correct the machine-read text above, following the instructions given.',
+		builtin: true,
+		modified: false
+	},
+	{
 		id: 'translation.research',
 		task: 'translation',
 		name: 'Translation for research',

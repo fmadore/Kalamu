@@ -100,7 +100,9 @@ should cost first, or that it is free with a model on your computer. The answer 
 
 When a few lines are badly read and the rest is fine, select them in the text and right-click
 (or use **Correct with a model…**, which appears with a selection). Choose a model and a
-correction prompt; Kalamu says what is sent (the passage and a little of the text around it)
+correction prompt: **Handwritten document or manuscript** is offered first for a page read
+with the handwritten prompt, **Printed document or newspaper** otherwise. Kalamu says what is
+sent (the passage and a little of the text around it)
 and what it should cost. The model's answer is a proposal shown against your selection:
 accept it, edit it first, or discard it. Accepting writes it as your correction, which you can
 undo; nothing changes by itself.

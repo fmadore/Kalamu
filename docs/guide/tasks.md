@@ -108,6 +108,8 @@ an item of its own, whose pages are extracted, analysed or exported apart from t
 For text that a machine already read badly: the text layer of a PDF, or a text file from a
 digital library. A model corrects it page by page, keeping the spelling and wording of the
 time, and every change is shown against the original so you can accept it with open eyes.
+Choose **Printed document or newspaper** for printed text, **Handwritten document or
+manuscript** for a transcription of handwriting.
 
 ## Translate a text
 

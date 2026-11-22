@@ -25,6 +25,30 @@ export interface Around {
 	at: number;
 }
 
+/** The correction prompt for any printed or typed text, the one a passage starts from. */
+export const GENERAL_CORRECTION = 'text_correction.general';
+
+/** The correction prompt made for the material a reading prompt was made for, by its id: a
+ * handwritten page's, under the handwritten extraction's id and the ids it replaced (the prompts
+ * crate's `RETIRED`). Every other material is corrected with the general one. */
+const CORRECTION_FOR: Record<string, string> = {
+	'text_extraction.handwritten': 'text_correction.handwritten',
+	'text_extraction.handwriting_french': 'text_correction.handwritten',
+	'text_extraction.manuscript_arabic_script': 'text_correction.handwritten',
+	'text_extraction.handwriting_multilingual': 'text_correction.handwritten'
+};
+
+/** The correction prompt a passage of text read with prompt `readWith` starts from. */
+export function correctionFor(readWith: string | null | undefined): string {
+	return (readWith && CORRECTION_FOR[readWith]) || GENERAL_CORRECTION;
+}
+
+/** The prompt to start from, given the one last used: kept, unless it was the general one (or
+ * none) while the text was read with a prompt made for other material, whose own is offered. */
+export function startPreset(remembered: string | null, fitting: string): string {
+	return remembered && remembered !== GENERAL_CORRECTION ? remembered : fitting;
+}
+
 const isHigh = (c: number) => c >= 0xd800 && c <= 0xdbff;
 const isLow = (c: number) => c >= 0xdc00 && c <= 0xdfff;
 

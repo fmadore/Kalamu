@@ -25,14 +25,19 @@ export const source = {
 	even_out_volume: false
 };
 
+/** `?handwritten`: the bulletin's first set-up read it as handwriting, for the prompt a passage's
+ * correction starts from. */
+const handwritten =
+	typeof location !== 'undefined' && new URLSearchParams(location.search).has('handwritten');
+
 export const setupA = {
 	id: '00000000-0000-0000-0000-00000000000a',
 	label: 'gemini-3.8-flash',
 	provider: 'gemini',
 	model: 'gemini-3.8-flash',
 	prompt: {
-		preset_id: 'text_extraction.newspaper',
-		preset_name: 'Newspaper',
+		preset_id: handwritten ? 'text_extraction.handwritten' : 'text_extraction.newspaper',
+		preset_name: handwritten ? 'Handwritten document or manuscript' : 'Newspaper',
 		template: '',
 		text: '',
 		user_prompt: ''

@@ -120,7 +120,8 @@ extraites, analysées ou exportées séparément du reste.
 Pour un texte déjà mal lu par une machine : la couche texte d’un PDF, ou un fichier texte venu
 d’une bibliothèque numérique. Un modèle le corrige page par page en gardant l’orthographe et la
 formulation de l’époque, et chaque modification est montrée face à l’original : vous l’acceptez
-en connaissance de cause.
+en connaissance de cause. Choisissez **Document imprimé ou journal** pour un texte imprimé,
+**Document manuscrit** pour la transcription d’un manuscrit.
 
 ## Traduire un texte
 

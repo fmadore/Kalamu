@@ -248,3 +248,19 @@ test('a right click where nothing is selected leaves the system’s menu alone',
 	expect(prevented).toBe(false);
 	await expect(page.getByRole('menu')).toHaveCount(0);
 });
+
+test('a page read as handwriting starts its passage’s correction on the handwritten prompt', async ({
+	page
+}) => {
+	for (const [extra, prompt] of [
+		['&handwritten', 'Handwritten document or manuscript'],
+		['', 'Printed document']
+	]) {
+		await openReview(page, extra);
+		await select(page, PHRASE);
+		await page.getByRole('button', { name: 'Correct with a model…' }).click();
+		const dialog = page.getByRole('dialog', { name: 'Correct a passage with a model' });
+		const picked = dialog.getByRole('combobox', { name: 'Prompt' }).locator('option:checked');
+		await expect(picked).toHaveText(prompt);
+	}
+});

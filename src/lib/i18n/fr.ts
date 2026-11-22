@@ -470,6 +470,11 @@ export const fr: Messages = {
 			description:
 				'Corrige seulement les erreurs de lecture automatique et remet les colonnes dans l’ordre ; l’orthographe, la formulation et le style de l’époque sont conservés.'
 		},
+		'text_correction.handwritten': {
+			name: 'Document manuscrit',
+			description:
+				'Corrige seulement les mots mal lus, en toute écriture ; l’orthographe et les abréviations de l’auteur, ainsi que les marques de la transcription, sont conservées.'
+		},
 		'dictionary.merges': {
 			name: 'Dictionnaire : regroupements proposés',
 			description:

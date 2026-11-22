@@ -287,7 +287,9 @@ order given there.
   CSV with a column per field.
 - **Default prompts, one per kind of material**: printed or typed documents, newspapers and
   handwriting for text extraction, each for any language and either reading direction;
-  recordings transcribed or translated into English; one correction prompt. Defaults that
+  recordings transcribed or translated into English; two correction prompts, for printed text
+and for a transcription of handwriting (the passage dialog offers the second for a page read
+as handwriting). Defaults that
   repeated another for a language or a variant were retired, and anything that names one runs
   with its replacement ([decision](decisions/2026-11-02-fewer-default-prompts.md)).
 - **Detailed tables of contents** of newspaper and magazine issues, archival files and books:

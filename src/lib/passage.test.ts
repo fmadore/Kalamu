@@ -1,9 +1,13 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import {
+	GENERAL_CORRECTION,
 	PASSAGE_LIMITS,
 	charCount,
+	correctionFor,
 	passageAround,
 	passageProblem,
+	startPreset,
 	withPassage
 } from './passage.js';
 
@@ -52,5 +56,32 @@ describe('a passage chosen for a model to correct', () => {
 		// Counted in characters, as the engine counts them.
 		expect(passageProblem('𝔄'.repeat(PASSAGE_LIMITS.max))).toBeNull();
 		expect(charCount('𝔄é')).toBe(2);
+	});
+});
+
+describe('the prompt a passage’s correction starts from', () => {
+	it('follows the material the set-up read: a handwritten page’s, else the general one', () => {
+		expect(correctionFor('text_extraction.handwritten')).toBe('text_correction.handwritten');
+		expect(correctionFor('text_extraction.newspaper')).toBe(GENERAL_CORRECTION);
+		expect(correctionFor('my.own.preset')).toBe(GENERAL_CORRECTION);
+		expect(correctionFor(null)).toBe(GENERAL_CORRECTION);
+	});
+
+	it('knows the handwriting prompts the handwritten one replaced, as the prompts crate does', () => {
+		const source = readFileSync('crates/prompts/src/defaults.rs', 'utf8');
+		const retired = [
+			...source.matchAll(/"(text_extraction\.[a-z_]+)",\s*"text_extraction\.handwritten"/g)
+		].map((m) => m[1]);
+		expect(retired.length).toBeGreaterThan(0);
+		for (const id of retired) expect(correctionFor(id), id).toBe('text_correction.handwritten');
+		expect(source).toContain('id: "text_correction.handwritten"');
+	});
+
+	it('keeps a prompt last used, unless it was the general one', () => {
+		const fitting = 'text_correction.handwritten';
+		expect(startPreset('my.handwriting', fitting)).toBe('my.handwriting');
+		expect(startPreset(GENERAL_CORRECTION, fitting)).toBe(fitting);
+		expect(startPreset(null, fitting)).toBe(fitting);
+		expect(startPreset(null, GENERAL_CORRECTION)).toBe(GENERAL_CORRECTION);
 	});
 });
