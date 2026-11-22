@@ -1,6 +1,6 @@
 use kalamu_core::{ExportDocument, ExportError, ExportFormat, Exporter, Segment, Task};
 
-use crate::timeline::{cues, timeline};
+use crate::timeline::{cues, name, timeline};
 
 pub struct SrtExporter;
 pub struct VttExporter;
@@ -73,18 +73,24 @@ impl Exporter for SrtExporter {
     }
 
     fn export(&self, doc: &ExportDocument) -> Result<Vec<u8>, ExportError> {
-        let cues = cues(&lines(doc)?, doc.options.speaker_labels);
+        let labels = doc.options.speaker_labels;
+        let cues = cues(&lines(doc)?, labels);
         if cues.is_empty() {
             return Err(no_timestamps());
         }
         let mut out = String::new();
         for (i, cue) in cues.iter().enumerate() {
+            // The speaker named where their line starts.
+            let text = match (&cue.speaker, labels && cue.opens_line) {
+                (Some(s), true) => format!("{}: {}", name(s), cue.text),
+                _ => cue.text.clone(),
+            };
             out.push_str(&format!(
                 "{}\n{} --> {}\n{}\n\n",
                 i + 1,
                 stamp(cue.start_ms, ','),
                 stamp(cue.end_ms, ','),
-                cue.text
+                text
             ));
         }
         Ok(out.into_bytes())
@@ -101,7 +107,8 @@ impl Exporter for VttExporter {
     }
 
     fn export(&self, doc: &ExportDocument) -> Result<Vec<u8>, ExportError> {
-        let cues = cues(&lines(doc)?, false);
+        // Cut as the SRT file's are, the name's room kept, so both show the same cues.
+        let cues = cues(&lines(doc)?, doc.options.speaker_labels);
         if cues.is_empty() {
             return Err(no_timestamps());
         }

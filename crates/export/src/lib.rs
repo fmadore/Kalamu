@@ -25,7 +25,7 @@ pub mod units;
 use kalamu_core::{ExportDocument, ExportFormat, Exporter};
 
 pub use table::{table_csv, table_xlsx};
-pub use timeline::{cues, timeline};
+pub use timeline::{Cue, cues, timeline};
 
 /// Every exporter, in the order formats are offered.
 pub fn all() -> Vec<Box<dyn Exporter>> {

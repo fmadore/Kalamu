@@ -303,7 +303,12 @@ any. A translation of any other text has no subtitles.
 ## Subtitles and spreadsheets
 
 - **`.srt` / `.vtt`**: cues of at most 84 characters and 6 seconds, from timed segments or from
-  `[hh:mm:ss]` markers in the text. WebVTT uses voice tags (`<v Speaker 1>`) for speakers.
+  `[hh:mm:ss]` markers in the text. A long line is cut at word boundaries into cues of even
+  length, its time shared out by length and its last cue ending with it; a line too short to
+  show each of its cues for a second is cut into fewer, longer ones, so no cue is a word
+  flashed on screen. The SRT file names the speaker at the start of each line (`Speaker 1: …`);
+  WebVTT uses voice tags (`<v Speaker 1>`) on every cue. Both keep the name's room in the first
+  cue, so they show the same cues at the same times.
 - **`.csv`**: one row per page (`page, text, corrected, reviewed`) or per segment
   (`start, end, speaker, text`), UTF-8 with a byte-order mark so Excel reads accents correctly.
 - **`.xlsx`**: the same rows as the CSV, in an Excel workbook (see above).

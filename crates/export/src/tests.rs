@@ -736,6 +736,88 @@ fn a_translated_transcript_matches_golden_files() {
     );
 }
 
+/// The Ouagadougou transcript translated in the 1.10.0-rc2 test pass: its `.srt` ended a line
+/// on a cue of 0.27 s holding "old.", where its `.vtt` cut the line in two. A line is now cut
+/// into cues of even length, the name's room kept in both files, so they show the same cues and
+/// none is too short to read; a line too short for its cues at a second each is cut in fewer.
+#[test]
+fn subtitles_cut_a_line_into_even_cues_the_same_in_both_files() {
+    let line = |start_ms: u64, end_ms: u64, speaker: &str, text: &str| Segment {
+        start_ms,
+        end_ms,
+        speaker: Some(speaker.into()),
+        text: text.into(),
+    };
+    let lines = vec![
+        line(
+            100,
+            7_600,
+            "Mariam Kaboré",
+            "Hello and thank you for having me. To begin, could you introduce yourself and tell \
+             me how you came to work at the newspaper?",
+        ),
+        line(
+            9_100,
+            20_400,
+            "Adama Sawadogo",
+            "Hello. My name is Adama Sawadogo. I joined the newspaper Le Réveil (The Awakening) \
+             in 1982 in Ouagadougou as an apprentice typographer. I was 17 years old.",
+        ),
+        // Said quickly: two cues of 84 characters would last under a second each.
+        line(
+            21_000,
+            22_500,
+            "Mariam Kaboré",
+            "So you learned the trade at the paper itself, from the older typographers who were \
+             already working there before you?",
+        ),
+    ];
+    let mut doc = translated_interview();
+    doc.parts = vec![ExportPart {
+        piece: kalamu_core::PieceRef::Passage { number: 1 },
+        text: kalamu_core::aligned::text(&lines),
+        segments: lines,
+        ..doc.parts[0].clone()
+    }];
+    let srt = run(ExportFormat::Srt, &doc);
+    let vtt = run(ExportFormat::Vtt, &doc);
+    check("even-cues.srt", &srt);
+    check("even-cues.vtt", &vtt);
+    let cues = crate::cues(&doc.parts[0].segments, true);
+    // The same times in both files.
+    let srt = String::from_utf8(srt).unwrap_or_default();
+    let vtt = String::from_utf8(vtt).unwrap_or_default();
+    let times = |text: &str, separator: char| -> Vec<String> {
+        text.lines()
+            .filter(|l| l.contains(" --> "))
+            .map(|l| l.replace(separator, "."))
+            .collect()
+    };
+    assert_eq!(times(&srt, ','), times(&vtt, '.'));
+    assert_eq!(times(&srt, ',').len(), cues.len());
+    // No sliver: every cue lasts a second at least, the last ends with its line.
+    for cue in &cues {
+        assert!(cue.end_ms - cue.start_ms >= 1_000, "{cue:?}");
+    }
+    assert!(srt.contains("I was 17 years old.\n"), "{srt}");
+    assert!(!srt.contains("\nold.\n"), "{srt}");
+    assert_eq!(cues.iter().filter(|c| c.end_ms == 20_400).count(), 1);
+    // The quick line in one cue, whole.
+    let quick: Vec<_> = cues.iter().filter(|c| c.start_ms >= 21_000).collect();
+    assert_eq!(quick.len(), 1, "{quick:?}");
+    // Each cue about as long as the others of its line.
+    let adama: Vec<usize> = cues
+        .iter()
+        .filter(|c| c.start_ms >= 9_100 && c.end_ms <= 20_400)
+        .map(|c| c.text.chars().count() + if c.opens_line { 16 } else { 0 })
+        .collect();
+    let (short, long) = (
+        adama.iter().min().copied().unwrap_or_default(),
+        adama.iter().max().copied().unwrap_or_default(),
+    );
+    assert!(long - short < 20, "{adama:?}");
+}
+
 #[test]
 fn a_translation_without_times_or_whose_correction_changed_its_lines_has_no_subtitles() {
     let refusal = |doc: &ExportDocument, format: ExportFormat| {
