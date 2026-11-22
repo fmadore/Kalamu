@@ -2,7 +2,8 @@
 	// The frame of a correction under way, in every review: whose text or answers are being
 	// corrected, the editor itself (the caller's), and saving, discarding or going back to the
 	// model's output. Ctrl Enter (⌘ Enter on a Mac) saves, which marks the piece reviewed, as it does outside the
-	// editor.
+	// editor and as the Save button does. The buttons stay at the foot of the pane while the
+	// editor, as tall as its text, scrolls under them, so a short window never hides them.
 	import type { Snippet } from 'svelte';
 	import { messages } from '#lib/i18n/index.js';
 	import { primary, shortcut } from '#lib/platform.js';
@@ -64,10 +65,20 @@
 		color: var(--text-secondary);
 		font-size: var(--type-sm);
 	}
+	/* At the foot of the pane, over the editor scrolling under them: in a short window the
+	   buttons stay in reach without scrolling the text. Where the webview keeps them above the
+	   pane's bottom padding, their shadow, in the paper's colour, hides the text there. */
 	.actions {
+		position: sticky;
+		bottom: 0;
+		z-index: 1;
 		display: flex;
 		flex-wrap: wrap;
 		gap: var(--space-2);
 		margin-top: var(--space-4);
+		padding: var(--space-3) 0;
+		border-top: 1px solid var(--line-soft);
+		background: var(--paper);
+		box-shadow: 0 var(--space-7) 0 2px var(--paper);
 	}
 </style>

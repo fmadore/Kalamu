@@ -2,7 +2,8 @@ use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 use crate::{
-    ExportFormat, ExportOptions, JobId, LanguageChoice, Setup, SourceFile, Task, Timestamp,
+    ExportFormat, ExportOptions, InputKind, JobId, LanguageChoice, PageSample, Setup, SourceFile,
+    SourceId, Task, Timestamp,
 };
 
 /// Settings shared by every set-up in a job.
@@ -163,6 +164,38 @@ pub struct Job {
 impl Job {
     pub fn is_comparison(&self) -> bool {
         self.setups.len() > 1
+    }
+
+    /// How many pieces the job counts, from the start: those `recorded`, and for each source
+    /// none of whose pieces is recorded yet (the engine records a source's pieces once it has
+    /// opened it) as many as it is sure to give each set-up. A recording's parts or a long
+    /// text's are known once it is opened, and the count grows then.
+    pub fn pieces_total(&self, recorded: u32, opened: &[SourceId]) -> u32 {
+        let setups = self.setups.len() as u32;
+        self.sources
+            .iter()
+            .filter(|s| !opened.contains(&s.id))
+            .map(|s| setups * self.pieces_before_opening(s))
+            .fold(recorded, u32::saturating_add)
+    }
+
+    /// The fewest pieces a source not yet opened gives each set-up: its pages, when they are
+    /// known and read one by one (all of them, or the sample tried); one otherwise, as a
+    /// whole document analysed, a text or a recording.
+    fn pieces_before_opening(&self, source: &SourceFile) -> u32 {
+        let paged =
+            matches!(source.kind, InputKind::Pdf | InputKind::Image) && self.task != Task::Analysis;
+        let pages = match source.page_count {
+            Some(pages) if paged && pages > 0 => pages,
+            _ => return 1,
+        };
+        match self.settings.page_sample() {
+            PageSample::All => pages,
+            PageSample::First(n) => n.min(pages),
+            // Spread through the document, its first page left out.
+            PageSample::Spread(n) => n.min(pages.saturating_sub(1)),
+        }
+        .max(1)
     }
 }
 

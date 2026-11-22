@@ -129,3 +129,45 @@ test('a field of choices offers only the choices not yet listed, and a choice is
 	await menu.getByRole('menuitem', { name: 'Remove from the answers' }).click();
 	await expect(trade).toHaveCount(0);
 });
+
+test('a name added by hand is found in the project search as written by the researcher', async ({
+	page
+}) => {
+	const answers = await open(page);
+	const places = answers.locator('[data-field="places"]');
+	await places.getByRole('button', { name: 'Add to “Places”' }).click();
+	await places.getByRole('textbox', { name: /^Add to “Places”/ }).fill('Siguiri');
+	await places.getByRole('button', { name: 'Add', exact: true }).click();
+	await expect(places.getByRole('button', { name: 'Siguiri, your correction' })).toBeVisible();
+
+	await page
+		.getByRole('navigation', { name: 'Jobs' })
+		.getByRole('button', { name: /^Missions in French West Africa/ })
+		.click();
+	await page
+		.getByRole('navigation', { name: 'Collections' })
+		.getByRole('button', { name: 'Search' })
+		.click();
+	const search = page.getByRole('search');
+	const main = page.getByRole('main');
+	await main.getByRole('checkbox', { name: /^Also search what models wrote about them/ }).check();
+	const box = search.getByRole('searchbox', { name: 'Words to find' });
+	const result = main.locator('.result');
+
+	await box.fill('Siguiri');
+	await search.getByRole('button', { name: 'Search' }).click();
+	// Added where both set-ups' names are shown together, it went into each one's answers.
+	await expect(result).toHaveCount(2);
+	for (const one of await result.all()) {
+		await expect(one.locator('mark')).toHaveText('Siguiri');
+		await expect(one.getByText('Written by you')).toBeVisible();
+		await expect(one.getByText('Written by a model')).toHaveCount(0);
+	}
+
+	// A name the model listed in the same answers is still said to be the model's.
+	await box.fill('Dakar');
+	await search.getByRole('button', { name: 'Search' }).click();
+	const analysis = result.filter({ hasText: 'Places' });
+	await expect(analysis.first().getByText('Written by a model')).toBeVisible();
+	await expect(analysis.first().getByText('Written by you')).toHaveCount(0);
+});

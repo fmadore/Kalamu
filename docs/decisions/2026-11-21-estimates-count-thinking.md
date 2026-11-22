@@ -48,3 +48,7 @@ nearly twice what it is sent as.
   formula with the texts described, which gives about $0.18 before this change, as the dialog
   showed when opened again; it was a tenth of that, as if the texts first priced were a tenth as
   long. Left to watch in the next test pass.
+
+Followed by the [entry of 22 November](2026-11-22-estimates-gemini-thinking-text-layer.md),
+from the rc2 test pass: each model's thinking on a page, small print known from the text
+layer, an interview's longer answer and a region priced as its share of the page.

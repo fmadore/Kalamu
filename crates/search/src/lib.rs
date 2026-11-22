@@ -189,6 +189,8 @@ pub struct Hit {
     pub at_ms: Option<u64>,
     pub reviewed: bool,
     pub corrected: bool,
+    /// In a name the researcher listed by hand (or renamed), not one the model wrote.
+    pub by_hand: bool,
 }
 
 /// Where words looked for stand within a match's words: `[start, end)`, in characters.

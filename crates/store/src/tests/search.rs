@@ -28,6 +28,7 @@ fn passage(job: JobId, index: u32, text: &str) -> (Passage, String) {
             reason: false,
             text: text.into(),
             lines: Vec::new(),
+            by_hand: Vec::new(),
         }],
     };
     // The search crate folds; here the text is already plain.

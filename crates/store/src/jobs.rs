@@ -54,9 +54,10 @@ pub(crate) fn job(store: &SqliteStore, id: JobId) -> Result<Job, StoreError> {
     Ok(job)
 }
 
-/// Every job with its pieces' progress and cost. A result's cost and cut-off mark are read
-/// from `results_costs`, named because SQLite otherwise takes the table's key and walks
-/// through each stored answer, which comes before them in the row, to reach them.
+/// Every job with its pieces' progress and cost, and the sources whose pieces are recorded. A
+/// result's cost and cut-off mark are read from `results_costs`, named because SQLite otherwise
+/// takes the table's key and walks through each stored answer, which comes before them in the
+/// row, to reach them.
 pub(crate) const LIST_JOBS: &str = "SELECT j.data, j.status, j.updated_at,
         COUNT(p.idx),
         COALESCE(SUM(p.status IN ('done', 'cached')), 0),
@@ -69,7 +70,8 @@ pub(crate) const LIST_JOBS: &str = "SELECT j.data, j.status, j.updated_at,
             UNION ALL SELECT cost_usd FROM region_readings WHERE job_id = j.id) x),
         (SELECT json_extract(w.data, '$.workflow_name')
          FROM run_steps s JOIN runs w ON w.id = s.run_id
-         WHERE s.job_id = j.id LIMIT 1)
+         WHERE s.job_id = j.id LIMIT 1),
+        GROUP_CONCAT(DISTINCT p.source_id)
     FROM jobs j LEFT JOIN pieces p ON p.job_id = j.id
     LEFT JOIN results r INDEXED BY results_costs ON r.cache_key = p.cache_key
     GROUP BY j.id
@@ -102,19 +104,40 @@ pub(crate) fn list_jobs(store: &SqliteStore) -> Result<Vec<JobSummary>, StoreErr
                 row.get::<_, Option<f64>>(7)?,
                 row.get::<_, Option<f64>>(8)?,
                 row.get::<_, Option<String>>(9)?,
+                row.get::<_, Option<String>>(10)?,
             ))
         })
         .map_err(db)?;
     let mut jobs = Vec::new();
     for row in rows {
-        let (data, status, updated_at, total, finished, failed, truncated, kept, refused, workflow) =
-            row.map_err(db)?;
+        let (
+            data,
+            status,
+            updated_at,
+            recorded,
+            finished,
+            failed,
+            truncated,
+            kept,
+            refused,
+            workflow,
+            opened,
+        ) = row.map_err(db)?;
         // What its results cost, and the answers billed but refused.
         let cost = match (kept, refused) {
             (None, None) => None,
             (kept, refused) => Some(kept.unwrap_or(0.0) + refused.unwrap_or(0.0)),
         };
         let job: Job = serde_json::from_str(&data).map_err(corrupt)?;
+        // Counted from the start: a source not opened yet counts the pieces it is sure to give,
+        // not none.
+        let opened: Vec<SourceId> = opened
+            .as_deref()
+            .unwrap_or_default()
+            .split(',')
+            .filter_map(|id| id.parse().ok())
+            .collect();
+        let total = job.pieces_total(recorded, &opened);
         jobs.push(JobSummary {
             models: job.models(),
             workflow,

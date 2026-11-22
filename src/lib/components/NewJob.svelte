@@ -23,7 +23,7 @@
 	import type { Task } from '#lib/bindings/Task.js';
 	import { describeError } from '#lib/errors.js';
 	import { messages } from '#lib/i18n/index.js';
-	import { followEstimate } from '#lib/newJobEstimate.svelte.js';
+	import { followEstimate, tooLongOf } from '#lib/newJobEstimate.svelte.js';
 	import { primary } from '#lib/platform.js';
 	import { type Mode, nameOfFile, forgetForm, formToOpen, keepForm } from '#lib/newJob.js';
 	import { JobChoices } from '#lib/newJobChoices.svelte.js';
@@ -99,6 +99,9 @@
 		await files.add(move);
 	}
 
+	/** A text too long for a model chosen, which the engine would refuse: Start stays off. */
+	const tooLong = $derived(tooLongOf(estimate, catalog, m));
+
 	const ready = $derived(
 		sources.length > 0 &&
 			choices.languagesReady &&
@@ -108,7 +111,8 @@
 				choices.drafts.every((d) => d.mergeModel && hasKey(d.mergeProvider))) &&
 			choices.models.every((model) => readsInput(model, choices.input)) &&
 			(choices.mode !== 'youtube' || choices.destination.kind === 'folder') &&
-			choices.formats.length > 0
+			choices.formats.length > 0 &&
+			tooLong === null
 	);
 
 	followEstimate(
@@ -137,13 +141,14 @@
 
 	/** Why Start is unavailable, when the form cannot say it where the user is looking. */
 	const blocker = $derived(
-		choices.mode === 'youtube' && sources.length > 0 && choices.destination.kind !== 'folder'
-			? m.newJob.needFolder
-			: rule.needs_language &&
-				  sources.length > 0 &&
-				  !(choices.languageMode === 'explicit' && choices.languages.length > 0)
-				? m.error['job.no_language']
-				: null
+		tooLong ??
+			(choices.mode === 'youtube' && sources.length > 0 && choices.destination.kind !== 'folder'
+				? m.newJob.needFolder
+				: rule.needs_language &&
+					  sources.length > 0 &&
+					  !(choices.languageMode === 'explicit' && choices.languages.length > 0)
+					? m.error['job.no_language']
+					: null)
 	);
 
 	async function savePipeline() {

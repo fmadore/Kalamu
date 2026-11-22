@@ -9,9 +9,9 @@ import { en, fr } from './i18n/index.js';
 import { interviewFormats, tooLongOf } from './interviewStart.svelte.js';
 
 describe('the files an interview analysis writes', () => {
-	it('are the memo, the JSON file and the table of quotations, as the release notes promise', () => {
+	it('are the memo, the JSON file and the tables, each as a workbook and a CSV, as the release notes promise', () => {
 		const analysis = ['txt', 'markdown', 'docx', 'json', 'csv', 'xlsx'] as const;
-		expect(interviewFormats([...analysis])).toEqual(['markdown', 'json', 'csv']);
+		expect(interviewFormats([...analysis])).toEqual(['markdown', 'json', 'xlsx', 'csv']);
 	});
 
 	it('keep to what the task can write', () => {
@@ -25,6 +25,7 @@ describe('the files an interview analysis writes', () => {
 		expect(interviewFormats([...analysis], ['txt', 'docx', 'json'])).toEqual([
 			'markdown',
 			'json',
+			'xlsx',
 			'csv',
 			'txt',
 			'docx'

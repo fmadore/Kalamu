@@ -295,9 +295,231 @@ fn estimates_meet_what_the_1_10_test_pass_was_billed() {
         },
     );
     assert!(
-        ordinary < hydrogen_36 / 2.5,
+        ordinary < hydrogen_36 / 1.5,
         "{ordinary} against {hydrogen_36}"
     );
+}
+
+/// What the test pass of 1.10.0-rc2 was billed, from the provenance files' usage, where the
+/// estimates of rc1 still fell short: Gemini's thinking on a page, a newspaper page read with
+/// the printed-document prompt, the interview analysis, and a strip of a page read again. Each
+/// is now estimated within 0.8 to 1.3 times what it cost, and the cases that were near stay so.
+#[test]
+fn estimates_meet_what_the_rc2_test_pass_was_billed() {
+    let catalog = Catalog::bundled();
+    let model = |provider: &str, id: &str| {
+        catalog
+            .model(&ProviderId::new(provider), id)
+            .unwrap_or_else(|| panic!("{id}"))
+    };
+    let (hydrogen, neon, sol) = (
+        model("gemini", "gemini-4-hydrogen"),
+        model("gemini", "gemini-4-neon"),
+        model("openai", "gpt-6.2-sol"),
+    );
+    let (sonnet, mistral) = (
+        model("anthropic", "claude-sonnet-5-5"),
+        model("mistral", "mistral-ocr-4-1"),
+    );
+    let usd = |model: &ModelInfo, task: Task, work: &Workload<'_>| {
+        catalog
+            .estimate(model, task, work)
+            .usd
+            .unwrap_or_else(|| panic!("{} has a price", model.id))
+    };
+    // What a call was billed, from the input and output tokens the provider reported.
+    let billed = |model: &ModelInfo, input: u64, output: u64| {
+        catalog
+            .actual_cost(
+                model,
+                &kalamu_core::Usage {
+                    input_tokens: input,
+                    output_tokens: output,
+                    ..kalamu_core::Usage::default()
+                },
+            )
+            .unwrap_or_default()
+    };
+    let within = |estimate: f64, billed: f64, what: &str| {
+        let ratio = estimate / billed;
+        assert!(
+            (0.8..=1.3).contains(&ratio),
+            "{what}: estimated ${estimate:.4}, billed ${billed:.4} ({ratio:.2} times)"
+        );
+    };
+
+    // One job of three set-ups, low thinking, the printed-document prompt (4,196 characters):
+    // the 1-page `daily-nebraskan-1911.pdf`, whose text layer holds about 1,940 words, and the
+    // handwritten page of 1755.
+    let printed = 4_196;
+    let newspaper = Workload {
+        dense_pages: 1,
+        prompt_chars: printed,
+        ..pages(1)
+    };
+    let handwritten = Workload {
+        prompt_chars: printed,
+        ..pages(1)
+    };
+    let mut total = (0.0, 0.0);
+    for (model, page, letter) in [
+        (sol, (12_497, 2_495), (4_033, 404)),
+        (hydrogen, (5_374, 5_127), (2_185, 1_783)),
+        (neon, (5_374, 5_486), (2_185, 2_327)),
+    ] {
+        let estimate = usd(model, Task::TextExtraction, &newspaper)
+            + usd(model, Task::TextExtraction, &handwritten);
+        let cost = billed(model, page.0, page.1) + billed(model, letter.0, letter.1);
+        within(estimate, cost, &model.id);
+        within(
+            usd(model, Task::TextExtraction, &handwritten),
+            billed(model, letter.0, letter.1),
+            &format!("{}, the handwritten page", model.id),
+        );
+        total = (total.0 + estimate, total.1 + cost);
+    }
+    within(total.0, total.1, "three set-ups");
+    // The page counted as dense from its text layer: read as an ordinary page, it would be
+    // priced at about half.
+    let ordinary = usd(hydrogen, Task::TextExtraction, &handwritten);
+    assert!(ordinary < usd(hydrogen, Task::TextExtraction, &newspaper) / 1.5);
+
+    // The interview analysis: a transcript of 1,568 bytes, the interview prompt, its themes and
+    // quotations two fields of quoted entries.
+    let interview = Workload {
+        text_chars: 1_568,
+        documents: 1,
+        prompt_chars: 5_615,
+        cited_entries: 2,
+        ..Workload::default()
+    };
+    within(
+        usd(hydrogen, Task::Analysis, &interview),
+        billed(hydrogen, 3_082, 2_521),
+        "the interview analysis",
+    );
+
+    // A strip of two lines of the 1755 page read again with Claude Sonnet 5.5 and the
+    // handwriting prompt (5,950 characters): priced as the picture sent, far below the whole
+    // page ($0.021); Mistral OCR bills a page whatever its size.
+    let strip = |model: &ModelInfo| {
+        usd(
+            model,
+            Task::TextExtraction,
+            &Workload {
+                prompt_chars: 5_950,
+                region: Some(0.8 * 0.08),
+                ..pages(1)
+            },
+        )
+    };
+    let page = usd(
+        sonnet,
+        Task::TextExtraction,
+        &Workload {
+            prompt_chars: 5_950,
+            ..pages(1)
+        },
+    );
+    within(page, 0.021, "the whole handwritten page");
+    assert!(
+        (0.004..0.008).contains(&strip(sonnet)),
+        "a strip: ${:.4}",
+        strip(sonnet)
+    );
+    assert!((strip(mistral) - 0.004).abs() < 1e-12);
+
+    // Near or under before, and still: a records analysis of a 4-page issue, a translation of
+    // a 207-word text, a page of Mistral OCR.
+    let records = catalog
+        .estimate_records(hydrogen, 4, 2_829, None)
+        .usd
+        .unwrap_or_default();
+    within(records, billed(hydrogen, 9_088, 3_210), "records");
+    let translation = usd(
+        hydrogen,
+        Task::Translation,
+        &Workload {
+            prompt_chars: 3_457,
+            ..pages(1)
+        },
+    );
+    within(translation, billed(hydrogen, 1_416, 1_509), "a translation");
+    within(
+        usd(mistral, Task::TextExtraction, &pages(1)),
+        0.004,
+        "Mistral OCR",
+    );
+    // GPT-6.2 Sol's People, places and organisations on an issue of about 5,000 words
+    // ($0.019 to $0.022 billed) was estimated a little high, and is not raised.
+    let entities = usd(
+        sol,
+        Task::Analysis,
+        &Workload {
+            text_chars: 29_000,
+            documents: 1,
+            prompt_chars: 2_255,
+            ..Workload::default()
+        },
+    );
+    assert!(
+        (0.019..0.031).contains(&entities),
+        "entities: ${entities:.4}"
+    );
+}
+
+/// A model's own measure of what it thinks on a page replaces the allowance on an ordinary page,
+/// scaled by the reasoning level as the allowance is; a dense page keeps the larger of the two.
+#[test]
+fn a_models_own_page_thinking_replaces_the_allowance() {
+    let catalog = Catalog::bundled();
+    let mut model = catalog
+        .model(&ProviderId::new("gemini"), "gemini-4-hydrogen")
+        .cloned()
+        .unwrap_or_else(|| panic!("no Hydrogen"));
+    model.pricing = Pricing {
+        input_per_mtok: Some(1.0),
+        output_per_mtok: Some(1.0),
+        ..Pricing::default()
+    };
+    let at = |model: &ModelInfo, work: Workload<'_>| {
+        catalog
+            .estimate(model, Task::TextExtraction, &work)
+            .usd
+            .unwrap_or_default()
+            * 1_000_000.0
+    };
+    // 1,100 tokens in, 900 of text and 1,400 of thinking out.
+    model.page_thinking = Some(1_400);
+    assert!((at(&model, pages(1)) - 3_400.0).abs() < 1e-6);
+    // Twice at `medium`.
+    let medium = at(
+        &model,
+        Workload {
+            reasoning: Some("medium"),
+            ..pages(1)
+        },
+    );
+    assert!((medium - 4_800.0).abs() < 1e-6, "{medium}");
+    // Without a measure, the allowance of 600.
+    model.page_thinking = None;
+    assert!((at(&model, pages(1)) - 2_600.0).abs() < 1e-6);
+    // A dense page: 3,000 in, 2,000 of text and 2,500 of thinking, a smaller measure ignored.
+    model.page_thinking = Some(100);
+    let dense = Workload {
+        dense_pages: 1,
+        ..pages(1)
+    };
+    assert!((at(&model, dense.clone()) - 7_500.0).abs() < 1e-6);
+    // A region a tenth of the page is priced as a fifth of one: 220 in, 200 out.
+    let region = at(
+        &model,
+        Workload {
+            region: Some(0.1),
+            ..pages(1)
+        },
+    );
+    assert!((region - 420.0).abs() < 1e-6, "{region}");
 }
 
 /// Thinking is billed as output: a higher reasoning level costs more, a model told not to
@@ -514,6 +736,23 @@ fn reasoning_suggests_the_lowest_for_reading_and_keeps_to_the_levels_a_model_has
     assert_eq!(
         level(model("mistral-ocr-4-1"), Task::TextExtraction, Some("high")),
         None
+    );
+    // More thinking: the next level the model has, never past the bound.
+    let sol = model("gpt-6.2-sol")
+        .reasoning
+        .as_ref()
+        .unwrap_or_else(|| panic!("GPT-6.2 Sol reasons"));
+    assert_eq!(sol.above("low", "high"), Some("medium"));
+    assert_eq!(sol.above("medium", "high"), Some("high"));
+    assert_eq!(sol.above("high", "high"), None);
+    assert_eq!(sol.above("low", "low"), None);
+    let medium_levels = medium
+        .reasoning
+        .as_ref()
+        .unwrap_or_else(|| panic!("reasons"));
+    assert_eq!(
+        medium_levels.above("none", "high"),
+        medium_levels.levels.get(1).map(String::as_str)
     );
     // Where Mistral documents no output limit, none is set.
     assert_eq!(medium.limits.max_output_tokens, None);

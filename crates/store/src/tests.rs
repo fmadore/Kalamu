@@ -36,6 +36,7 @@ fn job() -> Job {
             duration_ms: None,
             split_spreads: false,
             even_out_volume: false,
+            dense_pages: None,
             title: None,
             derived_from: None,
             pages: Vec::new(),
@@ -93,6 +94,56 @@ fn jobs_round_trip_and_are_listed_with_progress() -> Result<(), StoreError> {
     assert_eq!(listed[0].pieces_total, 2);
     assert_eq!(listed[0].pieces_finished, 1);
     assert_eq!(listed[0].pieces_failed, 1);
+    Ok(())
+}
+
+/// A job counts all its pieces from the start, not only those of the sources opened so far:
+/// two images read by three set-ups are six pieces before the second image is opened.
+#[test]
+fn a_job_counts_the_pieces_of_sources_not_yet_opened() -> Result<(), StoreError> {
+    let store = SqliteStore::in_memory()?;
+    let mut job = job();
+    let mut image = job.sources[0].clone();
+    image.id = SourceId::new();
+    image.kind = InputKind::Image;
+    image.page_count = None;
+    job.sources.push(image);
+    for label in ["claude", "gpt"] {
+        let mut setup = job.setups[0].clone();
+        setup.id = SetupId::new();
+        setup.label = label.into();
+        job.setups.push(setup);
+    }
+    store.create_job(&job)?;
+    // The two pages of the PDF and the image, for three set-ups, before anything is opened.
+    assert_eq!(store.list_jobs()?[0].pieces_total, 9);
+
+    // The PDF opened: its pieces recorded for every set-up, one of them read.
+    for setup in &job.setups {
+        for index in 0..2 {
+            let read = index == 0 && setup.id == job.setups[0].id;
+            let status = if read {
+                PieceStatus::Done
+            } else {
+                PieceStatus::Pending
+            };
+            store.upsert_piece(&PieceState {
+                setup_id: setup.id,
+                ..piece(&job, index, status)
+            })?;
+        }
+    }
+    let listed = store.list_jobs()?;
+    assert_eq!((listed[0].pieces_finished, listed[0].pieces_total), (1, 9));
+
+    // A sample of one page counts one page of the PDF.
+    let mut sample = job.clone();
+    sample.id = JobId::new();
+    sample.settings.sample_pages = Some(1);
+    store.create_job(&sample)?;
+    let listed = store.list_jobs()?;
+    let tried = listed.iter().find(|j| j.id == sample.id);
+    assert_eq!(tried.map(|j| j.pieces_total), Some(6));
     Ok(())
 }
 

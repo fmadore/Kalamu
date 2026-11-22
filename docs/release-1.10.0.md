@@ -115,12 +115,17 @@ keys. Once 1.10.0 has opened your job database, an earlier version refuses it.
   from the project. *Export the whole table* writes every document's answer, whatever filter is
   on.
 - **Estimates now count the models' thinking** and a newspaper's dense pages, which made them
-  three to eleven times too low before this version's test pass. They are still estimates:
-  compare the first job's cost with what your provider bills.
+  three to eleven times too low before this version's test pass: Gemini 4 thinks more than
+  other models on a page, a PDF page whose text layer is small print is priced as a
+  newspaper's whatever the prompt, an interview analysis writes a longer answer, and a region
+  read again is priced as the part of the page it sends. A newspaper scanned as images, with no
+  text layer, is priced as dense pages only with the *Newspaper or magazine* prompt. They are
+  still estimates: compare the first job's cost with what your provider bills.
 - **GPT-6.2 Sol can leave text out, or answer nothing.** It replaced a chemistry lecture's
   description in a 1911 newspaper with a note that it had omitted it, and answered an analysis
   of that issue with every field empty. Kalamu now refuses an analysis left wholly empty for a
-  long text and asks again, then says so; a comparison of two models shows the gaps in a
+  long text and asks again with more thinking (*Medium*, then *High*, where the model has them),
+  then says which levels were tried; a comparison of two models shows the gaps in a
   transcription.
 - **A project file has not yet been carried from Windows to a Mac.** A project opened without
   its original files cannot yet be pointed at those files on the new computer; save it again
@@ -135,13 +140,20 @@ keys. Once 1.10.0 has opened your job database, an earlier version refuses it.
   reading room may need it told otherwise. It takes about a minute for 300 photographs.
 - **The `.xlsx`** opens by double-click in Excel set to French; it has not yet been opened on a
   Mac. Exports' column headings stay in English.
-- **Search by meaning has been prepared with Gemini Embedding 2 only**; EmbeddingGemma 2 has
-  not yet run in the installed app. The map's positions are approximate.
-- **A region read again and a passage corrected by a model** have run against recorded answers
-  only. Check the cost shown against what your provider bills.
-- **A large Gemini batch sent as a file** follows Google's documentation and has not run live;
-  deleting a batch's files at OpenAI, Mistral and Anthropic has not run live either.
-- **GPT-6.2 and Gemini 4 Neon have not yet read a real page in Kalamu.**
+- **Search by meaning has been prepared with Gemini Embedding 2 and with EmbeddingGemma 2** on
+  the computer (about 2½ minutes for a small project on a Snapdragon's processor), not yet with
+  OpenAI's or Mistral's models. The map's positions are approximate.
+- **A region read again and a passage corrected by a model** have each run live once (Mistral
+  OCR on two handwritten lines, Gemini on a passage). Check the cost shown against what your
+  provider bills.
+- **A large Gemini batch sent as a file** follows Google's documentation and has not run live.
+  OpenAI's and Anthropic's batches have run live and came back within minutes; that their files
+  are deleted afterwards has not been checked on the providers' pages. Mistral's batches are
+  now sent as an uploaded file, since rc2's test pass found two photographed pages sent inline
+  refused; that file has not yet run live.
+- **GPT-6.2 Sol, GPT-6.2 Astra and Gemini 4 Neon have read one printed page and one handwritten
+  page each in Kalamu.** On the handwriting Neon reads much as Gemini 4 Hydrogen does, at about
+  twice the cost.
 - **Records** have run on a printed directory, not yet on a handwritten register or in economy
   mode: check the rows, and try a small job first.
 - **The offline language models are far weaker than the cloud models.** Check what they write.

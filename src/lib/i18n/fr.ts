@@ -470,6 +470,11 @@ export const fr: Messages = {
 			description:
 				'Corrige seulement les erreurs de lecture automatique et remet les colonnes dans l’ordre ; l’orthographe, la formulation et le style de l’époque sont conservés.'
 		},
+		'text_correction.handwritten': {
+			name: 'Document manuscrit',
+			description:
+				'Corrige seulement les mots mal lus, en toute écriture ; l’orthographe et les abréviations de l’auteur, ainsi que les marques de la transcription, sont conservées.'
+		},
 		'dictionary.merges': {
 			name: 'Dictionnaire : regroupements proposés',
 			description:
@@ -1070,6 +1075,9 @@ export const fr: Messages = {
 			'Ne rien trouver ne signifie pas que les documents n’en parlent jamais : seul le texte lu et conservé est cherché, et un modèle peut avoir mal lu un nom.',
 		preferred: 'Retenu',
 		generatedResult: 'Écrit par un modèle',
+		writtenByYou: 'Écrit par vous',
+		writtenByYouHint:
+			'Vous avez ajouté ce nom aux réponses, ou l’avez écrit sous votre propre forme.',
 		stale: 'Périmée',
 		staleHint: 'Le texte lu par cette analyse a été corrigé depuis.',
 		reason: 'justification',
@@ -1977,6 +1985,9 @@ export const fr: Messages = {
 		linkFolder:
 			'Une vidéo n’a pas de dossier à elle : ses transcriptions et ses fichiers de provenance en demandent un.',
 		needFolder: 'Choisissez un dossier pour les résultats avant de lancer le traitement.',
+		/** Said where Start is, which is off, when a text is too long for a model chosen. */
+		tooLong: (file: string, model: string, words: string, most: string, others: number) =>
+			`${file} est trop long pour ${model} : environ ${words} mots, alors qu’il en lit environ ${most} à la fois${others === 0 ? '' : others === 1 ? ', de même qu’un autre texte' : `, de même que ${others} autres textes`}. Choisissez un autre modèle, ou découpez le texte en documents plus courts.`,
 		estimateVideo:
 			'La durée d’une vidéo n’est connue qu’une fois que Gemini l’a lue : le coût s’affiche donc dans Traitements en cours d’exécution.'
 	},
@@ -2934,7 +2945,8 @@ export const fr: Messages = {
 			start: 'Lancer le traitement',
 			addLinks: 'Ajouter les liens YouTube collés',
 			newLine: 'Commencer une autre ligne de liens',
-			reviewed: 'Marquer la page comme relue, ou non relue ; pendant une correction, l’enregistrer',
+			reviewed:
+				'Marquer la page comme relue, ou non relue ; pendant une correction, l’enregistrer, ce qui marque la page comme relue, comme le fait Enregistrer la correction',
 			nextPage: 'Page ou partie suivante ; Pg suiv fait plutôt défiler un volet qui a le focus',
 			previousPage:
 				'Page ou partie précédente ; Pg préc fait plutôt défiler un volet qui a le focus',
@@ -3391,7 +3403,7 @@ export const fr: Messages = {
 		'provider.invalid_request': 'Le fournisseur a rejeté la requête.',
 		'provider.other': 'Le fournisseur a envoyé une réponse inattendue.',
 		'provider.invalid_answer':
-			'La réponse du modèle ne donnait pas les champs de l’analyse, même après une nouvelle demande. Réessayez plus tard, ou choisissez un autre modèle.',
+			'La réponse du modèle ne donnait pas les champs de l’analyse, même après une nouvelle demande. Choisissez un niveau plus élevé sous Réflexion, ou un autre modèle.',
 		'provider.cut_off':
 			'La réponse s’est arrêtée à la limite de sortie du modèle avant d’être complète. Envoyez moins de pages par appel, demandez des champs moins nombreux ou plus courts, ou choisissez un modèle capable d’écrire une réponse plus longue.',
 		'provider.cut_off_filter':

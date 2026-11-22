@@ -637,6 +637,8 @@ export const en = {
 			'Finding nothing does not mean the documents never mention it: only the text read and kept is searched, and a model may have misread a name.',
 		preferred: 'Preferred',
 		generatedResult: 'Written by a model',
+		writtenByYou: 'Written by you',
+		writtenByYouHint: 'You added this name to the answers, or wrote it in your own form.',
 		stale: 'Out of date',
 		staleHint: 'The text this analysis read has been corrected since.',
 		reason: 'reason',
@@ -1535,6 +1537,9 @@ export const en = {
 		linkFolder:
 			'A video has no folder of its own, so its transcripts and provenance files need one.',
 		needFolder: 'Choose a folder for the results before starting.',
+		/** Said where Start is, which is off, when a text is too long for a model chosen. */
+		tooLong: (file: string, model: string, words: string, most: string, others: number) =>
+			`${file} is too long for ${model}: about ${words} words, where it reads about ${most} at once${others === 0 ? '' : others === 1 ? ', and so is 1 other text' : `, and so are ${others} other texts`}. Choose another model, or split the text into shorter documents.`,
 		estimateVideo:
 			'A video’s length is known only once Gemini has read it, so the cost shows in Jobs as it runs.'
 	},
@@ -2495,7 +2500,8 @@ export const en = {
 			start: 'Start the job',
 			addLinks: 'Add the YouTube links pasted',
 			newLine: 'Start another line among the links',
-			reviewed: 'Mark the page reviewed, or not reviewed; while correcting, save the correction',
+			reviewed:
+				'Mark the page reviewed, or not reviewed; while correcting, save the correction, which marks the page reviewed, as Save correction does',
 			nextPage: 'Next page or part; Page Down scrolls a pane instead when it has the focus',
 			previousPage: 'Previous page or part; Page Up scrolls a pane instead when it has the focus',
 			differenceSteps: 'On a difference in the text: the previous or next one',
@@ -2963,7 +2969,7 @@ export const en = {
 		'provider.invalid_request': 'The provider rejected the request.',
 		'provider.other': 'The provider sent an unexpected response.',
 		'provider.invalid_answer':
-			'The model’s answer did not give the fields of the analysis, even when asked again. Try again later, or choose another model.',
+			'The model’s answer did not give the fields of the analysis, even when asked again. Choose a higher level under Thinking, or another model.',
 		'provider.cut_off':
 			'The answer stopped at the model’s output limit before it was complete. Send fewer pages in each call, ask for fewer or shorter fields, or choose a model that can write a longer answer.',
 		'provider.cut_off_filter':

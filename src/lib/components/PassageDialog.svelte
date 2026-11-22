@@ -2,7 +2,8 @@
 	// Asking a model to correct a passage selected in the text review, and what it proposes.
 	// First the request: the passage and the context sent around it, the model and the correction
 	// prompt (the last used, else the job's own when it is a correction, else the first provider
-	// with a key), who it goes to and what it costs. Then the wait, which can be stopped. Then the
+	// with a key; the prompt made for the material the set-up read, a handwritten page's, unless
+	// another than the general one was last used), who it goes to and what it costs. Then the wait, which can be stopped. Then the
 	// proposal, its changes marked against the passage: accepted as it is or edited first, which
 	// writes it into the researcher's corrections, or discarded. Nothing changes the text before
 	// it is accepted; the model's own output never changes. Asked through the engine, which
@@ -20,8 +21,10 @@
 	import {
 		PASSAGE_LIMITS,
 		charCount,
+		correctionFor,
 		passageAround,
 		passageProblem,
+		startPreset,
 		type Chosen
 	} from '#lib/passage.js';
 	import { hasKey } from '#lib/state.svelte.js';
@@ -62,18 +65,22 @@
 	const length = charCount(around.passage);
 
 	// The set-up to start from: the last one used, the job's own when it corrects text, or the
-	// first provider with a key and its usual model.
+	// first provider with a key and its usual model. Its prompt follows what the set-up read: a
+	// page read as handwriting starts on the handwritten correction.
 	// svelte-ignore state_referenced_locally
 	const own = job.task === 'text_correction' ? job.setups[0] : undefined;
+	// svelte-ignore state_referenced_locally
+	const fitting = correctionFor(job.setups.find((s) => s.id === setupId)?.prompt.preset_id);
+	const last = recall(LAST_KEY, readSetup, null);
 	const choice = new ModelChoice(
 		'text_correction',
 		TEXT,
 		hasKey,
 		[
-			recall(LAST_KEY, readSetup, null),
+			last ? { ...last, preset: startPreset(last.preset, fitting) } : null,
 			own ? { provider: own.provider, model: own.model, preset: own.prompt.preset_id } : null
 		],
-		'text_correction.general'
+		fitting
 	);
 	const request = new ModelRequest<PassageProposal, Correction>(p, {
 		cancel: api.cancelPassage,

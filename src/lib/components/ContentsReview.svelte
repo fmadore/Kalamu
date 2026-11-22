@@ -38,7 +38,8 @@
 		jobId,
 		sourceId,
 		find: opening,
-		start
+		start,
+		lead: leadSetup
 	}: {
 		jobId: string;
 		sourceId: string;
@@ -46,10 +47,12 @@
 		find?: ReviewFind;
 		/** The piece to open on, from 0: a page chosen in the list of what to check. */
 		start?: number;
+		/** The set-up to show first: an item's from the list of what to check. */
+		lead?: string;
 	} = $props();
 	const m = messages();
 	// svelte-ignore state_referenced_locally
-	const review = new Review(jobId, sourceId);
+	const review = new Review(jobId, sourceId, { lead: leadSetup });
 
 	/** The page shown, as an index among the source's pages. */
 	let page = $state(0);

@@ -9,8 +9,9 @@ export type EstimateRow = { provider: ProviderId, model: string, pages: number, 
  */
 merge: boolean, 
 /**
- * A cited analysis's texts this model cannot read even in parts, one passage of each alone
- * too long, in the order given: a job holding one is refused when created
+ * An analysis's texts this model cannot read, in the order given: a cited analysis's one
+ * passage of which alone is too long even read in parts, any other's longer than the model
+ * reads at once, being sent whole. A job holding one is refused when created
  * ([`crate::Engine::check_length`]), so this row prices the other sources only, as a job
  * that leaves them out would cost; absent when every text can be read.
  */

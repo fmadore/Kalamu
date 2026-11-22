@@ -58,6 +58,15 @@ Dans **Prompts**, l’éditeur de champs vous permet d’écrire les vôtres : 
 indiquez le type de réponse attendu (un texte, une liste, un choix dans votre propre liste) et
 décrivez ce que vous voulez.
 
+Chaque texte est envoyé en entier : il doit tenir dans ce que le modèle lit d’un coup, environ
+11 000 mots pour les modèles hors ligne Gemma 4, bien davantage pour les modèles en ligne. Un
+texte trop long est nommé au-dessus de **Lancer** dans Nouveau traitement, et Lancer reste
+désactivé tant que vous n’avez pas choisi un autre modèle ou découpé le texte, par exemple :
+*long-text.txt est trop long pour Gemma 4 E2B : environ 48 000 mots, alors qu’il en lit environ
+11 000 à la fois. Choisissez un autre modèle, ou découpez le texte en documents plus courts.*
+Rien n’est envoyé et aucun traitement n’est créé. Un entretien, lui, est lu en plusieurs parties
+(ci-dessous).
+
 ![Une analyse : les champs avec leurs réponses, à côté du document](../../store/screenshots/windows/fr/07-analysis.png)
 *Une analyse, champ par champ, avec le document dont elle est tirée.*
 
@@ -82,9 +91,11 @@ Kalamu l’indique à côté du coût.
 La réponse donne un résumé, des thèmes, des mots-clés et les passages à citer, chacun avec qui
 parle et à quel moment : [Vérifier une analyse](review.md#verifier-une-analyse) explique comment
 la vérifier. À côté de la transcription, Kalamu écrit une note en Markdown (chaque citation avec
-qui parle et à quel moment), un fichier JSON et deux tableaux : la réponse dans `.analysis.csv`
-et `.analysis.quotations.csv`, une ligne par citation, avec une colonne qui dit si vous l’avez
-ajoutée. Les formats choisis dans les Paramètres sont écrits aussi.
+qui parle et à quel moment), un fichier JSON et deux tableaux, chacun en tableur pour Excel
+(`.xlsx`) et en CSV : la réponse dans `.analysis.xlsx` et `.analysis.csv`, et
+`.analysis.quotations.xlsx` et `.analysis.quotations.csv`, une ligne par citation, avec une
+colonne qui dit si vous l’avez ajoutée. Les formats choisis dans les Paramètres sont écrits
+aussi.
 
 ### Un registre ou un annuaire en tableau
 
@@ -109,7 +120,8 @@ extraites, analysées ou exportées séparément du reste.
 Pour un texte déjà mal lu par une machine : la couche texte d’un PDF, ou un fichier texte venu
 d’une bibliothèque numérique. Un modèle le corrige page par page en gardant l’orthographe et la
 formulation de l’époque, et chaque modification est montrée face à l’original : vous l’acceptez
-en connaissance de cause.
+en connaissance de cause. Choisissez **Document imprimé ou journal** pour un texte imprimé,
+**Document manuscrit** pour la transcription d’un manuscrit.
 
 ## Traduire un texte
 

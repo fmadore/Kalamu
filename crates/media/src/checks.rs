@@ -15,7 +15,7 @@ const MIN_DPI: u32 = 200;
 const MIN_SCAN_DPI: u32 = 50;
 
 /// Pages checked for slow tests (text layer, image resolution) on long PDFs.
-const SAMPLE: u32 = 10;
+pub(crate) const SAMPLE: u32 = 10;
 
 pub(crate) fn pdf_warnings(pdf: &PdfSource) -> Vec<WarningKind> {
     let mut out = Vec::new();

@@ -30,7 +30,10 @@ sur votre système.
 
 ## Corriger le texte
 
-Corrigez le texte directement, puis enregistrez. Trois choses en découlent :
+Corrigez le texte directement, puis cliquez sur **Enregistrer la correction** (<kbd>Ctrl</kbd> <kbd>Entrée</kbd>,
+<kbd>⌘</kbd> <kbd>Entrée</kbd> sur un Mac), ce qui marque aussi la page comme relue ; **Abandonner les
+modifications** la laisse telle qu’elle était. Les deux restent au pied du texte pendant que
+vous le faites défiler, quelle que soit la longueur de la page. Trois choses en découlent :
 
 - le texte du modèle est **gardé tel quel** en dessous, et vous pouvez toujours le revoir ;
 - les exports utilisent votre texte corrigé et indiquent qu’il a été corrigé ;
@@ -108,7 +111,9 @@ PAGE XML et PDF interrogeable reprennent vos zones.
 
 Quand quelques lignes sont mal lues et que le reste est bon, sélectionnez-les dans le texte et
 faites un clic droit (ou utilisez **Corriger avec un modèle…**, qui apparaît dès qu’il y a une
-sélection). Choisissez un modèle et un prompt de correction. Kalamu vous dit ce qui sera envoyé
+sélection). Choisissez un modèle et un prompt de correction : **Document manuscrit** est
+proposé d’abord pour une page lue avec le prompt des manuscrits, **Document imprimé ou
+journal** sinon. Kalamu vous dit ce qui sera envoyé
 (le passage et un peu du texte qui l’entoure) et ce que cela devrait coûter. La réponse du
 modèle est une proposition, montrée face à votre sélection : acceptez-la, modifiez-la d’abord,
 ou écartez-la. L’accepter l’enregistre comme votre correction, que vous pouvez annuler ; rien ne

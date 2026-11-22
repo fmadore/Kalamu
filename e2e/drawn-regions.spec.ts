@@ -96,6 +96,21 @@ test('the card of a region drawn at the top of the page leaves the region in sig
 	if (!a || !b) throw new Error('not drawn');
 	const overlap = a.y < b.y + b.height && a.y + a.height > b.y;
 	expect(overlap).toBe(false);
+
+	// Moved or resized, what to do is said clear of the box too, at 1280 × 720 as at this size.
+	for (const size of [null, { width: 1280, height: 720 }]) {
+		if (size) await page.setViewportSize(size);
+		await note.getByRole('button', { name: 'Move or resize' }).click();
+		const frame = main.getByRole('application', { name: 'The region’s box' });
+		await expect(frame).toBeFocused();
+		await expect(note).toContainText('Drag the box to move it');
+		await expect(note).toHaveClass(/foot/);
+		const [f, n] = [await frame.boundingBox(), await note.boundingBox()];
+		if (!f || !n) throw new Error('not drawn');
+		expect(f.y < n.y + n.height && f.y + f.height > n.y, 'the hint covers the box').toBe(false);
+		await page.keyboard.press('Escape');
+		await expect(mine).toBeFocused();
+	}
 });
 
 test('a box drawn with the pointer is kept, with what is written there; a slip keeps nothing', async ({

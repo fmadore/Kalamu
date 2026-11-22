@@ -53,6 +53,13 @@ Ready-made analyses cover common needs, among them:
 Under **Prompts**, the field editor lets you write your own: name each field, say what kind of
 answer it takes (a text, a list, a choice from your own list), and describe what you want.
 
+Each text is sent whole, so it must fit in what the model reads at once: about 11,000 words for
+the offline Gemma 4 models, far more for the cloud models. A text that does not fit is named
+above **Start** in New job, and Start stays off until you choose another model or split the
+text, for example: *long-text.txt is too long for Gemma 4 E2B: about 48,000 words, where it
+reads about 11,000 at once. Choose another model, or split the text into shorter documents.*
+Nothing is sent and no job is made. An interview is read in parts instead (below).
+
 ![An analysis: fields with their answers beside the document](../store/screenshots/windows/en/07-analysis.png)
 *An analysis, field by field, with the document it was read from.*
 
@@ -75,9 +82,10 @@ once is read in parts, then brought together; Kalamu says so beside the cost.
 The answer gives a summary, themes, keywords and passages worth quoting, each with who speaks
 and when: [Check an analysis](review.md#check-an-analysis) says how to check it. Beside the
 transcript, Kalamu writes a Markdown memo (each quotation with its speaker and time), a JSON
-file, and two tables: the answer's `.analysis.csv` and `.analysis.quotations.csv`, one row per
-quotation, with a column saying whether you added it. The formats you chose in Settings are
-written as well.
+file, and two tables, each as a spreadsheet for Excel (`.xlsx`) and as a CSV: the answer's
+`.analysis.xlsx` and `.analysis.csv`, and `.analysis.quotations.xlsx` and
+`.analysis.quotations.csv`, one row per quotation, with a column saying whether you added it.
+The formats you chose in Settings are written as well.
 
 ### A register or a directory as a table
 
@@ -100,6 +108,8 @@ an item of its own, whose pages are extracted, analysed or exported apart from t
 For text that a machine already read badly: the text layer of a PDF, or a text file from a
 digital library. A model corrects it page by page, keeping the spelling and wording of the
 time, and every change is shown against the original so you can accept it with open eyes.
+Choose **Printed document or newspaper** for printed text, **Handwritten document or
+manuscript** for a transcription of handwriting.
 
 ## Translate a text
 

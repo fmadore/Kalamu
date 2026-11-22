@@ -241,52 +241,9 @@ impl Engine {
             .is_some_and(|s| cited::has_cited(&s.fields)))
     }
 
-    /// Refuses a new cited analysis whose text a set-up's model cannot read even in parts, one
-    /// turn of it alone too long, measured as the catalogue measures it
-    /// ([`kalamu_catalog::ModelInfo::too_long`]) on the numbered turn that would be sent: before
-    /// anything is sent or recorded, and never by a provider's or a model's name. A model the
-    /// catalogue gives no limit, and a text that cannot be read now, are left to the provider
-    /// and the run.
-    pub(crate) fn check_length(&self, catalog: &Catalog, new: &NewJob) -> Result<(), EngineError> {
-        for request in &new.setups {
-            if !self.request_cites(new.task, request)? {
-                continue;
-            }
-            if let Some(long) = self
-                .texts_too_long(catalog, request, &new.sources)
-                .into_iter()
-                .next()
-            {
-                let model = catalog
-                    .model(&request.provider, &request.model)
-                    .map_or_else(|| request.model.clone(), |m| m.name.clone());
-                return Err(EngineError::TextTooLong {
-                    file: long.file,
-                    model,
-                    words: long.words,
-                    most: long.most_words,
-                });
-            }
-        }
-        Ok(())
-    }
-
-    /// The sources a cited set-up's model cannot read even in parts, in the order given: one
-    /// turn of each alone is too long ([`crate::windows`]). A text longer than the model reads
-    /// at once is read in parts, and not refused.
-    pub(crate) fn texts_too_long(
-        &self,
-        catalog: &Catalog,
-        request: &SetupRequest,
-        sources: &[SourceFile],
-    ) -> Vec<TextTooLong> {
-        self.too_long_at(catalog, request, sources)
-            .into_iter()
-            .map(|(_, long)| long)
-            .collect()
-    }
-
-    /// [`Engine::texts_too_long`], each with its place among the sources.
+    /// The sources a cited set-up's model cannot read even in parts, each with its place among
+    /// the sources, in the order given: one turn of each alone is too long ([`crate::windows`]).
+    /// A text longer than the model reads at once is read in parts, and not refused.
     pub(crate) fn too_long_at(
         &self,
         catalog: &Catalog,

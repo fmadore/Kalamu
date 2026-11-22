@@ -46,6 +46,36 @@ test('a correction is saved and found again on coming back to the page', async (
 	await expect(text).not.toContainText('deux cents fidèles');
 });
 
+test('the correction’s Save and Discard stay in view at 1280 × 720, the text scrolling under them', async ({
+	page
+}) => {
+	await page.setViewportSize({ width: 1280, height: 720 });
+	await open(page, 'review');
+	const main = page.getByRole('main');
+	const pane = main.getByRole('region', { name: 'Reading text' }).locator('.page');
+	await main.getByRole('button', { name: 'Correct', exact: true }).first().click();
+	const editor = main.getByRole('textbox', { name: /^Correct / });
+	await expect(editor).toBeFocused();
+	// A long correction, far taller than the pane.
+	await editor.fill(Array.from({ length: 80 }, (_, i) => `Ligne ${i + 1} du texte.`).join('\n'));
+	const save = main.getByRole('button', { name: /^Save correction/ });
+	const discard = main.getByRole('button', { name: 'Discard changes' });
+	for (const top of [0, 400]) {
+		await pane.evaluate((el, at) => el.scrollTo({ top: at }), top);
+		const area = await pane.boundingBox();
+		if (!area) throw new Error('not drawn');
+		for (const button of [save, discard]) {
+			const box = await button.boundingBox();
+			if (!box) throw new Error('not drawn');
+			expect(box.y, `scrolled to ${top}`).toBeGreaterThanOrEqual(area.y);
+			expect(box.y + box.height, `scrolled to ${top}`).toBeLessThanOrEqual(area.y + area.height);
+		}
+	}
+	await save.click();
+	await expect(editor).toBeHidden();
+	await expect(main.getByRole('region', { name: 'Reading text' })).toContainText('Ligne 80');
+});
+
 test('a PDF’s corrected text shows the text the model read beside it, the page a click away', async ({
 	page
 }) => {
@@ -362,6 +392,22 @@ test('New job says why Start waits for the language to translate into', async ({
 	await expect(start).toHaveAccessibleDescription('Choose the language to translate into.');
 });
 
+test('New job names a text too long for the model chosen, and Start stays off', async ({
+	page
+}) => {
+	// B15: the engine would refuse the job (`job.text_too_long`), so it is said before Start.
+	await page.goto('/?mock&view=new&text-long');
+	await page.waitForLoadState('networkidle');
+	const main = page.getByRole('main');
+	await main.getByRole('button', { name: /^Analyse texts/ }).click();
+	await main.getByRole('button', { name: 'Add files' }).click();
+	const start = page.getByRole('button', { name: /^Start(?! over)/ });
+	await expect(start).toBeDisabled();
+	await expect(start).toHaveAccessibleDescription(
+		/is too long for .*: about 48,000 words, where it reads about 11,000 at once\. Choose another model, or split the text into shorter documents\./
+	);
+});
+
 test('New job offers a translation of text without times no subtitles, and says why', async ({
 	page
 }) => {
@@ -494,6 +540,41 @@ test('a difference’s readings show whole in a short text pane, wherever its wo
 		expect(box.y + box.height, `difference ${i + 1}: bottom`).toBeLessThanOrEqual(bottom + 1);
 		await readings.getByRole('button', { name: 'Close' }).click();
 		await expect(readings).toBeHidden();
+	}
+});
+
+test('a difference stepped to shows its readings whole at 1280 × 720, under the pane’s bar', async ({
+	page
+}) => {
+	// The Store's 1920 × 1080 at 150 %. Stepping scrolls the words into view after the readings
+	// are placed: they must end in the part of the pane that shows, not under its bar.
+	await page.setViewportSize({ width: 1280, height: 720 });
+	await open(page, 'review');
+	const text = page.getByRole('main').getByRole('region', { name: 'Reading text' });
+	const pane = text.locator('.page');
+	const readings = page.getByRole('dialog', { name: 'Choose the correct reading' });
+	const total = await text.locator('[data-entry]').count();
+	expect(total).toBeGreaterThan(1);
+	/** Whether the pane has stopped scrolling: its smooth scroll is over. */
+	let last = -1;
+	const still = async () => {
+		const top = await pane.evaluate((el) => el.scrollTop);
+		const done = top === last;
+		last = top;
+		return done;
+	};
+	// Round the differences and back to the first, the pane scrolling down and up again.
+	for (let i = 0; i <= total; i++) {
+		await page.getByRole('button', { name: 'Next difference' }).click();
+		await expect(readings).toBeVisible();
+		last = -1;
+		await expect.poll(still, { intervals: [150] }).toBe(true);
+		const [area, box] = [await pane.boundingBox(), await readings.boundingBox()];
+		if (!area || !box) throw new Error('not drawn');
+		expect(box.y, `step ${i + 1}: top`).toBeGreaterThanOrEqual(area.y - 1);
+		expect(box.y + box.height, `step ${i + 1}: bottom`).toBeLessThanOrEqual(
+			area.y + area.height + 1
+		);
 	}
 });
 
@@ -632,6 +713,35 @@ test('what to check draws the same sample again from a seed typed by hand', asyn
 	await sample.getByRole('button', { name: 'Draw at random' }).click();
 	await expect(sample.getByText(/^Seed 271828,/)).toBeVisible();
 	await expect(seed).toHaveValue('');
+});
+
+test('an item of what to check opens on its own set-up, not the job’s first', async ({ page }) => {
+	await open(page, 'queue');
+	const main = page.getByRole('main');
+	const witness = main.locator('.pane.text .pane-bar .witness');
+	// Page 1 of the bulletin is listed for its second set-up's reading.
+	await main
+		.getByRole('button', { name: 'Open Bulletin, May 1957, Page 1, in the review' })
+		.click();
+	await expect(main.getByRole('combobox', { name: 'Review' }).locator('option:checked')).toHaveText(
+		/^Page 1(,|$)/
+	);
+	await expect(witness).toContainText('claude-opus-5-5');
+	await expect(main.getByRole('status').filter({ hasText: /of \d+ to check/ })).toContainText(
+		'claude-opus-5-5'
+	);
+
+	// The analysis is listed once per set-up: each opens on its own answers, and stepping from
+	// one to the other in the review changes the answers shown.
+	await main.getByRole('button', { name: 'Back to the list' }).click();
+	const whole = main.getByRole('button', {
+		name: 'Open Bulletin, May 1957, Whole document, in the review'
+	});
+	await expect(whole).toHaveCount(2);
+	await whole.nth(1).click();
+	await expect(witness).toContainText('claude-opus-5-5');
+	await main.getByRole('button', { name: 'Previous to check' }).click();
+	await expect(witness).toContainText('gemini-3.8-flash');
 });
 
 test('a result set aside from what to check stays aside on coming back, until brought back', async ({

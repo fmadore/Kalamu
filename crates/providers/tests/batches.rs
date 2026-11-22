@@ -16,6 +16,11 @@ fn fixture(name: &str) -> serde_json::Value {
     serde_json::from_str(&text).unwrap_or_default()
 }
 
+fn fixture_text(name: &str) -> String {
+    let path = format!("{}/tests/fixtures/{name}", env!("CARGO_MANIFEST_DIR"));
+    std::fs::read_to_string(path).unwrap_or_default()
+}
+
 fn page(number: u32) -> PreparedInput {
     PreparedInput {
         piece: PieceRef::page(number),
@@ -254,10 +259,10 @@ async fn openai_uploads_a_jsonl_file_and_reads_the_output_and_error_files() {
     assert!(matches!(answers[1].1, Err(ProviderError::Transient(_))));
 }
 
-/// Gemini's and Mistral's batches are written item by item into the body that is sent: still
-/// one JSON document of the documented shape, each request under its id, sent as JSON.
+/// Gemini's batches are written item by item into the body that is sent: still one JSON
+/// document of the documented shape, each request under its id, sent as JSON.
 #[tokio::test]
-async fn gemini_and_mistral_send_each_request_of_a_batch_under_its_id() {
+async fn gemini_sends_each_request_of_a_batch_under_its_id() {
     let server = MockServer::start().await;
     Mock::given(method("POST"))
         .respond_with(
@@ -277,23 +282,16 @@ async fn gemini_and_mistral_send_each_request_of_a_batch_under_its_id() {
         .submit_batch(&key, &requests("gemini-3.8-flash", &pages, &langs, &opts))
         .await;
     assert_eq!(sent.as_deref(), Ok("batches/1"));
-    let mistral = Mistral::with_base_url(client(), &server.uri());
-    let sent = mistral
-        .submit_batch(&key, &requests("mistral-ocr-latest", &pages, &langs, &opts))
-        .await;
-    assert_eq!(sent.as_deref(), Ok("job_1"));
 
     let received = server.received_requests().await.unwrap_or_default();
-    assert_eq!(received.len(), 2);
-    for request in &received {
-        assert_eq!(
-            request
-                .headers
-                .get("content-type")
-                .and_then(|v| v.to_str().ok()),
-            Some("application/json")
-        );
-    }
+    assert_eq!(received.len(), 1);
+    assert_eq!(
+        received[0]
+            .headers
+            .get("content-type")
+            .and_then(|v| v.to_str().ok()),
+        Some("application/json")
+    );
     let gemini: serde_json::Value = serde_json::from_slice(&received[0].body).unwrap_or_default();
     assert_eq!(gemini["batch"]["display_name"], "kalamu");
     let items = gemini
@@ -306,20 +304,151 @@ async fn gemini_and_mistral_send_each_request_of_a_batch_under_its_id() {
         assert_eq!(item["metadata"]["key"], format!("p{i}"));
         assert!(item["request"]["contents"].is_array(), "{item}");
     }
+}
 
-    let mistral: serde_json::Value = serde_json::from_slice(&received[1].body).unwrap_or_default();
-    assert_eq!(mistral["endpoint"], "/v1/ocr");
-    assert_eq!(mistral["model"], "mistral-ocr-latest");
-    assert_eq!(mistral["timeout_hours"], 24);
-    let items = mistral["requests"].as_array().cloned().unwrap_or_default();
-    assert_eq!(items.len(), 3, "{mistral}");
-    for (i, item) in items.iter().enumerate() {
-        assert_eq!(item["custom_id"], format!("p{i}"));
-        assert_eq!(
-            item["body"]["document"]["document_url"],
-            "data:application/pdf;base64,JVBERi0xLjUgZmFrZQ=="
-        );
+/// The JSON lines of a multipart upload: each line of its body that is a JSON object.
+fn uploaded_lines(body: &[u8]) -> Vec<serde_json::Value> {
+    String::from_utf8_lossy(body)
+        .lines()
+        .filter(|l| l.starts_with('{'))
+        .filter_map(|l| serde_json::from_str(l).ok())
+        .collect()
+}
+
+/// A photographed page as Mistral OCR reads it, in the size of the 1755 letter of the test pass
+/// (1.8 MB): two of them passed the 2.5 MB an inline job's body may hold.
+fn photographed_page(number: u32) -> PreparedInput {
+    PreparedInput {
+        piece: PieceRef::page(number),
+        mime: "image/jpeg".into(),
+        bytes: vec![0xFF; 1_840_941],
+        file_name: format!("dodington-p{number}.jpg"),
     }
+}
+
+/// Mistral's requests go in a JSON Lines file uploaded for the batch, each under its id, and the
+/// job names that file: never inline, where two photographed pages were refused with an HTML
+/// "Bad Request (400)" page (1.10.0-rc2).
+#[tokio::test]
+async fn mistral_uploads_its_requests_as_a_file_the_job_names() {
+    let server = MockServer::start().await;
+    Mock::given(method("POST"))
+        .and(path("/files"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "id": "file-in", "object": "file", "bytes": 5_000_000, "purpose": "batch",
+            "filename": "batch.jsonl" })))
+        .mount(&server)
+        .await;
+    Mock::given(method("POST"))
+        .and(path("/batch/jobs"))
+        .and(header("content-type", "application/json"))
+        .and(body_partial_json(serde_json::json!({
+            "input_files": ["file-in"], "endpoint": "/v1/ocr", "model": "mistral-ocr-4-1",
+            "timeout_hours": 24 })))
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "id": "job_1", "object": "batch", "endpoint": "/v1/ocr", "model": "mistral-ocr-4-1",
+            "input_files": ["file-in"], "errors": [], "status": "QUEUED", "created_at": 1,
+            "total_requests": 2, "completed_requests": 0, "succeeded_requests": 0,
+            "failed_requests": 0 })))
+        .mount(&server)
+        .await;
+    let key = ApiKey::new("k");
+    let (pages, langs, opts) = (
+        [photographed_page(1), page(2)],
+        LanguageChoice::Auto,
+        SetupOptions::default(),
+    );
+    let mistral = Mistral::with_base_url(client(), &server.uri());
+    let sent = mistral
+        .submit_batch(&key, &requests("mistral-ocr-4-1", &pages, &langs, &opts))
+        .await;
+    assert_eq!(sent.as_deref(), Ok("job_1"));
+
+    let received = server.received_requests().await.unwrap_or_default();
+    assert_eq!(received.len(), 2, "{received:?}");
+    let upload = &received[0];
+    assert_eq!(upload.url.path(), "/files");
+    let form = upload
+        .headers
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or_default();
+    assert!(form.starts_with("multipart/form-data"), "{form}");
+    let text = String::from_utf8_lossy(&upload.body);
+    assert!(text.contains("name=\"purpose\"\r\n\r\nbatch"), "no purpose");
+    assert!(text.contains("filename=\"batch.jsonl\""), "no file name");
+    let lines = uploaded_lines(&upload.body);
+    assert_eq!(lines.len(), 2);
+    for (i, line) in lines.iter().enumerate() {
+        assert_eq!(line["custom_id"], format!("p{i}"));
+        assert_eq!(line["body"]["model"], "mistral-ocr-4-1");
+    }
+    assert_eq!(lines[0]["body"]["document"]["type"], "image_url");
+    assert!(
+        lines[0]["body"]["document"]["image_url"]
+            .as_str()
+            .is_some_and(|u| u.starts_with("data:image/jpeg;base64,/////")),
+        "{}",
+        &lines[0]["body"]["document"].to_string()[..80]
+    );
+    assert_eq!(
+        lines[1]["body"]["document"]["document_url"],
+        "data:application/pdf;base64,JVBERi0xLjUgZmFrZQ=="
+    );
+
+    // The job names the file and holds no request itself.
+    let job: serde_json::Value = serde_json::from_slice(&received[1].body).unwrap_or_default();
+    assert!(job.get("requests").is_none(), "{job}");
+}
+
+/// A file no job will name, because Mistral refused the job, is deleted at once; Mistral's HTML
+/// error page reaches the researcher as one short sentence.
+#[tokio::test]
+async fn mistral_deletes_the_uploaded_file_when_the_job_is_not_made() {
+    let server = MockServer::start().await;
+    Mock::given(method("POST"))
+        .and(path("/files"))
+        .respond_with(
+            ResponseTemplate::new(200).set_body_json(serde_json::json!({ "id": "file-in" })),
+        )
+        .mount(&server)
+        .await;
+    Mock::given(method("POST"))
+        .and(path("/batch/jobs"))
+        .respond_with(
+            ResponseTemplate::new(400)
+                .insert_header("content-type", "text/html")
+                .set_body_string(fixture_text("mistral_400.html")),
+        )
+        .mount(&server)
+        .await;
+    Mock::given(method("DELETE"))
+        .and(path("/files/file-in"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "id": "file-in", "object": "file", "deleted": true })))
+        .mount(&server)
+        .await;
+    let mistral = Mistral::with_base_url(client(), &server.uri());
+    let (pages, langs, opts) = ([page(1)], LanguageChoice::Auto, SetupOptions::default());
+    let sent = mistral
+        .submit_batch(
+            &ApiKey::new("k"),
+            &requests("mistral-ocr-4-1", &pages, &langs, &opts),
+        )
+        .await;
+    assert_eq!(
+        sent,
+        Err(ProviderError::InvalidRequest(
+            "The provider refused the request (400 Bad Request).".into()
+        ))
+    );
+    let received = server.received_requests().await.unwrap_or_default();
+    assert!(
+        received
+            .iter()
+            .any(|r| r.method.as_str() == "DELETE" && r.url.path() == "/files/file-in"),
+        "{received:?}"
+    );
 }
 
 /// What a settled OpenAI batch left is named from the batch, by its id, and deleted file by

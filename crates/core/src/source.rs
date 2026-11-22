@@ -63,6 +63,10 @@ impl InputKind {
     }
 }
 
+/// Words beyond which a page's text layer is small print in columns, a newspaper's: about twice
+/// a book's page. A page of the Daily Nebraskan of 1911 holds about 1,900.
+pub const DENSE_PAGE_WORDS: usize = 900;
+
 /// A file added to a job, identified by the hash of its content.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[ts(export)]
@@ -93,6 +97,13 @@ pub struct SourceFile {
     /// Even out a recording's volume before transcription (quiet or uneven speakers).
     #[serde(default)]
     pub even_out_volume: bool,
+    /// Of a PDF's pages, how many carry a text layer of small print (a newspaper's, more than
+    /// 900 words a page), counted on its first ten pages when it was added: an estimate prices
+    /// them as dense pages whatever the prompt. `None` for any other source, and for a PDF
+    /// added before Kalamu counted them.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub dense_pages: Option<u32>,
     /// A YouTube video's title, as YouTube gives it, when it could be read.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
@@ -110,9 +121,40 @@ pub struct SourceFile {
     pub pages: Vec<crate::PageFile>,
 }
 
+impl SourceFile {
+    /// Of `read` pages of this source (all of them, a sample's first ones, a spread's halves),
+    /// how many are dense pages ([`SourceFile::dense_pages`]), in the share they hold of all its
+    /// pages; none when they were not counted.
+    pub fn dense_of(&self, read: u32) -> u32 {
+        match (self.dense_pages, self.page_count) {
+            (Some(dense), Some(pages)) if pages > 0 => {
+                let share = f64::from(dense.min(pages)) / f64::from(pages);
+                (f64::from(read) * share).round() as u32
+            }
+            _ => 0,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn dense_pages_are_counted_in_their_share_of_the_pages_read() {
+        let mut source = SourceFile::image_document("issue", Vec::new());
+        source.kind = InputKind::Pdf;
+        assert_eq!(source.dense_of(4), 0, "not counted");
+        source.page_count = Some(4);
+        source.dense_pages = Some(4);
+        assert_eq!(source.dense_of(4), 4);
+        assert_eq!(source.dense_of(8), 8, "a spread's halves");
+        assert_eq!(source.dense_of(2), 2, "a sample's first pages");
+        source.dense_pages = Some(1);
+        assert_eq!(source.dense_of(4), 1);
+        source.page_count = Some(0);
+        assert_eq!(source.dense_of(4), 0);
+    }
 
     #[test]
     fn every_extension_reads_as_its_kind_in_any_case() {

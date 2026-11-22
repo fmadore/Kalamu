@@ -4,7 +4,9 @@
 //!
 //! An answer the check refuses is refused like any broken answer: billed and charged to the
 //! piece, asked again within `max_attempts` with the same request, and the piece fails with
-//! the reason when no answer passes. An answer that passes is kept as the check gives it back,
+//! the reason when no answer passes. An analysis's answer that left every field empty for a long
+//! text ([`refuse_empty`]) is asked again with more thinking where the model has it
+//! ([`Engine::call`](crate::Engine)), the same request having failed the same way. An answer that passes is kept as the check gives it back,
 //! which may be changed or completed from what the caller knows (a translation's lines given
 //! back their times). Numbered lines ([`crate::aligned::Passage`]) are the first check.
 
@@ -57,10 +59,13 @@ pub(crate) fn refuse_empty(
     input: Option<&PreparedInput>,
     output: ProcessOutput,
 ) -> Result<ProcessOutput, ProviderError> {
-    let words = input
-        .filter(|i| i.mime == "text/plain")
-        .map(|i| structured::word_count(&structured::document_text(i)));
-    refuse_empty_of(task, fields, words, output)
+    refuse_empty_of(task, fields, input.and_then(words_of), output)
+}
+
+/// How many words a text sent holds, as [`refuse_empty`] counts them; none for a scan or a
+/// picture.
+pub(crate) fn words_of(input: &PreparedInput) -> Option<u64> {
+    (input.mime == "text/plain").then(|| structured::word_count(&structured::document_text(input)))
 }
 
 /// [`refuse_empty`] for a text of `words` words, when the input itself is gone (a batch's

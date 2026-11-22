@@ -60,7 +60,10 @@ text, review status or analysis answers.
 **Search** finds every passage of the project's documents that holds your words, in the text as
 you corrected it. Capitals, accents and Arabic vowel marks are ignored. You can ask for all the
 words anywhere on a page, or within a few words of each other, and narrow the search by
-collection, tag, task or review state. Each match opens its source where it stands.
+collection, tag, task or review state. Each match opens its source where it stands. With
+**Also search what models wrote about them: analyses and tables of contents** ticked, matches in
+those answers are marked **Written by a model**, and a name you added to an analysis's list
+yourself **Written by you**.
 
 The search runs on your computer; nothing is sent. With every search, Kalamu says what was
 searched and what was not (documents not read yet, pages that failed), so that finding nothing
@@ -117,7 +120,9 @@ you choose.
 **What to check** is one list, across the whole project, of the pages and answers that need
 you: those that failed or were cut off, those two models read differently, analyses read from
 a text you corrected since, and what is not yet reviewed. Each line opens its review at the
-right page. Nothing is sent to a model to build it.
+right page, on the model's reading it names: in a comparison, that reading is the one shown
+first, which you correct and mark as reviewed, the others compared with it. Nothing is sent to
+a model to build it.
 
 For a large project that cannot be reviewed in full, draw a **random sample** of pages to
 review, of a size you choose. The sample is drawn from a seed that Kalamu shows, so a

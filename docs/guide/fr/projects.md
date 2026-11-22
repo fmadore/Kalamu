@@ -70,7 +70,10 @@ La **Recherche** trouve tous les passages des documents du projet qui contiennen
 le texte tel que vous l’avez corrigé. Elle ne tient pas compte des majuscules, des accents ni
 des voyelles brèves de l’arabe. Vous pouvez demander tous les mots n’importe où sur une page, ou
 à quelques mots les uns des autres, et limiter la recherche à une collection, une étiquette, une
-tâche ou un état de relecture. Chaque résultat ouvre sa source à l’endroit voulu.
+tâche ou un état de relecture. Chaque résultat ouvre sa source à l’endroit voulu. Quand la case
+**Chercher aussi ce que les modèles en ont écrit : analyses et tables des matières** est
+cochée, les résultats trouvés dans ces réponses sont marqués **Écrit par un modèle**, et un nom
+que vous avez ajouté vous-même à une liste d’une analyse **Écrit par vous**.
 
 La recherche se fait sur votre ordinateur ; rien n’est envoyé. À chaque recherche, Kalamu
 indique ce qui a été parcouru et ce qui ne l’a pas été (documents pas encore lus, pages en
@@ -134,7 +137,9 @@ réunir ces graphies en une seule entrée, sous le libellé de votre choix.
 **À vérifier** rassemble en une seule liste, pour tout le projet, les pages et les réponses qui
 ont besoin de vous : celles qui ont échoué ou ont été tronquées, celles que deux modèles ont lues
 différemment, les analyses faites sur un texte que vous avez corrigé depuis, et ce qui n’est pas
-encore relu. Chaque ligne ouvre sa relecture à la bonne page. Aucun modèle n’est sollicité pour
+encore relu. Chaque ligne ouvre sa relecture à la bonne page, sur la lecture du modèle qu’elle
+nomme : dans une comparaison, c’est elle qui s’affiche en premier, celle que vous corrigez et
+marquez comme relue, les autres comparées avec elle. Aucun modèle n’est sollicité pour
 construire cette liste.
 
 Pour un gros projet qu’on ne peut pas relire en entier, cliquez sur **Tirer au hasard** pour

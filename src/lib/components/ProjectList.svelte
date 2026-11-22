@@ -8,7 +8,7 @@
 	import { formatDateTime, messages } from '#lib/i18n/index.js';
 	import type { ProjectFileOpened } from '#lib/bindings/ProjectFileOpened.js';
 	import { pickProjectFile } from '#lib/projectFile.js';
-	import { go, refreshProjects } from '#lib/state.svelte.js';
+	import { go, refreshJobs, refreshProjects } from '#lib/state.svelte.js';
 	import { api, listenWhileMounted, on } from '#lib/tauri.js';
 	import ProgressBar from './ProgressBar.svelte';
 
@@ -58,7 +58,9 @@
 			async (found) => {
 				opened = found;
 				await load();
+				// Its jobs, copied in, are listed at once with the others.
 				void refreshProjects();
+				void refreshJobs();
 			}
 		);
 		opening = null;

@@ -1,7 +1,7 @@
 //! A transcript too long for the model to read at once: the estimate says so before Start, and
-//! the job is refused when created, before anything is sent or recorded; one that fits, and an
-//! analysis that sends no numbered text, go on as before. The offline models' limit in the
-//! catalogue is the offline engine's own.
+//! the job is refused when created, before anything is sent or recorded; one that fits goes on
+//! as before. An analysis that cites nothing is measured on the whole text it sends. The offline
+//! models' limit in the catalogue is the offline engine's own.
 
 use super::*;
 
@@ -132,16 +132,54 @@ async fn each_file_is_measured_on_its_own() {
     assert!(f.analysis(vec![short, other], None).is_ok());
 }
 
+/// An analysis that cites nothing sends its text whole, so a text longer than the model reads at
+/// once is refused when the job is made, and named by the estimate, as for a cited analysis that
+/// cannot read it even in parts (B15: Gemma 4 E2B and a 47,621-word text).
 #[tokio::test]
-async fn an_analysis_that_cites_nothing_is_not_measured() {
+async fn an_analysis_that_cites_nothing_is_measured_whole() {
     let f = interviews_reading(TOKENS);
-    let long = f.text_file("long.txt", &paragraph(1_000));
+    // Two paragraphs: a cited analysis would read them in parts, a plain one cannot.
+    let long = f.text_file(
+        "long.txt",
+        &format!(
+            "{}
+
+{}",
+            "a".repeat(300),
+            "b".repeat(300)
+        ),
+    );
+    let row = &estimate(&f, vec![long.clone()], None).rows[0];
+    assert_eq!(
+        row.too_long,
+        vec![TextTooLong {
+            source: long.id,
+            file: "long.txt".into(),
+            words: 110,
+            most_words: 66
+        }]
+    );
+    let refused = plain_analysis(&f, vec![long.clone()]);
     assert!(
-        estimate(&f, vec![long.clone()], None).rows[0]
+        matches!(&refused, Err(EngineError::TextTooLong { file, words, most, .. })
+            if file == "long.txt" && *words == 110 && *most == 66),
+        "{refused:?}"
+    );
+    assert_eq!(f.model.calls(), 0);
+    assert!(f.engine.store.list_jobs().unwrap_or_default().is_empty());
+    // The interview prompt reads the same text in parts, and is not refused.
+    let parts = estimate(&f, vec![long.clone()], Some("analysis.interview"));
+    assert!(parts.rows[0].too_long.is_empty());
+    assert_eq!(parts.rows[0].parts, Some(2));
+    assert!(f.analysis(vec![long], None).is_ok());
+    // A text that fits is sent as before.
+    let fits = f.text_file("fits.txt", &"a".repeat(400));
+    assert!(
+        estimate(&f, vec![fits.clone()], None).rows[0]
             .too_long
             .is_empty()
     );
-    assert!(plain_analysis(&f, vec![long]).is_ok());
+    assert!(plain_analysis(&f, vec![fits]).is_ok());
 }
 
 #[tokio::test]

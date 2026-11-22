@@ -16,7 +16,10 @@
 //! The tables of contents port iwac-ai-pipelines' `AI_summary_issue` prompts (page extraction
 //! and consolidation), in English and without their Islamic-magazine specifics; the archival
 //! file and the book are new, on the same two steps. The correction keeps `AI_ocr_correction`'s
-//! rules for any printed text, its newspaper ones included. The translation is new: it takes
+//! rules for any printed text, its newspaper ones included; the handwritten one has no ancestor
+//! there: it takes those rules to a transcription of handwriting, with the handwritten
+//! extraction's rules for scripts and its marks, so that a passage of a manuscript is corrected
+//! as one (the review's *Correct with a model* starts on it for a page read with that prompt). The translation is new: it takes
 //! the translated interview's rules (everything in order, names kept, the original term beside a
 //! culturally specific one) to any text, its target named by `{languages}` as an analysis's
 //! answer language is. The directory and the register are records analyses (#171), new: one row
@@ -337,6 +340,18 @@ pub(crate) const DEFAULTS: &[Default] = &[
         name: "Printed document or newspaper",
         description: "Corrects machine-reading errors only, columns put back in order; spelling, wording and style of the time kept.",
         instructions: include_str!("../defaults/correction-general.md"),
+        user_prompt: CORRECTION_REQUEST,
+        schema: None,
+        merge: None,
+        dense: false,
+        made_for: None,
+    },
+    Default {
+        id: "text_correction.handwritten",
+        task: Task::TextCorrection,
+        name: "Handwritten document or manuscript",
+        description: "Corrects only the words misread, in any script; the writer's spelling, abbreviations and the transcription's marks kept.",
+        instructions: include_str!("../defaults/correction-handwritten.md"),
         user_prompt: CORRECTION_REQUEST,
         schema: None,
         merge: None,

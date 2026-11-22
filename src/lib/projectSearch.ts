@@ -156,6 +156,12 @@ export function hitOrigin(hit: Hit, m: Messages): string {
 	return parts.join(' › ') + (hit.reason ? ` (${m.search.reason})` : '');
 }
 
+/** Whether a result is said to be written by a model: an analysis or a table of contents,
+ * unless every match shown in it is in a name the researcher listed by hand. */
+export function writtenByModel(result: ResultHits): boolean {
+	return result.generated && result.hits.some((h) => !h.by_hand);
+}
+
 /** What the review opens at for a match: its piece, and the match among those its search
  * finds there for the words of the match; for an answer, its field, and its entry in a table of
  * contents. */

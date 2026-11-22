@@ -256,6 +256,16 @@ impl Reasoning {
             .min_by_key(|l| (rank(l).abs_diff(want), rank(l)))
             .cloned()
     }
+
+    /// The least level the model has above `level`, if one is no higher than `at_most`: what an
+    /// answer asked again with more thinking is sent.
+    pub fn above(&self, level: &str, at_most: &str) -> Option<&str> {
+        let (from, to) = (rank(level), rank(at_most));
+        self.levels
+            .iter()
+            .map(String::as_str)
+            .find(|l| rank(l) > from && rank(l) <= to)
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
@@ -343,6 +353,13 @@ pub struct ModelInfo {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub reasoning: Option<Reasoning>,
+    /// What the model thinks before it writes an ordinary page, in tokens at `low`, where
+    /// measured against what its provider billed: an estimate counts it in place of the
+    /// allowance every model gets (600), Gemini 4 thinking far more and GPT-6.2 far less. Older
+    /// builds ignore the field.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub page_thinking: Option<u32>,
     /// Its name and description in other interface languages, by language (`fr`).
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     #[ts(optional, as = "Option<BTreeMap<String, Translation>>")]

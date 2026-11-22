@@ -46,4 +46,8 @@ marks: Array<Mark>,
  * In a recording, when its line begins, in milliseconds; none where the text was
  * corrected into other words.
  */
-at_ms: number | null, reviewed: boolean, corrected: boolean, };
+at_ms: number | null, reviewed: boolean, corrected: boolean, 
+/**
+ * In a name the researcher listed by hand (or renamed), not one the model wrote.
+ */
+by_hand: boolean, };

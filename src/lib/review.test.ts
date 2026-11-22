@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { columns, minShare, moveCut } from './review.svelte.js';
+import { columns, leading, minShare, moveCut } from './review.svelte.js';
 
 describe('the boundaries between the review’s panes', () => {
 	it('moves a boundary, keeping each pane at its narrowest share', () => {
@@ -22,5 +22,19 @@ describe('the boundaries between the review’s panes', () => {
 		expect(minShare(1300)).toBe(0.2);
 		expect(minShare(600)).toBe(0.3);
 		expect(minShare(0)).toBe(0.2);
+	});
+});
+
+describe('the set-up a review shows first', () => {
+	const setups = [{ id: 'a' }, { id: 'b' }, { id: 'c' }];
+
+	it('puts the set-up it was opened for first, the others in the job order', () => {
+		expect(leading(setups, 'c').map((s) => s.id)).toEqual(['c', 'a', 'b']);
+		expect(leading(setups, 'a').map((s) => s.id)).toEqual(['a', 'b', 'c']);
+	});
+
+	it('keeps the job order when none is asked for or the one asked for is gone', () => {
+		expect(leading(setups, undefined)).toBe(setups);
+		expect(leading(setups, 'z')).toBe(setups);
 	});
 });

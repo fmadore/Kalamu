@@ -24,6 +24,12 @@ habituelles sont une connexion perdue, un fournisseur surchargé (Kalamu attend 
 seul), ou une page que le fournisseur refuse. Relancez le traitement : seul ce qui a échoué est
 renvoyé.
 
+Une analyse qui ne répond rien du tout pour un long texte n’est pas conservée : Kalamu redemande,
+avec davantage de réflexion à chaque fois quand le modèle le permet (*Moyenne*, puis *Élevée*),
+et garde la première réponse complète, dont le relevé indique le niveau envoyé. Si toutes les
+réponses restent vides, la page le dit avec les niveaux essayés : choisissez un autre modèle
+plutôt que de relancer.
+
 Un traitement mis en pause, ou interrompu parce que l’application a été fermée, se trouve en bas
 de la barre latérale, sous *À reprendre*.
 
@@ -47,10 +53,12 @@ un modèle en ligne. Voir [Travailler hors ligne](offline.md#a-quelle-vitesse).
 
 Regardez ce que le traitement a réellement consommé, et le prix du modèle dans la liste.
 L’estimation compte ce que le modèle écrit et la réflexion qui lui est facturée avant d’écrire,
-au niveau choisi sous *Réflexion*, et compte les pages lues avec la consigne *Journal ou magazine*
-comme des pages pleines de petits caractères. Les longues pages manuscrites, les pages
-particulièrement denses et les analyses aux longues réponses peuvent encore coûter plus que les
-moyennes de l’estimation. Pour le lot suivant : un modèle plus petit, ou le
+au niveau choisi sous *Réflexion* (certains modèles, comme Gemini 4, réfléchissent bien plus
+que d’autres), et compte comme des pages pleines de petits caractères celles lues avec la
+consigne *Journal ou magazine* et celles d’un PDF dont la couche de texte est en petits
+caractères. Une zone relue est comptée pour la partie de la page envoyée. Les longues pages
+manuscrites, un journal numérisé en images et lu avec une autre consigne, et les analyses aux
+longues réponses peuvent encore coûter plus que les moyennes de l’estimation. Pour le lot suivant : un modèle plus petit, ou le
 [mode moins cher](costs.md#trois-facons-de-payer-moins).
 
 ## Où sont mes résultats ?

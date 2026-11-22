@@ -17,6 +17,7 @@
 	"contents.archival_file": "Archival file, item by item",
 	"contents.book": "Book, report or thesis",
 	"text_correction.general": "Printed document or newspaper",
+	"text_correction.handwritten": "Handwritten document or manuscript",
 	"translation.research": "Translation for research",
 	"dictionary.merges": "Dictionary: proposed merges"
 }

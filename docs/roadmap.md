@@ -287,7 +287,9 @@ order given there.
   CSV with a column per field.
 - **Default prompts, one per kind of material**: printed or typed documents, newspapers and
   handwriting for text extraction, each for any language and either reading direction;
-  recordings transcribed or translated into English; one correction prompt. Defaults that
+  recordings transcribed or translated into English; two correction prompts, for printed text
+and for a transcription of handwriting (the passage dialog offers the second for a page read
+as handwriting). Defaults that
   repeated another for a language or a variant were retired, and anything that names one runs
   with its replacement ([decision](decisions/2026-11-02-fewer-default-prompts.md)).
 - **Detailed tables of contents** of newspaper and magazine issues, archival files and books:
@@ -759,8 +761,7 @@ to run on the computer itself.
    the review drawing a moved block's estimated lines within its new box, as the exports do;
    the reading's identifier in the XML files; an answer of an analysis, an entry of a table of contents or a row of records tied to the
    regions it was read from (with item 6 and #47); a drawn region kept with the document
-   across jobs rather than with one job; a cost estimate that follows the region's size; and
-   the third step, imported ALTO and PAGE XML and a model's text aligned to OCR positions.
+   across jobs rather than with one job; and the third step, imported ALTO and PAGE XML and a model's text aligned to OCR positions.
 6. **Records, the second increment ([#171](https://github.com/fmadore/Kalamu/issues/171))**,
    the first being done: entries that run over a page (with #54), where each row sits (with
    item 5), rows across a project, a cut-off page read again in halves, error rates by row, and the

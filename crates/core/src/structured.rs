@@ -188,12 +188,29 @@ pub fn refuse_empty(
         return Ok(output);
     }
     Err(ProviderError::InvalidAnswer {
-        reason: format!(
-            "the model left every field empty, though the text runs to about {words} words: it \
-             may not have read it. Try again, or choose another model"
-        ),
+        reason: empty_reason(words, &[]),
         usage: output.usage,
     })
+}
+
+/// Why an answer that left every field empty for a text of `words` words is refused, in a
+/// sentence that says what to do next: `more`, the higher thinking levels the engine asked again
+/// at, in order, when it did (none when the model has no higher level, or was not asked again).
+/// Asking the same again would only fail the same way.
+pub fn empty_reason(words: u64, more: &[String]) -> String {
+    if more.is_empty() {
+        format!(
+            "the model left every field empty, though the text runs to about {words} words: it \
+             may not have read it. Choose a higher thinking level, or another model"
+        )
+    } else {
+        format!(
+            "the model left every field empty, though the text runs to about {words} words, even \
+             when asked again with more thinking ({}): it may not have read it. Choose another \
+             model",
+            more.join(", then ")
+        )
+    }
 }
 
 /// How many words a text holds, as [`refuse_empty`] counts them.
@@ -438,6 +455,23 @@ mod tests {
         let single = lists(&["Groups"]);
         let none = answered(r#"{"groups":[]}"#, &single);
         assert!(refuse_empty(none, &single, Some(40_000)).is_ok());
+    }
+
+    #[test]
+    fn an_empty_answer_s_reason_says_what_to_do_next_not_to_try_the_same_again() {
+        let first = empty_reason(5_557, &[]);
+        assert!(first.contains("about 5557 words"), "{first}");
+        assert!(
+            first.ends_with("Choose a higher thinking level, or another model"),
+            "{first}"
+        );
+        assert!(!first.contains("Try again"), "{first}");
+        let tried = empty_reason(5_557, &["medium".into(), "high".into()]);
+        assert!(
+            tried.contains("even when asked again with more thinking (medium, then high)"),
+            "{tried}"
+        );
+        assert!(tried.ends_with("Choose another model"), "{tried}");
     }
 
     #[test]

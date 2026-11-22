@@ -67,6 +67,8 @@ struct Fake {
     cut_groups: std::sync::atomic::AtomicBool,
     /// Analyses answer every list empty.
     empty_lists: std::sync::atomic::AtomicBool,
+    /// Analyses answer every list empty when sent at `low` thinking, as GPT-6.2 Sol did.
+    empty_at_low: std::sync::atomic::AtomicBool,
 }
 
 impl Fake {
@@ -82,6 +84,7 @@ impl Fake {
             cut_groups: std::sync::atomic::AtomicBool::new(false),
             cut_by_filter: std::sync::atomic::AtomicBool::new(false),
             empty_lists: std::sync::atomic::AtomicBool::new(false),
+            empty_at_low: std::sync::atomic::AtomicBool::new(false),
         })
     }
 
@@ -145,7 +148,9 @@ impl Provider for Fake {
             } else {
                 assert!(bytes.starts_with(b"%PDF"), "a document arrives as a PDF");
             }
-            let empty = self.empty_lists.load(Ordering::SeqCst);
+            let empty = self.empty_lists.load(Ordering::SeqCst)
+                || (self.empty_at_low.load(Ordering::SeqCst)
+                    && request.tuning.reasoning.as_deref() == Some("low"));
             let fields: Vec<FieldAnswer> = schema
                 .fields
                 .iter()
@@ -244,6 +249,20 @@ impl Provider for Fake {
 
     async fn list_models(&self, _key: &ApiKey) -> Result<Vec<String>, ProviderError> {
         Ok(vec!["fake-model".into()])
+    }
+
+    /// The level sent, as a provider records it, so the answer kept says what it was sent with.
+    fn request_settings(
+        &self,
+        _task: Task,
+        _model: &str,
+        tuning: &kalamu_core::Tuning,
+    ) -> Vec<kalamu_core::RequestSetting> {
+        tuning
+            .reasoning
+            .iter()
+            .map(|level| kalamu_core::RequestSetting::new("reasoning.effort", level))
+            .collect()
     }
 }
 
@@ -1412,6 +1431,133 @@ async fn every_field_empty_for_a_long_text_fails_the_piece_and_a_short_text_pass
     assert_eq!(f.fake.calls(), 4);
 }
 
+/// The fake model as the catalogue would list a reasoning model: `low`, `medium`, `high` and
+/// `xhigh`.
+fn thinking_fake(f: &Fixture) {
+    let mut catalog = kalamu_catalog::Catalog::bundled();
+    let mut fake = catalog
+        .models
+        .iter()
+        .find(|m| m.id == "gpt-6.2-sol")
+        .cloned()
+        .unwrap_or_else(|| panic!("model"));
+    fake.provider = ProviderId::new("fake");
+    fake.id = "fake-model".into();
+    fake.reasoning = Some(kalamu_catalog::Reasoning {
+        levels: vec!["low".into(), "medium".into(), "high".into(), "xhigh".into()],
+        default: None,
+    });
+    fake.inputs = vec!["application/pdf".into(), "text/plain".into()];
+    fake.tasks = vec![Task::Analysis];
+    catalog.models.push(fake);
+    f.engine.set_catalog(catalog);
+}
+
+/// An analysis of a long text, on the fake model at the level suggested (`low`).
+fn names_of_issue(f: &Fixture, words: usize) -> Job {
+    let path = f.dir.path().join("issue.txt");
+    std::fs::write(&path, "word ".repeat(words)).unwrap_or_else(|_| panic!("write"));
+    let source = kalamu_media::inspect(&path, None).unwrap_or_else(|_| panic!("inspect"));
+    f.engine
+        .create_job(NewJob {
+            name: "Names".into(),
+            task: Task::Analysis,
+            sources: vec![source],
+            setups: vec![SetupRequest {
+                provider: ProviderId::new("fake"),
+                model: "fake-model".into(),
+                preset_id: Some("analysis.entities".into()),
+                label: None,
+                options: Default::default(),
+                merge: None,
+            }],
+            settings: Default::default(),
+            output: OutputSettings {
+                formats: vec![ExportFormat::Txt],
+                ..Default::default()
+            },
+        })
+        .unwrap_or_else(|e| panic!("{e}"))
+}
+
+fn levels_sent(f: &Fixture) -> Vec<Option<String>> {
+    f.fake
+        .tunings
+        .lock()
+        .unwrap_or_else(|p| p.into_inner())
+        .iter()
+        .map(|t| t.reasoning.clone())
+        .collect()
+}
+
+/// An answer left empty at `low` is asked again at `medium`, not the same request again: the
+/// answer kept is the one sent at `medium`, and its record says so (GPT-6.2 Sol and the 10 May
+/// issue of 5,557 words, 1.10.0-rc2). The set-up keeps the level chosen.
+#[tokio::test]
+async fn an_answer_left_empty_is_asked_again_with_more_thinking_and_kept_with_its_level() {
+    let f = fixture();
+    thinking_fake(&f);
+    f.fake.empty_at_low.store(true, Ordering::SeqCst);
+    let job = names_of_issue(&f, 5_557);
+    assert_eq!(job.setups[0].options.reasoning.as_deref(), Some("low"));
+    assert_eq!(f.run(job.id).await, JobStatus::Completed);
+    assert_eq!(
+        levels_sent(&f),
+        [Some("low".to_string()), Some("medium".to_string())]
+    );
+    let pieces = f.store.pieces(job.id).unwrap_or_default();
+    assert_eq!(pieces[0].status, PieceStatus::Done);
+    let key = CacheKey(pieces[0].cache_key.clone().unwrap_or_default());
+    let kept = f
+        .store
+        .cached_result(&key)
+        .ok()
+        .flatten()
+        .unwrap_or_else(|| panic!("no result"));
+    assert_eq!(
+        kept.request,
+        [kalamu_core::RequestSetting::new(
+            "reasoning.effort",
+            "medium"
+        )]
+    );
+    assert!(kept.output.text.contains("Bamako"), "{}", kept.output.text);
+    // The empty answer was billed and is charged to the piece, as any refused answer.
+    assert_eq!(f.store.charges(job.id).unwrap_or_default().len(), 1);
+    // The job keeps the level the researcher chose.
+    let stored = f.engine.job(job.id).unwrap_or_else(|e| panic!("{e}"));
+    assert_eq!(stored.setups[0].options.reasoning.as_deref(), Some("low"));
+}
+
+/// Left empty at every level: asked at `medium`, then `high`, never past it, and the failure
+/// names the levels tried and suggests another model, not the same again.
+#[tokio::test]
+async fn an_answer_left_empty_at_every_level_fails_saying_which_were_tried() {
+    let f = fixture();
+    thinking_fake(&f);
+    f.fake.empty_lists.store(true, Ordering::SeqCst);
+    let job = names_of_issue(&f, 5_557);
+    assert_eq!(f.run(job.id).await, JobStatus::CompletedWithErrors);
+    assert_eq!(
+        levels_sent(&f),
+        [
+            Some("low".to_string()),
+            Some("medium".to_string()),
+            Some("high".to_string())
+        ]
+    );
+    let pieces = f.store.pieces(job.id).unwrap_or_default();
+    assert_eq!(
+        pieces[0].error.as_deref(),
+        Some(
+            "The answer did not fit the analysis: the model left every field empty, though the \
+             text runs to about 5557 words, even when asked again with more thinking (medium, \
+             then high): it may not have read it. Choose another model"
+        )
+    );
+    assert_eq!(f.store.charges(job.id).unwrap_or_default().len(), 3);
+}
+
 /// The estimates the 1.10.0 test pass found far too low. Screening ten corrected texts with
 /// Gemini 4 Hydrogen was estimated at about $0.018 and billed $0.20: each document is answered
 /// in a call of its own, with the instructions and the model's thinking, and its text is
@@ -1476,7 +1622,120 @@ fn screening_is_priced_document_by_document_and_newspaper_pages_as_dense() {
         (1.1..1.6).contains(&newspaper),
         "newspaper: ${newspaper:.2}"
     );
-    assert!(pages("text_extraction.printed") < newspaper / 2.5);
+    assert!(pages("text_extraction.printed") < newspaper / 1.5);
+}
+
+/// The 1.10.0-rc2 test pass read a one-page newspaper whose text layer holds about 1,940 words
+/// with the printed-document prompt, and Gemini 4 Hydrogen was billed twice the estimate: pages
+/// whose text layer is small print are now priced as dense pages whatever the prompt, as the
+/// newspaper prompt's are; a PDF of ordinary print, or one added before Kalamu counted them,
+/// keeps the prompt's pricing.
+#[test]
+fn pages_whose_text_layer_is_small_print_are_priced_as_dense_whatever_the_prompt() {
+    let f = fixture();
+    let hydrogen = |preset: &str| SetupRequest {
+        provider: ProviderId::new("gemini"),
+        model: "gemini-4-hydrogen".into(),
+        preset_id: Some(preset.into()),
+        label: None,
+        options: Default::default(),
+        merge: None,
+    };
+    let mut issue = f.pdf("issue.pdf", 4);
+    assert_eq!(issue.dense_pages, Some(0), "a scan without text");
+    let price = |source: &SourceFile, preset: &str, sample_pages: Option<u32>| {
+        f.engine
+            .estimate(&EstimateRequest {
+                task: Task::TextExtraction,
+                sources: vec![source.clone()],
+                setups: vec![hydrogen(preset)],
+                sample_pages,
+            })
+            .total_usd
+            .unwrap_or_default()
+    };
+    let ordinary = price(&issue, "text_extraction.printed", None);
+    issue.dense_pages = Some(4);
+    let dense = price(&issue, "text_extraction.printed", None);
+    let newspaper = price(&issue, "text_extraction.newspaper", None);
+    assert!(dense > 1.5 * ordinary, "{dense} against {ordinary}");
+    // As the newspaper prompt's pages, but for the length of the instructions.
+    assert!(
+        (dense / newspaper - 1.0).abs() < 0.05,
+        "{dense} against {newspaper}"
+    );
+    // Half its pages small print: half of them priced so; a sample of two pages, one of them.
+    issue.dense_pages = Some(2);
+    let half = price(&issue, "text_extraction.printed", None);
+    assert!((half - (ordinary + dense) / 2.0).abs() < 1e-9, "{half}");
+    let sample = price(&issue, "text_extraction.printed", Some(2));
+    assert!((sample - half / 2.0).abs() < 1e-9, "{sample}");
+    // Not counted (a PDF added before 1.10): the prompt's pricing.
+    issue.dense_pages = None;
+    assert_eq!(price(&issue, "text_extraction.printed", None), ordinary);
+}
+
+/// The interview analysis of the 1.10.0-rc2 test pass (Gemini 4 Hydrogen, a transcript of
+/// 1,568 bytes) was billed $0.024 against $0.013 estimated: its themes and quotations, entries
+/// that describe and quote the text, make a longer answer, now counted. A screening's passages,
+/// quotations alone, are not.
+#[test]
+fn an_interview_analysis_is_priced_with_its_longer_answer() {
+    let f = fixture();
+    let path = f.dir.path().join("interview-two-speakers.txt");
+    std::fs::write(
+        &path,
+        "[00:00:00] Mariam Kaboré: Bonjour et merci de me recevoir. ".repeat(26),
+    )
+    .unwrap_or_else(|_| panic!("write"));
+    let source = kalamu_media::inspect(&path, None).unwrap_or_else(|_| panic!("inspect"));
+    assert!((1_500..1_700).contains(&source.size_bytes));
+    let estimate = |preset: &str| {
+        f.engine
+            .estimate(&EstimateRequest {
+                task: Task::Analysis,
+                sources: vec![source.clone()],
+                setups: vec![SetupRequest {
+                    provider: ProviderId::new("gemini"),
+                    model: "gemini-4-hydrogen".into(),
+                    preset_id: Some(preset.into()),
+                    label: None,
+                    options: Default::default(),
+                    merge: None,
+                }],
+                sample_pages: None,
+            })
+            .total_usd
+            .unwrap_or_default()
+    };
+    let interview = estimate("analysis.interview");
+    // 3,082 tokens read and 2,521 written at $1.50 and $7.50 a million.
+    let billed = (3_082.0 * 1.5 + 2_521.0 * 7.5) / 1_000_000.0;
+    assert!(
+        (0.8 * billed..=1.3 * billed).contains(&interview),
+        "interview: ${interview:.4} against ${billed:.4}"
+    );
+    // The screening prompt's passages add nothing to its answer.
+    let catalog = f.engine.catalog();
+    let model = catalog
+        .model(&ProviderId::new("gemini"), "gemini-4-hydrogen")
+        .unwrap_or_else(|| panic!("no Hydrogen"));
+    let instructions = f
+        .engine
+        .with_prompts(|p| p.get("analysis.screening"))
+        .map(|p| p.instructions.len())
+        .unwrap_or_else(|e| panic!("{e}"));
+    let plain = catalog.estimate(
+        model,
+        Task::Analysis,
+        &kalamu_catalog::Workload {
+            text_chars: source.size_bytes,
+            documents: 1,
+            prompt_chars: instructions,
+            ..Default::default()
+        },
+    );
+    assert_eq!(Some(estimate("analysis.screening")), plain.usd);
 }
 
 /// Two jobs on one file never write over each other's files (a Tesseract job then a

@@ -22,6 +22,11 @@ Open the job: each failed page says why, in words. The usual causes are a lost c
 provider being busy (Kalamu waits and tries again by itself), or a page the provider refuses.
 Run the job again: only what failed is sent.
 
+An analysis that answers nothing at all for a long text is not kept: Kalamu asks again, with
+more thinking each time where the model has it (*Medium*, then *High*), and keeps the first
+full answer, whose record says the level it was sent at. If every answer is still empty, the
+page says so and which levels were tried: choose another model rather than running it again.
+
 A job that was paused, or cut short because the app was closed, is at the foot of the sidebar
 under *To resume*.
 
@@ -43,9 +48,11 @@ See [Working offline](offline.md#how-fast).
 
 Look at the job's actual usage, and at the model's price in the list. The estimate counts what
 a model writes and the thinking it is billed for before writing, at the level chosen under
-*Thinking*, and prices pages read with the *Newspaper or magazine* prompt as pages full of small print.
-Long handwritten pages, unusually dense pages and analyses with long answers can still cost
-more than the estimate's averages. For the next batch:
+*Thinking* (some models, such as Gemini 4, think far more than others), and prices as pages
+full of small print those read with the *Newspaper or magazine* prompt and those of a PDF
+whose text layer is small print. A region read again is priced as the part of the page sent.
+Long handwritten pages, a newspaper scanned as images and read with another prompt, and
+analyses with long answers can still cost more than the estimate's averages. For the next batch:
 a smaller model, or the [cheaper mode](costs.md#three-ways-to-pay-less).
 
 ## Where are my results?

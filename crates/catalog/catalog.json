@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-11-21",
+  "updated": "2026-11-22",
   "latest_version": "1.9.0",
   "notes": "Prices are USD from each provider's published list, checked on the date above; they change, so the app shows estimates only. Models marked 'preview' may change or be withdrawn. Cached-input and cache-write prices apply to the part of a prompt the provider reads from or writes to its prompt cache; batch_discount is the share taken off every price in economy mode, through the provider's batch service. max_input_tokens is the most a model reads in one request, as its provider documents it (the whole window where the provider gives one for the request and the answer together); for the models run on this computer, what the offline engine sends them, at four characters a token.",
   "providers": [
@@ -195,6 +195,7 @@
         ],
         "default": "high"
       },
+      "page_thinking": 1400,
       "translations": {
         "fr": {
           "description": "Le modèle Gemini 4 rapide de Google (novembre 2026), qui remplace 3.8 Flash : plus rapide, il lit bien l’imprimé et l’écriture manuscrite, au prix que 3.8 Flash atteint en janvier 2027."
@@ -373,6 +374,7 @@
         ],
         "default": "medium"
       },
+      "page_thinking": 1900,
       "translations": {
         "fr": {
           "description": "Le modèle le plus puissant de Google (novembre 2026), pour les écritures les plus difficiles, les numérisations abîmées et les longs documents."
@@ -432,6 +434,7 @@
         ],
         "default": "high"
       },
+      "page_thinking": 1900,
       "translations": {
         "fr": {
           "description": "Le deuxième modèle Gemini 4 le plus puissant de Google (novembre 2026), sous Carbon et au-dessus de Hydrogen : conçu pour les analyses approfondies et les longs documents, pour le double du prix de Hydrogen. Pas encore essayé sur de vraies pages dans Kalamu."
@@ -491,6 +494,7 @@
         ],
         "default": "medium"
       },
+      "page_thinking": 1400,
       "translations": {
         "fr": {
           "description": "Le modèle Gemini 4 efficace de Google (octobre 2026) : au prix de Carbon, il répond plus vite et réfléchit avec moins de jetons, si bien que chaque page coûte moins cher."
@@ -651,6 +655,7 @@
         ],
         "default": "medium"
       },
+      "page_thinking": 100,
       "translations": {
         "fr": {
           "description": "Le modèle principal d’OpenAI (il remplace GPT-6 Sol) ; lit les PDF et les images."
@@ -800,6 +805,7 @@
           "max"
         ]
       },
+      "page_thinking": 100,
       "translations": {
         "fr": {
           "description": "Le modèle le plus puissant et le plus cher d’OpenAI (novembre 2026), pour les documents les plus difficiles ; il remplace GPT-6 Astra pour moins cher."

@@ -1,6 +1,6 @@
 //! What a job will cost before it starts: each set-up's pages or minutes priced from the
 //! catalogue, a records analysis page by page, a table of contents' second step apart, and the
-//! totals at each pace; and, for a cited analysis, a text too long for its model.
+//! totals at each pace; and, for an analysis, a text too long for its model.
 
 use kalamu_catalog::CostEstimate;
 use kalamu_core::{InputKind, MergeModel, ProviderId, SourceFile, Task};
@@ -32,8 +32,9 @@ pub struct EstimateRow {
     pub estimate: CostEstimate,
     /// A table of contents' second step, which combines the pages.
     pub merge: bool,
-    /// A cited analysis's texts this model cannot read even in parts, one passage of each alone
-    /// too long, in the order given: a job holding one is refused when created
+    /// An analysis's texts this model cannot read, in the order given: a cited analysis's one
+    /// passage of which alone is too long even read in parts, any other's longer than the model
+    /// reads at once, being sent whole. A job holding one is refused when created
     /// ([`crate::Engine::check_length`]), so this row prices the other sources only, as a job
     /// that leaves them out would cost; absent when every text can be read.
     #[serde(skip_serializing_if = "Vec::is_empty")]
@@ -75,6 +76,9 @@ struct Read {
     /// For an analysis, the pages read as pictures, and the characters of the texts read as
     /// text; for any other task, every page, a text's included.
     picture_pages: u32,
+    /// Of the pages read as pictures, those of small print as their text layer says
+    /// ([`SourceFile::dense_pages`]).
+    dense_pages: u32,
     text_chars: u64,
     documents: u32,
 }
@@ -96,9 +100,24 @@ fn read_of(task: Task, sources: &[SourceFile], sample_pages: Option<u32>) -> Rea
             read.text_chars += s.size_bytes.min(cap);
         } else {
             read.picture_pages += n;
+            read.dense_pages += s.dense_of(n);
         }
     }
     read
+}
+
+/// An analysis's fields whose entries describe and quote the text (an interview's themes and
+/// quotations), each of which makes its answer longer; a screening's passages, quotations
+/// alone, do not count.
+fn cited_entries(preset: Option<&kalamu_prompts::Preset>) -> u32 {
+    use kalamu_core::FieldKind::Cited;
+    preset.and_then(|p| p.schema.as_ref()).map_or(0, |schema| {
+        schema
+            .fields
+            .iter()
+            .filter(|f| matches!(&f.kind, Cited { fields, .. } if !fields.is_empty()))
+            .count() as u32
+    })
 }
 
 impl Engine {
@@ -169,14 +188,11 @@ impl Engine {
         };
         let mut rows = Vec::new();
         for setup in &request.setups {
-            // A cited analysis's texts its model cannot read even in parts are left out of the
-            // price, as a job that leaves them out would cost.
+            // An analysis's texts its model cannot read (a cited one's even in parts) are left
+            // out of the price, as a job that leaves them out would cost.
             let cites = self.request_cites(request.task, setup).unwrap_or(false);
-            let unreadable = if cites {
-                self.too_long_at(&catalog, setup, &request.sources)
-            } else {
-                Vec::new()
-            };
+            let unreadable =
+                self.unreadable_texts(&catalog, request.task, setup, cites, &request.sources);
             let sources: Vec<SourceFile> = request
                 .sources
                 .iter()
@@ -197,15 +213,23 @@ impl Engine {
                 .map_or(PROMPT_CHARS, |p| p.instructions.len());
             let reasoning = setup.options.reasoning.as_deref();
             // What the set-up reads, the pages already read taken from the cache left out.
-            let work = |read: Read, cached: u32| kalamu_catalog::Workload {
-                pages: read.picture_pages.saturating_sub(cached),
-                text_chars: read.text_chars,
-                documents: read.documents,
-                audio_minutes: minutes,
-                prompt_chars,
-                // Pages full of small print hold far more text, and take far more thought.
-                dense: preset.as_ref().is_some_and(|p| p.is_dense()),
-                reasoning,
+            let cited_entries = cited_entries(preset.as_ref());
+            let work = |read: Read, cached: u32| {
+                let pages = read.picture_pages.saturating_sub(cached);
+                kalamu_catalog::Workload {
+                    pages,
+                    text_chars: read.text_chars,
+                    documents: read.documents,
+                    audio_minutes: minutes,
+                    prompt_chars,
+                    // Pages full of small print hold far more text, and take far more thought,
+                    // as the prompt says or their text layer shows.
+                    dense: preset.as_ref().is_some_and(|p| p.is_dense()),
+                    dense_pages: read.dense_pages.min(pages),
+                    region: None,
+                    cited_entries,
+                    reasoning,
+                }
             };
             // A records analysis (one row per entry) reads page by page, as the job will run it:
             // known by the preset's fields, as `reads_by_page` knows it.
@@ -253,6 +277,7 @@ impl Engine {
                         split.chars,
                         prompt_chars,
                         reasoning,
+                        cited_entries,
                     );
                     let usd = whole.zip(parts.usd).map(|(a, b)| a + b);
                     (
@@ -265,6 +290,7 @@ impl Engine {
                             split.parts,
                             prompt_chars,
                             reasoning,
+                            cited_entries,
                         )),
                     )
                 }

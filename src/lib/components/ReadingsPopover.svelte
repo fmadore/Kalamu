@@ -7,7 +7,14 @@
 	import Icon from './Icon.svelte';
 	import type { Entry } from '#lib/apparatus.js';
 	import { messages } from '#lib/i18n/index.js';
-	import { GAP, anchorLine, readingsTop, tallest, visibleBand } from '#lib/readingsPlace.js';
+	import {
+		GAP,
+		anchorLine,
+		anyShown,
+		readingsTop,
+		tallest,
+		visibleBand
+	} from '#lib/readingsPlace.js';
 
 	let {
 		id,
@@ -94,7 +101,9 @@
 		moveTo(at.top + by[0], at.left + by[1]);
 	}
 
-	function placeBox() {
+	/** Places the readings by their words. `scrolled`: the pane has just scrolled, and they follow
+	 * the words only while some of them show, so words scrolled away take their readings along. */
+	function placeBox(scrolled = false) {
 		const words = pane.querySelector<HTMLElement>(`[data-entry="${entry.id}"]`);
 		if (!box || !words) return;
 		const area = pane.getBoundingClientRect();
@@ -104,6 +113,7 @@
 		limit = tallest(visible);
 		if (moved) return;
 		const lines = Array.from(words.getClientRects());
+		if (scrolled && !anyShown(lines, visible)) return;
 		const line = anchorLine(lines.length ? lines : [words.getBoundingClientRect()], visible);
 		if (!line) return;
 		const { offsetWidth: w } = box;
@@ -120,7 +130,15 @@
 		const watch = new ResizeObserver(() => placeBox());
 		watch.observe(pane);
 		watch.observe(box);
-		return () => watch.disconnect();
+		// Stepping to a difference scrolls its words into view after the readings are placed,
+		// smoothly: placed again as the pane scrolls, they end whole in the part that shows rather
+		// than carried under the pane's bar or past its foot.
+		const onScroll = () => placeBox(true);
+		pane.addEventListener('scroll', onScroll, { passive: true });
+		return () => {
+			watch.disconnect();
+			pane.removeEventListener('scroll', onScroll);
+		};
 	});
 
 	function useOwn() {

@@ -4,7 +4,7 @@
 	// it was set. Marking the page reviewed stays the review's own button.
 	import Icon from './Icon.svelte';
 	import { messages } from '#lib/i18n/index.js';
-	import { placeOf, reasonText } from '#lib/queue.js';
+	import { placeOf, reasonText, reviewOf } from '#lib/queue.js';
 	import { app, go, returnTo } from '#lib/state.svelte.js';
 
 	let { jobId }: { jobId: string } = $props();
@@ -18,7 +18,8 @@
 		item !== undefined &&
 			app.view.name === 'review' &&
 			item.job_id === jobId &&
-			item.source_id === app.view.sourceId
+			item.source_id === app.view.sourceId &&
+			item.setup_id === app.view.setupId
 	);
 
 	function step(delta: number) {
@@ -27,15 +28,7 @@
 		const next = trail.items[at];
 		if (!next) return;
 		trail.at = at;
-		go(
-			{
-				name: 'review',
-				jobId: next.job_id,
-				sourceId: next.source_id,
-				index: next.index ?? undefined
-			},
-			{ replace: true }
-		);
+		go(reviewOf(next), { replace: true });
 	}
 
 	function back() {

@@ -61,11 +61,12 @@ pub(crate) async fn send_text(request: RequestBuilder) -> Result<String, Provide
     let response = request.send().await.map_err(network)?;
     let status = response.status();
     let retry_after = header_retry_after(&response);
+    let who = answered_by(response.url());
     let body = response.text().await.map_err(network)?;
     if status.is_success() {
         return Ok(body);
     }
-    Err(status_error(status, retry_after, &body))
+    Err(status_error(status, retry_after, &body, who))
 }
 
 /// Sends a request and returns the header `name` of a successful response, for an upload
@@ -77,6 +78,7 @@ pub(crate) async fn send_for_header(
     let response = request.send().await.map_err(network)?;
     let status = response.status();
     let retry_after = header_retry_after(&response);
+    let who = answered_by(response.url());
     let value = response
         .headers()
         .get(name)
@@ -86,7 +88,7 @@ pub(crate) async fn send_for_header(
     if status.is_success() {
         return Ok(value);
     }
-    Err(status_error(status, retry_after, &body))
+    Err(status_error(status, retry_after, &body, who))
 }
 
 /// Sends a request and returns the JSON body of a successful response, or `None` when the
@@ -98,12 +100,13 @@ pub(crate) async fn send_json_if_found(
     let response = request.send().await.map_err(network)?;
     let status = response.status();
     let retry_after = header_retry_after(&response);
+    let who = answered_by(response.url());
     let body = response.text().await.map_err(network)?;
     if status == StatusCode::NOT_FOUND {
         return Ok(None);
     }
     if !status.is_success() {
-        return Err(status_error(status, retry_after, &body));
+        return Err(status_error(status, retry_after, &body, who));
     }
     if body.trim().is_empty() {
         return Ok(Some(Value::Null));
@@ -149,18 +152,89 @@ fn wait(secs: f64) -> Option<Duration> {
         .then(|| Duration::from_secs_f64(secs.min(MAX_RETRY_WAIT_SECS)))
 }
 
-/// The provider's own error message, from the shapes the four providers use.
-pub(crate) fn error_message(body: &str) -> String {
+/// The longest error message passed on as the provider wrote it, in characters.
+const MAX_MESSAGE_CHARS: usize = 300;
+
+/// The providers whose services Kalamu calls, by the domain of their addresses, as a researcher
+/// knows them.
+const PROVIDER_DOMAINS: [(&str, &str); 4] = [
+    ("mistral.ai", "Mistral"),
+    ("openai.com", "OpenAI"),
+    ("anthropic.com", "Anthropic"),
+    ("googleapis.com", "Google"),
+];
+
+/// Who answered a request with an error, as [`error_message`] names it: the provider whose
+/// service the address belongs to, or "The provider" for any other (a proxy, a test server).
+fn answered_by(url: &reqwest::Url) -> &'static str {
+    let host = url.host_str().unwrap_or_default();
+    PROVIDER_DOMAINS
+        .iter()
+        .find(|(domain, _)| {
+            host == *domain
+                || host
+                    .strip_suffix(domain)
+                    .is_some_and(|sub| sub.ends_with('.'))
+        })
+        .map_or("The provider", |(_, name)| name)
+}
+
+/// What a researcher reads of an HTTP error's body: the provider's own message, from the shapes
+/// the four providers use (`detail` as FastAPI lists it included), cut to a readable length; a
+/// short plain text as it is; and for an error page in HTML, an empty body or a long one that is
+/// no message, one sentence naming who answered and the status, "Mistral refused the request
+/// (400 Bad Request)." rather than the page.
+pub(crate) fn error_message(body: &str, status: StatusCode, who: &str) -> String {
     let parsed: Option<Value> = serde_json::from_str(body).ok();
     let message = parsed.as_ref().and_then(|v| {
-        v.pointer("/error/message")
-            .or_else(|| v.pointer("/message"))
-            .or_else(|| v.pointer("/detail"))
-            .and_then(Value::as_str)
-            .map(str::to_string)
+        [
+            "/error/message",
+            "/message",
+            "/detail",
+            "/detail/0/msg",
+            "/error",
+        ]
+        .iter()
+        .filter_map(|at| v.pointer(at)?.as_str().map(str::trim))
+        .find(|m| !m.is_empty())
     });
-    let message = message.unwrap_or_else(|| body.chars().take(300).collect());
-    message.trim().to_string()
+    let body = body.trim();
+    let plain = !body.is_empty()
+        && parsed.is_none()
+        && body.chars().count() <= MAX_MESSAGE_CHARS
+        && !looks_like_markup(body);
+    match message.or(plain.then_some(body)) {
+        Some(message) => shortened(message),
+        None if status.is_server_error() => {
+            format!(
+                "{who} could not answer the request ({}).",
+                status_words(status)
+            )
+        }
+        None => format!("{who} refused the request ({}).", status_words(status)),
+    }
+}
+
+/// Whether a body is a page or a document of markup rather than a message: it opens with a tag.
+fn looks_like_markup(body: &str) -> bool {
+    body.starts_with('<')
+}
+
+/// "400 Bad Request": the status's number and its standard words, or the number alone.
+fn status_words(status: StatusCode) -> String {
+    match status.canonical_reason() {
+        Some(reason) => format!("{} {reason}", status.as_u16()),
+        None => status.as_u16().to_string(),
+    }
+}
+
+/// A message cut to [`MAX_MESSAGE_CHARS`], with an ellipsis where it was cut.
+fn shortened(message: &str) -> String {
+    if message.chars().count() <= MAX_MESSAGE_CHARS {
+        return message.to_string();
+    }
+    let cut: String = message.chars().take(MAX_MESSAGE_CHARS - 1).collect();
+    format!("{}…", cut.trim_end())
 }
 
 /// "Please retry in 12.5s", as Gemini words its per-minute limits.
@@ -185,8 +259,9 @@ pub(crate) fn status_error(
     status: StatusCode,
     retry_after: Option<Duration>,
     body: &str,
+    who: &str,
 ) -> ProviderError {
-    let message = error_message(body);
+    let message = error_message(body, status, who);
     let lower = message.to_lowercase();
     let quota = lower.contains("credit balance")
         || lower.contains("insufficient_quota")
@@ -327,6 +402,7 @@ mod tests {
             StatusCode::TOO_MANY_REQUESTS,
             None,
             r#"{"error":{"message":"Resource exhausted. Please retry in 12.5s."}}"#,
+            "Google",
         );
         assert_eq!(
             rate,
@@ -339,7 +415,8 @@ mod tests {
             status_error(
                 StatusCode::BAD_REQUEST,
                 None,
-                r#"{"error":{"message":"API key not valid."}}"#
+                r#"{"error":{"message":"API key not valid."}}"#,
+                "Google"
             ),
             ProviderError::Auth(_)
         ));
@@ -347,12 +424,112 @@ mod tests {
             status_error(
                 StatusCode::BAD_REQUEST,
                 None,
-                r#"{"type":"error","error":{"message":"Your credit balance is too low"}}"#
+                r#"{"type":"error","error":{"message":"Your credit balance is too low"}}"#,
+                "Anthropic"
             ),
             ProviderError::QuotaExhausted(_)
         ));
-        assert!(status_error(StatusCode::SERVICE_UNAVAILABLE, None, "busy").is_retryable());
-        assert!(!status_error(StatusCode::BAD_REQUEST, None, "bad").is_retryable());
+        assert!(
+            status_error(StatusCode::SERVICE_UNAVAILABLE, None, "busy", "Mistral").is_retryable()
+        );
+        assert!(!status_error(StatusCode::BAD_REQUEST, None, "bad", "Mistral").is_retryable());
+    }
+
+    /// The page Mistral answered an inline batch of two photographed pages with (1.10.0-rc2),
+    /// shortened.
+    const DJANGO_400: &str = "<!doctype html>\n<html lang=\"en\">\n<head>\n  <title>Bad Request \
+        (400)</title>\n</head>\n<body>\n  <h1>Bad Request (400)</h1><p></p>\n</body>\n</html>\n";
+
+    #[test]
+    fn an_error_page_becomes_one_sentence_naming_the_provider_and_the_status() {
+        let said = status_error(StatusCode::BAD_REQUEST, None, DJANGO_400, "Mistral");
+        assert_eq!(
+            said,
+            ProviderError::InvalidRequest("Mistral refused the request (400 Bad Request).".into())
+        );
+        assert_eq!(
+            said.to_string(),
+            "The provider rejected the request: Mistral refused the request (400 Bad Request)."
+        );
+        // A gateway's page for a service that is down is still worth trying again.
+        let down = status_error(
+            StatusCode::BAD_GATEWAY,
+            None,
+            "<html><body>502 Bad Gateway</body></html>",
+            "OpenAI",
+        );
+        assert_eq!(
+            down,
+            ProviderError::Transient(
+                "OpenAI could not answer the request (502 Bad Gateway).".into()
+            )
+        );
+        // An empty body, or one too long to be a message, says the same.
+        assert_eq!(
+            error_message("  ", StatusCode::BAD_REQUEST, "The provider"),
+            "The provider refused the request (400 Bad Request)."
+        );
+        assert_eq!(
+            error_message(&"x".repeat(301), StatusCode::FORBIDDEN, "Anthropic"),
+            "Anthropic refused the request (403 Forbidden)."
+        );
+        assert_eq!(
+            error_message("", StatusCode::from_u16(499).unwrap_or_default(), "Google"),
+            "Google refused the request (499)."
+        );
+    }
+
+    #[test]
+    fn a_message_in_json_or_short_plain_text_is_kept() {
+        let bad = StatusCode::BAD_REQUEST;
+        // Mistral's own shape, and the list FastAPI gives for a request that does not validate.
+        assert_eq!(
+            error_message(
+                r#"{"object":"error","message":"Invalid model: mistral-ocr-9","type":"invalid_request_error"}"#,
+                bad,
+                "Mistral"
+            ),
+            "Invalid model: mistral-ocr-9"
+        );
+        assert_eq!(
+            error_message(
+                r#"{"detail":[{"loc":["body","endpoint"],"msg":"Input should be '/v1/ocr'","type":"enum"}]}"#,
+                StatusCode::UNPROCESSABLE_ENTITY,
+                "Mistral"
+            ),
+            "Input should be '/v1/ocr'"
+        );
+        assert_eq!(
+            error_message(r#"{"error":"file not found"}"#, bad, "OpenAI"),
+            "file not found"
+        );
+        assert_eq!(error_message(" busy \n", bad, "Mistral"), "busy");
+        // JSON with no message is no message, whatever its length.
+        assert_eq!(
+            error_message(r#"{"code":17}"#, bad, "Mistral"),
+            "Mistral refused the request (400 Bad Request)."
+        );
+        // A long message is cut, and says so.
+        let long = format!(r#"{{"message":"{}"}}"#, "é".repeat(400));
+        let said = error_message(&long, bad, "Mistral");
+        assert_eq!(said.chars().count(), 300);
+        assert!(said.ends_with('…'));
+    }
+
+    #[test]
+    fn who_answered_is_named_by_the_provider_s_address() {
+        let named =
+            |url: &str| answered_by(&reqwest::Url::parse(url).unwrap_or_else(|e| panic!("{e}")));
+        assert_eq!(named("https://api.mistral.ai/v1/batch/jobs"), "Mistral");
+        assert_eq!(named("https://api.openai.com/v1/files"), "OpenAI");
+        assert_eq!(named("https://api.anthropic.com/v1/messages"), "Anthropic");
+        assert_eq!(
+            named("https://generativelanguage.googleapis.com/v1beta/models"),
+            "Google"
+        );
+        assert_eq!(named("http://127.0.0.1:4000/batch/jobs"), "The provider");
+        // A look-alike is not the provider.
+        assert_eq!(named("https://notmistral.ai/v1"), "The provider");
     }
 
     #[test]

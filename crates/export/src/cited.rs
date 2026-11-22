@@ -105,7 +105,8 @@ fn entry(own: &[Field], answers: &[FieldAnswer], evidence: &[Evidence]) -> Strin
 }
 
 /// The memo: the header every Markdown file has, then each field under its heading, cited
-/// fields entry by entry, and what was left out at the end of each.
+/// fields entry by entry, and what was left out at the end of each; a field with nothing to
+/// say has no heading.
 pub(crate) fn markdown(doc: &ExportDocument, fields: &[Field]) -> String {
     let mut out = format!(
         "# {}\n\n*{} · {} · prompt: {}*\n",
@@ -138,6 +139,11 @@ pub(crate) fn markdown(doc: &ExportDocument, fields: &[Field]) -> String {
                 blocks.push(format!("*Reason: {reason}*"));
             }
             blocks.retain(|b| !b.trim().is_empty());
+            // A heading with nothing under it (no guide, so no guide theme left out) is left
+            // out with its field.
+            if blocks.len() < 2 {
+                continue;
+            }
             out.push('\n');
             out.push_str(&blocks.join("\n\n"));
             out.push('\n');

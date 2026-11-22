@@ -12,6 +12,7 @@ import {
 	placeOf,
 	REASONS,
 	reasonText,
+	reviewOf,
 	parseSeed,
 	sampleItems,
 	SEED_MAX,
@@ -107,6 +108,18 @@ describe('the review queue', () => {
 		);
 		expect(itemKey(cut)).not.toBe(itemKey(plain));
 		expect(itemKey(item([{ kind: 'not_read' }], { index: null }))).toBe('j1/a/s1/all');
+	});
+
+	it('opens an item on its own page and its own set-up', () => {
+		const second = item([{ kind: 'not_reviewed' }], { setup_id: 'b', index: 3 });
+		expect(reviewOf(second)).toEqual({
+			name: 'review',
+			jobId: 'j1',
+			sourceId: 's1',
+			index: 3,
+			setupId: 'b'
+		});
+		expect(reviewOf(item([{ kind: 'not_read' }], { index: null })).index).toBeUndefined();
 	});
 
 	it('lists items kept aside apart, whatever the reasons shown, unless kept with an earlier answer', () => {
