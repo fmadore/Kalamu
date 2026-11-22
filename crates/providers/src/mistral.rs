@@ -4,7 +4,8 @@
 //! inline as data URLs rather than through the file upload the Python code uses, since each
 //! request carries a single page.
 //!
-//! Economy mode sends OCR and analysis requests as one batch job ([`batch`]), at half price.
+//! Economy mode sends OCR and analysis requests as one batch job of an uploaded file
+//! ([`batch`]), at half price.
 //! Recordings go one by one: Mistral's batch service lists the transcriptions endpoint, but not
 //! how a recording travels inside a batch.
 //!
@@ -341,8 +342,8 @@ impl Provider for Mistral {
         task != Task::AudioTranscription
     }
 
-    /// Inline batches take fewer than 10,000 requests; Mistral gives no size limit for them, so
-    /// a batch is kept to a size its other limits allow.
+    /// A batch file holds up to a million requests and 512 MB; a batch is kept far below, to a
+    /// size that uploads in reasonable time and whose answers are read back at once.
     fn batch_limits(&self) -> BatchLimits {
         BatchLimits {
             max_items: 1_000,

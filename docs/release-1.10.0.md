@@ -143,7 +143,9 @@ keys. Once 1.10.0 has opened your job database, an earlier version refuses it.
   provider bills.
 - **A large Gemini batch sent as a file** follows Google's documentation and has not run live.
   OpenAI's and Anthropic's batches have run live and came back within minutes; that their files
-  are deleted afterwards has not been checked on the providers' pages.
+  are deleted afterwards has not been checked on the providers' pages. Mistral's batches are
+  now sent as an uploaded file, since rc2's test pass found two photographed pages sent inline
+  refused; that file has not yet run live.
 - **GPT-6.2 Sol, GPT-6.2 Astra and Gemini 4 Neon have read one printed page and one handwritten
   page each in Kalamu.** On the handwriting Neon reads much as Gemini 4 Hydrogen does, at about
   twice the cost.

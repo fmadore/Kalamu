@@ -101,11 +101,6 @@ fn unwritable(err: serde_json::Error) -> ProviderError {
     ProviderError::Other(format!("the batch could not be written: {err}"))
 }
 
-/// A JSON string, quoted and escaped, for a body's head.
-pub(crate) fn quoted(text: &str) -> String {
-    Value::from(text).to_string()
-}
-
 /// A count the provider may write as `12` or `"12"`.
 pub(crate) fn count(value: Option<&Value>) -> u32 {
     match value {

@@ -1,21 +1,30 @@
-//! Mistral batch jobs: OCR or chat requests sent inline to `/v1/batch/jobs`, at half price, with
-//! a 24-hour limit. Results are read inline (`?inline=true`), or from the output file when the
-//! job has one. The reference types each result only as a map, so the common shapes are read.
+//! Mistral batch jobs: OCR or chat requests written to a JSON Lines file, uploaded to
+//! `/v1/files` (`purpose=batch`), and run as one job of `/v1/batch/jobs` naming it
+//! (`input_files`), at half price, with a 24-hour limit. Results are read inline
+//! (`?inline=true`), or from the output file when the job has one. The reference types each
+//! result only as a map, so the common shapes are read.
+//!
+//! The requests are not sent inline (`requests`), though Mistral takes them so: an inline job's
+//! body is refused past about 2.5 MB with an HTML page, "Bad Request (400)", before the batch
+//! service reads it, which two photographed pages already pass (1.10.0-rc2's test pass: a
+//! 1.8 MB and a 0.13 MB JPEG, 2.6 MB once in base64). An uploaded file has no such limit.
 //!
 //! A job keeps its files in the account's storage, with no stated end ("the results do not
-//! expire at this time"): the input files (a live run found inline requests stored as a file
-//! too), the output file and the error file. Once a job has settled, [`Mistral::files_of`] names them from the
-//! job and each is deleted with `DELETE /v1/files/{file_id}`.
+//! expire at this time"): the input file, the output file and the error file. Once a job has
+//! settled, [`Mistral::files_of`] names them from the job and each is deleted with
+//! `DELETE /v1/files/{file_id}`; an uploaded file no job names, because making the job failed,
+//! is deleted at once.
 
 use kalamu_core::{
     ApiKey, BatchContext, BatchProgress, ProcessOutput, ProcessRequest, ProviderError, Task,
 };
-use serde_json::Value;
+use reqwest::multipart::{Form, Part};
+use serde_json::{Value, json};
 
 use super::{Mistral, chat};
 use crate::analysis;
 use crate::batch::{self, Answer, Body};
-use crate::http::{send_json, with_json_body};
+use crate::http::{send_json, upload_timeout};
 
 impl Mistral {
     pub(super) async fn submit(
@@ -35,25 +44,60 @@ impl Mistral {
                 return Err(ProviderError::Unsupported("batched transcription".into()));
             }
         };
-        let head = format!(
-            r#"{{"endpoint":{},"model":{},"requests":["#,
-            batch::quoted(endpoint),
-            batch::quoted(first.model)
-        );
-        let mut body = Body::new(&head, requests);
+        let mut jsonl = Body::new("", requests);
         for (id, request) in requests {
             let item = match first.task {
                 Task::TextExtraction => Self::ocr_body(request),
                 _ => chat::body(request, analysis::fields(request)?),
             };
-            body.item(&[("body", &item), ("custom_id", &Value::from(id.as_str()))])?;
+            jsonl.line(&[("custom_id", &Value::from(id.as_str())), ("body", &item)])?;
         }
-        let created = send_json(with_json_body(
+        let jsonl = jsonl.finish("");
+        let timeout = upload_timeout(jsonl.len());
+        let file = Part::bytes(jsonl)
+            .file_name("batch.jsonl")
+            .mime_str("application/jsonl")
+            .map_err(|e| ProviderError::InvalidRequest(e.to_string()))?;
+        let uploaded = send_json(
+            self.client
+                .post(format!("{}/files", self.base_url))
+                .bearer_auth(key.expose())
+                .timeout(timeout)
+                .multipart(Form::new().text("purpose", "batch").part("file", file)),
+        )
+        .await?;
+        let file_id = uploaded
+            .get("id")
+            .and_then(Value::as_str)
+            .ok_or_else(|| ProviderError::Other("Mistral gave the batch file no id".into()))?;
+        let created = self.create(key, file_id, endpoint, first.model).await;
+        if created.is_err() {
+            // No job will name the file: it is deleted now, or it would stay in the account's
+            // storage with the pages it holds.
+            let _ = batch::delete_file(&self.client, &self.base_url, key, file_id).await;
+        }
+        created
+    }
+
+    /// A job of the requests in the file uploaded, on one endpoint and model.
+    async fn create(
+        &self,
+        key: &ApiKey,
+        file_id: &str,
+        endpoint: &str,
+        model: &str,
+    ) -> Result<String, ProviderError> {
+        let created = send_json(
             self.client
                 .post(format!("{}/batch/jobs", self.base_url))
-                .bearer_auth(key.expose()),
-            body.finish(r#"],"timeout_hours":24}"#),
-        ))
+                .bearer_auth(key.expose())
+                .json(&json!({
+                    "input_files": [file_id],
+                    "endpoint": endpoint,
+                    "model": model,
+                    "timeout_hours": 24,
+                })),
+        )
         .await?;
         created
             .get("id")
