@@ -197,6 +197,28 @@ impl PdfSource {
             .is_ok_and(|t| t.chars().filter(|c| c.is_alphanumeric()).count() > 40)
     }
 
+    /// How many pages carry a text layer of small print in columns (more than
+    /// [`kalamu_core::DENSE_PAGE_WORDS`] words, a newspaper's), counted on the first pages, as
+    /// the input checks sample them, and scaled to the whole document.
+    pub fn dense_pages(&self) -> u32 {
+        let pages = self.page_count();
+        let sampled = pages.min(crate::checks::SAMPLE);
+        if sampled == 0 {
+            return 0;
+        }
+        let dense = (1..=sampled)
+            .filter(|&n| {
+                self.doc.extract_text(&[n]).is_ok_and(|t| {
+                    t.split_whitespace()
+                        .filter(|w| w.chars().any(char::is_alphanumeric))
+                        .count()
+                        > kalamu_core::DENSE_PAGE_WORDS
+                })
+            })
+            .count() as u32;
+        (f64::from(dense) * f64::from(pages) / f64::from(sampled)).round() as u32
+    }
+
     fn resolve_dict<'a>(&'a self, value: &'a Object) -> Option<&'a Dictionary> {
         match value {
             Object::Dictionary(d) => Some(d),

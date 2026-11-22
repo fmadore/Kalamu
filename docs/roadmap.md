@@ -759,8 +759,7 @@ to run on the computer itself.
    the review drawing a moved block's estimated lines within its new box, as the exports do;
    the reading's identifier in the XML files; an answer of an analysis, an entry of a table of contents or a row of records tied to the
    regions it was read from (with item 6 and #47); a drawn region kept with the document
-   across jobs rather than with one job; a cost estimate that follows the region's size; and
-   the third step, imported ALTO and PAGE XML and a model's text aligned to OCR positions.
+   across jobs rather than with one job; and the third step, imported ALTO and PAGE XML and a model's text aligned to OCR positions.
 6. **Records, the second increment ([#171](https://github.com/fmadore/Kalamu/issues/171))**,
    the first being done: entries that run over a page (with #54), where each row sits (with
    item 5), rows across a project, a cut-off page read again in halves, error rates by row, and the

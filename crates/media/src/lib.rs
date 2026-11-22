@@ -91,10 +91,15 @@ pub fn inspect(path: &Path, ffmpeg: Option<&Ffmpeg>) -> Result<SourceFile, Media
     let kind = InputKind::from_path(path).ok_or(MediaError::UnsupportedKind)?;
     let metadata = std::fs::metadata(path).map_err(read_err)?;
     let sha256 = hash_file(path)?;
-    let page_count = match kind {
-        InputKind::Pdf => Some(PdfSource::open(path)?.page_count()),
-        InputKind::Image => ImageSource::open(path).map(|i| i.page_count()).ok(),
-        _ => None,
+    // A PDF's pages, and how many of them are a newspaper's small print, which an estimate
+    // prices as such whatever the prompt.
+    let (page_count, dense_pages) = match kind {
+        InputKind::Pdf => {
+            let pdf = PdfSource::open(path)?;
+            (Some(pdf.page_count()), Some(pdf.dense_pages()))
+        }
+        InputKind::Image => (ImageSource::open(path).map(|i| i.page_count()).ok(), None),
+        _ => (None, None),
     };
     let duration_ms = match kind {
         InputKind::Audio | InputKind::Video => audio::probe(path, ffmpeg).map(|p| p.duration_ms),
@@ -115,6 +120,7 @@ pub fn inspect(path: &Path, ffmpeg: Option<&Ffmpeg>) -> Result<SourceFile, Media
         duration_ms,
         split_spreads: false,
         even_out_volume: false,
+        dense_pages,
         title: None,
         derived_from: None,
         pages: Vec::new(),

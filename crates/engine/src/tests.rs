@@ -1622,7 +1622,120 @@ fn screening_is_priced_document_by_document_and_newspaper_pages_as_dense() {
         (1.1..1.6).contains(&newspaper),
         "newspaper: ${newspaper:.2}"
     );
-    assert!(pages("text_extraction.printed") < newspaper / 2.5);
+    assert!(pages("text_extraction.printed") < newspaper / 1.5);
+}
+
+/// The 1.10.0-rc2 test pass read a one-page newspaper whose text layer holds about 1,940 words
+/// with the printed-document prompt, and Gemini 4 Hydrogen was billed twice the estimate: pages
+/// whose text layer is small print are now priced as dense pages whatever the prompt, as the
+/// newspaper prompt's are; a PDF of ordinary print, or one added before Kalamu counted them,
+/// keeps the prompt's pricing.
+#[test]
+fn pages_whose_text_layer_is_small_print_are_priced_as_dense_whatever_the_prompt() {
+    let f = fixture();
+    let hydrogen = |preset: &str| SetupRequest {
+        provider: ProviderId::new("gemini"),
+        model: "gemini-4-hydrogen".into(),
+        preset_id: Some(preset.into()),
+        label: None,
+        options: Default::default(),
+        merge: None,
+    };
+    let mut issue = f.pdf("issue.pdf", 4);
+    assert_eq!(issue.dense_pages, Some(0), "a scan without text");
+    let price = |source: &SourceFile, preset: &str, sample_pages: Option<u32>| {
+        f.engine
+            .estimate(&EstimateRequest {
+                task: Task::TextExtraction,
+                sources: vec![source.clone()],
+                setups: vec![hydrogen(preset)],
+                sample_pages,
+            })
+            .total_usd
+            .unwrap_or_default()
+    };
+    let ordinary = price(&issue, "text_extraction.printed", None);
+    issue.dense_pages = Some(4);
+    let dense = price(&issue, "text_extraction.printed", None);
+    let newspaper = price(&issue, "text_extraction.newspaper", None);
+    assert!(dense > 1.5 * ordinary, "{dense} against {ordinary}");
+    // As the newspaper prompt's pages, but for the length of the instructions.
+    assert!(
+        (dense / newspaper - 1.0).abs() < 0.05,
+        "{dense} against {newspaper}"
+    );
+    // Half its pages small print: half of them priced so; a sample of two pages, one of them.
+    issue.dense_pages = Some(2);
+    let half = price(&issue, "text_extraction.printed", None);
+    assert!((half - (ordinary + dense) / 2.0).abs() < 1e-9, "{half}");
+    let sample = price(&issue, "text_extraction.printed", Some(2));
+    assert!((sample - half / 2.0).abs() < 1e-9, "{sample}");
+    // Not counted (a PDF added before 1.10): the prompt's pricing.
+    issue.dense_pages = None;
+    assert_eq!(price(&issue, "text_extraction.printed", None), ordinary);
+}
+
+/// The interview analysis of the 1.10.0-rc2 test pass (Gemini 4 Hydrogen, a transcript of
+/// 1,568 bytes) was billed $0.024 against $0.013 estimated: its themes and quotations, entries
+/// that describe and quote the text, make a longer answer, now counted. A screening's passages,
+/// quotations alone, are not.
+#[test]
+fn an_interview_analysis_is_priced_with_its_longer_answer() {
+    let f = fixture();
+    let path = f.dir.path().join("interview-two-speakers.txt");
+    std::fs::write(
+        &path,
+        "[00:00:00] Mariam Kaboré: Bonjour et merci de me recevoir. ".repeat(26),
+    )
+    .unwrap_or_else(|_| panic!("write"));
+    let source = kalamu_media::inspect(&path, None).unwrap_or_else(|_| panic!("inspect"));
+    assert!((1_500..1_700).contains(&source.size_bytes));
+    let estimate = |preset: &str| {
+        f.engine
+            .estimate(&EstimateRequest {
+                task: Task::Analysis,
+                sources: vec![source.clone()],
+                setups: vec![SetupRequest {
+                    provider: ProviderId::new("gemini"),
+                    model: "gemini-4-hydrogen".into(),
+                    preset_id: Some(preset.into()),
+                    label: None,
+                    options: Default::default(),
+                    merge: None,
+                }],
+                sample_pages: None,
+            })
+            .total_usd
+            .unwrap_or_default()
+    };
+    let interview = estimate("analysis.interview");
+    // 3,082 tokens read and 2,521 written at $1.50 and $7.50 a million.
+    let billed = (3_082.0 * 1.5 + 2_521.0 * 7.5) / 1_000_000.0;
+    assert!(
+        (0.8 * billed..=1.3 * billed).contains(&interview),
+        "interview: ${interview:.4} against ${billed:.4}"
+    );
+    // The screening prompt's passages add nothing to its answer.
+    let catalog = f.engine.catalog();
+    let model = catalog
+        .model(&ProviderId::new("gemini"), "gemini-4-hydrogen")
+        .unwrap_or_else(|| panic!("no Hydrogen"));
+    let instructions = f
+        .engine
+        .with_prompts(|p| p.get("analysis.screening"))
+        .map(|p| p.instructions.len())
+        .unwrap_or_else(|e| panic!("{e}"));
+    let plain = catalog.estimate(
+        model,
+        Task::Analysis,
+        &kalamu_catalog::Workload {
+            text_chars: source.size_bytes,
+            documents: 1,
+            prompt_chars: instructions,
+            ..Default::default()
+        },
+    );
+    assert_eq!(Some(estimate("analysis.screening")), plain.usd);
 }
 
 /// Two jobs on one file never write over each other's files (a Tesseract job then a

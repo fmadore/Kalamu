@@ -353,6 +353,13 @@ pub struct ModelInfo {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub reasoning: Option<Reasoning>,
+    /// What the model thinks before it writes an ordinary page, in tokens at `low`, where
+    /// measured against what its provider billed: an estimate counts it in place of the
+    /// allowance every model gets (600), Gemini 4 thinking far more and GPT-6.2 far less. Older
+    /// builds ignore the field.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub page_thinking: Option<u32>,
     /// Its name and description in other interface languages, by language (`fr`).
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     #[ts(optional, as = "Option<BTreeMap<String, Translation>>")]

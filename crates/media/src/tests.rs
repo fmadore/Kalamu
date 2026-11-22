@@ -468,4 +468,82 @@ fn a_thumbnail_is_a_small_picture_of_the_page() -> Result<(), MediaError> {
     Ok(())
 }
 
+/// A PDF whose pages carry a text layer of these many words each (none for 0).
+fn pdf_of_words(words: &[usize]) -> Vec<u8> {
+    use lopdf::content::{Content, Operation};
+    use lopdf::{Document, Object, Stream, dictionary};
+
+    let mut doc = Document::with_version("1.5");
+    let pages_id = doc.new_object_id();
+    let font_id = doc.add_object(dictionary! {
+        "Type" => "Font", "Subtype" => "Type1", "BaseFont" => "Helvetica",
+    });
+    let resources_id = doc.add_object(dictionary! { "Font" => dictionary! { "F1" => font_id } });
+    let mut kids = Vec::new();
+    for &n in words {
+        let mut operations = Vec::new();
+        if n > 0 {
+            operations = vec![
+                Operation::new("BT", vec![]),
+                Operation::new("Tf", vec!["F1".into(), 6.into()]),
+                Operation::new("Td", vec![36.into(), 800.into()]),
+                Operation::new("Tj", vec![Object::string_literal("news ".repeat(n))]),
+                Operation::new("ET", vec![]),
+            ];
+        }
+        let content = Content { operations };
+        let content_id = doc.add_object(Stream::new(
+            dictionary! {},
+            content.encode().unwrap_or_default(),
+        ));
+        let page_id = doc.add_object(dictionary! {
+            "Type" => "Page",
+            "Parent" => pages_id,
+            "MediaBox" => vec![0.into(), 0.into(), Object::Real(A4.0), Object::Real(A4.1)],
+            "Contents" => content_id,
+        });
+        kids.push(Object::Reference(page_id));
+    }
+    doc.objects.insert(
+        pages_id,
+        Object::Dictionary(dictionary! {
+            "Type" => "Pages",
+            "Kids" => kids,
+            "Count" => words.len() as i64,
+            "Resources" => resources_id,
+        }),
+    );
+    let catalog_id = doc.add_object(dictionary! { "Type" => "Catalog", "Pages" => pages_id });
+    doc.trailer.set("Root", catalog_id);
+    let mut out = Vec::new();
+    let _ = doc.save_to(&mut out);
+    out
+}
+
+/// A newspaper's page of small print (the Daily Nebraskan of 1911 holds about 1,900 words) is
+/// counted as dense when the PDF is added, from its text layer, so the estimate prices it so
+/// whatever the prompt; a book's page, a scan without text and a born-digital letter are not.
+#[test]
+fn pages_of_small_print_are_counted_from_the_text_layer() -> Result<(), MediaError> {
+    let dir = tempfile::tempdir().map_err(|e| MediaError::Pdf(e.to_string()))?;
+    let issue = dir.path().join("issue.pdf");
+    std::fs::write(&issue, pdf_of_words(&[1_900, 1_500, 400, 0]))
+        .map_err(|e| MediaError::Pdf(e.to_string()))?;
+    let source = inspect(&issue, None)?;
+    assert_eq!(source.page_count, Some(4));
+    assert_eq!(source.dense_pages, Some(2));
+    // The first ten pages are counted, and the rest taken to be like them.
+    let long = PdfSource::from_bytes(&pdf_of_words(&[1_200; 20]))?;
+    assert_eq!(long.dense_pages(), 20);
+    let scan = PdfSource::from_bytes(&sample_pdf(&[A4, A4], false))?;
+    assert_eq!(scan.dense_pages(), 0);
+    let letter = PdfSource::from_bytes(&sample_pdf(&[A4], true))?;
+    assert_eq!(letter.dense_pages(), 0);
+    // An image is not counted.
+    let photo = dir.path().join("page.png");
+    std::fs::write(&photo, png(40, 60)).map_err(|e| MediaError::Pdf(e.to_string()))?;
+    assert_eq!(inspect(&photo, None)?.dense_pages, None);
+    Ok(())
+}
+
 mod region;

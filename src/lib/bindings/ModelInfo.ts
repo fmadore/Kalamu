@@ -97,6 +97,13 @@ retired?: boolean, pricing: Pricing, limits: Limits,
  */
 reasoning?: Reasoning, 
 /**
+ * What the model thinks before it writes an ordinary page, in tokens at `low`, where
+ * measured against what its provider billed: an estimate counts it in place of the
+ * allowance every model gets (600), Gemini 4 thinking far more and GPT-6.2 far less. Older
+ * builds ignore the field.
+ */
+page_thinking?: number, 
+/**
  * Its name and description in other interface languages, by language (`fr`).
  */
 translations?: { [key in string]: Translation }, };

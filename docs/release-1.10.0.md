@@ -115,8 +115,12 @@ keys. Once 1.10.0 has opened your job database, an earlier version refuses it.
   from the project. *Export the whole table* writes every document's answer, whatever filter is
   on.
 - **Estimates now count the models' thinking** and a newspaper's dense pages, which made them
-  three to eleven times too low before this version's test pass. They are still estimates:
-  compare the first job's cost with what your provider bills.
+  three to eleven times too low before this version's test pass: Gemini 4 thinks more than
+  other models on a page, a PDF page whose text layer is small print is priced as a
+  newspaper's whatever the prompt, an interview analysis writes a longer answer, and a region
+  read again is priced as the part of the page it sends. A newspaper scanned as images, with no
+  text layer, is priced as dense pages only with the *Newspaper or magazine* prompt. They are
+  still estimates: compare the first job's cost with what your provider bills.
 - **GPT-6.2 Sol can leave text out, or answer nothing.** It replaced a chemistry lecture's
   description in a 1911 newspaper with a note that it had omitted it, and answered an analysis
   of that issue with every field empty. Kalamu now refuses an analysis left wholly empty for a

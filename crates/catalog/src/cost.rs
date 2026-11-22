@@ -4,7 +4,9 @@
 //! An estimate counts what a model writes and what it thinks before writing, which providers
 //! bill as output: at the level Kalamu suggests (the lowest for reading a page, `low` for an
 //! analysis), thinking is most of what a newspaper page costs. The figures were measured
-//! against what jobs were billed in the 1.10.0 test pass, and lean to the high side.
+//! against what jobs were billed in the 1.10.0 test passes (rc1 and rc2), and lean to the high
+//! side; a model that thinks far from the allowance has its own measure in the catalogue
+//! ([`ModelInfo::page_thinking`]).
 
 use kalamu_core::{EmbeddingModel, Task};
 use serde::{Deserialize, Serialize};
@@ -14,14 +16,19 @@ use crate::{CHARS_PER_TOKEN, Catalog, ModelInfo};
 
 /// Measured in iwac-ai-pipelines: a PDF page at Gemini's high media resolution.
 const INPUT_TOKENS_PER_PAGE: f64 = 1_100.0;
+/// A page of small print in columns as sent: Gemini reads a newspaper PDF's text layer beside
+/// its picture (about 3,400 tokens a page in the 1.10.0-rc2 test pass), GPT-6.2 Sol a large
+/// picture in many tiles (about 11,000).
+const DENSE_INPUT_TOKENS_PER_PAGE: f64 = 3_000.0;
 /// The text of an ordinary page transcribed in full: a letter, a page of a book or a report.
 const TEXT_TOKENS_PER_PAGE: f64 = 900.0;
 /// The text of a page of small print in columns (a newspaper's) transcribed in full: a page of
 /// the Daily Nebraskan of 1911 holds about 1,200 words, written with its headings marked.
 const DENSE_TEXT_TOKENS_PER_PAGE: f64 = 2_000.0;
 /// What a model thinks before it writes an ordinary page, at the lowest level it has that is
-/// not "none" (a reasoning level's [`thinking`] scales it). Claude Sonnet 5.5 was billed about
-/// 1,500 tokens of output for a handwritten page of 1755.
+/// not "none" (a reasoning level's [`thinking`] scales it), unless the catalogue measured its
+/// own ([`ModelInfo::page_thinking`]). Claude Sonnet 5.5 was billed about 1,500 tokens of output
+/// for a handwritten page of 1755.
 const THINKING_TOKENS_PER_PAGE: f64 = 600.0;
 /// What a model thinks before it writes a page of small print in columns, at the same level:
 /// Gemini 4 Hydrogen and GPT-6.2 Sol were each billed 4,000 to 5,500 tokens of output for a
@@ -36,6 +43,14 @@ const ANALYSIS_ANSWER_TOKENS: f64 = 700.0;
 /// What a model thinks before it answers an analysis of one document at `low`: screening ten
 /// documents with Gemini 4 Hydrogen was billed about 1,500 tokens of output for each.
 const ANALYSIS_THINKING_TOKENS: f64 = 800.0;
+/// What each field whose entries describe and quote the text (an interview's themes, its
+/// quotations worth keeping) adds to an analysis's answer: entries with fields of their own, and
+/// quotations copied word for word. Gemini 4 Hydrogen wrote 2,100 to 2,500 tokens, its thinking
+/// included, for an interview of 250 words, where 1,500 were counted.
+const CITED_ENTRIES_TOKENS: f64 = 500.0;
+/// The least share of a page a region read again is priced as: a strip of two lines still sends
+/// the instructions, a picture and some thought.
+const MIN_REGION_SHARE: f64 = 0.2;
 /// A page's entries for a table of contents: a few titles and short summaries.
 const CONTENTS_OUTPUT_TOKENS_PER_PAGE: f64 = 500.0;
 /// A page's rows for a records analysis (a directory, a register: one row per entry), as JSON
@@ -82,6 +97,18 @@ pub struct Workload<'a> {
     /// Pages of small print in columns (a newspaper's), as the prompt says
     /// (`Preset::is_dense`): read page by page, they hold far more text.
     pub dense: bool,
+    /// Of `pages`, those known to be small print from their text layer
+    /// (`SourceFile::dense_pages`), priced as dense whatever the prompt.
+    pub dense_pages: u32,
+    /// For a region of a page read again, the share of the page it covers, from 0 to 1: its
+    /// picture, text and thinking priced as that share of a page (at least
+    /// [`MIN_REGION_SHARE`]); `None` for whole pages. A model priced by the page bills a whole
+    /// one.
+    pub region: Option<f64>,
+    /// For an analysis, its fields whose entries describe and quote the text (an interview's
+    /// themes and quotations; not a screening's passages, which are quotations alone), each
+    /// writing a longer answer.
+    pub cited_entries: u32,
     /// The reasoning level the set-up chose, in the provider's words; `None` for the level
     /// Kalamu suggests for the task.
     pub reasoning: Option<&'a str>,
@@ -97,6 +124,13 @@ impl ModelInfo {
                 .and_then(|r| r.level(task, chosen))
                 .as_deref(),
         )
+    }
+
+    /// What it thinks before writing an ordinary page at `low`: its own measure, else the
+    /// allowance.
+    fn page_thinking_tokens(&self) -> f64 {
+        self.page_thinking
+            .map_or(THINKING_TOKENS_PER_PAGE, f64::from)
     }
 }
 
@@ -125,14 +159,24 @@ impl Catalog {
                 if let Some(per_page) = p.per_page {
                     Some(pages * per_page)
                 } else if let (Some(input), Some(output)) = (p.input_per_mtok, p.output_per_mtok) {
-                    // The instructions are sent with every page.
-                    let tokens_in = pages * (INPUT_TOKENS_PER_PAGE + prompt_tokens);
-                    let per_page = if work.dense {
-                        DENSE_TEXT_TOKENS_PER_PAGE + DENSE_THINKING_TOKENS_PER_PAGE * thinks
+                    // Pages of small print, as the prompt or their text layer says; the others
+                    // ordinary, or a share of one for a region.
+                    let dense = if work.dense {
+                        pages
                     } else {
-                        TEXT_TOKENS_PER_PAGE + THINKING_TOKENS_PER_PAGE * thinks
+                        f64::from(work.dense_pages.min(work.pages))
                     };
-                    let tokens_out = pages * per_page;
+                    let ordinary = pages - dense;
+                    let share = work.region.map_or(1.0, |s| s.clamp(MIN_REGION_SHARE, 1.0));
+                    let page_thinking = model.page_thinking_tokens();
+                    // The instructions are sent with every page.
+                    let tokens_in = ordinary * (INPUT_TOKENS_PER_PAGE * share + prompt_tokens)
+                        + dense * (DENSE_INPUT_TOKENS_PER_PAGE + prompt_tokens);
+                    let tokens_out =
+                        ordinary * (TEXT_TOKENS_PER_PAGE + page_thinking * thinks) * share
+                            + dense
+                                * (DENSE_TEXT_TOKENS_PER_PAGE
+                                    + DENSE_THINKING_TOKENS_PER_PAGE.max(page_thinking) * thinks);
                     Some((tokens_in * input + tokens_out * output) / 1_000_000.0)
                 } else {
                     None
@@ -168,7 +212,7 @@ impl Catalog {
                     let tokens_in = f64::from(work.pages) * INPUT_TOKENS_PER_PAGE
                         + work.text_chars as f64 / CHARS_PER_TOKEN as f64
                         + documents * prompt_tokens;
-                    let tokens_out = documents * analysis_output(thinks);
+                    let tokens_out = documents * analysis_output(work.cited_entries, thinks);
                     Some((tokens_in * input + tokens_out * output) / 1_000_000.0)
                 }
                 _ => None,
@@ -241,7 +285,8 @@ impl Catalog {
     /// A rough cost for a text too long for its model read in `parts` parts, `chars` characters
     /// sent in all (the turns some parts repeat counted again), at the `reasoning` level chosen
     /// (`None`: the suggestion): each part sent with the instructions and answered as an
-    /// analysis is. Never in a batch, as no cited analysis is.
+    /// analysis is, its fields of quoted entries counted ([`Workload::cited_entries`]). Never in
+    /// a batch, as no cited analysis is.
     pub fn estimate_parts(
         &self,
         model: &ModelInfo,
@@ -249,6 +294,7 @@ impl Catalog {
         chars: u64,
         prompt_chars: usize,
         reasoning: Option<&str>,
+        cited_entries: u32,
     ) -> CostEstimate {
         let p = &model.pricing;
         let usd = match (p.input_per_mtok, p.output_per_mtok) {
@@ -256,8 +302,8 @@ impl Catalog {
                 let parts = f64::from(parts.max(1));
                 let tokens_in =
                     (chars as f64 + parts * prompt_chars as f64) / CHARS_PER_TOKEN as f64;
-                let tokens_out =
-                    parts * analysis_output(model.thinking_for(Task::Analysis, reasoning));
+                let tokens_out = parts
+                    * analysis_output(cited_entries, model.thinking_for(Task::Analysis, reasoning));
                 Some((tokens_in * input + tokens_out * output) / 1_000_000.0)
             }
             _ => None,
@@ -270,20 +316,22 @@ impl Catalog {
 
     /// A rough cost for the step that brings `parts` parts together, at the `reasoning` level
     /// chosen (`None`: the suggestion): one call reading every part's answer and writing the
-    /// whole one.
+    /// whole one, each as long as its fields of quoted entries make it.
     pub fn estimate_together(
         &self,
         model: &ModelInfo,
         parts: u32,
         prompt_chars: usize,
         reasoning: Option<&str>,
+        cited_entries: u32,
     ) -> CostEstimate {
         let p = &model.pricing;
         let usd = match (p.input_per_mtok, p.output_per_mtok) {
             (Some(input), Some(output)) => {
-                let tokens_in = f64::from(parts.max(1)) * ANALYSIS_ANSWER_TOKENS
+                let tokens_in = f64::from(parts.max(1)) * analysis_output(cited_entries, 0.0)
                     + prompt_chars as f64 / CHARS_PER_TOKEN as f64;
-                let tokens_out = analysis_output(model.thinking_for(Task::Analysis, reasoning));
+                let tokens_out =
+                    analysis_output(cited_entries, model.thinking_for(Task::Analysis, reasoning));
                 Some((tokens_in * input + tokens_out * output) / 1_000_000.0)
             }
             _ => None,
@@ -349,9 +397,12 @@ fn page_by_page(
     Some((tokens_in * input + tokens_out * output) / 1_000_000.0)
 }
 
-/// What an analysis writes for one document, thinking `thinks` times what it thinks at `low`.
-fn analysis_output(thinks: f64) -> f64 {
-    ANALYSIS_ANSWER_TOKENS + ANALYSIS_THINKING_TOKENS * thinks
+/// What an analysis writes for one document, its answer longer by each of its `cited_entries`
+/// fields of quoted entries, thinking `thinks` times what it thinks at `low`.
+fn analysis_output(cited_entries: u32, thinks: f64) -> f64 {
+    ANALYSIS_ANSWER_TOKENS
+        + CITED_ENTRIES_TOKENS * f64::from(cited_entries)
+        + ANALYSIS_THINKING_TOKENS * thinks
 }
 
 /// `usd` at once, and in economy mode where the model has a batch service.

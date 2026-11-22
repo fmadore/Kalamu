@@ -255,10 +255,11 @@ impl Engine {
         Ok(input)
     }
 
-    /// What reading the region would cost: the picture cut, priced as one page of a text
-    /// extraction at the model's prices, as a job's estimate prices a page; nothing when the
-    /// answer is stored already, nothing to pay on this computer, none for a model without a
-    /// price.
+    /// What reading the region would cost: the picture cut, priced as the share of a page of a
+    /// text extraction it covers (its picture, text and thinking; the instructions whole), as a
+    /// job's estimate prices a page, and as a whole page for a model priced by the page; nothing
+    /// when the answer is stored already, nothing to pay on this computer, none for a model
+    /// without a price.
     pub async fn region_reading_estimate(
         &self,
         ask: &RegionAsk,
@@ -280,6 +281,7 @@ impl Engine {
                 pages: 1,
                 documents: 1,
                 prompt_chars: chars,
+                region: Some(f64::from(ask.width * ask.height)),
                 reasoning: planned.setup.options.reasoning.as_deref(),
                 ..Default::default()
             };

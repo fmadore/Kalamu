@@ -363,6 +363,7 @@ impl Engine {
                 duration_ms: None,
                 split_spreads: false,
                 even_out_volume: false,
+                dense_pages: None,
                 title: None,
                 derived_from: Some(DerivedFrom {
                     snapshot_id: snapshot.id,

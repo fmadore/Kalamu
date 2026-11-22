@@ -39,6 +39,13 @@ split_spreads: boolean,
  */
 even_out_volume: boolean, 
 /**
+ * Of a PDF's pages, how many carry a text layer of small print (a newspaper's, more than
+ * 900 words a page), counted on its first ten pages when it was added: an estimate prices
+ * them as dense pages whatever the prompt. `None` for any other source, and for a PDF
+ * added before Kalamu counted them.
+ */
+dense_pages?: number, 
+/**
  * A YouTube video's title, as YouTube gives it, when it could be read.
  */
 title?: string, 

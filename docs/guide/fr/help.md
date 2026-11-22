@@ -53,10 +53,12 @@ un modèle en ligne. Voir [Travailler hors ligne](offline.md#a-quelle-vitesse).
 
 Regardez ce que le traitement a réellement consommé, et le prix du modèle dans la liste.
 L’estimation compte ce que le modèle écrit et la réflexion qui lui est facturée avant d’écrire,
-au niveau choisi sous *Réflexion*, et compte les pages lues avec la consigne *Journal ou magazine*
-comme des pages pleines de petits caractères. Les longues pages manuscrites, les pages
-particulièrement denses et les analyses aux longues réponses peuvent encore coûter plus que les
-moyennes de l’estimation. Pour le lot suivant : un modèle plus petit, ou le
+au niveau choisi sous *Réflexion* (certains modèles, comme Gemini 4, réfléchissent bien plus
+que d’autres), et compte comme des pages pleines de petits caractères celles lues avec la
+consigne *Journal ou magazine* et celles d’un PDF dont la couche de texte est en petits
+caractères. Une zone relue est comptée pour la partie de la page envoyée. Les longues pages
+manuscrites, un journal numérisé en images et lu avec une autre consigne, et les analyses aux
+longues réponses peuvent encore coûter plus que les moyennes de l’estimation. Pour le lot suivant : un modèle plus petit, ou le
 [mode moins cher](costs.md#trois-facons-de-payer-moins).
 
 ## Où sont mes résultats ?
