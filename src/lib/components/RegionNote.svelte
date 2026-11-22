@@ -48,10 +48,12 @@
 	let atFoot = $state(false);
 
 	/** Puts the card under the pane's bar, or at the foot of the scan when it would cover the
-	 * region chosen there. */
+	 * region chosen there, or the box being moved or resized, with what to do. */
 	function place() {
 		const pane = note?.closest<HTMLElement>('.pane');
-		const box = pane?.querySelector<HTMLElement>('.layer .region.chosen');
+		const box =
+			pane?.querySelector<HTMLElement>('[data-adjusted-box]') ??
+			pane?.querySelector<HTMLElement>('.layer .region.chosen');
 		if (!note || !pane || !box) {
 			atFoot = false;
 			return;
@@ -70,6 +72,7 @@
 		void regions.chosen;
 		void region;
 		void edit.mode;
+		void edit.box;
 		const pane = note?.closest<HTMLElement>('.pane');
 		if (!note || !pane) return;
 		const again = () => requestAnimationFrame(place);

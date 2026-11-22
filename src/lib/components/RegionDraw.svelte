@@ -171,6 +171,7 @@
 		bind:clientHeight={frameHeight}
 		role="application"
 		tabindex="0"
+		data-adjusted-box
 		aria-label={m.review.regionEdit.box}
 		aria-describedby="region-adjust-hint"
 		style:left={pct(b.x)}
