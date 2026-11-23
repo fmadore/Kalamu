@@ -4,6 +4,8 @@
 //! the answers of every analysis that asked it alike, a document's newest answer counting, as
 //! the table of documents shows them (`answered`).
 
+use std::collections::HashSet;
+
 use kalamu_core::analysis::cited;
 use kalamu_core::{
     CsvCells, Field, FieldAnswer, FieldValue, Job, JobId, ProjectError, ProjectId, SetupId,
@@ -43,9 +45,12 @@ impl Projects {
         documents.sort_by_key(|d| (d.title.to_lowercase(), d.title.clone()));
 
         // The analyses read, newest first: this one, and those that asked its question alike.
+        // Every job looked at is remembered, an analysis or not, so each is read once however
+        // many documents link to it.
         let mut jobs: Vec<Job> = vec![job.clone()];
+        let mut seen: HashSet<JobId> = HashSet::from([job.id]);
         for link in &links {
-            if jobs.iter().any(|j| j.id == link.job_id) {
+            if !seen.insert(link.job_id) {
                 continue;
             }
             match self.jobs.job(link.job_id) {
