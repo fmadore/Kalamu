@@ -19,6 +19,7 @@ on:
       - .github/workflows/packaging.yml
       - .github/workflows/release.yml
       - .github/actions/windows-packages/**
+      - .github/actions/clang-for-msvc/**
       - .github/actions/vulkan-sdk/**
       - scripts/bundle-msix.mjs
       - scripts/fetch-ffmpeg.mjs
@@ -42,6 +43,7 @@ on:
       - .github/workflows/packaging.yml
       - .github/workflows/release.yml
       - .github/actions/windows-packages/**
+      - .github/actions/clang-for-msvc/**
       - .github/actions/vulkan-sdk/**
       - scripts/bundle-msix.mjs
       - scripts/fetch-ffmpeg.mjs
