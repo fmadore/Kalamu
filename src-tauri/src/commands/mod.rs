@@ -21,7 +21,7 @@ pub mod units;
 pub mod window;
 pub mod workflows;
 
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 
 use kalamu_core::{InputWarning, JobId, ProviderId, SourceFile, SourceId};
@@ -81,6 +81,8 @@ pub struct AppState {
     pub keys: Arc<CredentialKeys>,
     /// Folders and files the researcher handed the app, kept where a sandbox requires it.
     pub grants: crate::grants::Grants,
+    /// The files table exports wrote, so exporting again replaces them and nothing else.
+    pub exports: Arc<crate::exports::ExportLedger>,
     pub settings: Mutex<Settings>,
     pub paths: Paths,
     pub http: reqwest::Client,
@@ -238,19 +240,79 @@ fn write_text(path: PathBuf, text: String) -> Result<(), AppError> {
     std::fs::write(path, text).map_err(|e| AppError::new(crate::errors::id::FILE, e))
 }
 
-/// Writes a table beside an export's JSON, at `path` with each extension: `.xlsx`, which opens
-/// by double-click in Excel set to any language, and `.csv` for R, Python and other tools.
-/// `failed` says a table that could not be written as the export's own failure.
+/// The file of a table export the save dialog asked about, the one whose name the researcher
+/// chose; the table goes beside it.
+pub(crate) enum Asked {
+    /// A JSON file, holding this text: the workbook and the CSV go beside it.
+    Json(String),
+    /// The workbook itself: the CSV goes beside it.
+    Workbook,
+}
+
+/// Writes a table export where the researcher chose: the file the dialog asked about (`asked`,
+/// at `path` with its extension), and beside it the table as `.xlsx`, which opens by
+/// double-click in Excel set to any language, and as `.csv` for R, Python and other tools.
+///
+/// The dialog asked before replacing the chosen file, but not the files beside it: before
+/// anything is written, those are named so that none replaces a file an export did not write
+/// ([`kalamu_prompts::beside`], with the files an export wrote recognised by `ledger`). When one
+/// is the researcher's, the files beside all go under the next free name, `name (2).csv`…, and
+/// exporting again to the same name replaces Kalamu's own earlier files. Each file is written
+/// whole through a temporary file beside it. Returns the files written under another name than
+/// the chosen one's, for the interface to name. `failed` says a table that could not be made
+/// as the export's own failure.
 fn write_table(
-    path: &std::path::Path,
+    path: &Path,
+    asked: Asked,
     table: &kalamu_core::Table,
     failed: impl Fn(String) -> AppError,
-) -> Result<(), AppError> {
+    ledger: &crate::exports::ExportLedger,
+) -> Result<Vec<String>, AppError> {
     let xlsx = kalamu_export::table_xlsx(table).map_err(|e| failed(e.to_string()))?;
-    std::fs::write(path.with_extension("xlsx"), xlsx)
-        .map_err(|e| AppError::new(crate::errors::id::FILE, e))?;
-    let csv = kalamu_export::table_csv(table).map_err(|e| failed(e.to_string()))?;
-    write_text(path.with_extension("csv"), csv)
+    let csv = kalamu_export::table_csv(table)
+        .map_err(|e| failed(e.to_string()))?
+        .into_bytes();
+    let (chosen, chosen_bytes, beside) = match asked {
+        Asked::Json(json) => (
+            path.with_extension("json"),
+            json.into_bytes(),
+            vec![("xlsx", xlsx), ("csv", csv)],
+        ),
+        Asked::Workbook => (path.with_extension("xlsx"), xlsx, vec![("csv", csv)]),
+    };
+    let extensions: Vec<&str> = beside.iter().map(|(ext, _)| *ext).collect();
+    let names = kalamu_prompts::beside(&chosen, &extensions, |p| ledger.wrote(p))
+        .ok_or_else(|| AppError::new(crate::errors::id::FILE, chosen.display()))?;
+    write_whole(&chosen, &chosen_bytes)?;
+    ledger.record(&chosen, &chosen_bytes);
+    let mut renamed = Vec::new();
+    for ((ext, bytes), name) in beside.into_iter().zip(names) {
+        write_whole(&name, &bytes)?;
+        ledger.record(&name, &bytes);
+        if name != chosen.with_extension(ext) {
+            renamed.push(name.display().to_string());
+        }
+    }
+    Ok(renamed)
+}
+
+/// Writes `bytes` at `path` through a temporary file in the same folder, renamed at the end, so
+/// a failure leaves whatever stood there whole.
+fn write_whole(path: &Path, bytes: &[u8]) -> Result<(), AppError> {
+    let file_error = |e: std::io::Error| AppError::new(crate::errors::id::FILE, e);
+    let folder = match path.parent() {
+        Some(folder) if !folder.as_os_str().is_empty() => folder,
+        _ => Path::new("."),
+    };
+    let mut tmp = tempfile::Builder::new()
+        .prefix(".kalamu-")
+        .suffix(".pending")
+        .tempfile_in(folder)
+        .map_err(file_error)?;
+    std::io::Write::write_all(&mut tmp, bytes).map_err(file_error)?;
+    tmp.as_file().sync_all().map_err(file_error)?;
+    tmp.persist(path).map_err(|e| file_error(e.error))?;
+    Ok(())
 }
 
 /// Writes a pipeline's or a workflow's record: the JSON at `path`, whose name the researcher
@@ -268,4 +330,95 @@ fn write_record(
     write_text(json_path, json)?;
     write_text(markdown_path.clone(), markdown)?;
     Ok(markdown_path.display().to_string())
+}
+
+/// What every table export is checked against, one test per export calling the function its
+/// command calls.
+#[cfg(test)]
+#[allow(clippy::unwrap_used)]
+pub(crate) mod table_export_tests {
+    use std::collections::BTreeSet;
+    use std::path::Path;
+
+    use crate::errors::AppError;
+    use crate::exports::ExportLedger;
+
+    pub(crate) type Write<'a> = &'a dyn Fn(&Path, &ExportLedger) -> Result<Vec<String>, AppError>;
+
+    pub(crate) fn table() -> kalamu_core::Table {
+        kalamu_core::Table {
+            headings: vec!["Title".into(), "Answer".into()],
+            rows: vec![vec!["Letter 1".into(), "Yes".into()]],
+            cells: kalamu_core::CsvCells::default(),
+        }
+    }
+
+    fn names(folder: &Path) -> BTreeSet<String> {
+        std::fs::read_dir(folder)
+            .unwrap()
+            .map(|e| e.unwrap().file_name().to_string_lossy().into_owned())
+            .collect()
+    }
+
+    /// An export to `chosen` (the name the save dialog asked about, `inventory.json`) that
+    /// writes the table beside it with each of `beside`: files of the researcher's at those
+    /// names are kept byte for byte, the table going under `inventory (2)`, and exporting
+    /// again replaces Kalamu's own files without piling up numbered copies.
+    pub(crate) fn keeps_the_researchers_files(chosen: &str, beside: &[&str], write: Write<'_>) {
+        let dir = tempfile::tempdir().unwrap();
+        let ledger = ExportLedger::open(dir.path().join("exports.json"));
+        let out = dir.path().join("out");
+        std::fs::create_dir(&out).unwrap();
+        let path = out.join(chosen);
+        let stem = Path::new(chosen).file_stem().unwrap().to_string_lossy();
+        let mine = |ext: &str| format!("my own {ext}, with my columns");
+        for ext in beside {
+            std::fs::write(out.join(format!("{stem}.{ext}")), mine(ext)).unwrap();
+        }
+        let numbered: Vec<String> = beside
+            .iter()
+            .map(|ext| out.join(format!("{stem} (2).{ext}")).display().to_string())
+            .collect();
+
+        for _ in 0..2 {
+            assert_eq!(write(&path, &ledger).unwrap(), numbered);
+            for ext in beside {
+                assert_eq!(
+                    std::fs::read_to_string(out.join(format!("{stem}.{ext}"))).unwrap(),
+                    mine(ext),
+                    "the researcher's .{ext} is kept"
+                );
+            }
+            let mut expected: BTreeSet<String> = beside
+                .iter()
+                .flat_map(|ext| [format!("{stem}.{ext}"), format!("{stem} (2).{ext}")])
+                .collect();
+            expected.insert(chosen.to_string());
+            // Nothing else: no `(3)` copy, no temporary file left.
+            assert_eq!(names(&out), expected);
+        }
+    }
+
+    /// Exporting twice to the same name in a folder where nothing else is replaces the first
+    /// export's files under their own names; once the researcher changed one, it is theirs.
+    pub(crate) fn replaces_its_own_files(chosen: &str, beside: &[&str], write: Write<'_>) {
+        let dir = tempfile::tempdir().unwrap();
+        let ledger = ExportLedger::open(dir.path().join("exports.json"));
+        let out = dir.path().join("out");
+        std::fs::create_dir(&out).unwrap();
+        let path = out.join(chosen);
+        let stem = Path::new(chosen).file_stem().unwrap().to_string_lossy();
+        let mut expected: BTreeSet<String> =
+            beside.iter().map(|ext| format!("{stem}.{ext}")).collect();
+        expected.insert(chosen.to_string());
+        for _ in 0..2 {
+            assert!(write(&path, &ledger).unwrap().is_empty());
+            assert_eq!(names(&out), expected);
+        }
+        let last = beside.last().unwrap();
+        let edited = out.join(format!("{stem}.{last}"));
+        std::fs::write(&edited, "edited by hand").unwrap();
+        assert_eq!(write(&path, &ledger).unwrap().len(), beside.len());
+        assert_eq!(std::fs::read_to_string(&edited).unwrap(), "edited by hand");
+    }
 }

@@ -55,6 +55,16 @@ export async function pickTableSave(name: string): Promise<string | null> {
 	return save({ defaultPath: `${name}.xlsx`, filters: [{ name: 'Excel', extensions: ['xlsx'] }] });
 }
 
+/** What to say once a table export is written: `message`, and the files beside the chosen one
+ *  written under another name (`renamed`, as the export returns them), since a file of the
+ *  researcher's had theirs. */
+export function tableExported(message: string, renamed: string[] | null | undefined): string {
+	if (!renamed || renamed.length === 0) return message;
+	const m = messages();
+	const names = listNames(renamed.map((path) => m.common.quoted(baseName(path) || path)));
+	return `${message} ${m.common.tableBeside(names, renamed.length)}`;
+}
+
 export async function pickPresetFile(): Promise<string | null> {
 	if (!isTauri()) return null;
 	const { open } = await import('@tauri-apps/plugin-dialog');

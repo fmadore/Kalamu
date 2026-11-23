@@ -3239,6 +3239,10 @@ export const fr: Messages = {
 		/** An exported record's Markdown, written under another name than the JSON's. */
 		markdownBeside: (name: string) =>
 			`Le Markdown a été enregistré sous « ${name} », un de vos fichiers portant déjà son nom.`,
+		tableBeside: (names: string, count: number) =>
+			count === 1
+				? `Le tableau a été enregistré sous ${names}, car vous aviez déjà un fichier de ce nom.`
+				: `Le tableau a été enregistré sous ${names}, car vous aviez déjà des fichiers de ces noms.`,
 		linkFailed: (url: string) =>
 			`Cette page n’a pas pu être ouverte dans votre navigateur : ${url}`,
 		unsaved: 'Vos modifications ne sont pas enregistrées. Quitter et les abandonner ?',

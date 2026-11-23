@@ -2814,6 +2814,12 @@ export const en = {
 		/** An exported record's Markdown, written under another name than the JSON's. */
 		markdownBeside: (name: string) =>
 			`The Markdown was saved as “${name}”, since a file of yours already had its name.`,
+		/** An exported table's workbook or CSV, written under another name than the file chosen,
+		 *  `names` already listed and quoted. */
+		tableBeside: (names: string, count: number) =>
+			count === 1
+				? `The table was saved as ${names}, since a file of yours already had that name.`
+				: `The table was saved as ${names}, since files of yours already had those names.`,
 		linkFailed: (url: string) => `This page could not be opened in your browser: ${url}`,
 		/** Asked before leaving a correction, a prompt or a workflow with changes not saved. */
 		unsaved: 'Your changes are not saved. Leave and discard them?',
