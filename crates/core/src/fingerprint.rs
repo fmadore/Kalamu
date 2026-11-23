@@ -4,7 +4,7 @@
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
-use crate::{LanguageChoice, PIPELINE_VERSION, PieceRef, Setup, Step, Task};
+use crate::{LanguageChoice, PIPELINE_VERSION, PieceRef, PromptSnapshot, Setup, Step, Task};
 
 /// SHA-256 over the source content, the piece, the set-up and the job's languages.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -136,6 +136,34 @@ impl CacheKey {
     }
 }
 
+impl PromptSnapshot {
+    /// What a frozen prompt asked, whatever model read it and whatever the preset is called: the
+    /// part of a [`CacheKey`] that is the prompt (its instructions, the answer languages filled
+    /// in; the request sent with each document, the researcher's question and themes in it; and
+    /// an analysis's fields, the choices they offer and what each asks). Two runs of a preset
+    /// edited between them keep its id but not this. SHA-256, in hexadecimal.
+    pub fn fingerprint(&self) -> String {
+        let material = serde_json::json!({
+            "prompt": self.text,
+            "user_prompt": self.user_prompt,
+            "schema": self.schema,
+        });
+        sha256_hex(material.to_string().as_bytes())
+    }
+
+    /// [`PromptSnapshot::fingerprint`]'s first twelve characters: enough to tell two versions
+    /// of a prompt apart in a table, short enough to read.
+    pub fn short_fingerprint(&self) -> String {
+        short_fingerprint(&self.fingerprint())
+    }
+}
+
+/// A prompt's fingerprint ([`PromptSnapshot::fingerprint`]) cut to the twelve characters a table
+/// shows.
+pub fn short_fingerprint(fingerprint: &str) -> String {
+    fingerprint.chars().take(12).collect()
+}
+
 pub fn sha256_hex(bytes: &[u8]) -> String {
     hex::encode(Sha256::digest(bytes))
 }
@@ -263,6 +291,26 @@ mod tests {
             "ace2d5efb73011e7904c0454ecf2030c1af99251938a5233e75b1e95d7063010"
         );
     }
+    /// A prompt's fingerprint follows what it asks, not what it is called: its instructions, its
+    /// request and its fields change it; its preset's id and name do not.
+    #[test]
+    fn a_prompts_fingerprint_follows_what_it_asks() {
+        let base = setup("A").prompt;
+        let mut renamed = base.clone();
+        renamed.preset_id = Some("analysis.screening".into());
+        renamed.preset_name = "Another name".into();
+        assert_eq!(base.fingerprint(), renamed.fingerprint());
+        let mut asked = base.clone();
+        asked.user_prompt.push_str(" And this.");
+        let mut fields = base.clone();
+        fields.schema = Some(crate::AnalysisSchema { fields: Vec::new() });
+        assert_ne!(base.fingerprint(), setup("B").prompt.fingerprint());
+        assert_ne!(base.fingerprint(), asked.fingerprint());
+        assert_ne!(base.fingerprint(), fields.fingerprint());
+        assert_eq!(base.short_fingerprint().len(), 12);
+        assert!(base.fingerprint().starts_with(&base.short_fingerprint()));
+    }
+
     #[test]
     fn a_region_read_again_is_keyed_by_its_picture_model_and_prompt() {
         let picture = sha256_hex(b"the pixels cut");

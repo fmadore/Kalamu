@@ -64,6 +64,7 @@ pub const COMMANDS: &[&str] = &[
     "inspect_links",
     "estimate_cost",
     "create_job",
+    "prompt_fingerprints",
     "start_job",
     "rest_estimate",
     "rest_of_sample",
