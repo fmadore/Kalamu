@@ -1961,6 +1961,10 @@ export const fr: Messages = {
 		},
 		paceNotBatched: (names: string) =>
 			`${names} n’a pas de service de traitement par lots dans Kalamu et s’exécute toujours page par page, à son prix habituel.`,
+		paceQuotes: (names: string) =>
+			`Avec ${names}, une analyse qui cite le texte est envoyée tout de suite, au prix habituel, pour que Kalamu puisse retrouver chaque citation dans le texte.`,
+		paceTimedLines: (names: string) =>
+			`Avec ${names}, une transcription traduite ligne par ligne est envoyée tout de suite, au prix habituel, pour que Kalamu vérifie qu’aucune ligne ne manque.`,
 		start: 'Lancer',
 		startShortcut: '↵',
 		starting: 'Lancement…',
@@ -3038,7 +3042,7 @@ export const fr: Messages = {
 			},
 			economy: {
 				word: 'Mode économique (par lots)',
-				text: 'Envoie un traitement au service de traitement par lots du fournisseur, qui répond dans la journée pour environ la moitié du prix. Kalamu récupère les réponses à sa prochaine ouverture ; l’application n’a pas besoin de rester ouverte entre-temps.'
+				text: 'Envoie un traitement au service de traitement par lots du fournisseur, qui répond dans la journée pour environ la moitié du prix. Kalamu récupère les réponses à sa prochaine ouverture ; l’application n’a pas besoin de rester ouverte entre-temps. Une analyse qui cite le texte et une transcription traduite ligne par ligne partent quand même tout de suite, au prix habituel, pour que Kalamu puisse vérifier chaque réponse dans le texte.'
 			},
 			groundTruth: {
 				word: 'Vérité terrain',

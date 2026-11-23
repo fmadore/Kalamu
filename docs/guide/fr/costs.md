@@ -34,7 +34,13 @@ Pour beaucoup de collections d’imprimés nets, il n’en faut pas plus.
   **Moins cher** dans Nouveau traitement : le traitement part au service de traitement par lots
   du fournisseur, à moitié prix, et la réponse arrive dans la journée, souvent plus tôt. Vous
   pouvez fermer l’application entre-temps : les résultats sont récupérés à sa prochaine
-  ouverture.
+  ouverture. Deux sortes de travail partent quand même tout de suite, au prix habituel, parce
+  que Kalamu vérifie chaque réponse dans le texte dès qu’elle arrive : une analyse qui cite le
+  texte (comme le tri selon une question de recherche, ou l’analyse d’un entretien) et une
+  transcription traduite ligne par ligne avec ses horodatages. L’estimation les compte au prix
+  habituel, et sous **Rapidité et prix** Nouveau traitement dit pour quels modèles c’est le
+  cas ; quand rien dans le traitement ne peut partir par lots, **Moins cher** n’est pas
+  proposé.
 - **Les modèles hors ligne** ne coûtent rien du tout. Voir [Travailler hors ligne](offline.md).
 
 ## Où vont vos fichiers

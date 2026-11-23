@@ -28,6 +28,7 @@ mod contents;
 mod drawn;
 mod drawn_export;
 mod drawn_regions;
+mod economy_priced;
 mod images;
 mod large;
 mod later;
