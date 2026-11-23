@@ -128,13 +128,15 @@
 										{job.status === 'completed' ? m.task[job.task] : m.status[job.status]}
 									{:else}
 										{m.status[job.status]} ·
-										<span class="num">{m.jobs.progress(job.pieces_finished, job.pieces_total)}</span
-										>
+										<span class="num">
+											{m.jobs.progress(job.pieces_finished, job.pieces_total)}
+										</span>
 									{/if}
 								</span>
 								{#if group.key !== 'finished' && group.key !== 'waiting'}
-									<span class="job-bar" aria-hidden="true"><i style:width="{share(job)}%"></i></span
-									>
+									<span class="job-bar" aria-hidden="true">
+										<i style:width="{share(job)}%"></i>
+									</span>
 								{/if}
 							</button>
 							<button
@@ -142,8 +144,10 @@
 								aria-label={m.shell.jobMenu(job.name)}
 								title={m.shell.jobMenu(job.name)}
 								aria-haspopup="menu"
-								onclick={(e) => openMenu(e, job)}><Icon name="more" size={16} /></button
+								onclick={(e) => openMenu(e, job)}
 							>
+								<Icon name="more" size={16} />
+							</button>
 						{/if}
 					</li>
 				{/each}
@@ -158,9 +162,9 @@
 			class:current={allJobsOpen}
 			aria-current={allJobsOpen ? 'page' : undefined}
 			onclick={() => go({ name: 'allJobs' })}
-			><Icon name="list" size={14} /><span class="ellipsis">{m.allJobs.link(app.jobs.length)}</span
-			></button
 		>
+			<Icon name="list" size={14} /><span class="ellipsis">{m.allJobs.link(app.jobs.length)}</span>
+		</button>
 	{/if}
 </div>
 

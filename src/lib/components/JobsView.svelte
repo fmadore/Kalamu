@@ -21,9 +21,9 @@
 	</header>
 	<div class="empty">
 		<p class="muted">{m.jobs.empty}</p>
-		<button class="btn primary" onclick={() => go({ name: 'new' })}
-			><Icon name="plus" />{m.jobs.empty_new}</button
-		>
+		<button class="btn primary" onclick={() => go({ name: 'new' })}>
+			<Icon name="plus" />{m.jobs.empty_new}
+		</button>
 	</div>
 {/if}
 

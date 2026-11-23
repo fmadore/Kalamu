@@ -167,9 +167,9 @@
 	<div class="kinds" role="group" aria-label={m.meaning.kind}>
 		<span class="muted">{m.meaning.kind}</span>
 		{#each KINDS as k (k)}
-			<button class="btn sm kind" aria-pressed={kind === k} onclick={() => chooseKind(k)}
-				>{m.meaning.kinds[k]}</button
-			>
+			<button class="btn sm kind" aria-pressed={kind === k} onclick={() => chooseKind(k)}>
+				{m.meaning.kinds[k]}
+			</button>
 		{/each}
 	</div>
 	{#if unread}<p class="muted">{m.projects.start.nothingToSearch}</p>{/if}
@@ -323,8 +323,9 @@
 						<button
 							class="link"
 							onclick={() => go({ name: 'projects', projectId, documentId: d.document_id })}
-							>{d.title}</button
 						>
+							{d.title}
+						</button>
 					</h3>
 					{#each d.results as r (r.job_id + r.setup_id)}
 						<div class="result">
@@ -349,15 +350,17 @@
 											<span class="place num">{place}</span>
 											<span class="snippet">
 												{#if origin}<span class="origin">{origin}</span>{/if}
-												{h.before}{#each hitWords(h) as w, i (i)}{#if w.found}<mark>{w.text}</mark
-														>{:else}{w.text}{/if}{/each}{h.after}
+												{h.before}{#each hitWords(h) as w, i (i)}{#if w.found}<mark>
+															{w.text}
+														</mark>{:else}{w.text}{/if}{/each}{h.after}
 											</span>
 											<span class="state">
-												{#if h.by_hand}<span class="chip hand" title={m.search.writtenByYouHint}
-														>{m.search.writtenByYou}</span
-													>
-												{:else if h.corrected}<span class="chip hand">{m.review.corrected}</span
-													>{/if}
+												{#if h.by_hand}<span class="chip hand" title={m.search.writtenByYouHint}>
+														{m.search.writtenByYou}
+													</span>
+												{:else if h.corrected}<span class="chip hand">
+														{m.review.corrected}
+													</span>{/if}
 												{#if h.reviewed}<span class="chip ok">{m.review.reviewed}</span>{/if}
 											</span>
 										</button>

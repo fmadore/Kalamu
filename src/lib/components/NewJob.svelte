@@ -294,9 +294,9 @@
 		<p class="lede">{m.newJob.lede}</p>
 	</div>
 	{#if files.list.length > 0 || files.name}
-		<button class="btn ghost" title={m.newJob.startOverHint} onclick={startOver}
-			>{m.newJob.startOver}</button
-		>
+		<button class="btn ghost" title={m.newJob.startOverHint} onclick={startOver}>
+			{m.newJob.startOver}
+		</button>
 	{/if}
 </header>
 {#if from.project}

@@ -221,9 +221,9 @@
 {#snippet actions()}
 	{#if lead && setups[0] && lead.status !== 'failed' && !editing}
 		{@const first = setups[0]}
-		<button class="btn" onclick={() => startEditing(first)}
-			><Icon name="edit" size={14} />{m.review.edit}</button
-		>
+		<button class="btn" onclick={() => startEditing(first)}>
+			<Icon name="edit" size={14} />{m.review.edit}
+		</button>
 	{/if}
 {/snippet}
 

@@ -176,19 +176,21 @@
 			class="grip"
 			aria-label={m.review.moveReadings}
 			title={m.review.moveReadings}
-			onkeydown={nudge}><Icon name="grip" size={14} /></button
+			onkeydown={nudge}
 		>
+			<Icon name="grip" size={14} />
+		</button>
 		<span>{heading}</span>
 		<span class="mono">{m.review.differenceOf(place.n, place.total)}</span>
-		<button class="btn sm icon ghost" aria-label={m.common.close} onclick={onclose}
-			><Icon name="close" size={14} /></button
-		>
+		<button class="btn sm icon ghost" aria-label={m.common.close} onclick={onclose}>
+			<Icon name="close" size={14} />
+		</button>
 	</div>
 	<ul class="options">
 		<li class="option">
-			<span class="option-text in-text" class:none={!entry.lemma}
-				>{entry.lemma || m.review.noText}</span
-			>
+			<span class="option-text in-text" class:none={!entry.lemma}>
+				{entry.lemma || m.review.noText}
+			</span>
 			<span class="option-who mono">{inUse}</span>
 			<span class="option-end chip">{m.review.inUse}</span>
 		</li>
@@ -214,9 +216,9 @@
 					}
 				}}
 			/>
-			<button class="btn sm primary" disabled={!own.trim()} onclick={useOwn}
-				>{m.review.apply}</button
-			>
+			<button class="btn sm primary" disabled={!own.trim()} onclick={useOwn}>
+				{m.review.apply}
+			</button>
 		</li>
 	</ul>
 	<p class="note">{m.review.readingKept}</p>

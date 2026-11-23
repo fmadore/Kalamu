@@ -61,16 +61,18 @@
 	</div>
 	<div class="set-aside-actions">
 		{#each aside.readers as reader (reader)}
-			<button class="btn sm" title={set.insteadHint} onclick={() => onswitch(reader)}
-				><Icon name={taskOf(reader)} size={14} />{set.instead(m.task[reader])}</button
-			>
+			<button class="btn sm" title={set.insteadHint} onclick={() => onswitch(reader)}>
+				<Icon name={taskOf(reader)} size={14} />{set.instead(m.task[reader])}
+			</button>
 		{/each}
 		<button
 			class="btn ghost sm icon"
 			aria-label={set.dismiss}
 			title={set.dismiss}
-			onclick={ondismiss}><Icon name="close" size={14} /></button
+			onclick={ondismiss}
 		>
+			<Icon name="close" size={14} />
+		</button>
 	</div>
 </div>
 

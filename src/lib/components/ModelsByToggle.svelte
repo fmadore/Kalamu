@@ -17,8 +17,10 @@
 				type="button"
 				class="btn sm"
 				aria-pressed={by === option}
-				onclick={() => (by = option)}>{m.newJob.tiers.by[option]}</button
+				onclick={() => (by = option)}
 			>
+				{m.newJob.tiers.by[option]}
+			</button>
 		{/each}
 	</div>
 </div>

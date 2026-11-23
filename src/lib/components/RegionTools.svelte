@@ -31,8 +31,9 @@
 		aria-pressed={regions.shown}
 		title={engineHint ? m.review.regionsHint : m.review.regionEdit.ownHint}
 		onclick={() => regions.toggle()}
-		>{regions.engine ? m.review.regionsShow : m.review.regionEdit.showOwn}</button
 	>
+		{regions.engine ? m.review.regionsShow : m.review.regionEdit.showOwn}
+	</button>
 	{#if regions.shown && regions.drawable}
 		<button
 			type="button"
@@ -40,8 +41,10 @@
 			data-region-draw
 			aria-pressed={edit.mode === 'drawing'}
 			title={m.review.regionEdit.drawHint}
-			onclick={() => edit.startDrawing()}>{m.review.regionEdit.draw}</button
+			onclick={() => edit.startDrawing()}
 		>
+			{m.review.regionEdit.draw}
+		</button>
 	{/if}
 	<span class="sr-only" aria-live="polite">{regions.shown ? edit.said : ''}</span>
 </span>

@@ -114,9 +114,9 @@
 <div class="layout">
 	<section class="list" aria-labelledby="prompts-title">
 		<div class="row">
-			<button class="btn sm primary" onclick={() => leaveThen(create)}
-				><Icon name="plus" size={14} />{m.prompts.newPrompt}</button
-			>
+			<button class="btn sm primary" onclick={() => leaveThen(create)}>
+				<Icon name="plus" size={14} />{m.prompts.newPrompt}
+			</button>
 			<button
 				class="btn sm"
 				onclick={() =>
@@ -126,8 +126,10 @@
 						const imported = await api.importPresets(path);
 						toast(m.prompts.imported(imported.length));
 						return imported[0]?.id;
-					})}>{m.prompts.import}</button
+					})}
 			>
+				{m.prompts.import}
+			</button>
 			<button
 				class="btn sm"
 				disabled={!selected}
@@ -136,8 +138,10 @@
 						if (!selected) return;
 						const path = await pickJsonSave(selected.name);
 						if (path) await api.exportPresets([selected.id], path);
-					})}>{m.prompts.export}</button
+					})}
 			>
+				{m.prompts.export}
+			</button>
 		</div>
 		<!-- The prompts could not be read: said here, where the list would be. -->
 		{#if action.error && !draft}<p class="chip danger" role="alert">{action.error}</p>{/if}
@@ -154,13 +158,9 @@
 							onclick={() => leaveThen(() => select(p.id))}
 						>
 							<span>{p.name}</span>
-							<span class="chip"
-								>{p.modified
-									? m.prompts.modified
-									: p.builtin
-										? m.prompts.builtin
-										: m.prompts.own}</span
-							>
+							<span class="chip">
+								{p.modified ? m.prompts.modified : p.builtin ? m.prompts.builtin : m.prompts.own}
+							</span>
 						</button>
 					</li>
 				{/each}
@@ -225,11 +225,11 @@
 					placeholder={isNew ? m.prompts.instructionsPlaceholder : undefined}></textarea>
 			</label>
 			<label class="field">
-				<span
-					>{draft.schema && draft.task === 'analysis'
+				<span>
+					{draft.schema && draft.task === 'analysis'
 						? m.prompts.userPromptDocument
-						: m.prompts.userPrompt}</span
-				>
+						: m.prompts.userPrompt}
+				</span>
 				<textarea class="short mono" bind:value={draft.user_prompt}></textarea>
 			</label>
 			{#if draft.task === 'analysis' && quotesText(draft.schema)}
@@ -298,12 +298,13 @@
 					class="btn primary"
 					disabled={!dirty}
 					onclick={() => run(async () => (await api.savePreset($state.snapshot(draft)!)).id)}
-					>{m.prompts.save}</button
 				>
+					{m.prompts.save}
+				</button>
 				{#if isNew || !selected}
-					<button class="btn ghost" onclick={() => select(presets[0]?.id ?? null)}
-						>{m.prompts.discard}</button
-					>
+					<button class="btn ghost" onclick={() => select(presets[0]?.id ?? null)}>
+						{m.prompts.discard}
+					</button>
 				{:else if selected.id !== DICTIONARY}
 					<button
 						class="btn"
@@ -311,8 +312,10 @@
 							run(
 								async () =>
 									(await api.duplicatePreset(selected.id, m.prompts.copyName(selected.name))).id
-							)}>{m.prompts.duplicate}</button
+							)}
 					>
+						{m.prompts.duplicate}
+					</button>
 				{/if}
 				{#if selected?.modified}
 					<button

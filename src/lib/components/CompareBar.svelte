@@ -45,8 +45,10 @@
 	class="btn sm icon ghost close-compare"
 	aria-label={m.review.closeCompare}
 	title={m.review.closeCompare}
-	onclick={onclose}><Icon name="close" size={14} /></button
+	onclick={onclose}
 >
+	<Icon name="close" size={14} />
+</button>
 
 <style>
 	.compared {

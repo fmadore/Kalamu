@@ -125,29 +125,31 @@
 	<button class="btn ghost sm" onclick={onclear}>{m.projects.clearSelection}</button>
 	<span class="grow"></span>
 	{#if deciding}
-		<button class="btn sm" onclick={() => decide(true)}
-			><Icon name="check" size={14} />{m.screening.keep}</button
-		>
+		<button class="btn sm" onclick={() => decide(true)}>
+			<Icon name="check" size={14} />{m.screening.keep}
+		</button>
 		<button class="btn sm" onclick={() => decide(false)}>{m.screening.setAside}</button>
 	{/if}
-	<button class="btn primary sm" disabled={selectionPaths(chosen).length === 0} onclick={newJob}
-		><Icon name="plus" size={14} />{m.projects.newJobWith}</button
-	>
+	<button class="btn primary sm" disabled={selectionPaths(chosen).length === 0} onclick={newJob}>
+		<Icon name="plus" size={14} />{m.projects.newJobWith}
+	</button>
 	<button
 		class="btn sm"
 		disabled={selectionPaths(chosen).length === 0}
 		onclick={() => go({ name: 'workflows', paths: selectionPaths(chosen), project })}
-		><Icon name="workflow" size={14} />{m.projects.workflowWith}</button
 	>
+		<Icon name="workflow" size={14} />{m.projects.workflowWith}
+	</button>
 	<button
 		class="btn sm"
 		onclick={() =>
 			go({ name: 'projects', projectId, collectionId, pane: 'queue', selection: ids() })}
-		><Icon name="flag" size={14} />{m.queue.checkSelection}</button
 	>
-	<button class="btn sm" onclick={() => (screening = ids())}
-		><Icon name="search" size={14} />{m.screening.action}</button
-	>
+		<Icon name="flag" size={14} />{m.queue.checkSelection}
+	</button>
+	<button class="btn sm" onclick={() => (screening = ids())}>
+		<Icon name="search" size={14} />{m.screening.action}
+	</button>
 	{#if collections.length > 0}
 		<select
 			class="sm"
@@ -177,8 +179,9 @@
 	{#if collectionId}
 		<button class="btn sm" onclick={removeFromCollection}>{m.projects.removeFromCollection}</button>
 	{/if}
-	<button class="btn ghost danger sm" onclick={removeDocuments}>{m.projects.removeDocuments}</button
-	>
+	<button class="btn ghost danger sm" onclick={removeDocuments}>
+		{m.projects.removeDocuments}
+	</button>
 </div>
 
 {#if screening}

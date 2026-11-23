@@ -41,9 +41,9 @@
 	{#if !compact}
 		<figcaption class="head">
 			<span class="title">{d.title}</span>
-			<button class="btn sm ghost" onclick={() => replays++}
-				><Icon name="replay" size={14} />{d.replay}</button
-			>
+			<button class="btn sm ghost" onclick={() => replays++}>
+				<Icon name="replay" size={14} />{d.replay}
+			</button>
 		</figcaption>
 	{/if}
 	{#key `${replays}/${stages.length}`}

@@ -205,25 +205,25 @@
 			</label>
 			{#if current}
 				<div class="row">
-					<button class="btn ghost sm" disabled={action.busy} onclick={edit}
-						><Icon name="edit" size={14} />{p.edit}</button
-					>
-					<button class="btn ghost sm" disabled={action.busy} onclick={duplicate}
-						>{p.duplicate}</button
-					>
+					<button class="btn ghost sm" disabled={action.busy} onclick={edit}>
+						<Icon name="edit" size={14} />{p.edit}
+					</button>
+					<button class="btn ghost sm" disabled={action.busy} onclick={duplicate}>
+						{p.duplicate}
+					</button>
 					<button class="btn ghost sm" disabled={action.busy} onclick={share}>{p.share}</button>
-					<button class="btn ghost danger sm" disabled={action.busy} onclick={remove}
-						>{p.delete}</button
-					>
+					<button class="btn ghost danger sm" disabled={action.busy} onclick={remove}>
+						{p.delete}
+					</button>
 				</div>
 			{/if}
 			<div class="row">
-				<button class="btn ghost sm" disabled={action.busy} onclick={() => start('every')}
-					>{p.newProfile} · {p.starters.every}</button
-				>
-				<button class="btn ghost sm" disabled={action.busy} onclick={() => start('dublin_core')}
-					>{p.newProfile} · {p.starters.dublin_core}</button
-				>
+				<button class="btn ghost sm" disabled={action.busy} onclick={() => start('every')}>
+					{p.newProfile} · {p.starters.every}
+				</button>
+				<button class="btn ghost sm" disabled={action.busy} onclick={() => start('dublin_core')}>
+					{p.newProfile} · {p.starters.dublin_core}
+				</button>
 				<button class="btn ghost sm" disabled={action.busy} onclick={importFile}>{p.import}</button>
 			</div>
 		</div>
@@ -267,9 +267,9 @@
 									</optgroup>
 									<optgroup label={p.groups.from}>
 										{#each FIELDS as f (f)}
-											<option value={`from:${f}`}
-												>{p.fromPart(m.projects.describe.fields[f])}</option
-											>
+											<option value={`from:${f}`}>
+												{p.fromPart(m.projects.describe.fields[f])}
+											</option>
 										{/each}
 									</optgroup>
 									<optgroup label={p.groups.result}>
@@ -313,21 +313,27 @@
 									disabled={i === 0}
 									onclick={() => move(i, -1)}
 									aria-label={p.moveUp(i + 1)}
-									title={p.moveUp(i + 1)}><Icon name="up" size={14} /></button
+									title={p.moveUp(i + 1)}
 								>
+									<Icon name="up" size={14} />
+								</button>
 								<button
 									class="btn ghost icon sm"
 									disabled={i === draft.columns.length - 1}
 									onclick={() => move(i, 1)}
 									aria-label={p.moveDown(i + 1)}
-									title={p.moveDown(i + 1)}><Icon name="down" size={14} /></button
+									title={p.moveDown(i + 1)}
 								>
+									<Icon name="down" size={14} />
+								</button>
 								<button
 									class="btn ghost icon sm"
 									onclick={() => draft?.columns.splice(i, 1)}
 									aria-label={p.remove(i + 1)}
-									title={p.remove(i + 1)}><Icon name="close" size={14} /></button
+									title={p.remove(i + 1)}
 								>
+									<Icon name="close" size={14} />
+								</button>
 							</td>
 						</tr>
 					{/each}
@@ -343,8 +349,9 @@
 				<button
 					class="btn ghost sm"
 					onclick={() => draft?.columns.push({ heading: '', value: { kind: 'title' } })}
-					><Icon name="plus" size={14} />{p.addColumn}</button
 				>
+					<Icon name="plus" size={14} />{p.addColumn}
+				</button>
 			</div>
 			<div class="options">
 				<label class="field">
@@ -371,14 +378,14 @@
 	<div class="actions">
 		{#if draft}
 			<button class="btn" onclick={() => (draft = null)}>{p.cancel}</button>
-			<button class="btn primary" disabled={action.busy || problem !== null} onclick={save}
-				>{p.save}</button
-			>
+			<button class="btn primary" disabled={action.busy || problem !== null} onclick={save}>
+				{p.save}
+			</button>
 		{:else}
 			<button class="btn" onclick={onclose}>{p.close}</button>
-			<button class="btn primary" disabled={action.busy} onclick={exportNow}
-				><Icon name="download" size={14} />{p.export}</button
-			>
+			<button class="btn primary" disabled={action.busy} onclick={exportNow}>
+				<Icon name="download" size={14} />{p.export}
+			</button>
 		{/if}
 	</div>
 </Dialog>

@@ -49,16 +49,20 @@
 			aria-pressed={decision === 'keep'}
 			aria-label={t.keepThis(title)}
 			disabled={busy}
-			onclick={() => ondecide(true)}>{t.keep}</button
+			onclick={() => ondecide(true)}
 		>
+			{t.keep}
+		</button>
 		<button
 			class="btn sm"
 			class:on={decision === 'aside'}
 			aria-pressed={decision === 'aside'}
 			aria-label={t.setAsideThis(title)}
 			disabled={busy}
-			onclick={() => ondecide(false)}>{t.setAside}</button
+			onclick={() => ondecide(false)}
 		>
+			{t.setAside}
+		</button>
 	</div>
 </div>
 

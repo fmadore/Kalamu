@@ -221,30 +221,31 @@
 
 <header class="masthead">
 	<div>
-		<button class="back" onclick={() => returnTo({ name: 'projects' })}
-			><Icon name="back" size={14} />{m.projects.back}</button
-		>
+		<button class="back" onclick={() => returnTo({ name: 'projects' })}>
+			<Icon name="back" size={14} />{m.projects.back}
+		</button>
 		<h1>{project?.name ?? ''}</h1>
 		{#if project?.description}<p class="lede">{project.description}</p>{/if}
 	</div>
 	{#if project}
 		<div class="tools">
-			<button class="btn ghost sm" onclick={startEdit}
-				><Icon name="edit" size={14} />{m.projects.edit}</button
-			>
-			<button class="btn ghost sm" onclick={() => (exporting = true)}
-				><Icon name="download" size={14} />{m.projects.describe.export}</button
-			>
-			<button class="btn ghost sm" onclick={() => (saving = true)}
-				><Icon name="download" size={14} />{m.projectFile.save}</button
-			>
+			<button class="btn ghost sm" onclick={startEdit}>
+				<Icon name="edit" size={14} />{m.projects.edit}
+			</button>
+			<button class="btn ghost sm" onclick={() => (exporting = true)}>
+				<Icon name="download" size={14} />{m.projects.describe.export}
+			</button>
+			<button class="btn ghost sm" onclick={() => (saving = true)}>
+				<Icon name="download" size={14} />{m.projectFile.save}
+			</button>
 			<button
 				class="btn ghost sm"
 				onclick={() => action.run(() => api.archiveProject(projectId, !project.archived))}
-				><Icon name={project.archived ? 'restore' : 'archive'} size={14} />{project.archived
-					? m.projects.restore
-					: m.projects.archive}</button
 			>
+				<Icon name={project.archived ? 'restore' : 'archive'} size={14} />{project.archived
+					? m.projects.restore
+					: m.projects.archive}
+			</button>
 			<button class="btn ghost danger sm" onclick={remove}>{m.projects.delete}</button>
 		</div>
 	{/if}
@@ -326,11 +327,12 @@
 								class="btn ghost sm"
 								onclick={() =>
 									(naming = { id: collection.collection.id, name: collection.collection.name })}
-								>{m.projects.renameCollection}</button
 							>
-							<button class="btn ghost danger sm" onclick={removeCollection}
-								>{m.projects.deleteCollection}</button
-							>
+								{m.projects.renameCollection}
+							</button>
+							<button class="btn ghost danger sm" onclick={removeCollection}>
+								{m.projects.deleteCollection}
+							</button>
 						{/if}
 					{:else}
 						<h2>{m.projects.allDocuments}</h2>
@@ -340,14 +342,15 @@
 						class="btn sm"
 						disabled={adding}
 						onclick={async () => addPaths(await pickDocuments())}
-						><Icon name="add-file" size={14} />{m.projects.addFiles}</button
 					>
-					<button class="btn sm" disabled={adding} onclick={addFolder}
-						><Icon name="folder" size={14} />{m.projects.addFolder}</button
-					>
-					<button class="btn sm" onclick={() => (attaching = true)}
-						><Icon name="link" size={14} />{m.projects.attachJob}</button
-					>
+						<Icon name="add-file" size={14} />{m.projects.addFiles}
+					</button>
+					<button class="btn sm" disabled={adding} onclick={addFolder}>
+						<Icon name="folder" size={14} />{m.projects.addFolder}
+					</button>
+					<button class="btn sm" onclick={() => (attaching = true)}>
+						<Icon name="link" size={14} />{m.projects.attachJob}
+					</button>
 				</div>
 				{#if view.documents.length === 0}
 					<ProjectStart />

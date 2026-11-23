@@ -179,9 +179,9 @@
 					<button class="btn sm" disabled={!renaming.trim()}>{m.projects.renameTag}</button>
 				</form>
 			{:else if filterTag}
-				<button class="btn ghost sm" onclick={() => (renaming = filterTag)}
-					><Icon name="edit" size={14} />{m.projects.renameTag}</button
-				>
+				<button class="btn ghost sm" onclick={() => (renaming = filterTag)}>
+					<Icon name="edit" size={14} />{m.projects.renameTag}
+				</button>
 			{/if}
 		{/if}
 		<AnswerFilter
@@ -253,14 +253,14 @@
 								onchange={() => selection.toggle(doc.id)}
 							/>
 						</td>
-						<td
-							><div class="title">
+						<td>
+							<div class="title">
 								<button class="link" onclick={() => open(doc.id)}>{doc.title}</button>
 								<span class="file mono" title={doc.source.path}>{doc.source.file_name}</span>
 								{#if row.missing}
-									<span class="chip danger" title={m.projects.missingHint}
-										>{m.projects.missing}</span
-									>
+									<span class="chip danger" title={m.projects.missingHint}>
+										{m.projects.missing}
+									</span>
 								{/if}
 								{#if row.same_content > 0}
 									<span class="chip warn">{m.projects.sameContent(row.same_content)}</span>
@@ -274,8 +274,8 @@
 										ondecide={(keep) => decide(doc.id, doc.tags, keep)}
 									/>
 								{/if}
-							</div></td
-						>
+							</div>
+						</td>
 						<td class="muted">{m.projects.kind[doc.source.kind]}</td>
 						<td>
 							<div class="chips">
@@ -288,8 +288,9 @@
 										class:on={name === filterTag}
 										aria-pressed={name === filterTag}
 										onclick={() => (tag = name === filterTag ? '' : name)}
-										><Icon name="tag" size={11} />{name}</button
 									>
+										<Icon name="tag" size={11} />{name}
+									</button>
 								{/each}
 							</div>
 						</td>
@@ -315,30 +316,33 @@
 										data-said={said}
 										onclick={() => open(doc.id)}
 									>
-										<span class="mark" aria-hidden="true" title={m.task[t.task]}
-											><Icon name={t.task} size={13} /></span
-										>
-										<span class="num" aria-hidden="true" title={m.projects.resultCount(t.results)}
-											>{t.results}</span
-										>
+										<span class="mark" aria-hidden="true" title={m.task[t.task]}>
+											<Icon name={t.task} size={13} />
+										</span>
+										<span class="num" aria-hidden="true" title={m.projects.resultCount(t.results)}>
+											{t.results}
+										</span>
 										{#if t.reviewed > 0}<span
 												class="mark"
 												aria-hidden="true"
 												title={m.projects.reviewedMark(t.reviewed)}
-												><Icon name="check" size={12} /></span
-											>{/if}
+											>
+												<Icon name="check" size={12} />
+											</span>{/if}
 										{#if t.preferred}<span
 												class="mark"
 												aria-hidden="true"
-												title={m.projects.preferredMark}><Icon name="star" size={12} filled /></span
-											>{/if}
+												title={m.projects.preferredMark}
+											>
+												<Icon name="star" size={12} filled />
+											</span>{/if}
 									</button>
 								{/each}
 							{/if}
 						</td>
-						<td class="num muted date" title={formatDateTime(doc.created_at)}
-							>{formatDate(doc.created_at)}</td
-						>
+						<td class="num muted date" title={formatDateTime(doc.created_at)}>
+							{formatDate(doc.created_at)}
+						</td>
 					</tr>
 				{/each}
 			</tbody>

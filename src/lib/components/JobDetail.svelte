@@ -219,31 +219,35 @@
 					class="btn ghost sm icon"
 					title={m.jobs.rename}
 					aria-label={m.jobs.rename}
-					onclick={() => (draftName = job?.name ?? '')}><Icon name="edit" size={14} /></button
+					onclick={() => (draftName = job?.name ?? '')}
 				>
+					<Icon name="edit" size={14} />
+				</button>
 			{/if}
 			<span
 				class="chip"
 				class:warn={stopped || summary.status === 'pending'}
 				class:ok={summary.status === 'completed'}
 				class:danger={summary.status === 'completed_with_errors'}
-				class:hand={running}>{m.status[summary.status]}</span
+				class:hand={running}
 			>
+				{m.status[summary.status]}
+			</span>
 		</div>
 		<div class="actions">
 			{#if running}
-				<button class="btn" onclick={() => act(() => api.pauseJob(jobId))}
-					><Icon name="pause" size={12} />{m.jobs.pause}</button
-				>
-				<button class="btn danger" onclick={() => act(() => api.cancelJob(jobId))}
-					>{m.jobs.cancel}</button
-				>
+				<button class="btn" onclick={() => act(() => api.pauseJob(jobId))}>
+					<Icon name="pause" size={12} />{m.jobs.pause}
+				</button>
+				<button class="btn danger" onclick={() => act(() => api.cancelJob(jobId))}>
+					{m.jobs.cancel}
+				</button>
 			{:else}
 				<button class="btn ghost danger" onclick={remove}>{m.jobs.delete}</button>
 				{#if summary.pieces_failed > 0}
-					<button class="btn" onclick={() => act(() => api.retryFailed(jobId))}
-						>{m.jobs.retry}</button
-					>
+					<button class="btn" onclick={() => act(() => api.retryFailed(jobId))}>
+						{m.jobs.retry}
+					</button>
 				{/if}
 				{#if job && rulesFor(app.rules, job.task).yields_text && summary.pieces_finished > 0}
 					{#if job.setups.length > 1}
@@ -263,9 +267,9 @@
 					<button class="btn" onclick={summarise}>{m.jobs.summarise}</button>
 				{/if}
 				{#if summary.status !== 'completed'}
-					<button class="btn primary" onclick={() => act(() => api.startJob(jobId))}
-						><Icon name="play" size={12} />{m.jobs.resume}</button
-					>
+					<button class="btn primary" onclick={() => act(() => api.startJob(jobId))}>
+						<Icon name="play" size={12} />{m.jobs.resume}
+					</button>
 				{/if}
 			{/if}
 		</div>
@@ -277,9 +281,9 @@
 		<p class="banner" role="status">
 			{d.freshness === 'changed' ? m.jobs.derivedChanged : m.jobs.derivedGone}
 			{#if d.freshness === 'changed'}
-				<button class="btn sm" onclick={() => analyseText(d.from.job_id, d.from.setup_id)}
-					>{m.jobs.derivedAgain}</button
-				>
+				<button class="btn sm" onclick={() => analyseText(d.from.job_id, d.from.setup_id)}>
+					{m.jobs.derivedAgain}
+				</button>
 			{/if}
 		</p>
 	{/each}

@@ -118,9 +118,9 @@
 		</label>
 		<div class="order-head">
 			<h3 id="order-title">{g.order}</h3>
-			<button class="btn sm ghost" onclick={onnatural} disabled={!doc}
-				><Icon name="replay" size={14} />{g.naturalOrder}</button
-			>
+			<button class="btn sm ghost" onclick={onnatural} disabled={!doc}>
+				<Icon name="replay" size={14} />{g.naturalOrder}
+			</button>
 		</div>
 		<p class="hint">{byHand ? g.orderHintMoved : g.orderHint}</p>
 		{#if sorting && !doc}
@@ -155,16 +155,20 @@
 								aria-label={g.moveUp(page.file_name)}
 								title={g.moveUp(page.file_name)}
 								disabled={i === 0}
-								onclick={(e) => step(i, -1, e.currentTarget)}><Icon name="up" size={14} /></button
+								onclick={(e) => step(i, -1, e.currentTarget)}
 							>
+								<Icon name="up" size={14} />
+							</button>
 							<button
 								class="btn sm icon ghost"
 								data-move="down"
 								aria-label={g.moveDown(page.file_name)}
 								title={g.moveDown(page.file_name)}
 								disabled={i === pages.length - 1}
-								onclick={(e) => step(i, 1, e.currentTarget)}><Icon name="down" size={14} /></button
+								onclick={(e) => step(i, 1, e.currentTarget)}
 							>
+								<Icon name="down" size={14} />
+							</button>
 						</span>
 						{#each notes as note (note)}
 							<span class="note">{note}</span>

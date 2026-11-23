@@ -256,8 +256,10 @@
 					!choice.model ||
 					!choice.keyed ||
 					!choice.installed}
-				onclick={read}>{r.read}</button
+				onclick={read}
 			>
+				{r.read}
+			</button>
 		{:else if request.stage === 'waiting'}
 			<button class="btn" onclick={() => request.stop()}>{r.stop}</button>
 		{:else if request.stage === 'answer' && target.kind === 'nowhere'}
@@ -273,8 +275,9 @@
 				class="btn primary"
 				disabled={request.editing && !request.draft.trim()}
 				onclick={() => request.accept(onaccepted)}
-				>{target.kind === 'region' ? r.useRegion : r.useText}</button
 			>
+				{target.kind === 'region' ? r.useRegion : r.useText}
+			</button>
 		{:else}
 			<button class="btn primary" onclick={() => request.discard(onclose)}>{r.lookAgain}</button>
 		{/if}

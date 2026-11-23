@@ -197,8 +197,10 @@
 			class="grip"
 			aria-label={e.moveCard}
 			title={e.moveCardHint}
-			onkeydown={onGripKey}><Icon name="grip" size={14} /></button
+			onkeydown={onGripKey}
 		>
+			<Icon name="grip" size={14} />
+		</button>
 		{#if edit.mode === 'drawing'}
 			<div class="actions row">
 				<p class="status">{e.drawing}</p>
@@ -237,15 +239,16 @@
 			{/if}
 			<div class="actions">
 				{#if adjustable}
-					<button type="button" class="act" onclick={() => edit.adjustChosen()}
-						>{e.moveResize}</button
-					>
+					<button type="button" class="act" onclick={() => edit.adjustChosen()}>
+						{e.moveResize}
+					</button>
 				{/if}
 				{#if own}
 					<button type="button" class="act" onclick={() => void edit.remove(r)}>{e.remove}</button>
 				{:else if adjusted && regions.drawable}
-					<button type="button" class="act" onclick={() => void edit.putBack(r)}>{e.putBack}</button
-					>
+					<button type="button" class="act" onclick={() => void edit.putBack(r)}>
+						{e.putBack}
+					</button>
 				{/if}
 				{#if regions.onread}
 					{@const read = regions.onread}
@@ -257,8 +260,10 @@
 				class="close"
 				aria-label={m.review.regionClose}
 				title={m.review.regionClose}
-				onclick={close}><Icon name="close" size={14} /></button
+				onclick={close}
 			>
+				<Icon name="close" size={14} />
+			</button>
 		{:else}
 			<p class="status">{fallback}</p>
 		{/if}

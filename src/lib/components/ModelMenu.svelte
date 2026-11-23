@@ -205,14 +205,14 @@
 						data-name={model.name}
 						onclick={() => choose(model)}
 					>
-						<span class="name"
-							>{nameOf(model)}{#if providerOf(model)}<span class="provider"
-									>{providerOf(model)}</span
-								>{/if}</span
-						>
-						{#if selected}<span class="check" aria-hidden="true"
-								><Icon name="check" size={14} /></span
-							>{/if}
+						<span class="name">
+							{nameOf(model)}{#if providerOf(model)}<span class="provider">
+									{providerOf(model)}
+								</span>{/if}
+						</span>
+						{#if selected}<span class="check" aria-hidden="true">
+								<Icon name="check" size={14} />
+							</span>{/if}
 						{#if why}
 							<span class="desc">{why}</span>
 						{:else if model.description}

@@ -69,12 +69,14 @@
 		onclick={() => {
 			close();
 			onrename();
-		}}><Icon name="edit" size={14} />{m.jobs.rename}</button
+		}}
 	>
+		<Icon name="edit" size={14} />{m.jobs.rename}
+	</button>
 	<div class="group" role="group" aria-label={m.shell.addToProject}>
-		<span class="label" aria-hidden="true"
-			><Icon name="project" size={14} />{m.shell.addToProject}</span
-		>
+		<span class="label" aria-hidden="true">
+			<Icon name="project" size={14} />{m.shell.addToProject}
+		</span>
 		{#if projects === null}
 			<span class="note">{m.common.loading}</span>
 		{:else if projects.length === 0}
@@ -82,9 +84,9 @@
 		{:else}
 			<div class="projects">
 				{#each projects as p (p.project.id)}
-					<button type="button" role="menuitem" class="project" onclick={() => addTo(p)}
-						><span class="ellipsis">{p.project.name}</span></button
-					>
+					<button type="button" role="menuitem" class="project" onclick={() => addTo(p)}>
+						<span class="ellipsis">{p.project.name}</span>
+					</button>
 				{/each}
 			</div>
 		{/if}
@@ -95,8 +97,10 @@
 		class="danger"
 		disabled={running}
 		title={running ? m.shell.pauseFirst : undefined}
-		onclick={remove}>{m.jobs.delete}</button
+		onclick={remove}
 	>
+		{m.jobs.delete}
+	</button>
 </ContextMenu>
 
 <style>

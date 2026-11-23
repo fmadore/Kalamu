@@ -173,11 +173,11 @@
 				}}
 			>
 				{#each info.reasoning.levels as level (level)}
-					<option value={level}
-						>{level === suggested
+					<option value={level}>
+						{level === suggested
 							? m.newJob.reasoning.suggested(m.newJob.reasoning.level(level))
-							: m.newJob.reasoning.level(level)}</option
-					>
+							: m.newJob.reasoning.level(level)}
+					</option>
 				{/each}
 			</select>
 			<small>{m.newJob.reasoning.hint}</small>
@@ -191,17 +191,19 @@
 	{/if}
 	{#if task === 'audio_transcription'}
 		<div class="row opts">
-			<label class="inline"
-				><input type="checkbox" bind:checked={d.diarize} disabled={!labelsSpeakers(info)} />
-				{labelsSpeakers(info) ? m.newJob.diarize : m.newJob.noSpeakers}</label
-			>
-			<label class="inline"
-				><input type="checkbox" bind:checked={d.timestamps} /> {m.newJob.timestamps}</label
-			>
+			<label class="inline">
+				<input type="checkbox" bind:checked={d.diarize} disabled={!labelsSpeakers(info)} />
+				{labelsSpeakers(info) ? m.newJob.diarize : m.newJob.noSpeakers}
+			</label>
+			<label class="inline">
+				<input type="checkbox" bind:checked={d.timestamps} />
+				{m.newJob.timestamps}
+			</label>
 			{#if translates(info, task)}
-				<label class="inline" title={m.newJob.translateHint}
-					><input type="checkbox" bind:checked={d.translate} /> {m.newJob.translate}</label
-				>
+				<label class="inline" title={m.newJob.translateHint}>
+					<input type="checkbox" bind:checked={d.translate} />
+					{m.newJob.translate}
+				</label>
 			{/if}
 		</div>
 		{#if translates(info, task) && d.translate}
@@ -219,9 +221,9 @@
 			</label>
 			{#if projectNames}
 				<div class="wide">
-					<button class="btn ghost sm" onclick={() => void addProjectNames(d)}
-						><Icon name="plus" size={14} />{m.newJob.vocabulary.fromProject}</button
-					>
+					<button class="btn ghost sm" onclick={() => void addProjectNames(d)}>
+						<Icon name="plus" size={14} />{m.newJob.vocabulary.fromProject}
+					</button>
 				</div>
 			{/if}
 		{/if}
@@ -298,9 +300,9 @@
 				: m.newJob.modelReplaced(replaced.model.name, replaced.replacement?.name ?? '')}
 			{#if replaced.replacement}
 				{@const next = replaced.replacement}
-				<button class="btn sm" onclick={() => (d.model = next.id)}
-					>{m.newJob.useModel(next.name)}</button
-				>
+				<button class="btn sm" onclick={() => (d.model = next.id)}>
+					{m.newJob.useModel(next.name)}
+				</button>
 			{/if}
 		</p>
 	{/if}
@@ -310,9 +312,9 @@
 	{#if d.model && !isInstalled(d.provider, d.model)}
 		<p class="warning small">
 			{m.newJob.notDownloaded}
-			<button class="btn sm" onclick={() => go({ name: 'settings', tab: 'offline' })}
-				>{m.newJob.openSettings}</button
-			>
+			<button class="btn sm" onclick={() => go({ name: 'settings', tab: 'offline' })}>
+				{m.newJob.openSettings}
+			</button>
 		</p>
 	{/if}
 	{#if d.provider && !hasKey(d.provider)}

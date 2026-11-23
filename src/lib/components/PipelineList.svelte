@@ -73,14 +73,18 @@
 						class="x"
 						aria-label={m.newJob.pipelineExport(p.name)}
 						title={m.newJob.pipelineExport(p.name)}
-						onclick={() => exportPipeline(p)}><Icon name="download" size={14} /></button
+						onclick={() => exportPipeline(p)}
 					>
+						<Icon name="download" size={14} />
+					</button>
 					<button
 						class="x"
 						aria-label={m.newJob.pipelineDelete(p.name)}
 						title={m.newJob.pipelineDelete(p.name)}
-						onclick={() => deletePipeline(p)}><Icon name="close" size={14} /></button
+						onclick={() => deletePipeline(p)}
 					>
+						<Icon name="close" size={14} />
+					</button>
 				</li>
 			{/each}
 		</ul>

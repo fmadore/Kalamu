@@ -74,16 +74,16 @@
 			<p class="hint">{m.review.itemEverywhere}</p>
 			<div class="actions">
 				<button type="button" class="btn ghost sm" onclick={close}>{m.common.cancel}</button>
-				<button type="submit" class="btn primary sm" disabled={!draft.trim()}
-					>{m.common.save}</button
-				>
+				<button type="submit" class="btn primary sm" disabled={!draft.trim()}>
+					{m.common.save}
+				</button>
 			</div>
 		</form>
 	{:else}
 		{#if renamable}
-			<button type="button" role="menuitem" class="item" onclick={() => (renaming = true)}
-				><Icon name="edit" size={14} />{m.review.renameItem}</button
-			>
+			<button type="button" role="menuitem" class="item" onclick={() => (renaming = true)}>
+				<Icon name="edit" size={14} />{m.review.renameItem}
+			</button>
 		{/if}
 		<button
 			type="button"
@@ -92,8 +92,10 @@
 			onclick={() => {
 				close();
 				onremove();
-			}}><Icon name="close" size={14} />{m.review.removeItem}</button
+			}}
 		>
+			<Icon name="close" size={14} />{m.review.removeItem}
+		</button>
 	{/if}
 </ContextMenu>
 

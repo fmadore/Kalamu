@@ -137,9 +137,9 @@
 	{#if project}<p class="muted">{w.fromProject(project.name)}</p>{/if}
 
 	<div class="files">
-		<button class="btn" onclick={async () => add(await pickDocuments())}
-			><Icon name="add-file" />{w.chooseFiles}</button
-		>
+		<button class="btn" onclick={async () => add(await pickDocuments())}>
+			<Icon name="add-file" />{w.chooseFiles}
+		</button>
 		{#if files.length > 0}
 			<span class="num">{w.files(sources.length)}</span>
 		{/if}
@@ -160,9 +160,10 @@
 		<ol class="plan">
 			{#each workflow.steps as step, i (i)}
 				<li>
-					<span class="name"
-						>{w.stepNumber(i + 1)}{m.common.colon} {shownName(step.pipeline.name)}</span
-					>
+					<span class="name">
+						{w.stepNumber(i + 1)}{m.common.colon}
+						{shownName(step.pipeline.name)}
+					</span>
 					<span class="muted">{sends(i)} · <span class="num">{cost(i)}</span></span>
 				</li>
 			{/each}
@@ -174,9 +175,9 @@
 				<span>{w.runName}</span>
 				<input type="text" bind:value={name} />
 			</label>
-			<button class="btn primary" onclick={start} disabled={action.busy}
-				><Icon name="play" />{w.start}</button
-			>
+			<button class="btn primary" onclick={start} disabled={action.busy}>
+				<Icon name="play" />{w.start}
+			</button>
 		</div>
 	{/if}
 </section>

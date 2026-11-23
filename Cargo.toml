@@ -49,7 +49,7 @@ tiff = "0.11.3"
 # its zip deflates with zopfli and zlib-rs, no C library.
 rust_xlsxwriter = { version = "0.103.0", default-features = false }
 reqwest = { version = "0.13.5", default-features = false, features = ["json", "multipart", "native-tls", "system-proxy"] }
-rusqlite = { version = "0.41.0", features = ["bundled"] }
+rusqlite = { version = "0.43.0", features = ["bundled"] }
 serde = { version = "1.0.229", features = ["derive"] }
 serde_json = "1.0.154"
 # wry pins sha2 0.10; moving ahead would ship two copies in the exe.

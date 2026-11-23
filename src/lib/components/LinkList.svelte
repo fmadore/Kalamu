@@ -77,9 +77,9 @@
 					e.currentTarget.form?.requestSubmit();
 				}
 			}}></textarea>
-		<button class="btn" type="submit" disabled={checking || !pasted.trim()}
-			><Icon name="plus" size={14} />{checking ? m.newJob.inspecting : m.newJob.addLinks}</button
-		>
+		<button class="btn" type="submit" disabled={checking || !pasted.trim()}>
+			<Icon name="plus" size={14} />{checking ? m.newJob.inspecting : m.newJob.addLinks}
+		</button>
 	</form>
 	<p class="hint" id="links-hint">{m.newJob.linksHint}</p>
 	<p class="sr-only" aria-live="polite">{status}</p>
@@ -100,8 +100,9 @@
 								class="btn sm ghost"
 								aria-label={m.newJob.openVideoNamed(name)}
 								onclick={() => link.source && openLink(link.source.path)}
-								>{m.newJob.openVideo}</button
 							>
+								{m.newJob.openVideo}
+							</button>
 						{:else}
 							<span></span>
 						{/if}
@@ -110,8 +111,9 @@
 							aria-label="{m.newJob.remove} {name}"
 							title={m.newJob.remove}
 							onclick={() => (links = links.filter((_, j) => j !== i))}
-							><Icon name="close" size={14} /></button
 						>
+							<Icon name="close" size={14} />
+						</button>
 					</div>
 					{#if link.error}
 						<!-- The link is already in the row, so the sentence alone says what is wrong. -->

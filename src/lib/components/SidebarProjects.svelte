@@ -27,9 +27,9 @@
 				aria-current={openProject === p.project.id ? 'page' : undefined}
 				data-project={p.project.id}
 				onclick={() => go({ name: 'projects', projectId: p.project.id })}
-				><span class="ellipsis">{p.project.name}</span><span class="num">{p.documents}</span
-				></button
 			>
+				<span class="ellipsis">{p.project.name}</span><span class="num">{p.documents}</span>
+			</button>
 		</li>
 	{/each}
 </ul>

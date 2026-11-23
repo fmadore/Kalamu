@@ -99,9 +99,9 @@
 			<!-- A Markdown heading's marks stay in the text, hidden; the line is set as a heading. -->
 			{@const heading = headingOf(line)}
 			<div class="line" class:blank={line.number === 0}>
-				{#if numberedLine(line.number, entries)}<span class="n num" aria-hidden="true"
-						>{line.number}</span
-					>{/if}
+				{#if numberedLine(line.number, entries)}<span class="n num" aria-hidden="true">
+						{line.number}
+					</span>{/if}
 				<!-- prettier-ignore -->
 				<span class="t" class:heading>{#if heading}<span class="heading-mark">{heading.mark}</span>{/if}{#each heading?.parts ?? line.parts as part, k (k)}{@render text(part)}{/each}</span>
 			</div>

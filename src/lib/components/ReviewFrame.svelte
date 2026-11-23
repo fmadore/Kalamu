@@ -198,12 +198,14 @@
 					class="btn ghost icon sm go-back"
 					aria-label={m.nav.back}
 					title={keys ? `${m.nav.back} (${keys})` : m.nav.back}
-					onclick={back}><Icon name="back" size={14} /></button
+					onclick={back}
 				>
+					<Icon name="back" size={14} />
+				</button>
 			{/if}
-			<button class="back" onclick={() => returnTo({ name: 'jobs', jobId })} title={m.review.back}
-				>{jobName ?? m.review.title}</button
-			>
+			<button class="back" onclick={() => returnTo({ name: 'jobs', jobId })} title={m.review.back}>
+				{jobName ?? m.review.title}
+			</button>
 			<span class="slash" aria-hidden="true">/</span>
 			<h1 class="file mono">{fileName}</h1>
 		</div>
@@ -219,10 +221,11 @@
 						api
 							.openOriginal(jobId, file)
 							.catch((e) => toast(describeError(e, m), { kind: 'error' }))}
-					><Icon name="folder" size={14} /><span class="mono"
-						>{m.review.originalFile(baseName(file))}</span
-					></button
 				>
+					<Icon name="folder" size={14} /><span class="mono">
+						{m.review.originalFile(baseName(file))}
+					</span>
+				</button>
 			{/if}
 			{#if search}
 				<button
@@ -231,8 +234,9 @@
 					aria-label={m.review.search}
 					title="{m.review.search} ({shortcut(m.review.searchShortcut)})"
 					onclick={() => (searching ? (searching = false) : openSearch())}
-					><Icon name="search" size={14} /></button
 				>
+					<Icon name="search" size={14} />
+				</button>
 			{/if}
 			{@render actions?.()}
 			{#if reviewed !== null && onreviewed}
@@ -242,16 +246,17 @@
 						aria-pressed="true"
 						title={m.review.markNotReviewed}
 						onclick={onreviewed}
-						><Icon name="check" size={14} />{m.review.reviewed}<span class="kbd"
-							>{shortcut(m.review.reviewedShortcut)}</span
-						></button
 					>
+						<Icon name="check" size={14} />{m.review.reviewed}<span class="kbd">
+							{shortcut(m.review.reviewedShortcut)}
+						</span>
+					</button>
 				{:else}
-					<button class="btn primary" aria-pressed="false" onclick={onreviewed}
-						><Icon name="check" size={14} />{m.review.markReviewed}<span class="kbd"
-							>{shortcut(m.review.reviewedShortcut)}</span
-						></button
-					>
+					<button class="btn primary" aria-pressed="false" onclick={onreviewed}>
+						<Icon name="check" size={14} />{m.review.markReviewed}<span class="kbd">
+							{shortcut(m.review.reviewedShortcut)}
+						</span>
+					</button>
 				{/if}
 			{/if}
 		</div>

@@ -94,16 +94,16 @@
 
 	<p class="model">
 		<span>{t.model(s.model?.name ?? s.draft.model, s.providerName)}</span>
-		{#if s.cost !== null && s.readable.length > 0}<span class="cost"
-				>{t.cost(formatUsd(s.cost))}</span
-			>{/if}
+		{#if s.cost !== null && s.readable.length > 0}<span class="cost">
+				{t.cost(formatUsd(s.cost))}
+			</span>{/if}
 	</p>
 	{#if !s.keyed}
 		<p class="notice" role="status">
 			{m.newJob.noKey(s.providerName)}
-			<button class="btn sm" onclick={() => go({ name: 'settings', tab: 'keys' })}
-				>{m.newJob.openSettings}</button
-			>
+			<button class="btn sm" onclick={() => go({ name: 'settings', tab: 'keys' })}>
+				{m.newJob.openSettings}
+			</button>
 		</p>
 	{/if}
 

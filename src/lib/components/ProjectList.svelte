@@ -83,12 +83,12 @@
 	</div>
 	{#if !creating}
 		<div class="tools">
-			<button class="btn" onclick={openFile} disabled={!!opening}
-				><Icon name="folder" />{m.projectFile.open}</button
-			>
-			<button class="btn primary" onclick={() => (creating = true)}
-				><Icon name="plus" />{m.projects.newProject}</button
-			>
+			<button class="btn" onclick={openFile} disabled={!!opening}>
+				<Icon name="folder" />{m.projectFile.open}
+			</button>
+			<button class="btn primary" onclick={() => (creating = true)}>
+				<Icon name="plus" />{m.projects.newProject}
+			</button>
 		</div>
 	{/if}
 </header>
@@ -111,8 +111,9 @@
 				<button
 					class="btn primary sm"
 					onclick={() => go({ name: 'projects', projectId: project.project_id })}
-					><Icon name="project" size={14} />{project.name}</button
 				>
+					<Icon name="project" size={14} />{project.name}
+				</button>
 			</div>
 		</div>
 	{/if}
@@ -131,9 +132,9 @@
 				></textarea>
 			</label>
 			<div class="actions">
-				<button type="button" class="btn ghost" onclick={() => (creating = false)}
-					>{m.projects.cancel}</button
-				>
+				<button type="button" class="btn ghost" onclick={() => (creating = false)}>
+					{m.projects.cancel}
+				</button>
 				<button class="btn primary" disabled={!name.trim()}>{m.projects.create}</button>
 			</div>
 		</form>

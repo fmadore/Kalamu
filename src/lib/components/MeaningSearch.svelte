@@ -247,11 +247,13 @@
 						<button
 							class="link"
 							onclick={() => go({ name: 'projects', projectId, documentId: d.document_id })}
-							>{d.title}</button
 						>
-						<span class="sim num" title={m.meaning.similarityHint}
-							>{m.meaning.similarity}{m.common.colon} {sim(d.similarity)}</span
-						>
+							{d.title}
+						</button>
+						<span class="sim num" title={m.meaning.similarityHint}>
+							{m.meaning.similarity}{m.common.colon}
+							{sim(d.similarity)}
+						</span>
 					</h3>
 					<ol class="hits">
 						{#each d.passages as p (`${p.job_id}/${p.setup_id}/${p.hit.index}/${p.hit.nth}/${p.hit.term}`)}
@@ -275,8 +277,10 @@
 					<button
 						class="btn ghost sm"
 						aria-expanded={!!alike[d.document_id]}
-						onclick={() => like(d)}>{m.meaning.likeThis}</button
+						onclick={() => like(d)}
 					>
+						{m.meaning.likeThis}
+					</button>
 					{#if alike[d.document_id] && alike[d.document_id] !== 'loading'}
 						{@const near = alike[d.document_id] as Neighbour[]}
 						{#if near.length === 0}
@@ -288,8 +292,9 @@
 										<button
 											class="link"
 											onclick={() => go({ name: 'projects', projectId, documentId: n.document_id })}
-											>{n.title}</button
 										>
+											{n.title}
+										</button>
 										<span class="sim num">{sim(n.similarity)}</span>
 									</li>
 								{/each}

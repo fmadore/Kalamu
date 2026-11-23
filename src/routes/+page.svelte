@@ -302,8 +302,10 @@
 						class="dismiss"
 						aria-label={m.common.dismissMessage}
 						title={m.common.dismissMessage}
-						onclick={() => void dismissFailure()}><Icon name="close" size={14} /></button
+						onclick={() => void dismissFailure()}
 					>
+						<Icon name="close" size={14} />
+					</button>
 				</div>
 			{/key}
 		{/if}
@@ -321,9 +323,9 @@
 				onfocusin={() => holdToast('focus', true)}
 				onfocusout={() => holdToast('focus', false)}
 			>
-				{app.toast}{#if app.toastAction}<button class="btn ghost sm" onclick={takeToastAction}
-						>{app.toastAction.label}</button
-					>{/if}
+				{app.toast}{#if app.toastAction}<button class="btn ghost sm" onclick={takeToastAction}>
+						{app.toastAction.label}
+					</button>{/if}
 			</div>
 		{/if}
 	</div>

@@ -140,8 +140,10 @@
 		</figcaption>
 		<blockquote lang="">
 			{#if around.before}<span class="context" title={p.context}>{around.before}</span>{/if}<mark
-				class="passage">{around.passage}</mark
-			>{#if around.after}<span class="context" title={p.context}>{around.after}</span>{/if}
+				class="passage"
+			>
+				{around.passage}
+			</mark>{#if around.after}<span class="context" title={p.context}>{around.after}</span>{/if}
 		</blockquote>
 		{#if around.before || around.after}
 			<p class="muted small"><span class="swatch" aria-hidden="true"></span>{p.context}</p>
@@ -204,8 +206,10 @@
 					!choice.model ||
 					!choice.keyed ||
 					!choice.installed}
-				onclick={ask}>{p.ask}</button
+				onclick={ask}
 			>
+				{p.ask}
+			</button>
 		{:else if request.stage === 'waiting'}
 			<button class="btn" onclick={() => request.stop()}>{p.stop}</button>
 		{:else if request.stage === 'answer'}
@@ -216,8 +220,10 @@
 			<button
 				class="btn primary"
 				disabled={request.editing && !request.draft.trim()}
-				onclick={() => request.accept(onaccepted)}>{p.accept}</button
+				onclick={() => request.accept(onaccepted)}
 			>
+				{p.accept}
+			</button>
 		{:else}
 			<button class="btn primary" onclick={() => request.discard(onclose)}>{p.lookAgain}</button>
 		{/if}

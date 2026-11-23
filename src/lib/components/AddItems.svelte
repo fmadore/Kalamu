@@ -135,9 +135,9 @@
 		{#if !choices || choices.length > 0}
 			<button type="submit" class="btn primary sm" disabled={busy}>{m.review.addItem}</button>
 		{/if}
-		<button bind:this={closer} type="button" class="btn ghost sm" onclick={close}
-			>{m.common.close}</button
-		>
+		<button bind:this={closer} type="button" class="btn ghost sm" onclick={close}>
+			{m.common.close}
+		</button>
 		<p class="note" id={hintId}>{m.review.addHint}</p>
 		<p class="note said" role="status">{message}</p>
 	</form>
@@ -148,8 +148,10 @@
 		class="btn ghost sm opener"
 		data-add={field}
 		aria-label={m.review.addTo(label)}
-		onclick={() => (open = true)}><Icon name="plus" size={14} />{m.review.addItem}</button
+		onclick={() => (open = true)}
 	>
+		<Icon name="plus" size={14} />{m.review.addItem}
+	</button>
 {/if}
 
 <style>

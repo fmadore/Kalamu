@@ -82,8 +82,10 @@
 				job.pieces_finished,
 				job.pieces_total
 			)}"
-			onclick={(e) => void resume(job, e.currentTarget)}><Icon name="play" size={16} /></button
+			onclick={(e) => void resume(job, e.currentTarget)}
 		>
+			<Icon name="play" size={16} />
+		</button>
 	{:else}
 		<section class="resume" aria-labelledby="resume-head">
 			<!-- With others, the head is where they are shown, so the foot keeps to one job's
@@ -96,10 +98,11 @@
 						aria-expanded={showOthers}
 						aria-controls="resume-list"
 						onclick={() => (showOthers = !showOthers)}
-						>{m.shell.resumeOthers(others.length)}<span class="turn" class:open={showOthers}
-							><Icon name="chevron" size={14} /></span
-						></button
 					>
+						{m.shell.resumeOthers(others.length)}<span class="turn" class:open={showOthers}>
+							<Icon name="chevron" size={14} />
+						</span>
+					</button>
 				{/if}
 			</div>
 			<ul id="resume-list">
@@ -120,8 +123,9 @@
 							aria-describedby="resume-meta-{job.id} resume-failure"
 							aria-disabled={busy === job.id}
 							onclick={(e) => void resume(job, e.currentTarget)}
-							><Icon name="play" size={12} />{m.jobs.resume}</button
 						>
+							<Icon name="play" size={12} />{m.jobs.resume}
+						</button>
 					</li>
 				{/each}
 			</ul>

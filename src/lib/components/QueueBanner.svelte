@@ -51,12 +51,12 @@
 			{item.signals.map((s) => reasonText(s, m, item.piece === null)).join(m.common.semicolon)}
 		</p>
 		<span class="buttons">
-			<button class="btn sm ghost" onclick={() => step(-1)} disabled={trail.at === 0}
-				><Icon name="previous" size={14} />{q.banner.previous}</button
-			>
-			<button class="btn sm" onclick={() => step(1)} disabled={trail.at >= trail.items.length - 1}
-				>{q.banner.next}<Icon name="chevron" size={14} /></button
-			>
+			<button class="btn sm ghost" onclick={() => step(-1)} disabled={trail.at === 0}>
+				<Icon name="previous" size={14} />{q.banner.previous}
+			</button>
+			<button class="btn sm" onclick={() => step(1)} disabled={trail.at >= trail.items.length - 1}>
+				{q.banner.next}<Icon name="chevron" size={14} />
+			</button>
 			<button class="btn sm ghost" onclick={back}>{q.banner.back}</button>
 		</span>
 	</div>

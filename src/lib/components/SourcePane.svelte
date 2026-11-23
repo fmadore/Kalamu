@@ -339,8 +339,9 @@
 				aria-pressed={kind === 'text'}
 				title={kind === 'text' ? m.review.showPageHint : m.review.showOriginalHint}
 				onclick={switchable.onswitch}
-				>{kind === 'text' ? m.review.showPage : m.review.showOriginal}</button
 			>
+				{kind === 'text' ? m.review.showPage : m.review.showOriginal}
+			</button>
 		{/if}
 		{#if paging && paging.count > 1 && onstep}
 			<span class="paging">
@@ -349,16 +350,20 @@
 					aria-label={m.review.previous}
 					title={m.review.previous}
 					disabled={paging.at <= 0}
-					onclick={() => onstep(-1)}><Icon name="previous" /></button
+					onclick={() => onstep(-1)}
 				>
+					<Icon name="previous" />
+				</button>
 				<span class="count mono">{paging.at + 1} / {paging.count}</span>
 				<button
 					class="tool"
 					aria-label={m.review.next}
 					title={m.review.next}
 					disabled={paging.at >= paging.count - 1}
-					onclick={() => onstep(1)}><Icon name="chevron" /></button
+					onclick={() => onstep(1)}
 				>
+					<Icon name="chevron" />
+				</button>
 			</span>
 		{/if}
 	</div>
@@ -399,13 +404,13 @@
 			{#if text === null}
 				<p class="muted">{m.common.loading}</p>
 			{:else}
-				{#if span}{text.slice(0, span.start)}<mark class="quoted"
-						>{text.slice(span.start, span.end)}</mark
-					>{text.slice(
+				{#if span}{text.slice(0, span.start)}<mark class="quoted">
+						{text.slice(span.start, span.end)}
+					</mark>{text.slice(
 						span.end
-					)}{:else}{#each findTerm(text, find) as part, k (k)}{#if part.hit}<mark class:found
-								>{part.text}</mark
-							>{:else}{part.text}{/if}{/each}{/if}
+					)}{:else}{#each findTerm(text, find) as part, k (k)}{#if part.hit}<mark class:found>
+								{part.text}
+							</mark>{:else}{part.text}{/if}{/each}{/if}
 			{/if}
 		</div>
 	{:else}

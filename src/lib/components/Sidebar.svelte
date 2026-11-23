@@ -112,8 +112,9 @@
 			aria-expanded={!collapsed}
 			aria-controls="job-list"
 			onclick={() => (collapsed = !collapsed)}
-			><Icon name={collapsed ? 'sidebar-open' : 'sidebar-close'} size={16} /></button
 		>
+			<Icon name={collapsed ? 'sidebar-open' : 'sidebar-close'} size={16} />
+		</button>
 	</div>
 
 	<button
@@ -140,8 +141,9 @@
 				aria-label={collapsed ? m.nav.projects : undefined}
 				title={collapsed ? m.nav.projects : undefined}
 				onclick={() => go({ name: 'projects' })}
-				><Icon name="project" size={16} />{#if !collapsed}{m.nav.projects}{/if}</button
 			>
+				<Icon name="project" size={16} />{#if !collapsed}{m.nav.projects}{/if}
+			</button>
 			{#if !collapsed && listed.length > 0}
 				<button
 					class="fold unfold"
@@ -150,9 +152,9 @@
 					aria-expanded={showProjects}
 					aria-controls="project-list"
 					onclick={() => (showProjects = !showProjects)}
-					><span class="turn" class:open={showProjects}><Icon name="chevron" size={14} /></span
-					></button
 				>
+					<span class="turn" class:open={showProjects}><Icon name="chevron" size={14} /></span>
+				</button>
 			{/if}
 		</div>
 		{#if !collapsed && showProjects && listed.length > 0}
@@ -166,8 +168,9 @@
 		aria-label={collapsed ? m.nav.workflows : undefined}
 		title={collapsed ? m.nav.workflows : undefined}
 		onclick={() => go({ name: 'workflows' })}
-		><Icon name="workflow" size={16} />{#if !collapsed}{m.nav.workflows}{/if}</button
 	>
+		<Icon name="workflow" size={16} />{#if !collapsed}{m.nav.workflows}{/if}
+	</button>
 	{#if collapsed}
 		<!-- The rail hides the job list; the Jobs page stays one click away. -->
 		<button
@@ -176,8 +179,10 @@
 			aria-current={allJobsOpen ? 'page' : undefined}
 			aria-label={m.allJobs.title}
 			title={m.allJobs.title}
-			onclick={() => go({ name: 'allJobs' })}><Icon name="list" size={16} /></button
+			onclick={() => go({ name: 'allJobs' })}
 		>
+			<Icon name="list" size={16} />
+		</button>
 	{/if}
 
 	<SidebarJobs {collapsed} {drag} />
@@ -192,8 +197,9 @@
 			aria-label={collapsed ? m.nav.prompts : undefined}
 			title={collapsed ? m.nav.prompts : undefined}
 			onclick={() => go({ name: 'prompts' })}
-			><Icon name="prompts" size={16} />{#if !collapsed}{m.nav.prompts}{/if}</button
 		>
+			<Icon name="prompts" size={16} />{#if !collapsed}{m.nav.prompts}{/if}
+		</button>
 		<button
 			class="tool"
 			class:current={app.view.name === 'settings'}
@@ -201,8 +207,9 @@
 			aria-label={collapsed ? m.nav.settings : undefined}
 			title="{m.nav.settings} ({shortcut(m.shell.settingsShortcut)})"
 			onclick={() => go({ name: 'settings' })}
-			><Icon name="settings" size={16} />{#if !collapsed}{m.nav.settings}{/if}</button
 		>
+			<Icon name="settings" size={16} />{#if !collapsed}{m.nav.settings}{/if}
+		</button>
 		<button
 			bind:this={lastTool}
 			class="tool"
@@ -211,8 +218,9 @@
 			aria-label={collapsed ? m.nav.glossary : undefined}
 			title={collapsed ? m.nav.glossary : undefined}
 			onclick={() => go({ name: 'glossary' })}
-			><Icon name="glossary" size={16} />{#if !collapsed}{m.nav.glossary}{/if}</button
 		>
+			<Icon name="glossary" size={16} />{#if !collapsed}{m.nav.glossary}{/if}
+		</button>
 		{#if !app.info?.app_store}
 			<SupportLink variant="tool" iconOnly={collapsed} />
 		{/if}
@@ -221,16 +229,18 @@
 		{/if}
 		{#if release && !collapsed}
 			<p class="release">
-				<span
-					>{m.settings.newerRelease(release.version)}
-					<ExternalLink href={release.url}>{m.settings.releasePage}</ExternalLink></span
-				>
+				<span>
+					{m.settings.newerRelease(release.version)}
+					<ExternalLink href={release.url}>{m.settings.releasePage}</ExternalLink>
+				</span>
 				<button
 					class="hide-release"
 					aria-label={m.settings.hideRelease}
 					title={m.settings.hideRelease}
-					onclick={(e) => hideRelease(e, release.version)}><Icon name="close" size={14} /></button
+					onclick={(e) => hideRelease(e, release.version)}
 				>
+					<Icon name="close" size={14} />
+				</button>
 			</p>
 		{/if}
 	</div>

@@ -69,9 +69,9 @@
 		<p class="done" role="status">{t.saved(saved.path)}</p>
 		{#if saved.originals_left > 0}<p class="muted">{t.leftOut(saved.originals_left)}</p>{/if}
 		<div class="actions">
-			<button class="btn ghost" onclick={() => saved && void revealInFolder(saved.path)}
-				><Icon name="folder" size={14} />{forSystem(t.show)}</button
-			>
+			<button class="btn ghost" onclick={() => saved && void revealInFolder(saved.path)}>
+				<Icon name="folder" size={14} />{forSystem(t.show)}
+			</button>
 			<button class="btn primary" onclick={onclose}>{t.close}</button>
 		</div>
 	{:else if !plan}
@@ -94,9 +94,9 @@
 				<input type="checkbox" bind:checked={withOriginals} disabled={action.busy} />
 				<span>
 					<span class="label">{t.originals}</span>
-					<span class="muted hint"
-						>{t.originalsHint(plan.originals, t.bytes(plan.originals_bytes))}</span
-					>
+					<span class="muted hint">
+						{t.originalsHint(plan.originals, t.bytes(plan.originals_bytes))}
+					</span>
 				</span>
 			</label>
 		{:else}
@@ -116,9 +116,9 @@
 
 		<div class="actions">
 			<button class="btn ghost" onclick={onclose} disabled={action.busy}>{t.cancel}</button>
-			<button class="btn primary" onclick={save} disabled={action.busy}
-				><Icon name="download" size={14} />{t.saveButton}</button
-			>
+			<button class="btn primary" onclick={save} disabled={action.busy}>
+				<Icon name="download" size={14} />{t.saveButton}
+			</button>
 		</div>
 	{/if}
 </Dialog>

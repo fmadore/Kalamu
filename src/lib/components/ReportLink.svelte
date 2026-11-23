@@ -23,8 +23,10 @@
 		{href}
 		aria-label={m.report.review}
 		title={m.report.review}
-		onclick={open}><Icon name="flag" size={14} /></a
+		onclick={open}
 	>
+		<Icon name="flag" size={14} />
+	</a>
 {:else}
 	<a class="btn sm" {href} onclick={open}><Icon name="flag" size={14} />{m.report.link}</a>
 {/if}

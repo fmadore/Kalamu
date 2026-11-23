@@ -41,9 +41,9 @@
 						{/if}
 						{#if pairs}
 							<td>
-								<span class="pair" aria-hidden="true"
-									><i class="siglum">{row.pair[0]}</i><i class="siglum">{row.pair[1]}</i></span
-								><span class="sr-only">{m.agreement.pairOf(row.pair[0], row.pair[1])}</span>
+								<span class="pair" aria-hidden="true">
+									<i class="siglum">{row.pair[0]}</i><i class="siglum">{row.pair[1]}</i>
+								</span><span class="sr-only">{m.agreement.pairOf(row.pair[0], row.pair[1])}</span>
 							</td>
 						{/if}
 						<td class="muted">{m.agreement.measures[row.measure]}</td>

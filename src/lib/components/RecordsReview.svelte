@@ -130,8 +130,9 @@
 			class="btn"
 			onclick={() =>
 				review.save({ setup: target, index: view.index, fields: null, reviewed: view.reviewed })}
-			>{m.review.revert}</button
 		>
+			{m.review.revert}
+		</button>
 	{/if}
 {/snippet}
 
@@ -245,23 +246,27 @@
 										class="btn sm icon ghost"
 										aria-label={m.review.insertRow(r + 1)}
 										title={m.review.insertRow(r + 1)}
-										onclick={() => addRow(r + 1)}><Icon name="plus" size={14} /></button
+										onclick={() => addRow(r + 1)}
 									>
+										<Icon name="plus" size={14} />
+									</button>
 									<button
 										class="btn sm icon ghost"
 										aria-label={m.review.removeRow(r + 1)}
 										title={m.review.removeRow(r + 1)}
-										onclick={() => removeRow(r)}><Icon name="close" size={14} /></button
+										onclick={() => removeRow(r)}
 									>
+										<Icon name="close" size={14} />
+									</button>
 								</td>
 							</tr>
 						{/each}
 					</tbody>
 				</table>
 			{/if}
-			<button class="btn add" onclick={() => addRow(rows.length)}
-				><Icon name="plus" size={14} />{m.review.addRow}</button
-			>
+			<button class="btn add" onclick={() => addRow(rows.length)}>
+				<Icon name="plus" size={14} />{m.review.addRow}
+			</button>
 			<p class="muted small">{m.review.rowsKept}</p>
 		</div>
 	{/if}

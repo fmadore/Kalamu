@@ -83,8 +83,10 @@
 			class:on={fav}
 			aria-pressed={fav}
 			aria-label={fav ? m.newJob.removeFavourite(name(l)) : m.newJob.addFavourite(name(l))}
-			onclick={() => toggleFavourite(l.code)}><Icon name="star" size={14} filled={fav} /></button
+			onclick={() => toggleFavourite(l.code)}
 		>
+			<Icon name="star" size={14} filled={fav} />
+		</button>
 	</li>
 {/snippet}
 
@@ -99,8 +101,9 @@
 						class="x"
 						aria-label="{m.newJob.remove} {label(code)}"
 						onclick={() => (selected = selected.filter((c) => c !== code))}
-						><Icon name="close" size={12} /></button
 					>
+						<Icon name="close" size={12} />
+					</button>
 				</span>
 			{/each}
 		</div>
@@ -139,9 +142,9 @@
 	{#if quick.length > 0 && !(single && selected.length > 0)}
 		<div class="quick" aria-label={m.newJob.favouriteLanguages} role="group">
 			{#each quick as l (l.code)}
-				<button class="btn ghost sm" onclick={() => add(l.code)}
-					><Icon name="plus" size={14} />{name(l)}</button
-				>
+				<button class="btn ghost sm" onclick={() => add(l.code)}>
+					<Icon name="plus" size={14} />{name(l)}
+				</button>
 			{/each}
 		</div>
 	{/if}

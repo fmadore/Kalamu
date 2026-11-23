@@ -68,17 +68,17 @@
 		</p>
 		<span class="buttons">
 			{#if where === 'review'}
-				<button class="btn sm primary" onclick={proceed} disabled={action.busy}
-					><Icon name="check" size={14} />{w.continue}</button
-				>
+				<button class="btn sm primary" onclick={proceed} disabled={action.busy}>
+					<Icon name="check" size={14} />{w.continue}
+				</button>
 			{:else if where === 'attention'}
-				<button class="btn sm primary" onclick={proceed} disabled={action.busy}
-					>{w.continueAnyway}</button
-				>
+				<button class="btn sm primary" onclick={proceed} disabled={action.busy}>
+					{w.continueAnyway}
+				</button>
 			{/if}
-			<button class="btn sm ghost" onclick={() => go({ name: 'workflows', runId: run.id })}
-				>{w.banner.see}</button
-			>
+			<button class="btn sm ghost" onclick={() => go({ name: 'workflows', runId: run.id })}>
+				{w.banner.see}
+			</button>
 		</span>
 	</div>
 {/if}

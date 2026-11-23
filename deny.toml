@@ -27,3 +27,15 @@ confidence-threshold = 0.9
 [sources]
 unknown-registry = "deny"
 unknown-git = "deny"
+
+[bans]
+# Many crates appear in two versions; only the rule below fails the check.
+multiple-versions = "allow"
+deny = [
+  # kreuzberg-tesseract 4.10.4 asks for any `zip` from 7 up in its build script, which no longer
+  # compiles against zip 9 (`mangled_name` returns a Result there). Cargo.lock keeps it on the
+  # zip 8 that docx-rs already uses; a lockfile update (Dependabot's included) may move it to
+  # the zip 9 that rust_xlsxwriter and calamine need, so this fails the check instead of three builds. Undo
+  # it by pointing kreuzberg-tesseract's "zip 9.x" back at "zip 8.x" in Cargo.lock.
+  { crate = "zip:>=9", wrappers = ["rust_xlsxwriter", "calamine"], reason = "kreuzberg-tesseract's build script does not compile with zip 9" },
+]

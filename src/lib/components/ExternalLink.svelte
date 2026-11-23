@@ -15,6 +15,6 @@
 	}
 </script>
 
-<a {href} onclick={open}
-	>{@render children()}<span class="sr-only">{m.common.opensInBrowser}</span></a
->
+<a {href} onclick={open}>
+	{@render children()}<span class="sr-only">{m.common.opensInBrowser}</span>
+</a>

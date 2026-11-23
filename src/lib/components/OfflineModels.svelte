@@ -200,23 +200,25 @@
 						api
 							.cancelModelDownload()
 							.catch((e: unknown) => toast(describeError(e, m), { kind: 'error' }))}
-					>{m.settings.cancelDownload}</button
 				>
+					{m.settings.cancelDownload}
+				</button>
 			{:else if s?.installed}
-				<button class="btn sm ghost danger" disabled={s.in_use} onclick={() => remove(id)}
-					>{m.settings.removeModel}</button
-				>
+				<button class="btn sm ghost danger" disabled={s.in_use} onclick={() => remove(id)}>
+					{m.settings.removeModel}
+				</button>
 			{:else}
 				<button
 					class="btn sm primary"
 					disabled={downloading || blocked}
 					onclick={() => download(id)}
-					>{stopped ? m.settings.continueDownload : m.settings.download}</button
 				>
+					{stopped ? m.settings.continueDownload : m.settings.download}
+				</button>
 				{#if stopped}
-					<button class="btn sm ghost danger" disabled={downloading} onclick={() => remove(id)}
-						>{m.settings.discardDownload}</button
-					>
+					<button class="btn sm ghost danger" disabled={downloading} onclick={() => remove(id)}>
+						{m.settings.discardDownload}
+					</button>
 				{/if}
 			{/if}
 		</div>

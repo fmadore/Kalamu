@@ -178,9 +178,9 @@
 	<div class="head">
 		<h2>{q.title}</h2>
 		{#if view && view.queue.items.length > 0}
-			<button class="btn sm" onclick={exportList}
-				><Icon name="download" size={14} />{q.export}</button
-			>
+			<button class="btn sm" onclick={exportList}>
+				<Icon name="download" size={14} />{q.export}
+			</button>
 		{/if}
 	</div>
 	<p class="muted lede">{q.lede}</p>
@@ -272,9 +272,9 @@
 					{/each}
 				</ul>
 				{#if groups.processing.length > limit.processing}
-					<button class="btn ghost sm" onclick={() => (limit.processing += PAGE)}
-						>{q.more(Math.min(PAGE, groups.processing.length - limit.processing))}</button
-					>
+					<button class="btn ghost sm" onclick={() => (limit.processing += PAGE)}>
+						{q.more(Math.min(PAGE, groups.processing.length - limit.processing))}
+					</button>
 				{/if}
 			</section>
 		{/if}
@@ -288,9 +288,9 @@
 					{/each}
 				</ul>
 				{#if groups.answers.length > limit.answers}
-					<button class="btn ghost sm" onclick={() => (limit.answers += PAGE)}
-						>{q.more(Math.min(PAGE, groups.answers.length - limit.answers))}</button
-					>
+					<button class="btn ghost sm" onclick={() => (limit.answers += PAGE)}>
+						{q.more(Math.min(PAGE, groups.answers.length - limit.answers))}
+					</button>
 				{/if}
 			</section>
 		{/if}

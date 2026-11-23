@@ -92,12 +92,14 @@
 			class="btn sm"
 			type="submit"
 			disabled={busy}
-			title={sample ? s.drawAgainHint : undefined}>{sample ? s.drawAgain : s.draw}</button
+			title={sample ? s.drawAgainHint : undefined}
 		>
+			{sample ? s.drawAgain : s.draw}
+		</button>
 		{#if sample}
-			<button class="btn ghost sm" type="button" disabled={busy} onclick={() => run(onremove)}
-				>{s.remove}</button
-			>
+			<button class="btn ghost sm" type="button" disabled={busy} onclick={() => run(onremove)}>
+				{s.remove}
+			</button>
 		{/if}
 	</form>
 	<p class="hint" id="sample-seed-hint">{s.seedFieldHint}</p>
@@ -107,9 +109,9 @@
 	{#if sample}
 		<p class="facts num">
 			<span>{s.summary(sample.drawn, sample.candidates)}</span>
-			<span title={s.seedHint}
-				>{s.seed(sample.seed)}, {s.drawnOn(formatDateTime(sample.drawn_at))}</span
-			>
+			<span title={s.seedHint}>
+				{s.seed(sample.seed)}, {s.drawnOn(formatDateTime(sample.drawn_at))}
+			</span>
 			<span>{s.reviewed(sample.reviewed, sample.drawn)}</span>
 		</p>
 		{#if sample.drawn === 0}

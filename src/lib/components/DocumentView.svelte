@@ -123,8 +123,9 @@
 		<button
 			class="back"
 			onclick={() => returnTo({ name: 'projects', projectId, collectionId: from })}
-			><Icon name="back" size={14} />{project?.project.name ?? m.projects.back}</button
 		>
+			<Icon name="back" size={14} />{project?.project.name ?? m.projects.back}
+		</button>
 		{#if draftTitle !== null}
 			<!-- svelte-ignore a11y_autofocus -->
 			<input
@@ -144,8 +145,9 @@
 					aria-label={m.projects.document.rename}
 					title={m.projects.document.rename}
 					onclick={() => (draftTitle = detail?.document.title ?? '')}
-					><Icon name="edit" size={14} /></button
 				>
+					<Icon name="edit" size={14} />
+				</button>
 			{/if}
 		{/if}
 	</div>
@@ -161,16 +163,18 @@
 			<p class="path mono">{doc.source.path}</p>
 			<p class="facts">
 				<span>{m.projects.kind[doc.source.kind]}</span>
-				{#if doc.source.page_count}<span class="num">{m.newJob.pages(doc.source.page_count)}</span
-					>{/if}
+				{#if doc.source.page_count}<span class="num">
+						{m.newJob.pages(doc.source.page_count)}
+					</span>{/if}
 				{#if detail.missing}
 					<span class="chip danger">{m.projects.missing}</span>
 				{:else if doc.source.kind !== 'youtube'}
 					<button
 						class="btn ghost sm"
 						onclick={() => action.run(() => revealInFolder(doc.source.path), null)}
-						><Icon name="folder" size={14} />{m.projects.document.reveal}</button
 					>
+						<Icon name="folder" size={14} />{m.projects.document.reveal}
+					</button>
 				{/if}
 			</p>
 			{#if detail.missing}<p class="muted">{m.projects.missingHint}</p>{/if}
@@ -224,8 +228,10 @@
 								class="untag"
 								aria-label={m.projects.removeTagFrom(tag)}
 								title={m.projects.removeTagFrom(tag)}
-								onclick={() => removeTag(tag)}><Icon name="close" size={11} /></button
+								onclick={() => removeTag(tag)}
 							>
+								<Icon name="close" size={11} />
+							</button>
 						</li>
 					{/each}
 				</ul>
@@ -243,12 +249,13 @@
 							<button
 								class="link"
 								onclick={() => go({ name: 'projects', projectId, documentId: other.id })}
-								>{other.title}</button
 							>
+								{other.title}
+							</button>
 							<span class="mono muted path">{other.path}</span>
-							<button class="btn sm" onclick={() => merge(other.id, other.title)}
-								><Icon name="merge" size={14} />{m.projects.document.merge}</button
-							>
+							<button class="btn sm" onclick={() => merge(other.id, other.title)}>
+								<Icon name="merge" size={14} />{m.projects.document.merge}
+							</button>
 						</li>
 					{/each}
 				</ul>
@@ -280,18 +287,18 @@
 								<tr class:preferred={r.preferred}>
 									<td>
 										<span class="job">{r.job_name}</span>
-										<span class="muted small num"
-											>{formatDateTime(r.created_at)} · {m.status[r.job_status]}</span
-										>
+										<span class="muted small num">
+											{formatDateTime(r.created_at)} · {m.status[r.job_status]}
+										</span>
 									</td>
 									<td class="mono small">{r.model}</td>
 									<td class="num">{m.projects.document.pieces(r.finished, r.pieces, r.failed)}</td>
-									<td class="num"
-										>{m.projects.document.reviewedCount(r.reviewed, r.pieces, r.corrected)}</td
-									>
-									<td class="num"
-										>{#if r.cost_usd !== null}{formatUsd(r.cost_usd)}{:else}<Missing />{/if}</td
-									>
+									<td class="num">
+										{m.projects.document.reviewedCount(r.reviewed, r.pieces, r.corrected)}
+									</td>
+									<td class="num">
+										{#if r.cost_usd !== null}{formatUsd(r.cost_usd)}{:else}<Missing />{/if}
+									</td>
 									<td>
 										<button
 											class="btn ghost sm"
@@ -299,22 +306,25 @@
 											aria-pressed={r.preferred}
 											title={m.projects.document.preferHint}
 											onclick={() => prefer(r)}
-											><Icon name="star" size={14} filled={r.preferred} />{r.preferred
-												? m.projects.document.preferred
-												: m.projects.document.prefer}</button
 										>
+											<Icon name="star" size={14} filled={r.preferred} />{r.preferred
+												? m.projects.document.preferred
+												: m.projects.document.prefer}
+										</button>
 									</td>
 									<td class="open">
 										<button
 											class="btn sm"
 											onclick={() => go({ name: 'review', jobId: r.job_id, sourceId: r.source_id })}
-											>{m.projects.document.open}</button
 										>
+											{m.projects.document.open}
+										</button>
 										<button
 											class="btn ghost sm"
 											onclick={() => go({ name: 'jobs', jobId: r.job_id })}
-											>{m.projects.document.openJob}</button
 										>
+											{m.projects.document.openJob}
+										</button>
 										{#if rulesFor(app.rules, r.task).yields_text && r.finished > 0}
 											<UseTextMenu
 												small
@@ -330,8 +340,10 @@
 											class="btn ghost sm icon"
 											aria-label={m.projects.document.detach}
 											title={m.projects.document.detach}
-											onclick={() => detach(r)}><Icon name="unlink" size={14} /></button
+											onclick={() => detach(r)}
 										>
+											<Icon name="unlink" size={14} />
+										</button>
 									</td>
 								</tr>
 							{/each}

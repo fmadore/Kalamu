@@ -77,9 +77,9 @@
 	</div>
 	<div class="buttons">
 		<button class="btn" onclick={importOne}><Icon name="download" />{w.import}</button>
-		<button class="btn primary" onclick={() => open('new')}
-			><Icon name="plus" />{w.newWorkflow}</button
-		>
+		<button class="btn primary" onclick={() => open('new')}>
+			<Icon name="plus" />{w.newWorkflow}
+		</button>
 	</div>
 </header>
 
@@ -144,8 +144,9 @@
 						class="btn sm"
 						onclick={() =>
 							go({ name: 'workflows', workflowId: 'new', example: kind, paths, sources, project })}
-						>{w.useExample}</button
 					>
+						{w.useExample}
+					</button>
 				</li>
 			{/each}
 		</ul>

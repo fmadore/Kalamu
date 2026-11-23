@@ -121,8 +121,10 @@
 						onclick={() => {
 							box?.close();
 							onadd(group.field.key, card.entry, card.title, at.start, at.end);
-						}}>{card.title}</button
+						}}
 					>
+						{card.title}
+					</button>
 				{/each}
 			{/if}
 		{/each}

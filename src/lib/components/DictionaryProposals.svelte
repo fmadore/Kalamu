@@ -188,9 +188,9 @@
 		<div class="ask card">
 			<p>
 				{p.plan(fieldLabel, plan.rows, plan.sources.length)}
-				<button class="link" onclick={() => go({ name: 'prompts', presetId: 'dictionary.merges' })}
-					>{p.prompt}</button
-				>
+				<button class="link" onclick={() => go({ name: 'prompts', presetId: 'dictionary.merges' })}>
+					{p.prompt}
+				</button>
 			</p>
 			<div class="pickers">
 				<label class="pick">
@@ -234,8 +234,10 @@
 				<button
 					class="btn primary sm"
 					disabled={starting || !model || !hasKey(provider)}
-					onclick={start}>{p.start}</button
+					onclick={start}
 				>
+					{p.start}
+				</button>
 				<button class="btn ghost sm" onclick={() => (asking = false)}>{m.dictionary.cancel}</button>
 			</div>
 		</div>
@@ -243,25 +245,20 @@
 
 	{#each requests as r (r.id)}
 		<p class="request muted">
-			<span
-				>{p.request(
-					m.status[r.status],
-					r.answered,
-					r.groups,
-					r.proposals,
-					formatDate(r.created_at)
-				)}</span
-			>
+			<span>
+				{p.request(m.status[r.status], r.answered, r.groups, r.proposals, formatDate(r.created_at))}
+			</span>
 			{#if r.unknown > 0}<span class="chip">{p.unknown(r.unknown)}</span>{/if}
-			<button class="btn ghost sm" onclick={() => go({ name: 'jobs', jobId: r.job_id })}
-				>{p.openJob}</button
-			>
+			<button class="btn ghost sm" onclick={() => go({ name: 'jobs', jobId: r.job_id })}>
+				{p.openJob}
+			</button>
 			<button
 				class="btn ghost sm"
 				title={p.forgetHint}
 				onclick={() => action.run(() => api.dictionaryForgetRequest(projectId, r.id))}
-				>{p.forget}</button
 			>
+				{p.forget}
+			</button>
 		</p>
 	{/each}
 
@@ -280,9 +277,9 @@
 							oninput={(e) => (labels[x.key] = e.currentTarget.value)}
 							aria-label={m.dictionary.mergeLabel}
 						/>
-						<span class="chip certainty {x.certainty}" title={p.certaintyHint}
-							>{p.certainty[x.certainty as keyof typeof p.certainty] ?? x.certainty}</span
-						>
+						<span class="chip certainty {x.certainty}" title={p.certaintyHint}>
+							{p.certainty[x.certainty as keyof typeof p.certainty] ?? x.certainty}
+						</span>
 					</div>
 					{#if x.reason}<p class="reason">{x.reason}</p>{/if}
 					<ul class="members">
@@ -307,15 +304,17 @@
 							class="btn primary sm"
 							type="submit"
 							disabled={chosen(x).length < 2 || !(labels[x.key] ?? x.label).trim()}
-							>{m.dictionary.mergeConfirm}</button
 						>
+							{m.dictionary.mergeConfirm}
+						</button>
 						<button
 							class="btn sm"
 							type="button"
 							onclick={() =>
 								action.run(() => api.dictionaryDismiss(projectId, namespace, x.key, true))}
-							>{p.dismiss}</button
 						>
+							{p.dismiss}
+						</button>
 						{#if x.members.length === 2}
 							<button
 								class="btn ghost sm"
@@ -331,8 +330,10 @@
 												x.members[1].item
 											),
 										changed
-									)}>{m.dictionary.keepApart}</button
+									)}
 							>
+								{m.dictionary.keepApart}
+							</button>
 						{/if}
 					</div>
 				</form>
@@ -341,9 +342,9 @@
 	</ul>
 
 	{#if dismissed.length > 0}
-		<button class="btn ghost sm" onclick={() => (showDismissed = !showDismissed)}
-			>{p.dismissedCount(dismissed.length)}</button
-		>
+		<button class="btn ghost sm" onclick={() => (showDismissed = !showDismissed)}>
+			{p.dismissedCount(dismissed.length)}
+		</button>
 		{#if showDismissed}
 			<ul class="dismissed">
 				{#each dismissed as x (x.key)}
@@ -353,8 +354,9 @@
 							class="btn ghost sm"
 							onclick={() =>
 								action.run(() => api.dictionaryDismiss(projectId, namespace, x.key, false))}
-							>{p.takeBack}</button
 						>
+							{p.takeBack}
+						</button>
 					</li>
 				{/each}
 			</ul>

@@ -257,8 +257,9 @@
 		<button
 			class="btn ghost sm"
 			onclick={() => returnTo({ name: 'workflows', paths, sources, project })}
-			><Icon name="back" />{w.back}</button
 		>
+			<Icon name="back" />{w.back}
+		</button>
 		<label class="field name">
 			<span>{w.name}</span>
 			<input type="text" bind:value={workflow.name} />
@@ -276,8 +277,9 @@
 			onclick={save}
 			disabled={!dirty || workflow.steps.length === 0}
 			title={workflow.steps.length === 0 ? w.saveNeedsStep : undefined}
-			><Icon name="check" />{w.save}</button
 		>
+			<Icon name="check" />{w.save}
+		</button>
 	</div>
 </header>
 
@@ -317,23 +319,26 @@
 								title={w.moveUp(i + 1)}
 								disabled={i === 0}
 								onclick={() => (workflow.steps = moveStep(workflow.steps, i, i - 1))}
-								><Icon name="up" /></button
 							>
+								<Icon name="up" />
+							</button>
 							<button
 								class="btn ghost sm icon"
 								aria-label={w.moveDown(i + 1)}
 								title={w.moveDown(i + 1)}
 								disabled={i === workflow.steps.length - 1}
 								onclick={() => (workflow.steps = moveStep(workflow.steps, i, i + 1))}
-								><Icon name="down" /></button
 							>
+								<Icon name="down" />
+							</button>
 							<button
 								class="btn ghost sm icon danger"
 								aria-label={w.remove(i + 1)}
 								title={w.remove(i + 1)}
 								onclick={() => (workflow.steps = removeStep(workflow.steps, i))}
-								><Icon name="close" /></button
 							>
+								<Icon name="close" />
+							</button>
 						</span>
 					</div>
 					<p class="models">
@@ -379,9 +384,9 @@
 								onchange={(e) => setInput(i, e.currentTarget.value)}
 							>
 								{#each choices as choice (JSON.stringify(choice))}
-									<option value={JSON.stringify(choice)} selected={sameInput(choice, step.input)}
-										>{inputLabel(choice)}</option
-									>
+									<option value={JSON.stringify(choice)} selected={sameInput(choice, step.input)}>
+										{inputLabel(choice)}
+									</option>
 								{/each}
 							</select>
 						</label>
@@ -419,8 +424,9 @@
 						{/each}
 					</select>
 				</label>
-				<button class="btn" onclick={add} disabled={!adding}><Icon name="plus" />{w.addStep}</button
-				>
+				<button class="btn" onclick={add} disabled={!adding}>
+					<Icon name="plus" />{w.addStep}
+				</button>
 			</div>
 		{/if}
 		{#if workflow.id}<p class="muted note">{w.savedNote}</p>{/if}

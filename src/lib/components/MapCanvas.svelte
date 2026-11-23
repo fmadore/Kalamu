@@ -239,8 +239,10 @@
 				text-anchor={label.anchor}
 				font-size={r * 2.6}
 				stroke-width={r * 0.6}
-				aria-hidden="true">{shown.title}</text
+				aria-hidden="true"
 			>
+				{shown.title}
+			</text>
 		{/if}
 	</svg>
 </div>

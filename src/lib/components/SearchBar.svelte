@@ -100,15 +100,19 @@
 				aria-label={m.review.previousMatch}
 				title="{m.review.previousMatch} ({shifted('↵')})"
 				disabled={count === 0}
-				onclick={() => step(-1)}><Icon name="up" size={14} /></button
+				onclick={() => step(-1)}
 			>
+				<Icon name="up" size={14} />
+			</button>
 			<button
 				class="btn sm icon"
 				aria-label={m.review.nextMatch}
 				title="{m.review.nextMatch} (↵)"
 				disabled={count === 0}
-				onclick={() => step(1)}><Icon name="down" size={14} /></button
+				onclick={() => step(1)}
 			>
+				<Icon name="down" size={14} />
+			</button>
 			<button
 				class="btn sm toggle"
 				aria-expanded={listed && count > 0}
@@ -116,16 +120,19 @@
 				title={m.review.listMatchesHint}
 				disabled={count === 0}
 				onclick={() => (listed = !listed)}
-				><Icon name="list" size={14} />{m.review.listMatches}</button
 			>
+				<Icon name="list" size={14} />{m.review.listMatches}
+			</button>
 		</span>
 	{/if}
 	<button
 		class="btn sm icon ghost close"
 		aria-label={m.review.closeSearch}
 		title={m.review.closeSearch}
-		onclick={onclose}><Icon name="close" size={14} /></button
+		onclick={onclose}
 	>
+		<Icon name="close" size={14} />
+	</button>
 
 	{#if matches && listed && count > 0}
 		<div class="list" id="matches" role="region" aria-label={m.review.matches}>
@@ -141,11 +148,11 @@
 							onclick={() => pick(i)}
 						>
 							{#if hit.time}<span class="time num">{hit.time}</span>{/if}
-							<span class="words"
-								>{hit.before}<mark>{hit.words}</mark>{hit.after}<span class="sr-only">
-									· {hit.group}</span
-								></span
-							>
+							<span class="words">
+								{hit.before}<mark>{hit.words}</mark>{hit.after}<span class="sr-only">
+									· {hit.group}
+								</span>
+							</span>
 						</button>
 					</li>
 				{/each}
