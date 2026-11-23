@@ -71,13 +71,13 @@
 		await action.run(() => api.untagDocuments(projectId, of, name));
 	}
 
-	/** Keep or Set aside: one tag given, the other taken off. */
+	/** Keep or Set aside: one tag given, every other decision tag taken off, in any language. */
 	async function decide(keep: boolean) {
 		const of = ids();
-		const { add, remove } = decisionTags(keep, m);
+		const { add, remove } = decisionTags(keep, chosenTags, m);
 		await action.run(
 			async () => {
-				await api.untagDocuments(projectId, of, remove);
+				for (const tag of remove) await api.untagDocuments(projectId, of, tag);
 				await api.tagDocuments(projectId, of, add);
 			},
 			async () => {

@@ -5,7 +5,7 @@ import type { SetupRequest } from './bindings/SetupRequest.js';
 import { saidBy } from './cited.js';
 import { en } from './i18n/en.js';
 import { fr } from './i18n/fr.js';
-import { setLocale, type Messages } from './i18n/index.js';
+import { everyCatalog, LOCALES, setLocale, type Messages } from './i18n/index.js';
 import {
 	answerKey,
 	answerOptions,
@@ -13,6 +13,7 @@ import {
 	chosenAnswer,
 	decisionOf,
 	decisionTags,
+	decisionTagsOf,
 	rowAnswers,
 	screeningRequest,
 	tableName,
@@ -118,10 +119,71 @@ describe('the filter by an answer', () => {
 	});
 });
 
+/** A document's tags after a decision, as the projects crate applies one: each tag taken off
+ * whatever its capitals, then the one given unless it is already carried. */
+function decided(tags: string[], keep: boolean, messages: Messages): string[] {
+	const { add, remove } = decisionTags(keep, tags, messages);
+	const off = remove.map((t) => t.toLowerCase());
+	const left = tags.filter((t) => !off.includes(t.toLowerCase()));
+	return left.some((t) => t.toLowerCase() === add.toLowerCase()) ? left : [...left, add];
+}
+
 describe('the researcher’s decision', () => {
-	it('is one of two tags, the other taken off', () => {
-		expect(decisionTags(true, m)).toEqual({ add: 'Kept', remove: 'Set aside' });
-		expect(decisionTags(false, mFr)).toEqual({ add: 'Écarté', remove: 'Gardé' });
+	it('is one tag in the interface’s language, the other taken off', () => {
+		expect(decisionTags(true, ['Set aside', 'letters'], m)).toEqual({
+			add: 'Kept',
+			remove: ['Set aside']
+		});
+		expect(decisionTags(false, ['Gardé'], mFr)).toEqual({ add: 'Écarté', remove: ['Gardé'] });
+		expect(decisionTags(true, ['letters'], m)).toEqual({ add: 'Kept', remove: [] });
+	});
+
+	it('given in one language, is read in the other', () => {
+		for (const messages of [m, mFr]) {
+			expect(decisionOf(['Kept', 'letters'])).toBe('keep');
+			expect(decisionOf(['Gardé'])).toBe('keep');
+			expect(decisionOf(['Set aside'])).toBe('aside');
+			expect(decisionOf(['Écarté', 'letters'])).toBe('aside');
+			expect(decisionOf(['letters'])).toBeNull();
+			// The same whichever catalog wrote the tags given.
+			expect(decisionOf(decided([], true, messages))).toBe('keep');
+		}
+	});
+
+	it('is read whatever the tag’s capitals and spaces, as the project compares tags', () => {
+		expect(decisionOf(['kept'])).toBe('keep');
+		expect(decisionOf(['  set   ASIDE '])).toBe('aside');
+		expect(decisionOf(['écarté'])).toBe('aside');
+	});
+
+	it('changed in the other language, leaves exactly one decision tag', () => {
+		// Kept in English, set aside in French: Kept is taken off, not left beside Écarté.
+		const french = decided(['Kept', 'letters'], false, mFr);
+		expect(french).toEqual(['letters', 'Écarté']);
+		expect(decisionTagsOf(french)).toEqual(['Écarté']);
+		expect(decisionOf(french)).toBe('aside');
+		// Kept in English, kept again in French: replaced, not doubled.
+		expect(decisionTagsOf(decided(['Kept'], true, mFr))).toEqual(['Gardé']);
+		// And back in English.
+		expect(decisionTagsOf(decided(french, true, m))).toEqual(['Kept']);
+	});
+
+	it('carrying both reads as a conflict in every language, settled by either', () => {
+		const both = ['Kept', 'letters', 'Écarté'];
+		setLocale('fr');
+		expect(decisionOf(both)).toBe('both');
+		setLocale('en');
+		expect(decisionOf(both)).toBe('both');
+		expect(decisionTagsOf(decided(both, true, m))).toEqual(['Kept']);
+		expect(decisionTagsOf(decided(both, false, mFr))).toEqual(['Écarté']);
+		expect(decisionTagsOf(decided(both, false, m))).toEqual(['Set aside']);
+	});
+
+	it('never names one word for both decisions in any language shipped', () => {
+		const keep = everyCatalog().map((c) => c.screening.keptTag.toLowerCase());
+		const aside = everyCatalog().map((c) => c.screening.setAsideTag.toLowerCase());
+		expect(keep.filter((k) => aside.includes(k))).toEqual([]);
+		expect(keep).toHaveLength(LOCALES.length);
 	});
 });
 
@@ -198,12 +260,5 @@ describe('the answer in each row', () => {
 		expect(rows?.get('d')?.reason).toBeNull();
 		setLocale('fr');
 		expect(rowAnswers([group()], key)?.get('a')?.label).toBe('Non pertinent');
-	});
-
-	it('reads the researcher’s decision from the document’s tags', () => {
-		expect(decisionOf(['Kept', 'letters'], m)).toBe('keep');
-		expect(decisionOf(['Set aside'], m)).toBe('aside');
-		expect(decisionOf(['letters'], m)).toBeNull();
-		expect(decisionOf(['Gardé'], mFr)).toBe('keep');
 	});
 });

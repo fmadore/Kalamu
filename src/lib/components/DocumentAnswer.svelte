@@ -3,9 +3,11 @@
 	// analysis answered, why, and the passages it quoted, each with its page, readable without
 	// opening the job; then the researcher's own decision, Keep or Set aside, two buttons the
 	// keyboard reaches in the row's order, the one given pressed. Pressing it again takes it off.
+	// A document carrying both (given in two languages) shows neither pressed and says so;
+	// either button settles it.
 	import { saidBy } from '#lib/cited.js';
 	import { messages } from '#lib/i18n/index.js';
-	import type { RowAnswer } from '#lib/screening.js';
+	import type { Decision, RowAnswer } from '#lib/screening.js';
 
 	let {
 		title,
@@ -17,7 +19,7 @@
 		/** The document's title, naming the buttons for a screen reader. */
 		title: string;
 		answer: RowAnswer;
-		decision: 'keep' | 'aside' | null;
+		decision: Decision | null;
 		busy: boolean;
 		/** Keep (true) or Set aside (false); the same again takes it off. */
 		ondecide: (keep: boolean) => void;
@@ -63,6 +65,9 @@
 		>
 			{t.setAside}
 		</button>
+		{#if decision === 'both'}
+			<span class="chip warn">{t.decisionConflict}</span>
+		{/if}
 	</div>
 </div>
 
