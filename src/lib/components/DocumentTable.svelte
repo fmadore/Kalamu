@@ -17,7 +17,7 @@
 	import type { DocumentRow } from '#lib/bindings/DocumentRow.js';
 	import type { TagView } from '#lib/bindings/TagView.js';
 	import { Action } from '#lib/action.svelte.js';
-	import { formatDate, formatDateTime, messages } from '#lib/i18n/index.js';
+	import { formatDate, formatDateTime, listNames, messages } from '#lib/i18n/index.js';
 	import { Paging, rowIndex } from '#lib/paging.svelte.js';
 	import {
 		shownDocuments,
@@ -25,7 +25,13 @@
 		sortDocuments,
 		type DocumentSort
 	} from '#lib/projects.js';
-	import { answeredDocuments, decisionOf, decisionTags, rowAnswers } from '#lib/screening.js';
+	import {
+		answeredDocuments,
+		decisionOf,
+		decisionTags,
+		decisionTagsOf,
+		rowAnswers
+	} from '#lib/screening.js';
 	import { Selection } from '#lib/selection.svelte.js';
 	import { go, toast } from '#lib/state.svelte.js';
 	import { keepFor, recallFor } from '#lib/stored.js';
@@ -122,19 +128,20 @@
 		);
 	}
 
-	/** Keep or Set aside one document from its row; the decision it already has, taken off. */
+	/** Keep or Set aside one document from its row, in whatever language its decision was given:
+	 *  the same again takes it off; the other, or either on a conflict, leaves one decision tag. */
 	async function decide(id: string, tags: string[], keep: boolean) {
-		const { add, remove } = decisionTags(keep, m);
-		const again = decisionOf(tags, m) === (keep ? 'keep' : 'aside');
+		const again = decisionOf(tags) === (keep ? 'keep' : 'aside');
+		const off = decisionTagsOf(tags);
+		const { add, remove } = decisionTags(keep, tags, m);
 		await deciding.run(
 			async () => {
-				if (again) return api.untagDocuments(projectId, [id], add);
-				await api.untagDocuments(projectId, [id], remove);
-				await api.tagDocuments(projectId, [id], add);
+				for (const tag of again ? off : remove) await api.untagDocuments(projectId, [id], tag);
+				if (!again) await api.tagDocuments(projectId, [id], add);
 			},
 			async () => {
 				await onchange();
-				toast(again ? m.screening.decisionTakenOff(add) : m.screening.decided(add, 1));
+				toast(again ? m.screening.decisionTakenOff(listNames(off)) : m.screening.decided(add, 1));
 			}
 		);
 	}
@@ -269,7 +276,7 @@
 									<DocumentAnswer
 										title={doc.title}
 										answer={said}
-										decision={decisionOf(doc.tags, m)}
+										decision={decisionOf(doc.tags)}
 										busy={deciding.busy}
 										ondecide={(keep) => decide(doc.id, doc.tags, keep)}
 									/>

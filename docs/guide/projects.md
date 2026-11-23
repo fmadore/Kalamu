@@ -30,7 +30,12 @@ recording) with every transcription, extraction and analysis made of it.
   without starting, it keeps your question until you open it again). Each document comes back as relevant, partly relevant, not relevant or unsure, with a reason and
   the passages that show it, each found word for word in the text with its page. Filter the
   table by the answer, read the passages, then **Keep** or **Set aside**: your decision is a
-  tag, and the model's answer stays as it was. **Export the whole table** writes the whole list for
+  tag, and the model's answer stays as it was. The tag is written in the interface's language
+  (*Kept* or *Set aside* in English, *Gardé* or *Écarté* in French), and your decision holds
+  whatever the language: after you change it in Settings, or when a colleague working in the
+  other language opens your project file. A document tagged both ways shows **Kept and set
+  aside: choose one** beside the buttons; **Keep** or **Set aside** settles it and leaves one
+  tag. **Export the whole table** writes the whole list for
   a spreadsheet. With an answer chosen in the filter, each row shows its answer, the reason
   and the passages. When you add documents later, **Read the new documents against this
   question** asks it of those alone.

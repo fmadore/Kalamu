@@ -186,6 +186,48 @@ test('each row shows its answer, reason and passages, kept or set aside by keybo
 	await expect(aside).toHaveAttribute('aria-pressed', 'false');
 });
 
+/** Changes the interface language in Settings, then comes back to the project's table. */
+async function switchLanguage(page: Page, settings: string, general: string, language: string) {
+	await page.getByRole('button', { name: settings, exact: true }).click();
+	const main = page.getByRole('main');
+	await main.getByRole('tab', { name: general, exact: true }).click();
+	await main.getByRole('combobox', { name: language }).selectOption({ label: 'Français' });
+	await page.getByRole('button', { name: 'Missions in French West Africa' }).first().click();
+	await expect(main.getByRole('table')).toBeVisible();
+}
+
+test('Keep and Set aside hold when the interface language changes (#240)', async ({ page }) => {
+	const main = await open(page);
+	await main
+		.getByRole('combobox', { name: 'Filter by an answer' })
+		.selectOption({ label: 'Relevant (1)' });
+	const row = main.locator('tbody tr').filter({ hasText: 'Bulletin, May 1957' });
+	await row.getByRole('button', { name: 'Keep “Bulletin, May 1957”' }).click();
+	await expect(row.getByRole('button', { name: 'Keep “Bulletin, May 1957”' })).toHaveAttribute(
+		'aria-pressed',
+		'true'
+	);
+
+	await switchLanguage(page, 'Settings', 'General', 'Language of the interface');
+	await main
+		.getByRole('combobox', { name: 'Filtrer selon une réponse' })
+		.selectOption({ label: 'Pertinent (1)' });
+	// Kept in English reads as kept in French.
+	const garder = row.getByRole('button', { name: /^Garder .*Bulletin, May 1957/ });
+	const ecarter = row.getByRole('button', { name: /^Écarter .*Bulletin, May 1957/ });
+	await expect(garder).toHaveAttribute('aria-pressed', 'true');
+	await expect(ecarter).toHaveAttribute('aria-pressed', 'false');
+
+	// Set aside in French: Kept is taken off, one decision tag left, no conflict.
+	await ecarter.click();
+	await expect(ecarter).toHaveAttribute('aria-pressed', 'true');
+	await expect(garder).toHaveAttribute('aria-pressed', 'false');
+	const chips = row.locator('.chip.tag');
+	await expect(chips.filter({ hasText: 'Écarté' })).toHaveCount(1);
+	await expect(chips.filter({ hasText: 'Kept' })).toHaveCount(0);
+	await expect(row.getByText('Gardé et écarté', { exact: false })).toHaveCount(0);
+});
+
 test('the question is asked again of the documents added since, as it was asked', async ({
 	page
 }) => {

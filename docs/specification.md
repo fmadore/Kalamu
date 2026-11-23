@@ -828,7 +828,11 @@ analysed, compared. A **project** keeps it together
   order, the one given pressed and taken off when pressed again; the documents chosen can also
   be **kept or set aside** in one click from the selection bar: the researcher's decision is one
   of two tags, *Kept* or *Set aside* in the interface's language, the other taken off, so the
-  model's answer is never changed. *Export the whole table* writes that analysis as one table, an Excel workbook and CSV:
+  model's answer is never changed. The tags are read in every language the interface ships, so
+  a decision holds when the language changes or a project file passes between colleagues; a
+  decision given takes off every other decision tag in any language, and a document carrying
+  both is shown as a conflict that Keep or Set aside settles
+  ([decision](decisions/2026-11-23-screening-decision-any-language.md)). *Export the whole table* writes that analysis as one table, an Excel workbook and CSV:
   one row per document it read, its title and file, each field under the label the job froze
   (passages with where each stands), then the document's tags
   ([decision](decisions/2026-11-20-research-question-screening.md),

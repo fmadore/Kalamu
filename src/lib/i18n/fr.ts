@@ -645,6 +645,7 @@ export const fr: Messages = {
 		keepThis: (title: string) => `Garder « ${title} »`,
 		setAsideThis: (title: string) => `Écarter « ${title} »`,
 		decisionTakenOff: (tag: string) => `Étiquette « ${tag} » retirée`,
+		decisionConflict: 'Gardé et écarté : à trancher',
 		notReadAgainst: (n: number, question: string) =>
 			n === 1
 				? `1 document n’a pas encore été lu avec la question « ${question} ».`

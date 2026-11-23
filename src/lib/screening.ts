@@ -9,7 +9,14 @@ import type { Estimate } from './bindings/Estimate.js';
 import type { Catalog } from './bindings/Catalog.js';
 import type { SetupRequest } from './bindings/SetupRequest.js';
 import { modelNameOf } from './catalogText.js';
-import { choiceLabel, fieldLabel, listNames, localiseFields, type Messages } from './i18n/index.js';
+import {
+	choiceLabel,
+	everyCatalog,
+	fieldLabel,
+	listNames,
+	localiseFields,
+	type Messages
+} from './i18n/index.js';
 
 /** The ready-made prompt that reads a document against the researcher's question. */
 export const SCREENING_PRESET = 'analysis.screening';
@@ -118,10 +125,45 @@ export function tableName(project: string, group: ChoiceAnswers): string {
 		.replace(/[\s.]+$/, '');
 }
 
-/** The researcher's decision on a document, as tags: the one given, and the other, taken off. */
-export function decisionTags(keep: boolean, m: Messages): { add: string; remove: string } {
-	const [kept, aside] = [m.screening.keptTag, m.screening.setAsideTag];
-	return keep ? { add: kept, remove: aside } : { add: aside, remove: kept };
+/** Two tags are one when they differ only in capitals and spaces, as the projects crate
+ * compares them (`same_tag`, after `tag_name`). */
+function tagKey(tag: string): string {
+	return tag.trim().split(/\s+/).join(' ').toLowerCase();
+}
+
+/** Keep and Set aside as tags in every language the interface ships, so a decision given in
+ * one is read in all: a project file passes between colleagues, the language changes. */
+function decisionWords(): { keep: Set<string>; aside: Set<string> } {
+	const catalogs = everyCatalog();
+	return {
+		keep: new Set(catalogs.map((c) => tagKey(c.screening.keptTag))),
+		aside: new Set(catalogs.map((c) => tagKey(c.screening.setAsideTag)))
+	};
+}
+
+/** The researcher's decision on a document, read from its tags in any language: kept, set
+ * aside, both (a conflict to settle, read the same in every language), or none yet. */
+export type Decision = 'keep' | 'aside' | 'both';
+
+/** The decision tags a document carries, in whatever language they were given. */
+export function decisionTagsOf(tags: string[]): string[] {
+	const { keep, aside } = decisionWords();
+	return tags.filter((t) => keep.has(tagKey(t)) || aside.has(tagKey(t)));
+}
+
+/**
+ * The researcher's decision on documents carrying `carried` tags, as tags: the one given, in the
+ * interface's language; taken off, every other decision tag carried, the opposite in any
+ * language and the same given in another, so one decision tag is left.
+ */
+export function decisionTags(
+	keep: boolean,
+	carried: string[],
+	m: Messages
+): { add: string; remove: string[] } {
+	const add = keep ? m.screening.keptTag : m.screening.setAsideTag;
+	const remove = [...new Set(decisionTagsOf(carried))].filter((t) => tagKey(t) !== tagKey(add));
+	return { add, remove };
 }
 
 /** What a row of the table shows under a document's title while it is filtered by an answer:
@@ -153,9 +195,12 @@ export function rowAnswers(groups: ChoiceAnswers[], key: string): Map<string, Ro
 	);
 }
 
-/** The researcher's decision on a document, read from its tags: kept, set aside, or none yet. */
-export function decisionOf(tags: string[], m: Messages): 'keep' | 'aside' | null {
-	if (tags.includes(m.screening.keptTag)) return 'keep';
-	if (tags.includes(m.screening.setAsideTag)) return 'aside';
-	return null;
+/** The researcher's decision on a document, read from its tags in every language the interface
+ * ships, the same whichever is in use. */
+export function decisionOf(tags: string[]): Decision | null {
+	const { keep, aside } = decisionWords();
+	const kept = tags.some((t) => keep.has(tagKey(t)));
+	const setAside = tags.some((t) => aside.has(tagKey(t)));
+	if (kept && setAside) return 'both';
+	return kept ? 'keep' : setAside ? 'aside' : null;
 }

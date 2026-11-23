@@ -82,7 +82,9 @@ interface's language, given, the other taken off. Tags are already the researche
 document (never written by a model, filtered on, renamed, exported), so the model's answer is
 never touched and no table, migration, command or store trait is added. The cost is that the two
 tags are words like any other: renamed, removed or typed by hand, and named in the language the
-interface had when they were given.
+interface had when they were given. (Amended on
+[23 November](2026-11-23-screening-decision-any-language.md): they are read in every language
+the interface ships, and a document carrying both is a conflict to settle.)
 
 Rejected: a decision table beside the corrections (a new store, trait and export column for what
 a tag already does); a correction of the choice itself (agreeing that a document is *Partly

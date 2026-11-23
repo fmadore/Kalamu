@@ -39,6 +39,12 @@ export function resolveLocale(setting: string, system: readonly string[]): Local
 	return 'en';
 }
 
+/** Every language's catalog, for what must be read whatever language wrote it (the screening's
+ * Keep and Set aside tags). */
+export function everyCatalog(): Messages[] {
+	return LOCALES.map((l) => CATALOGS[l]);
+}
+
 /** The catalog for the interface language. */
 export function messages(): Messages {
 	return CATALOGS[current];

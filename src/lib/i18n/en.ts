@@ -215,6 +215,8 @@ export const en = {
 		keepThis: (title: string) => `Keep “${title}”`,
 		setAsideThis: (title: string) => `Set aside “${title}”`,
 		decisionTakenOff: (tag: string) => `Tag “${tag}” taken off`,
+		/** A document tagged both kept and set aside, perhaps in two interface languages. */
+		decisionConflict: 'Kept and set aside: choose one',
 		/** A question kept with the project, asked again of the documents added since. */
 		notReadAgainst: (n: number, question: string) =>
 			n === 1
