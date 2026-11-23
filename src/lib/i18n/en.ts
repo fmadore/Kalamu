@@ -2742,7 +2742,12 @@ export const en = {
 				jobs === 1 ? '1 job' : `${jobs} jobs`
 			}. It is a new project beside your others: nothing of theirs was changed.`,
 		openedWithout:
-			'The original files were not saved in it: the text, your corrections and the exports are all here, and the pages and recordings will show once the project is saved again with its original files.'
+			'The original files were not saved in it: the text, your corrections and the exports are all here, and the pages and recordings will show once the project is saved again with its original files.',
+		missingTexts: (n: number) =>
+			n === 1
+				? 'One corrected text that a job read was not in the file: the job and its results are here, without the text it read.'
+				: `${n} corrected texts that jobs read were not in the file: the jobs and their results are here, without the texts they read.`,
+		missingText: (what: string, jobs: string) => `${what}, read by ${jobs}`
 	},
 	os: {
 		windows: {
@@ -3017,7 +3022,11 @@ export const en = {
 			'This project file was saved by a newer version of Kalamu. Update Kalamu, then open it again.',
 		'project.file_write':
 			'The project file could not be written. Check that there is enough free space, or choose another place.',
-		'project.file_read': 'The project file could not be read.'
+		'project.file_read': 'The project file could not be read.',
+		'project.frozen_text_missing':
+			'The project was not saved: the corrected text a job read, which Kalamu kept as it was then, is no longer in Kalamu’s data folder. A file saved earlier under this name is unchanged.',
+		'project.frozen_text_changed':
+			'The project was not saved: the corrected text a job read, which Kalamu kept as it was then, has changed since. A file saved earlier under this name is unchanged.'
 	}
 };
 

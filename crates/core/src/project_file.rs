@@ -91,6 +91,22 @@ pub struct ProjectFileOpened {
     pub with_originals: bool,
     /// When the file was saved.
     pub saved_at: Timestamp,
+    /// The frozen texts the file should have carried and did not: a file saved by 1.10.0 when
+    /// a text had gone from the data folder, or changed, since a job read it (#239). The jobs
+    /// that read them are restored, without the text behind their answers.
+    pub missing_texts: Vec<MissingText>,
+}
+
+/// A frozen text a project file did not carry, and who read it.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct MissingText {
+    /// The documents the text was read for, by their titles; empty when none is linked.
+    pub documents: Vec<String>,
+    /// The jobs that read it, by their names.
+    pub jobs: Vec<String>,
+    /// The text's name as its source records it, for when no document names it.
+    pub file_name: String,
 }
 
 /// The manifest at the head of a project file.
@@ -124,6 +140,14 @@ pub enum ProjectFileError {
     Write(String),
     #[error("The project file could not be read: {0}")]
     Read(String),
+    /// A frozen text a job read is no longer in the data folder, so the project was not saved;
+    /// the text's readers are named, its document then its jobs.
+    #[error("A text a job read is missing from Kalamu's data folder ({0})")]
+    FrozenTextMissing(String),
+    /// A frozen text whose bytes no longer match what the job read, so the project was not
+    /// saved.
+    #[error("A text a job read has changed since it was read ({0})")]
+    FrozenTextChanged(String),
     #[error(transparent)]
     Store(#[from] StoreError),
 }
@@ -137,6 +161,8 @@ impl ProjectFileError {
             Self::Newer(_) => "project.file_newer",
             Self::Write(_) => "project.file_write",
             Self::Read(_) => "project.file_read",
+            Self::FrozenTextMissing(_) => "project.frozen_text_missing",
+            Self::FrozenTextChanged(_) => "project.frozen_text_changed",
             Self::Store(StoreError::NotFound) => "project.not_found",
             Self::Store(_) => "job.database",
         }
@@ -254,6 +280,8 @@ mod tests {
             ProjectFileError::Newer(String::new()).code(),
             ProjectFileError::Write(String::new()).code(),
             ProjectFileError::Read(String::new()).code(),
+            ProjectFileError::FrozenTextMissing(String::new()).code(),
+            ProjectFileError::FrozenTextChanged(String::new()).code(),
         ];
         let unique: std::collections::BTreeSet<_> = codes.iter().collect();
         assert_eq!(unique.len(), codes.len());

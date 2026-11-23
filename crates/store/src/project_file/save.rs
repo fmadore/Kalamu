@@ -1,6 +1,7 @@
 //! Saving a project to a file: its rows read under the store's lock into a new database beside
 //! the file chosen (`<name>.kalamu.part`), the files it carries written after, the part renamed
-//! once whole. A failure deletes the part.
+//! once whole. A failure, a frozen text missing or changed among them, deletes the part and
+//! leaves a file saved earlier under that name as it was.
 
 use std::path::{Path, PathBuf};
 
@@ -203,7 +204,27 @@ fn write(
         selection
     };
     let listed = selection::files(&selection, &places.snapshots);
-    let (originals, left) = carried::write_files(&file, &listed, with_originals, progress)?;
+    let written = carried::write_files(&file, &listed, with_originals, progress)?;
+    // A frozen text is what the results were read from: a file without it is no backup, so the
+    // save fails here, before the part replaces a file saved earlier.
+    let named = |paths: &[String]| {
+        paths
+            .iter()
+            .map(|p| selection.readers(p))
+            .collect::<Vec<_>>()
+            .join("; ")
+    };
+    if !written.frozen_missing.is_empty() {
+        return Err(ProjectFileError::FrozenTextMissing(named(
+            &written.frozen_missing,
+        )));
+    }
+    if !written.frozen_changed.is_empty() {
+        return Err(ProjectFileError::FrozenTextChanged(named(
+            &written.frozen_changed,
+        )));
+    }
+    let (originals, left) = (written.originals, written.originals_left);
     let manifest = manifest(
         &selection.name,
         selection.documents.len() as u32,

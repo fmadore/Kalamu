@@ -71,6 +71,27 @@ test('a project file opens as a new project, said in a sentence', async ({ page 
 	await expect(main.getByRole('heading', { level: 1, name: 'Mission letters' })).toBeVisible();
 });
 
+test('a file saved without a corrected text a job read says which, and who read it', async ({
+	page
+}) => {
+	// As 1.10.0 could save it (#239): it opens, and the texts missing are named.
+	await open(page, '&missing-text');
+	const main = page.getByRole('main');
+	await main.getByRole('button', { name: 'Open a project file…' }).click();
+	const said = main.getByRole('status').filter({ hasText: 'is open' });
+	await expect(said).toContainText('One corrected text that a job read was not in the file');
+	await expect(said).toContainText('Letter of 1915, read by Mission letters, summary');
+});
+
+test('a complete project file names no missing text', async ({ page }) => {
+	await open(page);
+	const main = page.getByRole('main');
+	await main.getByRole('button', { name: 'Open a project file…' }).click();
+	const said = main.getByRole('status').filter({ hasText: 'is open' });
+	await expect(said).toBeVisible();
+	await expect(said).not.toContainText('was not in the file');
+});
+
 test('a damaged project file is refused in plain words', async ({ page }) => {
 	await open(page, '&damaged-file');
 	const main = page.getByRole('main');
