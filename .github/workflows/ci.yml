@@ -34,7 +34,10 @@ jobs:
         run: npm audit --omit=dev
       # Every main screen opens without an error in Chromium, the engine of Windows' WebView2;
       # the webkit job below opens them in macOS's.
-      - run: npx playwright install --with-deps chromium
+      # Once, on 23 November 2026, the runner's apt index lacked Ubuntu's archive and the fonts
+      # Chromium needs could not be found: a fresh index and a second try cover that.
+      - name: Chromium for Playwright
+        run: npx playwright install --with-deps chromium || { sudo apt-get update && npx playwright install --with-deps chromium; }
       - run: npm run test:chromium
 
   # The interface in WebKit, the engine of macOS's webview, on a Mac: every main screen opens
@@ -68,22 +71,10 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      # The x64 image's standard library (MSVC 14.52, from 16 November 2026) refuses a Clang older
-      # than 22, and the image still ships 20: bring a newer one where that is so. Nothing is done
-      # once the image's own is new enough, nor on ARM64, whose image is another.
+      # MSVC 14.52 on the x64 image refuses a Clang older than 22: see the action.
       - name: A Clang the image's standard library accepts
         if: runner.os == 'Windows' && runner.arch == 'X64'
-        shell: pwsh
-        run: |
-          $clang = 'C:\Program Files\LLVM\bin\clang-cl.exe'
-          $major = 0
-          if ((Test-Path $clang) -and ((& $clang --version | Out-String) -match 'version (\d+)')) { $major = [int]$Matches[1] }
-          "clang-cl $major"
-          if ($major -lt 22) {
-            choco upgrade llvm --version=22.1.8 --allow-downgrade -y --no-progress
-            if ($LASTEXITCODE -ne 0) { throw "LLVM was not installed (exit code $LASTEXITCODE)." }
-            & $clang --version
-          }
+        uses: ./.github/actions/clang-for-msvc
       # whisper.cpp and Tesseract (crates/offline) build with clang-cl and Ninja, as in Live
       # Translation: MSVC's compiler lacks ggml's fast paths on ARM64. Both ship with the Windows
       # images. On macOS the image's Apple clang and CMake need no setting.
