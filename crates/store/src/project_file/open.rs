@@ -149,6 +149,7 @@ pub(super) fn open(
             originals,
             with_originals: manifest.with_originals,
             saved_at: manifest.saved_at,
+            missing_texts: carried::missing(&file)?,
         })
     })();
     if opened.is_err() {

@@ -3178,7 +3178,12 @@ export const fr: Messages = {
 				jobs === 1 ? '1 traitement' : `${jobs} traitements`
 			}. C’est un nouveau projet, à côté des vôtres, qui n’ont pas été modifiés.`,
 		openedWithout:
-			'Les fichiers d’origine n’y ont pas été enregistrés : le texte, vos corrections et les exports sont bien là, et les pages et les enregistrements s’afficheront quand le projet sera de nouveau enregistré avec ses fichiers d’origine.'
+			'Les fichiers d’origine n’y ont pas été enregistrés : le texte, vos corrections et les exports sont bien là, et les pages et les enregistrements s’afficheront quand le projet sera de nouveau enregistré avec ses fichiers d’origine.',
+		missingTexts: (n: number) =>
+			n === 1
+				? 'Un texte corrigé lu par un traitement manquait dans le fichier : le traitement et ses résultats sont là, mais pas le texte qu’il a lu.'
+				: `${n} textes corrigés lus par des traitements manquaient dans le fichier : les traitements et leurs résultats sont là, mais pas les textes qu’ils ont lus.`,
+		missingText: (what: string, jobs: string) => `${what}, lu par ${jobs}`
 	},
 	os: {
 		windows: {
@@ -3453,6 +3458,10 @@ export const fr: Messages = {
 			'Ce fichier de projet a été enregistré par une version plus récente de Kalamu. Mettez Kalamu à jour, puis ouvrez-le de nouveau.',
 		'project.file_write':
 			'Le fichier de projet n’a pas pu être écrit. Vérifiez qu’il reste assez de place, ou choisissez un autre endroit.',
-		'project.file_read': 'Le fichier de projet n’a pas pu être lu.'
+		'project.file_read': 'Le fichier de projet n’a pas pu être lu.',
+		'project.frozen_text_missing':
+			'Le projet n’a pas été enregistré : le texte corrigé qu’un traitement a lu, que Kalamu avait gardé tel quel, ne se trouve plus dans son dossier de données. Un fichier enregistré auparavant sous ce nom n’a pas été modifié.',
+		'project.frozen_text_changed':
+			'Le projet n’a pas été enregistré : le texte corrigé qu’un traitement a lu, que Kalamu avait gardé tel quel, a été modifié depuis. Un fichier enregistré auparavant sous ce nom n’a pas été modifié.'
 	}
 };

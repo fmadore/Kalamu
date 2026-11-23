@@ -1,6 +1,7 @@
 // The pretend back end's project files (#213): what saving the sample project would write, the
 // save itself, and a file opened as a new project. The native dialogs answer with a path when
 // they ask for a Kalamu project file. `?damaged-file`: the file opened is refused as damaged.
+// `?missing-text`: the file opened lacks a corrected text a job read, as 1.10.0 could save it.
 // The file opened brings a job with it, listed with the others from then on.
 
 import type { JobSummary } from '../bindings/JobSummary.js';
@@ -76,7 +77,16 @@ export function projectFileCommand(cmd: string, a: Record<string, unknown>): unk
 				jobs: 1,
 				originals: 0,
 				with_originals: false,
-				saved_at: Date.now()
+				saved_at: Date.now(),
+				missing_texts: new URLSearchParams(location.search).has('missing-text')
+					? [
+							{
+								documents: ['Letter of 1915'],
+								jobs: ['Mission letters, summary'],
+								file_name: 'lettre 1.txt'
+							}
+						]
+					: []
 			} satisfies ProjectFileOpened;
 		}
 		case 'plugin:dialog|save':
