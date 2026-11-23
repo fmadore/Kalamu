@@ -216,5 +216,5 @@ jobs:
       # whole pinned toolchain.
       - name: RustSec audit
         run: cargo-audit audit
-      - name: Licences and sources
-        run: cargo-deny check licenses sources
+      - name: Licences, sources and bans
+        run: cargo-deny check licenses sources bans
