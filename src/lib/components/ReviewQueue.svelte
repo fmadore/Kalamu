@@ -17,7 +17,7 @@
 	import type { ResultKey } from '#lib/bindings/ResultKey.js';
 	import type { Signal } from '#lib/bindings/Signal.js';
 	import { Action } from '#lib/action.svelte.js';
-	import { askForFolders, pickJsonSave } from '#lib/dialogs.js';
+	import { askForFolders, pickJsonSave, tableExported } from '#lib/dialogs.js';
 	import { messages } from '#lib/i18n/index.js';
 	import {
 		DEFAULT_FILTER,
@@ -134,8 +134,8 @@
 		try {
 			// The CSV goes beside the JSON: in the Mac App Store's build, its folder is asked for.
 			if (!(await askForFolders([path]))) return;
-			await api.exportReviewManifest(projectId, selectionOf(scope), path);
-			toast(q.exported);
+			const renamed = await api.exportReviewManifest(projectId, selectionOf(scope), path);
+			toast(tableExported(q.exported, renamed));
 		} catch (e) {
 			action.fail(e);
 		}

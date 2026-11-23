@@ -230,21 +230,59 @@ pub fn dictionary_undo_apart(
     Ok(state.dictionary.undo_apart(project, a, b)?)
 }
 
-/// Writes the entries as `.json` and every listed form with its entry as `.xlsx` and `.csv`,
-/// beside each other at the path chosen.
+/// Writes the entries as `.json` at the path chosen and every listed form with its entry as
+/// `.xlsx` and `.csv` beside it, never over a file an export did not write
+/// ([`super::write_table`]). Returns the files written under another name than the JSON's.
 #[tauri::command]
 pub fn export_dictionary(
     state: State<'_, AppState>,
     project: ProjectId,
     path: String,
-) -> CmdResult<()> {
-    let path = std::path::Path::new(&path);
-    let write = super::write_text;
-    write(
-        path.with_extension("json"),
+) -> CmdResult<Vec<String>> {
+    write_dictionary(
+        std::path::Path::new(&path),
         state.dictionary.export_json(project)?,
-    )?;
-    super::write_table(path, &state.dictionary.forms_table(project)?, |m| {
-        kalamu_core::DictionaryError::Export(m).into()
-    })
+        &state.dictionary.forms_table(project)?,
+        &state.exports,
+    )
+}
+
+fn write_dictionary(
+    path: &std::path::Path,
+    json: String,
+    forms: &kalamu_core::Table,
+    ledger: &crate::exports::ExportLedger,
+) -> CmdResult<Vec<String>> {
+    super::write_table(
+        path,
+        super::Asked::Json(json),
+        forms,
+        |m| kalamu_core::DictionaryError::Export(m).into(),
+        ledger,
+    )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::super::table_export_tests::{
+        keeps_the_researchers_files, replaces_its_own_files, table,
+    };
+    use super::*;
+
+    fn export(
+        path: &std::path::Path,
+        ledger: &crate::exports::ExportLedger,
+    ) -> CmdResult<Vec<String>> {
+        write_dictionary(path, "{\"entries\":[]}".into(), &table(), ledger)
+    }
+
+    #[test]
+    fn the_dictionary_keeps_a_workbook_and_a_csv_it_did_not_write() {
+        keeps_the_researchers_files("Letters dictionary.json", &["xlsx", "csv"], &export);
+    }
+
+    #[test]
+    fn the_dictionary_exported_again_replaces_its_own_files() {
+        replaces_its_own_files("Letters dictionary.json", &["xlsx", "csv"], &export);
+    }
 }

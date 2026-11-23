@@ -63,9 +63,16 @@ Anyone who has the file can read everything in it, so look after it as you do th
 
 Each document can be described as an archive would describe it: repository, fonds, shelfmark,
 creator, date, citation, rights. What all the documents of a project share is given once for
-the project. **Export descriptions** writes them as CSV or JSON, in Kalamu's columns or in
-columns of your own that you can save for the next project, beside each document's corrected
-text, review status or analysis answers.
+the project. **Export descriptions** writes them as three files under the name you choose: a
+JSON file (`name.json`), a spreadsheet for Excel (`name.xlsx`) and a CSV (`name.csv`), in
+Kalamu's columns or in columns of your own that you can save for the next project, beside each
+document's corrected text, review status or analysis answers.
+
+Only the JSON file's name is asked about. If a spreadsheet or a CSV of yours already has that
+name in the folder, Kalamu leaves it as it is, writes the table as `name (2).xlsx` and
+`name (2).csv`, and tells you so. Files from an earlier export of Kalamu that you have not
+changed since are simply replaced. **Export the whole table**, **Export the list** and the
+dictionary's export keep your files in the same way.
 
 ## Search a project
 

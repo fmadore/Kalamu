@@ -71,10 +71,17 @@ contient : prenez-en soin comme des documents eux-mêmes.
 
 Chaque document peut être décrit comme le ferait un service d’archives : lieu de conservation,
 fonds, cote, auteur, date, référence, droits. Ce que tous les documents d’un projet ont en
-commun se saisit une seule fois, pour le projet. **Exporter les descriptions** les écrit en CSV
-ou en JSON, dans les colonnes de Kalamu ou dans les vôtres, que vous pouvez enregistrer pour le
-projet suivant, à côté du texte corrigé de chaque document, de son état de relecture ou des
-réponses de ses analyses.
+commun se saisit une seule fois, pour le projet. **Exporter les descriptions** les écrit dans
+trois fichiers portant le nom que vous choisissez : un fichier JSON (`nom.json`), un tableur
+pour Excel (`nom.xlsx`) et un CSV (`nom.csv`), dans les colonnes de Kalamu ou dans les vôtres,
+que vous pouvez enregistrer pour le projet suivant, à côté du texte corrigé de chaque document,
+de son état de relecture ou des réponses de ses analyses.
+
+Seul le nom du fichier JSON vous est demandé. Si vous avez déjà un tableur ou un CSV de ce nom
+dans le dossier, Kalamu n’y touche pas : il écrit le tableau sous `nom (2).xlsx` et
+`nom (2).csv`, et vous le signale. Les fichiers d’un export précédent de Kalamu, que vous
+n’avez pas modifiés depuis, sont simplement remplacés. **Exporter tout le tableau**,
+**Exporter la liste** et l’export du dictionnaire protègent vos fichiers de la même façon.
 
 ## Chercher dans un projet
 
