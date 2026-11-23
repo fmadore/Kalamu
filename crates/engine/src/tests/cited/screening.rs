@@ -64,24 +64,29 @@ async fn read_pages(f: &Interviews) -> SourceFile {
 
 fn screening(f: &Interviews, sources: Vec<SourceFile>) -> Job {
     f.engine
-        .create_job(NewJob {
-            name: "Tri".into(),
-            task: Task::Analysis,
-            sources,
-            setups: vec![setup(
-                "interviewer",
-                "interviewer-1",
-                Some("analysis.screening"),
-                Some(QUESTION),
-            )],
-            settings: Default::default(),
-            output: OutputSettings {
-                formats: vec![ExportFormat::Txt, ExportFormat::Csv],
-                destination: f.folder(),
-                ..Default::default()
-            },
-        })
+        .create_job(screening_job(f, sources))
         .unwrap_or_else(|e| panic!("{e}"))
+}
+
+/// The screening job [`screening`] creates, not created yet.
+fn screening_job(f: &Interviews, sources: Vec<SourceFile>) -> NewJob {
+    NewJob {
+        name: "Tri".into(),
+        task: Task::Analysis,
+        sources,
+        setups: vec![setup(
+            "interviewer",
+            "interviewer-1",
+            Some("analysis.screening"),
+            Some(QUESTION),
+        )],
+        settings: Default::default(),
+        output: OutputSettings {
+            formats: vec![ExportFormat::Txt, ExportFormat::Csv],
+            destination: f.folder(),
+            ..Default::default()
+        },
+    }
 }
 
 fn relevance(fields: &[FieldAnswer]) -> String {
@@ -90,6 +95,29 @@ fn relevance(fields: &[FieldAnswer]) -> String {
         .find(|a| a.key == "relevance")
         .map(|a| a.value.joined())
         .unwrap_or_default()
+}
+
+/// Asked again with nothing changed, a question freezes the prompt it froze, so its answers
+/// join the first ones; with the answers in another language, it does not (#241).
+#[tokio::test]
+async fn a_question_asked_again_freezes_the_prompt_it_froze_unless_something_changed() {
+    let f = interviews();
+    let pages = read_pages(&f).await;
+    let job = screening(&f, vec![pages.clone()]);
+    let again = f
+        .engine
+        .prompt_fingerprints(&screening_job(&f, vec![pages.clone()]))
+        .unwrap_or_else(|e| panic!("{e}"));
+    assert_eq!(again, [job.setups[0].prompt.fingerprint()]);
+
+    let mut french = screening_job(&f, vec![pages]);
+    french.settings.languages =
+        kalamu_core::LanguageChoice::Explicit(vec![kalamu_core::LanguageCode::new("fr")]);
+    let changed = f
+        .engine
+        .prompt_fingerprints(&french)
+        .unwrap_or_else(|e| panic!("{e}"));
+    assert_ne!(changed, again);
 }
 
 #[tokio::test]

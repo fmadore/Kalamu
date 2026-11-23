@@ -38,13 +38,17 @@ ont été faites.
   ou **Écarter** : votre décision est une étiquette, et la réponse du modèle reste telle
   quelle. L’étiquette est écrite dans la langue de l’interface (*Gardé* ou *Écarté* en
   français, *Kept* ou *Set aside* en anglais), et votre décision tient quelle que soit la
-  langue : après un changement dans les Paramètres, ou quand une collègue qui travaille dans
+  langue : après un changement dans les Paramètres, ou quand une collègue qui travaille dans
   l’autre langue ouvre votre fichier de projet. Un document étiqueté des deux façons affiche
-  **Gardé et écarté : à trancher** à côté des boutons ; **Garder** ou **Écarter** tranche et ne
-  laisse qu’une étiquette. **Exporter tout le tableau** écrit toute la liste pour un tableur. Quand une réponse
-  est choisie dans le filtre, chaque ligne montre sa réponse, la raison et les passages. Si
-  vous ajoutez des documents plus tard, **Poser cette question aux nouveaux documents** ne
-  fait lire que ceux-là.
+  **Gardé et écarté : à trancher** à côté des boutons ; **Garder** ou **Écarter** tranche et ne
+  laisse qu’une étiquette. **Exporter tout le tableau** écrit toute la liste pour un tableur ;
+  ses colonnes `job_id` et `prompt_fingerprint` disent quel traitement a donné chaque réponse et
+  avec quelle version du prompt elle a été lue. Quand une réponse est choisie dans le filtre,
+  chaque ligne montre sa réponse, la raison et les passages. Si vous ajoutez des documents plus
+  tard, **Poser cette question aux nouveaux documents** ne fait lire que ceux-là. Si le prompt
+  a été modifié depuis la première fois, la fenêtre le dit : les nouvelles réponses sont rangées
+  à part des précédentes, et le filtre montre la question deux fois, chacune suivie de « posée
+  la première fois le » et de la date.
 - Quand un document a été lu plusieurs fois, choisissez le résultat auquel vous vous fiez avec
   **Retenir**. La recherche, les exports et les analyses utilisent alors celui-là.
 

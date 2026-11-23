@@ -58,6 +58,16 @@ impl Engine {
         )
     }
 
+    /// The fingerprint of the prompt each set-up of `new` would freeze, in order
+    /// ([`PromptSnapshot::fingerprint`]), nothing created: for a question asked again to say,
+    /// before it starts, that its prompt changed since it was first asked, so its answers will
+    /// not join the earlier ones.
+    pub fn prompt_fingerprints(&self, new: &NewJob) -> Result<Vec<String>, EngineError> {
+        let catalog = self.current_catalog();
+        let setups = self.freeze_setups(&catalog, new.task, &new.settings, &new.setups)?;
+        Ok(setups.iter().map(|s| s.prompt.fingerprint()).collect())
+    }
+
     /// Whether a job can be made of what was chosen: files and set-ups, a folder for what has
     /// none to write beside, sources the task reads and models that do it and can read them.
     pub(crate) fn check_new(&self, catalog: &Catalog, new: &NewJob) -> Result<(), EngineError> {

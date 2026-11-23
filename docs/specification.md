@@ -254,13 +254,17 @@ not be read*. Only a document one passage of which the model cannot read even al
 named in the dialog with the others left out, *Left out, too long for Gemma 4 E4B even read in
 parts*, and the job reads the rest; the cost said is theirs. **The question is kept with the
 project**: analyses that asked the same question with the same prompt and model are one, a
-document's newest answer counting; once documents have been added since, one line under the
+document's newest answer counting, the same prompt being the prompt as each run froze it (a
+question asked under a preset edited since is a group of its own, followed in the filter by
+*first asked* and the date it was first asked, and the dialog asking it again says the prompt
+has changed); once documents have been added since, one line under the
 table's filters says *3 documents have not been read against “…” yet* with *Read the new
 documents against this question*, which opens the same dialog over those documents alone with the
 question, the model and the languages it was asked with, so only they are paid for, and their
 answers join the others in the filter, the rows and the table exported
 ([decision](decisions/2026-11-20-research-question-screening.md),
 [decision](decisions/2026-11-20-screening-long-documents-rows-question.md),
+[decision](decisions/2026-11-23-answers-grouped-by-frozen-prompt.md),
 [#51](https://github.com/fmadore/Kalamu/issues/51)).
 
 **Existing text is corrected, not read again.** Many researchers already have machine-read
@@ -838,7 +842,8 @@ analysed, compared. A **project** keeps it together
   both is shown as a conflict that Keep or Set aside settles
   ([decision](decisions/2026-11-23-screening-decision-any-language.md)). *Export the whole table* writes that analysis as one table, an Excel workbook and CSV:
   one row per document it read, its title and file, each field under the label the job froze
-  (passages with where each stands), then the document's tags
+  (passages with where each stands), the job that gave the row's answer and the fingerprint of
+  the prompt it froze (`job_id`, `prompt_fingerprint`), then the document's tags
   ([decision](decisions/2026-11-20-research-question-screening.md),
   [decision](decisions/2026-11-20-screening-long-documents-rows-question.md)).
 - **A source's description** is the researcher's, as an archive or library gives it: the

@@ -249,6 +249,8 @@ test('the question is asked again of the documents added since, as it was asked'
 		'How Catholic and Muslim associations dealt with the colonial administration'
 	);
 	await expect(dialog.getByText('1 document will be read.')).toBeVisible();
+	// The prompt is the one the question was asked with: nothing to say.
+	await expect(dialog.getByText(/^The prompt has changed/)).toHaveCount(0);
 	await dialog.getByRole('button', { name: 'Start', exact: true }).click();
 	await expect(dialog).toBeHidden();
 	const created = await page.evaluate(() => window.__kalamuCreated as NewJob | undefined);
@@ -262,6 +264,21 @@ test('the question is asked again of the documents added since, as it was asked'
 		}
 	});
 	expect(created?.settings.languages).toEqual({ mode: 'explicit', languages: ['fr'] });
+});
+
+test('asked again after its prompt was edited, the dialog says the answers stand apart', async ({
+	page
+}) => {
+	const main = await open(page, '&screening-new&screening-prompt-changed');
+	await main.getByRole('button', { name: 'Read the new documents against this question' }).click();
+	const dialog = page.getByRole('dialog', {
+		name: 'Which of these documents speak of my question?'
+	});
+	await expect(
+		dialog.getByText(
+			'The prompt has changed since this question was asked. The new answers will be kept apart from the earlier ones, in the filter and in the exported table.'
+		)
+	).toBeVisible();
 });
 
 test('a project no analysis answered shows no filter by an answer', async ({ page }) => {

@@ -222,7 +222,12 @@ export const en = {
 			n === 1
 				? `1 document has not been read against “${question}” yet.`
 				: `${n} documents have not been read against “${question}” yet.`,
-		askAgain: 'Read the new documents against this question'
+		askAgain: 'Read the new documents against this question',
+		/** Beside a question asked under two versions of its prompt, in the filter. */
+		askedSince: (when: string) => `first asked ${when}`,
+		/** Asked again after its prompt was edited: the answers form a group of their own. */
+		promptChanged:
+			'The prompt has changed since this question was asked. The new answers will be kept apart from the earlier ones, in the filter and in the exported table.'
 	},
 	/** The cards of an answer that quotes the text: a theme, or a passage worth quoting. */
 	cited: {

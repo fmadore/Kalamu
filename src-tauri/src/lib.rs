@@ -134,6 +134,7 @@ pub fn run() {
             commands::jobs::inspect_links,
             commands::jobs::estimate_cost,
             commands::jobs::create_job,
+            commands::jobs::prompt_fingerprints,
             commands::jobs::start_job,
             commands::sample::rest_estimate,
             commands::sample::rest_of_sample,

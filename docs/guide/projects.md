@@ -35,10 +35,13 @@ recording) with every transcription, extraction and analysis made of it.
   whatever the language: after you change it in Settings, or when a colleague working in the
   other language opens your project file. A document tagged both ways shows **Kept and set
   aside: choose one** beside the buttons; **Keep** or **Set aside** settles it and leaves one
-  tag. **Export the whole table** writes the whole list for
-  a spreadsheet. With an answer chosen in the filter, each row shows its answer, the reason
+  tag. **Export the whole table** writes the whole list for a spreadsheet; its `job_id` and
+  `prompt_fingerprint` columns say which job gave each answer and which version of the prompt
+  it was read with. With an answer chosen in the filter, each row shows its answer, the reason
   and the passages. When you add documents later, **Read the new documents against this
-  question** asks it of those alone.
+  question** asks it of those alone. If the prompt has been edited since you first asked, the
+  dialog says so: the new answers are kept apart from the earlier ones, and the filter shows the
+  question twice, each followed by "first asked" and the date it was first asked.
 - When a document has been read several times, **mark the result you rely on** as preferred.
   Search, exports and analyses then use that one.
 
