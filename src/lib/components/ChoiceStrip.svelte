@@ -17,10 +17,9 @@
 		<label class="choice" class:selected={value === option.value}>
 			<input type="radio" bind:group={value} value={option.value} />
 			<span>
-				<strong
-					>{option.label}{#if option.price}<span class="mono price">{option.price}</span
-						>{/if}</strong
-				>
+				<strong>
+					{option.label}{#if option.price}<span class="mono price">{option.price}</span>{/if}
+				</strong>
 				<span class="hint">{option.hint}</span>
 			</span>
 		</label>

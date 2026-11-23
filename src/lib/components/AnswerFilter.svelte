@@ -64,7 +64,9 @@
 			class="btn ghost sm"
 			disabled={action.busy}
 			title={m.screening.exportTableHint}
-			onclick={exportAnswers}><Icon name="download" size={14} />{m.screening.exportTable}</button
+			onclick={exportAnswers}
 		>
+			<Icon name="download" size={14} />{m.screening.exportTable}
+		</button>
 	{/if}
 {/if}

@@ -75,9 +75,9 @@
 		>
 			<option value="">{m.projects.attach.chooseJob}</option>
 			{#each app.jobs as job (job.id)}
-				<option value={job.id}
-					>{job.name} · {m.task[job.task]} · {formatDateTime(job.created_at)}</option
-				>
+				<option value={job.id}>
+					{job.name} · {m.task[job.task]} · {formatDateTime(job.created_at)}
+				</option>
 			{/each}
 		</select>
 	</label>
@@ -95,14 +95,14 @@
 						<td>
 							<select bind:value={choices[p.source_id]} aria-label={p.file_name}>
 								{#if p.linked}
-									<option value={p.linked}
-										>{m.projects.attach.already(titles.get(p.linked) ?? '')}</option
-									>
+									<option value={p.linked}>
+										{m.projects.attach.already(titles.get(p.linked) ?? '')}
+									</option>
 								{/if}
 								{#if p.proposed && p.proposed !== p.linked}
-									<option value={p.proposed}
-										>{m.projects.attach.proposed(titles.get(p.proposed) ?? '')}</option
-									>
+									<option value={p.proposed}>
+										{m.projects.attach.proposed(titles.get(p.proposed) ?? '')}
+									</option>
 								{/if}
 								{#each p.same_content.filter((d) => d.id !== p.linked) as d (d.id)}
 									<option value={d.id}>{m.projects.attach.sameContent(d.title)}</option>
@@ -121,9 +121,9 @@
 
 	<div class="actions">
 		<button class="btn" onclick={() => onclose(0)}>{m.projects.cancel}</button>
-		<button class="btn primary" disabled={action.busy || chosenCount === 0} onclick={confirm}
-			>{m.projects.attach.confirm}</button
-		>
+		<button class="btn primary" disabled={action.busy || chosenCount === 0} onclick={confirm}>
+			{m.projects.attach.confirm}
+		</button>
 	</div>
 </Dialog>
 

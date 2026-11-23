@@ -48,8 +48,9 @@
 				menu?.close();
 				action.run();
 			}}
-			>{#if action.icon}<IconGlyph name={action.icon} size={14} />{/if}{action.label}</button
 		>
+			{#if action.icon}<IconGlyph name={action.icon} size={14} />{/if}{action.label}
+		</button>
 	{/each}
 </ContextMenu>
 

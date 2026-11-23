@@ -143,8 +143,9 @@
 										{#if f.kind.type === 'choice'}
 											<select bind:value={edit.draft[f.key]}>
 												<option value=""></option>
-												{#each f.kind.values as v (v)}<option value={v}>{choiceLabel(f, v)}</option
-													>{/each}
+												{#each f.kind.values as v (v)}<option value={v}>
+														{choiceLabel(f, v)}
+													</option>{/each}
 											</select>
 										{:else if k === 0 && own.length > 1}
 											<!-- svelte-ignore a11y_autofocus -->
@@ -160,13 +161,17 @@
 										onclick={() => {
 											cited.editing = null;
 											void cited.focus(s.id, field.key, { entry: e }, true);
-										}}>{m.common.cancel}</button
+										}}
 									>
+										{m.common.cancel}
+									</button>
 									<button
 										class="btn sm primary"
 										disabled={cited.busy}
-										onclick={() => saveEditing(s, e)}>{m.common.save}</button
+										onclick={() => saveEditing(s, e)}
 									>
+										{m.common.save}
+									</button>
 								</div>
 							</div>
 						{:else}
@@ -193,10 +198,11 @@
 															: c.showInTextOf(said)
 														: undefined}
 													onclick={() => cited.open(q)}
-													><Icon name={plays ? 'play' : 'file'} size={12} />{plays
-														? c.listen
-														: c.showInText}</button
 												>
+													<Icon name={plays ? 'play' : 'file'} size={12} />{plays
+														? c.listen
+														: c.showInText}
+												</button>
 												{#if said}<span class="by" aria-hidden="true">{said}</span>{/if}
 												{#if q.added}<span class="chip hand">{c.addedByYou}</span>{/if}
 												<button
@@ -205,8 +211,9 @@
 													title={c.removeQuote(quoteStart(q.quote))}
 													disabled={cited.busy}
 													onclick={() => removeQuote(s, card, e, n)}
-													><Icon name="close" size={14} /></button
 												>
+													<Icon name="close" size={14} />
+												</button>
 											</div>
 										</li>
 									{/each}
@@ -221,15 +228,18 @@
 									data-act="edit"
 									aria-label={card.title ? c.editEntry(card.title) : c.editThis}
 									disabled={cited.busy}
-									onclick={() => startEditing(s, e)}><Icon name="edit" size={12} />{c.edit}</button
+									onclick={() => startEditing(s, e)}
 								>
+									<Icon name="edit" size={12} />{c.edit}
+								</button>
 								<button
 									class="btn ghost sm"
 									aria-label={card.title ? c.removeEntry(card.title) : c.removeThis}
 									disabled={cited.busy}
 									onclick={() => removeEntry(s, card, e, cards.length)}
-									><Icon name="close" size={12} />{c.remove}</button
 								>
+									<Icon name="close" size={12} />{c.remove}
+								</button>
 							</div>
 						{/if}
 					</li>

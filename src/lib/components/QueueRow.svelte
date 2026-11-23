@@ -73,15 +73,16 @@
 				{/each}
 				{#if item.reviewed}<span class="chip ok">{q.reviewedBadge}</span>{/if}
 				{#if item.kept && !item.kept.current}
-					<span class="chip muted" title={q.keep.earlierHint(item.kept.note)}>{q.keep.earlier}</span
-					>
+					<span class="chip muted" title={q.keep.earlierHint(item.kept.note)}>
+						{q.keep.earlier}
+					</span>
 				{/if}
 				<!-- When the answer was stored; its fingerprint tells no two rows apart, a piece
 				     having one answer at a time. -->
 				{#if item.answered_at}
-					<span class="revision num muted" title={q.answeredHint}
-						>{q.answered(formatDateTime(item.answered_at))}</span
-					>
+					<span class="revision num muted" title={q.answeredHint}>
+						{q.answered(formatDateTime(item.answered_at))}
+					</span>
 				{/if}
 			</span>
 			{#if kept && item.kept}
@@ -106,20 +107,22 @@
 					autofocus
 				/>
 				<button class="btn sm" type="submit" disabled={busy}>{q.keep.save}</button>
-				<button class="btn ghost sm" type="button" onclick={() => (draft = null)}
-					>{q.keep.cancel}</button
-				>
+				<button class="btn ghost sm" type="button" onclick={() => (draft = null)}>
+					{q.keep.cancel}
+				</button>
 			</form>
 		{:else if kept}
-			<button class="btn ghost sm" disabled={busy} onclick={() => keep(null)}
-				>{q.keep.putBack}</button
-			>
+			<button class="btn ghost sm" disabled={busy} onclick={() => keep(null)}>
+				{q.keep.putBack}
+			</button>
 		{:else}
 			<button
 				class="btn ghost sm"
 				aria-label={q.keep.label(item.document, placeOf(item, m))}
-				onclick={() => (draft = item.kept?.note ?? '')}>{q.keep.action}</button
+				onclick={() => (draft = item.kept?.note ?? '')}
 			>
+				{q.keep.action}
+			</button>
 		{/if}
 	</div>
 </li>

@@ -38,14 +38,14 @@
 		<form class="rename" onsubmit={rename}>
 			<input type="text" bind:value={renaming} aria-label={m.dictionary.label} />
 			<button class="btn sm" type="submit" disabled={!renaming.trim()}>{m.dictionary.save}</button>
-			<button class="btn ghost sm" type="button" onclick={() => (renaming = null)}
-				>{m.dictionary.cancel}</button
-			>
+			<button class="btn ghost sm" type="button" onclick={() => (renaming = null)}>
+				{m.dictionary.cancel}
+			</button>
 		</form>
 	{:else}
-		<button class="btn ghost sm" onclick={() => (renaming = row.label)}
-			><Icon name="edit" size={14} />{m.dictionary.rename}</button
-		>
+		<button class="btn ghost sm" onclick={() => (renaming = row.label)}>
+			<Icon name="edit" size={14} />{m.dictionary.rename}
+		</button>
 	{/if}
 {/if}
 <h3>{m.dictionary.forms}</h3>
@@ -60,8 +60,9 @@
 					aria-label={m.dictionary.takeOut(f.form)}
 					title={m.dictionary.takeOut(f.form)}
 					onclick={() => act(() => api.dictionarySplit(projectId, row.entry ?? '', [f.form]))}
-					><Icon name="unlink" size={13} /></button
 				>
+					<Icon name="unlink" size={13} />
+				</button>
 			{/if}
 		</li>
 	{/each}
@@ -77,14 +78,15 @@
 					class="link"
 					title={m.dictionary.openReview}
 					onclick={() => go({ name: 'review', jobId: e.job_id, sourceId: e.source_id })}
-					>{e.document}</button
 				>
+					{e.document}
+				</button>
 				<span class="muted">{e.job_name} · {e.setup_label}</span>
 				{#each e.forms as form (form)}
 					{@const yours = e.by_hand.includes(form)}
-					<span class="chip" class:yours title={yours ? m.dictionary.byHand : undefined}
-						>{form}{#if yours}<span class="sr-only">({m.dictionary.byHand})</span>{/if}</span
-					>
+					<span class="chip" class:yours title={yours ? m.dictionary.byHand : undefined}>
+						{form}{#if yours}<span class="sr-only">({m.dictionary.byHand})</span>{/if}
+					</span>
 				{/each}
 			</li>
 		{/each}

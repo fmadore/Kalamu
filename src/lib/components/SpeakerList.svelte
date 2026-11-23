@@ -91,9 +91,9 @@
 					</label>
 				{/each}
 				<div class="actions">
-					<button class="btn sm" type="submit" disabled={saving === setup.id}
-						>{m.review.saveNames}</button
-					>
+					<button class="btn sm" type="submit" disabled={saving === setup.id}>
+						{m.review.saveNames}
+					</button>
 				</div>
 			</form>
 		{/each}

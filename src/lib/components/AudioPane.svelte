@@ -163,8 +163,10 @@
 				class="play"
 				aria-label={paused ? m.review.play : m.review.pausePlayback}
 				title={paused ? m.review.play : m.review.pausePlayback}
-				onclick={toggle}><Icon name={paused ? 'play' : 'pause'} size={14} /></button
+				onclick={toggle}
 			>
+				<Icon name={paused ? 'play' : 'pause'} size={14} />
+			</button>
 			<span class="time num">{clock(offsetMs + now * 1000)}</span>
 			<input
 				class="scrub"

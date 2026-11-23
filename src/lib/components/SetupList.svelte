@@ -64,9 +64,9 @@
 	{#if !app.keys.some((k) => k.saved)}
 		<p class="warning">
 			{m.newJob.noProvider}
-			<button class="btn sm" onclick={() => go({ name: 'settings', tab: 'keys' })}
-				>{m.nav.settings}</button
-			>
+			<button class="btn sm" onclick={() => go({ name: 'settings', tab: 'keys' })}>
+				{m.nav.settings}
+			</button>
 		</p>
 	{/if}
 	<!-- One set-up lays its fields in a row; two or more stand side by side, one column per
@@ -88,16 +88,16 @@
 			/>
 		{/each}
 		{#if drafts.length > 1}
-			<button class="add-column" onclick={addSetup}
-				><Icon name="plus" size={18} />{m.newJob.compareAdd}</button
-			>
+			<button class="add-column" onclick={addSetup}>
+				<Icon name="plus" size={18} />{m.newJob.compareAdd}
+			</button>
 		{/if}
 	</div>
 	{#if drafts.length === 1}
 		<div class="add">
-			<button class="btn" onclick={addSetup}
-				><Icon name="plus" size={16} />{m.newJob.compareAdd}</button
-			>
+			<button class="btn" onclick={addSetup}>
+				<Icon name="plus" size={16} />{m.newJob.compareAdd}
+			</button>
 			<p class="muted small">{m.newJob.setupsHint}</p>
 		</div>
 	{/if}

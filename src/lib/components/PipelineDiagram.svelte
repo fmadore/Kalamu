@@ -87,9 +87,9 @@
 <figure class="diagram" class:playing={run > 0}>
 	<figcaption class="head">
 		<span class="title">{m.pipeline.title}</span>
-		<button class="btn sm ghost replay" onclick={() => replays++}
-			><Icon name="replay" size={14} />{m.pipeline.replay}</button
-		>
+		<button class="btn sm ghost replay" onclick={() => replays++}>
+			<Icon name="replay" size={14} />{m.pipeline.replay}
+		</button>
 	</figcaption>
 	{#key run}
 		<ol
@@ -101,9 +101,9 @@
 		>
 			{#each stages as stage, i (stage.art)}
 				<li class="stage" style="--i: {i}">
-					{#if i > 0}<span class="connector"
-							><Icon name={stage.also ? 'plus' : 'chevron'} size={14} /></span
-						>{/if}
+					{#if i > 0}<span class="connector">
+							<Icon name={stage.also ? 'plus' : 'chevron'} size={14} />
+						</span>{/if}
 					<div class="art" aria-hidden="true">
 						{@render art(stage.art)}
 					</div>
@@ -441,10 +441,10 @@
 						{#each columns as _, j (j)}
 							<td>
 								{#if j === 0}<span class="value"></span>
-								{:else}<span class="chips"
-										>{#each { length: j % 2 === 1 ? 2 : 1 } as _, k (k)}<span class="chip-stub"
-											></span>{/each}</span
-									>{/if}
+								{:else}<span class="chips">
+										{#each { length: j % 2 === 1 ? 2 : 1 } as _, k (k)}<span class="chip-stub"
+											></span>{/each}
+									</span>{/if}
 							</td>
 						{/each}
 					</tr>
@@ -497,9 +497,9 @@
 					{#if kind === 'cut'}
 						{@const from = cuts[p - 1] ?? 0}
 						{@const to = cuts[p] ?? BARS}
-						<text class="num" x={left + ((from + to) / 2) * BAR_STEP + p * CUT_GAP} y="62"
-							>{p === shownPieces - 1 ? pieces : p + 1}</text
-						>
+						<text class="num" x={left + ((from + to) / 2) * BAR_STEP + p * CUT_GAP} y="62">
+							{p === shownPieces - 1 ? pieces : p + 1}
+						</text>
 					{/if}
 				</g>
 			{/each}

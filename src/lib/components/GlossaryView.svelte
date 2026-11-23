@@ -82,8 +82,10 @@
 										onclick={(e) => {
 											e.preventDefault();
 											void show(other);
-										}}>{m.glossary.terms[other].word}</a
-									>{/each}
+										}}
+									>
+										{m.glossary.terms[other].word}
+									</a>{/each}
 							</p>
 						{/if}
 					</dd>
@@ -121,8 +123,9 @@
 				{#each group.rows as row (row.does)}
 					<div class="key-row">
 						<dt>
-							{#each row.keys as key, i (key)}{#if i > 0}<span class="or">{m.glossary.keysOr}</span
-									>{/if}<kbd class="kbd">{key}</kbd>{/each}
+							{#each row.keys as key, i (key)}{#if i > 0}<span class="or">
+										{m.glossary.keysOr}
+									</span>{/if}<kbd class="kbd">{key}</kbd>{/each}
 						</dt>
 						<dd>{row.does}</dd>
 					</div>

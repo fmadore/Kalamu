@@ -31,8 +31,10 @@
 	aria-label={m.review.previous}
 	title={m.review.previous}
 	disabled={indices.indexOf(index) <= 0}
-	onclick={() => onstep(-1)}><Icon name="previous" /></button
+	onclick={() => onstep(-1)}
 >
+	<Icon name="previous" />
+</button>
 <select
 	class="pages"
 	aria-label={m.review.title}
@@ -46,11 +48,11 @@
 >
 	{#each indices as i (i)}
 		{@const v = views.find((x) => x.index === i)}
-		<option value={i}
-			>{views.some((x) => x.index === i && x.reviewed)
+		<option value={i}>
+			{views.some((x) => x.index === i && x.reviewed)
 				? m.review.pieceReviewed(labelOf(v))
-				: labelOf(v)}</option
-		>
+				: labelOf(v)}
+		</option>
 	{/each}
 </select>
 <button
@@ -58,8 +60,10 @@
 	aria-label={m.review.next}
 	title={m.review.next}
 	disabled={indices.indexOf(index) >= indices.length - 1}
-	onclick={() => onstep(1)}><Icon name="chevron" /></button
+	onclick={() => onstep(1)}
 >
+	<Icon name="chevron" />
+</button>
 
 <style>
 	.pages {

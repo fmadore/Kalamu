@@ -86,8 +86,10 @@
 		<button
 			class="btn primary"
 			disabled={busy || !draft.model || !hasKey(draft.provider) || usedAlready}
-			onclick={start}>{t.compareStart}</button
+			onclick={start}
 		>
+			{t.compareStart}
+		</button>
 	</div>
 </Dialog>
 

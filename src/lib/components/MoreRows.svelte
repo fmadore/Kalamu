@@ -22,9 +22,9 @@
 {#if next > 0}
 	<div class="more-rows">
 		<span class="num">{m.common.shownRows(paging.limit, total)}</span>
-		<button class="btn ghost sm" onclick={() => paging.more(table)}
-			>{m.common.showMore(next)}</button
-		>
+		<button class="btn ghost sm" onclick={() => paging.more(table)}>
+			{m.common.showMore(next)}
+		</button>
 	</div>
 {/if}
 

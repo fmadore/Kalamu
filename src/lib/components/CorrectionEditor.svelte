@@ -46,9 +46,9 @@
 	</p>
 	{@render children()}
 	<div class="actions">
-		<button class="btn primary" onclick={onsave}
-			>{m.review.save}<span class="kbd">{shortcut(m.review.reviewedShortcut)}</span></button
-		>
+		<button class="btn primary" onclick={onsave}>
+			{m.review.save}<span class="kbd">{shortcut(m.review.reviewedShortcut)}</span>
+		</button>
 		<button class="btn ghost" onclick={ondiscard}>{m.review.discard}</button>
 		{#if onrevert}
 			<button class="btn ghost" onclick={onrevert}>{m.review.revert}</button>

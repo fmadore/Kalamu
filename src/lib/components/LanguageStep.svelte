@@ -85,14 +85,14 @@
 	{:else}
 		{#if !needed}
 			<div class="row">
-				<label class="inline"
-					><input type="radio" bind:group={mode} value="auto" disabled={notDetecting.length > 0} />
-					{answers ? m.newJob.analysisLanguageAuto : m.newJob.languageAuto}</label
-				>
-				<label class="inline"
-					><input type="radio" bind:group={mode} value="explicit" />
-					{m.newJob.languagePick}</label
-				>
+				<label class="inline">
+					<input type="radio" bind:group={mode} value="auto" disabled={notDetecting.length > 0} />
+					{answers ? m.newJob.analysisLanguageAuto : m.newJob.languageAuto}
+				</label>
+				<label class="inline">
+					<input type="radio" bind:group={mode} value="explicit" />
+					{m.newJob.languagePick}
+				</label>
 			</div>
 		{/if}
 		{#if notDetecting.length > 0}
@@ -113,8 +113,9 @@
 					<button
 						class="btn sm"
 						onclick={() => go({ name: 'settings', tab: 'offline', languages: [...missingData] })}
-						>{m.newJob.openSettings}</button
 					>
+						{m.newJob.openSettings}
+					</button>
 				</p>
 			{/if}
 			{#each unsupportedChosen as [code, names] (code)}

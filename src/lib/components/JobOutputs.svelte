@@ -27,9 +27,9 @@
 		{#each written as path (path)}
 			{@const name = baseName(path)}
 			<li>
-				<button class="link mono" title={m.jobs.openFile} onclick={() => onopen(path)}
-					><Icon name="file" size={14} />{name}</button
-				>
+				<button class="link mono" title={m.jobs.openFile} onclick={() => onopen(path)}>
+					<Icon name="file" size={14} />{name}
+				</button>
 				<button
 					class="btn ghost sm icon"
 					title={m.jobs.openFolder}
@@ -37,8 +37,10 @@
 					onclick={() =>
 						revealInFolder(path).catch((e: unknown) =>
 							toast(describeError(e, m), { kind: 'error' })
-						)}><Icon name="folder" size={14} /></button
+						)}
 				>
+					<Icon name="folder" size={14} />
+				</button>
 			</li>
 		{/each}
 	</ul>

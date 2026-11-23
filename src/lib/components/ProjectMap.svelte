@@ -172,9 +172,9 @@
 								<span class="title">{chosen.title}</span>
 								<span class="muted num">{t.chunks(chosen.chunks)}</span>
 							</p>
-							<button class="btn sm" onclick={() => open(chosen.document_id)}
-								>{t.openDocument}</button
-							>
+							<button class="btn sm" onclick={() => open(chosen.document_id)}>
+								{t.openDocument}
+							</button>
 							<h4>{t.nearest}</h4>
 							{#if near && near.length === 0}
 								<p class="muted">{t.noNeighbours}</p>
@@ -182,12 +182,12 @@
 								<ol class="near" aria-label={t.nearest}>
 									{#each near as n (n.document_id)}
 										<li>
-											<button class="link" onclick={() => (selected = n.document_id)}
-												>{n.title}</button
-											>
-											<span class="muted num" title={m.meaning.similarityHint}
-												>{sim(n.similarity)}</span
-											>
+											<button class="link" onclick={() => (selected = n.document_id)}>
+												{n.title}
+											</button>
+											<span class="muted num" title={m.meaning.similarityHint}>
+												{sim(n.similarity)}
+											</span>
 										</li>
 									{/each}
 								</ol>

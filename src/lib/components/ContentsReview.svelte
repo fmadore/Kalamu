@@ -212,13 +212,13 @@
 
 {#snippet actions()}
 	{#if done && !editing}
-		<button class="btn toggle" aria-pressed={itemsShown} onclick={() => (itemsShown = !itemsShown)}
-			>{m.units.tab}</button
-		>
+		<button class="btn toggle" aria-pressed={itemsShown} onclick={() => (itemsShown = !itemsShown)}>
+			{m.units.tab}
+		</button>
 		{#if !itemsShown}
-			<button class="btn" onclick={startEditing}
-				><Icon name="edit" size={14} />{m.review.editEntries}</button
-			>
+			<button class="btn" onclick={startEditing}>
+				<Icon name="edit" size={14} />{m.review.editEntries}
+			</button>
 		{/if}
 	{/if}
 {/snippet}
@@ -236,9 +236,9 @@
 			{#each readHere as entry, i (i)}
 				<li>
 					<span>{valueText(entry, TITLE)}</span>
-					{#if valueText(entry, 'continues')}<span class="muted"
-							>· {valueText(entry, 'continues')}</span
-						>{/if}
+					{#if valueText(entry, 'continues')}<span class="muted">
+							· {valueText(entry, 'continues')}
+						</span>{/if}
 				</li>
 			{/each}
 		</ul>
@@ -326,13 +326,13 @@
 				<div class="entry-edit">
 					{#each fields as f (f.key)}
 						<div class="field">
-							<span class="field-label" aria-hidden="true"
-								>{f.key === TITLE
+							<span class="field-label" aria-hidden="true">
+								{f.key === TITLE
 									? m.review.entryTitle
 									: f.key === PAGES
 										? m.review.entryPages
-										: f.label}</span
-							>
+										: f.label}
+							</span>
 							<FieldInput
 								field={f}
 								bind:value={draft[f.key]}
@@ -343,13 +343,14 @@
 					<button
 						class="btn ghost sm remove"
 						onclick={() => (editing = editing?.filter((_, j) => j !== i) ?? null)}
-						>{m.review.removeEntry}</button
 					>
+						{m.review.removeEntry}
+					</button>
 				</div>
 			{/each}
-			<button class="btn add" onclick={addEntry}
-				><Icon name="plus" size={14} />{m.review.addEntry}</button
-			>
+			<button class="btn add" onclick={addEntry}>
+				<Icon name="plus" size={14} />{m.review.addEntry}
+			</button>
 		</CorrectionEditor>
 	{:else if itemsShown && setup}
 		<UnitsPanel
@@ -370,9 +371,9 @@
 				<li value={n} class:here={onPage(entry)} class:opened={opening?.entry === n}>
 					<button class="entry" onclick={() => showEntry(entry)}>
 						<span class="entry-title">{valueText(entry, TITLE)}</span>
-						<span class="entry-pages mono" title={m.review.goToPage(valueText(entry, PAGES))}
-							>{valueText(entry, PAGES)}</span
-						>
+						<span class="entry-pages mono" title={m.review.goToPage(valueText(entry, PAGES))}>
+							{valueText(entry, PAGES)}
+						</span>
 					</button>
 					<dl>
 						{#each details as f (f.key)}

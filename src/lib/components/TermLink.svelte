@@ -47,8 +47,10 @@
 	class="term"
 	aria-label={m.glossary.whatIs(word)}
 	title={m.glossary.whatIs(word)}
-	popovertarget={id}><Icon name="help" size={14} /></button
-><span
+	popovertarget={id}
+>
+	<Icon name="help" size={14} />
+</button><span
 	bind:this={bubble}
 	{id}
 	class="bubble"
@@ -64,12 +66,12 @@
 	{#if term === 'formats'}
 		<span class="formats">
 			{#each FORMATS as f (f)}
-				<span class="format"
-					><b class:mono={f === 'provenance'}
-						>{f === 'provenance' ? 'provenance.json' : m.format[f]}</b
-					>
-					{m.glossary.formats[f]}</span
-				>
+				<span class="format">
+					<b class:mono={f === 'provenance'}>
+						{f === 'provenance' ? 'provenance.json' : m.format[f]}
+					</b>
+					{m.glossary.formats[f]}
+				</span>
 			{/each}
 		</span>
 	{:else}
@@ -83,8 +85,10 @@
 				onclick={() => {
 					bubble?.hidePopover();
 					go({ name: 'prompts' });
-				}}>{m.glossary.openPrompts}</button
+				}}
 			>
+				{m.glossary.openPrompts}
+			</button>
 		{/if}
 		<button type="button" class="more" onclick={openGlossary}>{m.glossary.openGlossary}</button>
 	</span>

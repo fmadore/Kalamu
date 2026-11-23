@@ -356,9 +356,13 @@
 
 {#snippet actions()}
 	{#if witnesses.length > 0}
-		<button class="btn toggle" aria-pressed={comparison.open} onclick={() => layout.toggleCompare()}
-			><Icon name="compare" size={14} />{m.review.compare}</button
+		<button
+			class="btn toggle"
+			aria-pressed={comparison.open}
+			onclick={() => layout.toggleCompare()}
 		>
+			<Icon name="compare" size={14} />{m.review.compare}
+		</button>
 	{/if}
 	{#if chosen && offerPassage}
 		{@const at = chosen}
@@ -368,14 +372,15 @@
 			title={m.passage.buttonHint}
 			onmousedown={(e) => e.preventDefault()}
 			onclick={() => passage?.correct(at)}
-			><Icon name="text_correction" size={14} />{m.passage.button}</button
 		>
+			<Icon name="text_correction" size={14} />{m.passage.button}
+		</button>
 	{/if}
 	{#if lead && lead.ai_text !== null && setups[0] && !editing}
 		{@const first = setups[0]}
-		<button class="btn" onclick={() => correctHere(first.id)}
-			><Icon name="edit" size={14} />{m.review.edit}</button
-		>
+		<button class="btn" onclick={() => correctHere(first.id)}>
+			<Icon name="edit" size={14} />{m.review.edit}
+		</button>
 	{/if}
 {/snippet}
 
@@ -416,29 +421,34 @@
 {#snippet tools()}
 	{#if witnesses.length > 0 && !editing}
 		{#if entries.length > 0}
-			<span class="count"
-				><span class="swatch" aria-hidden="true"></span>{m.review.differences(entries.length)}</span
-			>
+			<span class="count">
+				<span class="swatch" aria-hidden="true"></span>{m.review.differences(entries.length)}
+			</span>
 			<button
 				class="btn sm icon"
 				aria-label={m.review.previousDifference}
 				title="{m.review.previousDifference} ({shifted('F')})"
 				data-step
-				onclick={() => readings.step(-1)}><Icon name="up" size={14} /></button
+				onclick={() => readings.step(-1)}
 			>
+				<Icon name="up" size={14} />
+			</button>
 			<button
 				class="btn sm icon"
 				aria-label={m.review.nextDifference}
 				title="{m.review.nextDifference} (F)"
 				data-step
-				onclick={() => readings.step(1)}><Icon name="down" size={14} /></button
+				onclick={() => readings.step(1)}
 			>
+				<Icon name="down" size={14} />
+			</button>
 		{:else if Object.keys(spans).length === witnesses.length}
 			<span class="count">{m.review.noDifferences}</span>
 		{/if}
-		<label class="switch"
-			><input type="checkbox" bind:checked={showDiff} /> {m.review.showDiff}</label
-		>
+		<label class="switch">
+			<input type="checkbox" bind:checked={showDiff} />
+			{m.review.showDiff}
+		</label>
 	{/if}
 {/snippet}
 
@@ -564,8 +574,9 @@
 	{:else}
 		{#each cutOff as note (note.text)}
 			<p class="cut-off" role="note">
-				{#if setups.length > 1}{#each note.setups as i (i)}<i class="siglum">{siglum(i)}</i
-						>{/each}{/if}
+				{#if setups.length > 1}{#each note.setups as i (i)}<i class="siglum">
+							{siglum(i)}
+						</i>{/each}{/if}
 				{note.text}
 			</p>
 		{/each}

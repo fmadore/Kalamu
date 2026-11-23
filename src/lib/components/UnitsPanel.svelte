@@ -148,9 +148,9 @@
 		<div class="empty">
 			<p>{u.lede}</p>
 			{#if view.entries > 0}
-				<button class="btn primary" onclick={make} disabled={action.busy}
-					><Icon name="plus" size={14} />{u.make}</button
-				>
+				<button class="btn primary" onclick={make} disabled={action.busy}>
+					<Icon name="plus" size={14} />{u.make}
+				</button>
 				<p class="muted small">{u.makeHint}</p>
 			{:else}
 				<p class="muted">{u.notCombined}</p>
@@ -166,11 +166,9 @@
 					indeterminate={chosen.length > 0 && chosen.length < units.length}
 					onchange={() => selection.toggleAll(units.map((v) => v.unit.id))}
 				/>
-				<span class="muted small"
-					>{chosen.length > 0
-						? u.selected(chosen.length, units.length)
-						: u.count(units.length)}</span
-				>
+				<span class="muted small">
+					{chosen.length > 0 ? u.selected(chosen.length, units.length) : u.count(units.length)}
+				</span>
 			</label>
 			<div class="send">
 				<button
@@ -178,20 +176,25 @@
 					title={u.extractHint}
 					disabled={action.busy || chosen.length === 0 || !view.readable}
 					onclick={() => send('text_extraction')}
-					><Icon name="text_extraction" size={14} />{u.extract}</button
 				>
+					<Icon name="text_extraction" size={14} />{u.extract}
+				</button>
 				<button
 					class="btn sm"
 					title={u.analyseHint}
 					disabled={action.busy || chosen.length === 0 || !view.readable}
-					onclick={() => send('analysis')}><Icon name="analysis" size={14} />{u.analyse}</button
+					onclick={() => send('analysis')}
 				>
+					<Icon name="analysis" size={14} />{u.analyse}
+				</button>
 				<button
 					class="btn sm"
 					title={u.exportHint}
 					disabled={action.busy || chosen.length === 0 || !view.readable}
-					onclick={exportChosen}>{u.export}</button
+					onclick={exportChosen}
 				>
+					{u.export}
+				</button>
 			</div>
 		</div>
 		{#if !view.readable}<p class="muted small">{u.pdfOnly}</p>{/if}
@@ -228,15 +231,18 @@
 								aria-label={u.editItem(titleOf(unit))}
 								onclick={() =>
 									(editing = { id: unit.id, title: unit.title, pages: typedPages(pages, m) })}
-								><Icon name="edit" size={14} />{u.edit}</button
 							>
+								<Icon name="edit" size={14} />{u.edit}
+							</button>
 							{#if next}
 								<button
 									class="btn ghost sm"
 									title={u.joinHint}
 									disabled={action.busy}
-									onclick={() => act(() => api.joinUnits(unit.id, next.id))}>{u.joinNext}</button
+									onclick={() => act(() => api.joinUnits(unit.id, next.id))}
 								>
+									{u.joinNext}
+								</button>
 							{/if}
 							{#if unit.pages.length > 1}
 								<select
@@ -260,8 +266,10 @@
 								class="btn ghost sm danger"
 								aria-label={u.removeItem(titleOf(unit))}
 								disabled={action.busy}
-								onclick={() => act(() => api.deleteUnit(unit.id))}>{u.remove}</button
+								onclick={() => act(() => api.deleteUnit(unit.id))}
 							>
+								{u.remove}
+							</button>
 						</div>
 					{/if}
 				</li>
@@ -277,8 +285,10 @@
 						id: null,
 						title: '',
 						pages: shown?.kind === 'page' ? typedPage(shown) : ''
-					})}><Icon name="plus" size={14} />{u.add}</button
+					})}
 			>
+				<Icon name="plus" size={14} />{u.add}
+			</button>
 		{/if}
 		{#if units.some((v) => v.shared.length > 0)}<p class="muted small">{u.precision}</p>{/if}
 	{/if}
@@ -304,9 +314,9 @@
 			</label>
 			<div class="actions">
 				<button class="btn primary sm" type="submit" disabled={action.busy}>{u.save}</button>
-				<button class="btn ghost sm" type="button" onclick={() => (editing = null)}
-					>{u.cancel}</button
-				>
+				<button class="btn ghost sm" type="button" onclick={() => (editing = null)}>
+					{u.cancel}
+				</button>
 			</div>
 		</form>
 	{/if}

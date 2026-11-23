@@ -37,23 +37,23 @@
 		<dt>{m.jobs.pieces}</dt>
 		<dd class="mono">
 			{m.jobs.progress(summary.pieces_finished, summary.pieces_total)}
-			{#if summary.pieces_failed > 0}<span class="fail"
-					>· {m.jobs.failed(summary.pieces_failed)}</span
-				>{/if}
-			{#if summary.pieces_truncated > 0}<span class="cut" title={m.jobs.truncatedNote}
-					>· {m.jobs.truncated(summary.pieces_truncated)}</span
-				>{/if}
+			{#if summary.pieces_failed > 0}<span class="fail">
+					· {m.jobs.failed(summary.pieces_failed)}
+				</span>{/if}
+			{#if summary.pieces_truncated > 0}<span class="cut" title={m.jobs.truncatedNote}>
+					· {m.jobs.truncated(summary.pieces_truncated)}
+				</span>{/if}
 		</dd>
 	</div>
 	<div class="wide">
 		<dt>{m.jobs.models}</dt>
 		<dd class="models">
 			{#each job.setups as s, i (s.id)}
-				<span
-					>{#if job.setups.length > 1}<i class="siglum">{siglum(i)}</i>{/if}<span class="mono"
-						>{s.model}</span
-					></span
-				>
+				<span>
+					{#if job.setups.length > 1}<i class="siglum">{siglum(i)}</i>{/if}<span class="mono">
+						{s.model}
+					</span>
+				</span>
 			{/each}
 		</dd>
 	</div>
@@ -63,9 +63,9 @@
 			<dd class="scores">
 				{#each totals as total, i (i)}
 					{#if total}
-						<span
-							>{#if job.setups.length > 1}<i class="siglum">{siglum(i)}</i>{/if}{total}</span
-						>
+						<span>
+							{#if job.setups.length > 1}<i class="siglum">{siglum(i)}</i>{/if}{total}
+						</span>
 					{/if}
 				{/each}
 				<span class="note">{m.scores.note}</span>

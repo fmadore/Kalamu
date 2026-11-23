@@ -81,9 +81,9 @@
 	{@const { run, status, steps } = view}
 	<header class="masthead">
 		<div class="title">
-			<button class="btn ghost sm" onclick={() => returnTo({ name: 'workflows' })}
-				><Icon name="back" />{w.back}</button
-			>
+			<button class="btn ghost sm" onclick={() => returnTo({ name: 'workflows' })}>
+				<Icon name="back" />{w.back}
+			</button>
 			<h1>{shownName(run.name)}</h1>
 			<p class="lede">
 				<span class="chip {tone(status)}">{w.runStatus[status]}</span>
@@ -142,18 +142,18 @@
 					<div class="actions">
 						{#if step.job}
 							{@const job = step.job}
-							<button class="btn sm" onclick={() => go({ name: 'jobs', jobId: job.id })}
-								>{w.openJob}</button
-							>
+							<button class="btn sm" onclick={() => go({ name: 'jobs', jobId: job.id })}>
+								{w.openJob}
+							</button>
 						{/if}
 						{#if step.state === 'review'}
-							<button class="btn sm primary" onclick={() => approve(i)} disabled={action.busy}
-								><Icon name="check" />{w.continue}</button
-							>
+							<button class="btn sm primary" onclick={() => approve(i)} disabled={action.busy}>
+								<Icon name="check" />{w.continue}
+							</button>
 						{:else if step.state === 'attention'}
-							<button class="btn sm primary" onclick={() => approve(i)} disabled={action.busy}
-								>{w.continueAnyway}</button
-							>
+							<button class="btn sm primary" onclick={() => approve(i)} disabled={action.busy}>
+								{w.continueAnyway}
+							</button>
 						{/if}
 					</div>
 				</li>

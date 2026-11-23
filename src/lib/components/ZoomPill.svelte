@@ -29,34 +29,44 @@
 		class="tool"
 		aria-label={m.review.zoomOut}
 		title="{m.review.zoomOut} ({shortcut(m.review.zoomOutShortcut)})"
-		onclick={() => onzoom(1 / 1.25)}><Icon name="zoom-out" /></button
+		onclick={() => onzoom(1 / 1.25)}
 	>
+		<Icon name="zoom-out" />
+	</button>
 	<span class="zoom-value mono" title={hint}>{formatPercent(Math.round(zoom * 100) / 100)}</span>
 	<button
 		class="tool"
 		aria-label={m.review.zoomIn}
 		title="{m.review.zoomIn} ({shortcut(m.review.zoomInShortcut)})"
-		onclick={() => onzoom(1.25)}><Icon name="zoom-in" /></button
+		onclick={() => onzoom(1.25)}
 	>
+		<Icon name="zoom-in" />
+	</button>
 	<span class="zoom-rule" aria-hidden="true"></span>
 	<button
 		class="tool wide"
 		title="{m.review.fitWidth} ({shortcut(m.review.zoomFitShortcut)})"
-		onclick={onfit}>{m.review.fitWidth}</button
+		onclick={onfit}
 	>
+		{m.review.fitWidth}
+	</button>
 	<span class="zoom-rule" aria-hidden="true"></span>
 	<button
 		class="tool"
 		aria-label={m.review.turnLeft}
 		title={m.review.turnLeft}
-		onclick={() => onturn(-1)}><Icon name="turn-left" /></button
+		onclick={() => onturn(-1)}
 	>
+		<Icon name="turn-left" />
+	</button>
 	<button
 		class="tool"
 		aria-label={m.review.turnRight}
 		title={m.review.turnRight}
-		onclick={() => onturn(1)}><Icon name="turn-right" /></button
+		onclick={() => onturn(1)}
 	>
+		<Icon name="turn-right" />
+	</button>
 </div>
 
 <style>

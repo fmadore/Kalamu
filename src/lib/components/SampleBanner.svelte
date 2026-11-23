@@ -35,8 +35,9 @@
 
 <section class="sample" aria-labelledby="sample-head">
 	<p>
-		<strong id="sample-head">{job.settings.sample_spread ? t.spread(pages) : t.first(pages)}</strong
-		>
+		<strong id="sample-head">
+			{job.settings.sample_spread ? t.spread(pages) : t.first(pages)}
+		</strong>
 		{t.next}
 	</p>
 	{#if offered.length > 0}
@@ -44,9 +45,9 @@
 			{#each offered as s (s.id)}
 				{@const rest = next.rests[s.id]}
 				<li>
-					<button class="btn primary sm" disabled={next.busy} onclick={() => next.runRest(s)}
-						>{t.runRest(nameOf(s.provider, s.model))}</button
-					>
+					<button class="btn primary sm" disabled={next.busy} onclick={() => next.runRest(s)}>
+						{t.runRest(nameOf(s.provider, s.model))}
+					</button>
 					{#if rest}
 						<span class="price">
 							{t.left(leftOf(rest))}, {rest.estimate.total_usd !== null
@@ -60,9 +61,9 @@
 		</ul>
 	{/if}
 	<div>
-		<button class="btn sm" disabled={next.busy} onclick={() => (comparing = true)}
-			>{m.newJob.compareAdd}</button
-		>
+		<button class="btn sm" disabled={next.busy} onclick={() => (comparing = true)}>
+			{m.newJob.compareAdd}
+		</button>
 	</div>
 	{#if next.error}<p class="chip danger" role="alert">{next.error}</p>{/if}
 </section>

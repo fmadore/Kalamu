@@ -105,9 +105,9 @@
 								total={Math.max(c.total, 1)}
 								label="{source.file_name} {setup.label}"
 							/>
-							<span class="count mono"
-								>{#if c.total > 0}{c.done}/{c.total}{:else}<Missing />{/if}</span
-							>
+							<span class="count mono">
+								{#if c.total > 0}{c.done}/{c.total}{:else}<Missing />{/if}
+							</span>
 						</div>
 						{#each c.errors as e (e)}
 							<p class="err">{e}</p>

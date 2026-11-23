@@ -34,9 +34,9 @@
 			<option value={tag}></option>
 		{/each}
 	</datalist>
-	<button class="btn sm" type="submit" disabled={!typed}
-		><Icon name="tag" size={14} />{m.projects.tagButton}</button
-	>
+	<button class="btn sm" type="submit" disabled={!typed}>
+		<Icon name="tag" size={14} />{m.projects.tagButton}
+	</button>
 </form>
 
 <style>

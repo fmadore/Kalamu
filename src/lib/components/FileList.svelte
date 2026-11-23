@@ -96,16 +96,18 @@
 		<h2 id="files-title">{m.newJob.filesTitle}</h2>
 		<span class="hint">{m.newJob.dropHint}</span>
 		<div class="row">
-			<button class="btn sm" onclick={async () => onadd(await pickFiles(task))}
-				><Icon name="plus" size={14} />{m.newJob.addFiles}</button
-			>
+			<button class="btn sm" onclick={async () => onadd(await pickFiles(task))}>
+				<Icon name="plus" size={14} />{m.newJob.addFiles}
+			</button>
 			<button
 				class="btn sm"
 				onclick={async () => {
 					const folder = await pickFolder();
 					if (folder) await onadd([folder]);
-				}}><Icon name="folder" size={14} />{m.newJob.addFolder}</button
+				}}
 			>
+				<Icon name="folder" size={14} />{m.newJob.addFolder}
+			</button>
 		</div>
 	</div>
 	{#if inspecting}
@@ -144,8 +146,9 @@
 							aria-label="{m.newJob.remove} {fileName}"
 							title={m.newJob.remove}
 							onclick={() => (files = files.filter((_, j) => j !== i))}
-							><Icon name="close" size={14} /></button
 						>
+							<Icon name="close" size={14} />
+						</button>
 					</div>
 					{#if file.error}
 						<p class="problem danger">{describeError(file.error, m)}</p>

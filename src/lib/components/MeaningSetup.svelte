@@ -117,16 +117,16 @@
 			{#if status.blocked === 'provider.not_installed'}
 				<p class="notice">
 					{s.notInstalled}
-					<button class="link" onclick={() => go({ name: 'settings', tab: 'offline' })}
-						>{s.openOffline}</button
-					>
+					<button class="link" onclick={() => go({ name: 'settings', tab: 'offline' })}>
+						{s.openOffline}
+					</button>
 				</p>
 			{:else if status.blocked === 'provider.missing_key'}
 				<p class="notice">
 					{s.missingKey}
-					<button class="link" onclick={() => go({ name: 'settings', tab: 'keys' })}
-						>{s.openKeys}</button
-					>
+					<button class="link" onclick={() => go({ name: 'settings', tab: 'keys' })}>
+						{s.openKeys}
+					</button>
 				</p>
 			{:else}
 				<p class="chip danger">{describeError({ id: status.blocked }, m)}</p>
@@ -138,8 +138,10 @@
 				<button
 					class="btn sm"
 					disabled={busy}
-					onclick={() => act(() => api.consentMeaning(projectId))}>{s.consent}</button
+					onclick={() => act(() => api.consentMeaning(projectId))}
 				>
+					{s.consent}
+				</button>
 			</div>
 		{/if}
 		{#if model && !model.local && status.choice?.consented_at}
@@ -157,12 +159,12 @@
 					label={s.title}
 				/>
 				<div class="row">
-					<button class="btn sm" onclick={() => act(() => api.pauseMeaning(projectId))}
-						>{s.pause}</button
-					>
-					<button class="btn sm danger" onclick={() => act(() => api.cancelMeaning(projectId))}
-						>{s.cancel}</button
-					>
+					<button class="btn sm" onclick={() => act(() => api.pauseMeaning(projectId))}>
+						{s.pause}
+					</button>
+					<button class="btn sm danger" onclick={() => act(() => api.cancelMeaning(projectId))}>
+						{s.cancel}
+					</button>
 				</div>
 			</div>
 		{:else if counts && model && (step === 'prepare' || step === 'ready')}
@@ -233,8 +235,9 @@
 						<span class:danger-text={run.state === 'failed'}>{s.state[run.state]}</span>
 						<span>{s.run(run.chunks, number(run.tokens))}</span>
 						{#if run.cost_usd !== null}<span>{usdText(run.cost_usd, m)}</span>{/if}
-						{#if run.error}<span class="danger-text">{describeError({ id: run.error }, m)}</span
-							>{/if}
+						{#if run.error}<span class="danger-text">
+								{describeError({ id: run.error }, m)}
+							</span>{/if}
 					</li>
 				{/each}
 			</ul>
@@ -251,8 +254,10 @@
 							<button
 								class="btn sm danger"
 								disabled={busy || step === 'running'}
-								onclick={() => remove(size.space)}>{s.remove}</button
+								onclick={() => remove(size.space)}
 							>
+								{s.remove}
+							</button>
 						</li>
 					{/each}
 				</ul>

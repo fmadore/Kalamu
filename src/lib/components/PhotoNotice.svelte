@@ -58,8 +58,9 @@
 				{/if}
 				<figcaption>
 					<span class="mono">{name}</span>
-					{#if id === keep && clearly}<span class="chip ok">{m.warning.photos.sharperMark}</span
-						>{/if}
+					{#if id === keep && clearly}<span class="chip ok">
+							{m.warning.photos.sharperMark}
+						</span>{/if}
 				</figcaption>
 			</figure>
 		{/each}
@@ -74,17 +75,15 @@
 	</p>
 	<div class="actions">
 		{#if warning.kind === 'same_page'}
-			<button class="btn sm" onclick={() => onleaveout(set)}
-				>{clearly
-					? m.warning.photos.keepSharper
-					: m.warning.photos.keepOnly(nameOf(warning.keep))}</button
-			>
+			<button class="btn sm" onclick={() => onleaveout(set)}>
+				{clearly ? m.warning.photos.keepSharper : m.warning.photos.keepOnly(nameOf(warning.keep))}
+			</button>
 			<button class="btn sm" onclick={onkeep}>{m.warning.photos.keepBoth}</button>
 		{:else}
 			<button class="btn sm" onclick={onkeep}>{m.warning.photos.keepIt}</button>
-			<button class="btn sm" onclick={() => onleaveout(warning.source_id)}
-				>{m.warning.photos.leaveOut}</button
-			>
+			<button class="btn sm" onclick={() => onleaveout(warning.source_id)}>
+				{m.warning.photos.leaveOut}
+			</button>
 		{/if}
 	</div>
 </div>

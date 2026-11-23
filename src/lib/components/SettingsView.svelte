@@ -179,8 +179,10 @@
 				aria-selected={tab === t}
 				aria-controls="settings-panel"
 				tabindex={tab === t ? 0 : -1}
-				onclick={() => choose(t)}>{m.settings.tabs[t]}</button
+				onclick={() => choose(t)}
 			>
+				{m.settings.tabs[t]}
+			</button>
 		{/each}
 	</div>
 
@@ -193,9 +195,9 @@
 					<div class="key">
 						<div class="key-name">
 							<strong>{p.name}</strong>
-							<span class="chip" class:ok={hasKey(p.id)}
-								>{hasKey(p.id) ? m.settings.keySaved : m.settings.keyMissing}</span
-							>
+							<span class="chip" class:ok={hasKey(p.id)}>
+								{hasKey(p.id) ? m.settings.keySaved : m.settings.keyMissing}
+							</span>
 						</div>
 						<input
 							type="password"
@@ -215,16 +217,20 @@
 										drafts[p.id] = '';
 										const models = await api.testApiKey(p.id);
 										return m.settings.testOk(models.length);
-									})}>{m.settings.save}</button
+									})}
 							>
+								{m.settings.save}
+							</button>
 							<button
 								class="btn sm"
 								disabled={!hasKey(p.id) || busy === p.id}
 								onclick={() =>
 									withProvider(p.id, async () =>
 										m.settings.testOk((await api.testApiKey(p.id)).length)
-									)}>{m.settings.test}</button
+									)}
 							>
+								{m.settings.test}
+							</button>
 							<button
 								class="btn sm ghost danger"
 								disabled={!hasKey(p.id) || busy === p.id}
@@ -232,11 +238,13 @@
 									withProvider(p.id, async () => {
 										await api.clearApiKey(p.id);
 										return m.settings.keyMissing;
-									})}>{m.settings.remove}</button
+									})}
 							>
-							<button class="btn sm ghost" onclick={() => openLink(p.key_url)}
-								>{m.settings.getKey}</button
-							>
+								{m.settings.remove}
+							</button>
+							<button class="btn sm ghost" onclick={() => openLink(p.key_url)}>
+								{m.settings.getKey}
+							</button>
 						</div>
 						<!-- Mounted empty, so the result of a test is read out when it comes. -->
 						<p
@@ -293,9 +301,9 @@
 				<h2 id="storage-settings">{m.settings.storageTitle}</h2>
 				<p class="muted small">{m.settings.storageHint}</p>
 				<div class="row">
-					<button class="btn sm" disabled={jobsRunning || clear.busy} onclick={clearUnused}
-						>{m.settings.clearUnused}</button
-					>
+					<button class="btn sm" disabled={jobsRunning || clear.busy} onclick={clearUnused}>
+						{m.settings.clearUnused}
+					</button>
 					{#if jobsRunning}<span class="muted small">{m.settings.clearUnusedBusy}</span>{/if}
 				</div>
 			</section>
@@ -342,9 +350,10 @@
 				<p class="muted small">
 					{#each placeholders(m.settings.credits) as part, i (i)}{#if 'name' in part}<ExternalLink
 								href={CREDIT_URLS[part.name] ?? ''}
-								>{m.settings.creditNames[part.name as keyof typeof m.settings.creditNames] ??
-									part.name}</ExternalLink
-							>{:else}{part.text}{/if}{/each}
+							>
+								{m.settings.creditNames[part.name as keyof typeof m.settings.creditNames] ??
+									part.name}
+							</ExternalLink>{:else}{part.text}{/if}{/each}
 				</p>
 				<p class="muted small">{m.report.note}</p>
 				<div><ReportLink /></div>
@@ -357,8 +366,10 @@
 					<h2 id="support">{m.support.title}</h2>
 					<p class="muted small">
 						{#each placeholders(m.support.note) as part, i (i)}{#if 'name' in part}<ExternalLink
-									href={AUTHOR_URL}>Frédérick Madore</ExternalLink
-								>{:else}{part.text}{/if}{/each}
+									href={AUTHOR_URL}
+								>
+									Frédérick Madore
+								</ExternalLink>{:else}{part.text}{/if}{/each}
 					</p>
 					<SupportLink />
 				</section>

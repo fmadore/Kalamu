@@ -137,9 +137,9 @@
 			<p class="described">{a.chosen.question}</p>
 			<p class="small muted">
 				{t.keptHint}
-				<button class="btn sm ghost" onclick={() => openPrompts(a.chosen!.id)}
-					>{t.openPrompts}</button
-				>
+				<button class="btn sm ghost" onclick={() => openPrompts(a.chosen!.id)}>
+					{t.openPrompts}
+				</button>
 			</p>
 		</div>
 	{:else}
@@ -181,9 +181,9 @@
 	{#if !a.keyed}
 		<p class="notice" role="status">
 			{m.newJob.noKey(a.providerName)}
-			<button class="btn sm" onclick={() => go({ name: 'settings', tab: 'keys' })}
-				>{m.newJob.openSettings}</button
-			>
+			<button class="btn sm" onclick={() => go({ name: 'settings', tab: 'keys' })}>
+				{m.newJob.openSettings}
+			</button>
 		</p>
 	{/if}
 
@@ -226,8 +226,10 @@
 		<button
 			class="btn primary"
 			disabled={!a.sources || !a.keyed || !a.draft.model || a.busy || a.tooLong !== null}
-			onclick={start}>{t.start}</button
+			onclick={start}
 		>
+			{t.start}
+		</button>
 	</div>
 </Dialog>
 

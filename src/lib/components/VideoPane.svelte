@@ -116,9 +116,9 @@
 				{#if blocked}
 					<div class="card">
 						<p>{m.review.videoBlocked}</p>
-						<button class="btn on-stage" onclick={() => openLink(videoAt(url, now * 1000))}
-							>{m.review.openVideo}</button
-						>
+						<button class="btn on-stage" onclick={() => openLink(videoAt(url, now * 1000))}>
+							{m.review.openVideo}
+						</button>
 					</div>
 				{:else if src}
 					<iframe
@@ -144,9 +144,9 @@
 		<div class="under">
 			<span class="muted small">{blocked ? m.review.videoHintOpen : m.review.videoHint}</span>
 			{#if !blocked}
-				<button class="btn sm ghost" onclick={() => openLink(videoAt(url, now * 1000))}
-					>{m.review.openVideo}</button
-				>
+				<button class="btn sm ghost" onclick={() => openLink(videoAt(url, now * 1000))}>
+					{m.review.openVideo}
+				</button>
 			{/if}
 		</div>
 		<div class="transcript">

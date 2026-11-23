@@ -82,11 +82,9 @@
 				class="num"
 				disabled={!sample}
 			/>
-			<span class="muted"
-				>{sampleSpread
-					? m.newJob.trySample.spread(samplePages)
-					: m.newJob.sample(samplePages)}</span
-			>
+			<span class="muted">
+				{sampleSpread ? m.newJob.trySample.spread(samplePages) : m.newJob.sample(samplePages)}
+			</span>
 		</label>
 	{/if}
 	<fieldset>
@@ -117,9 +115,9 @@
 			{#if destination.kind === 'folder'}
 				<span class="path mono">{destination.path}</span>
 			{/if}
-			<button class="btn sm" onclick={chooseDestination}
-				><Icon name="folder" size={14} />{m.newJob.chooseFolder}</button
-			>
+			<button class="btn sm" onclick={chooseDestination}>
+				<Icon name="folder" size={14} />{m.newJob.chooseFolder}
+			</button>
 		</div>
 		{#if destination.kind !== 'folder' && hasSources}
 			<p class="notice">{m.newJob.linkFolder}</p>

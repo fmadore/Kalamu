@@ -157,9 +157,9 @@
 	{#if app.jobs.length === 0}
 		<div class="empty">
 			<p class="muted">{m.jobs.empty}</p>
-			<button class="btn primary" onclick={() => go({ name: 'new' })}
-				><Icon name="plus" />{m.jobs.empty_new}</button
-			>
+			<button class="btn primary" onclick={() => go({ name: 'new' })}>
+				<Icon name="plus" />{m.jobs.empty_new}
+			</button>
 		</div>
 	{:else}
 		<div class="table-filters">
@@ -202,9 +202,9 @@
 		{#if chosen.length > 0}
 			<div class="selection-bar" role="toolbar" aria-label={m.allJobs.selected(chosen.length)}>
 				<span class="num">{m.allJobs.selected(chosen.length)}</span>
-				<button class="btn ghost sm" onclick={() => selection.clear()}
-					>{m.allJobs.clearSelection}</button
-				>
+				<button class="btn ghost sm" onclick={() => selection.clear()}>
+					{m.allJobs.clearSelection}
+				</button>
 				<span class="grow"></span>
 				{#if projects.length > 0}
 					<select
@@ -223,8 +223,10 @@
 					class="btn ghost danger sm"
 					disabled={anyRunning}
 					title={anyRunning ? m.allJobs.runningKept : undefined}
-					onclick={remove}>{m.allJobs.delete}</button
+					onclick={remove}
 				>
+					{m.allJobs.delete}
+				</button>
 			</div>
 		{/if}
 
@@ -282,9 +284,9 @@
 										{@attach focusName}
 									/>
 								{:else}
-									<button class="link" onclick={() => go({ name: 'jobs', jobId: job.id })}
-										><Icon name={job.task} size={14} /><span>{job.name}</span></button
-									>
+									<button class="link" onclick={() => go({ name: 'jobs', jobId: job.id })}>
+										<Icon name={job.task} size={14} /><span>{job.name}</span>
+									</button>
 								{/if}
 								<span class="meta">
 									<span class="num">{m.allJobs.files(job.source_count)}</span>
@@ -305,8 +307,10 @@
 										class:chip={job.status !== 'completed' && job.status !== 'cancelled'}
 										class:warn={UNFINISHED.includes(job.status)}
 										class:danger={job.status === 'completed_with_errors'}
-										class:muted={job.status === 'cancelled'}>{m.status[job.status]}</span
+										class:muted={job.status === 'cancelled'}
 									>
+										{m.status[job.status]}
+									</span>
 								{/if}
 							</td>
 							<td class="pieces num">
@@ -315,22 +319,24 @@
 									<span class="failed">{m.jobs.failed(job.pieces_failed)}</span>
 								{/if}
 							</td>
-							<td class="cost num"
-								>{#if job.cost_usd !== null}{formatUsd(job.cost_usd)}{:else}<span class="muted"
-										><Missing label={m.common.none} /></span
-									>{/if}</td
-							>
-							<td class="date num muted" title={formatDateTime(job.created_at)}
-								>{formatDate(job.created_at)}</td
-							>
+							<td class="cost num">
+								{#if job.cost_usd !== null}{formatUsd(job.cost_usd)}{:else}<span class="muted">
+										<Missing label={m.common.none} />
+									</span>{/if}
+							</td>
+							<td class="date num muted" title={formatDateTime(job.created_at)}>
+								{formatDate(job.created_at)}
+							</td>
 							<td class="more">
 								<button
 									class="btn ghost sm icon"
 									aria-label={m.shell.jobMenu(job.name)}
 									title={m.shell.jobMenu(job.name)}
 									aria-haspopup="menu"
-									onclick={(e) => openMenu(e, job)}><Icon name="more" size={16} /></button
+									onclick={(e) => openMenu(e, job)}
 								>
+									<Icon name="more" size={16} />
+								</button>
 							</td>
 						</tr>
 					{/each}

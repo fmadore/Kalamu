@@ -210,21 +210,27 @@
 							disabled={i === 0}
 							aria-label={m.fields.up}
 							title={m.fields.up}
-							onclick={() => move(i, -1)}><Icon name="up" /></button
+							onclick={() => move(i, -1)}
 						>
+							<Icon name="up" />
+						</button>
 						<button
 							class="btn sm icon"
 							disabled={i === list.length - 1}
 							aria-label={m.fields.down}
 							title={m.fields.down}
-							onclick={() => move(i, 1)}><Icon name="down" /></button
+							onclick={() => move(i, 1)}
 						>
+							<Icon name="down" />
+						</button>
 						<button
 							class="btn sm icon ghost"
 							aria-label={group ? m.fields.removeColumn(field.label) : m.fields.remove(field.label)}
 							title={group ? m.fields.removeColumn(field.label) : m.fields.remove(field.label)}
-							onclick={() => setList(list.filter((_, j) => j !== i))}><Icon name="close" /></button
+							onclick={() => setList(list.filter((_, j) => j !== i))}
 						>
+							<Icon name="close" />
+						</button>
 					</div>
 				</div>
 				{#if field.kind.type === 'cited'}
@@ -275,15 +281,15 @@
 
 	<div class="add">
 		{#if group}
-			<button class="btn sm" onclick={addColumn}
-				><Icon name="plus" size={14} />{m.fields.addColumn}</button
-			>
+			<button class="btn sm" onclick={addColumn}>
+				<Icon name="plus" size={14} />{m.fields.addColumn}
+			</button>
 		{:else}
 			<span class="label">{m.fields.add}</span>
 			{#each templates as template (template)}
-				<button class="btn sm" onclick={() => add(template)}
-					><Icon name="plus" size={14} />{m.fields.templates[template].label}</button
-				>
+				<button class="btn sm" onclick={() => add(template)}>
+					<Icon name="plus" size={14} />{m.fields.templates[template].label}
+				</button>
 			{/each}
 		{/if}
 	</div>

@@ -46,14 +46,15 @@
 					title={s.wer !== null
 						? `${m.review.wer}${m.common.colon} ${formatPercent(s.wer)}`
 						: undefined}
-					>{siglum(i).toUpperCase()}
-					{#if s.cer !== null}{formatPercent(s.cer)}{:else}<Missing />{/if}</span
 				>
+					{siglum(i).toUpperCase()}
+					{#if s.cer !== null}{formatPercent(s.cer)}{:else}<Missing />{/if}
+				</span>
 			{/if}
 		{/each}
-		{#if report.scores.some((s) => s.cer !== null)}<span class="hint"
-				>· {m.review.scoredPages(report.scores[0]?.scored_pages ?? 0)}</span
-			>{:else}<span class="hint">· {m.review.noReference}</span>{/if}
+		{#if report.scores.some((s) => s.cer !== null)}<span class="hint">
+				· {m.review.scoredPages(report.scores[0]?.scored_pages ?? 0)}
+			</span>{:else}<span class="hint">· {m.review.noReference}</span>{/if}
 	{:else if ownScore}
 		<span title={m.scores.note}>{ownScore}</span>
 	{:else}
@@ -62,11 +63,11 @@
 </span>
 {#if compared || corrected}
 	<span class="legend">
-		{#if compared}<span
-				><i class="key marker" aria-hidden="true"></i>{correction
+		{#if compared}<span>
+				<i class="key marker" aria-hidden="true"></i>{correction
 					? m.review.legendChanged
-					: m.review.legendDiffer}</span
-			>{/if}
+					: m.review.legendDiffer}
+			</span>{/if}
 		<span><i class="key hand" aria-hidden="true"></i>{m.review.legendCorrected}</span>
 	</span>
 {/if}

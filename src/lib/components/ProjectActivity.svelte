@@ -68,9 +68,9 @@
 				{/each}
 			</select>
 			{#if isFiltered(filter)}
-				<button class="clear" onclick={() => (filter = { ...openFilter })}
-					>{m.projects.clearFilters}</button
-				>
+				<button class="clear" onclick={() => (filter = { ...openFilter })}>
+					{m.projects.clearFilters}
+				</button>
 			{/if}
 		</div>
 
@@ -89,9 +89,9 @@
 				{#each shown as job (job.id)}
 					<li>
 						<button class="job" onclick={() => go({ name: 'jobs', jobId: job.id })}>
-							<span class="name"
-								><Icon name={job.task} size={14} /><span class="ellipsis">{job.name}</span></span
-							>
+							<span class="name">
+								<Icon name={job.task} size={14} /><span class="ellipsis">{job.name}</span>
+							</span>
 							<span class="meta num">
 								{m.task[job.task]} · {m.status[job.status]} ·
 								{m.jobs.progress(job.pieces_finished, job.pieces_total)}

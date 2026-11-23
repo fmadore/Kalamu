@@ -49,9 +49,9 @@
 <aside class="summary" aria-labelledby="estimate-label">
 	<div class="estimate">
 		<span id="estimate-label" class="label">{m.newJob.estimate}<TermLink term="tokens" /></span>
-		<strong class="total mono"
-			>{#if estimates.length > 0 && total !== null}{formatUsd(total)}{:else}<Missing />{/if}</strong
-		>
+		<strong class="total mono">
+			{#if estimates.length > 0 && total !== null}{formatUsd(total)}{:else}<Missing />{/if}
+		</strong>
 		{#if video}
 			<p class="hint">{m.newJob.estimateVideo}</p>
 		{:else if estimates.length > 0}
@@ -59,9 +59,9 @@
 				{#each estimates as row, i (`${i}/${row.provider}/${row.model}/${row.merge}`)}
 					<li>
 						<span class="mono">{row.merge ? m.newJob.mergeRow(row.model) : row.model}</span>
-						<span class="mono"
-							>{cost(row) !== null ? formatUsd(cost(row) ?? 0) : m.newJob.estimateUnknown}</span
-						>
+						<span class="mono">
+							{cost(row) !== null ? formatUsd(cost(row) ?? 0) : m.newJob.estimateUnknown}
+						</span>
 					</li>
 				{/each}
 			</ul>
@@ -83,14 +83,14 @@
 			aria-describedby={blocker && !starting ? 'start-blocker' : undefined}
 			onclick={onstart}
 		>
-			{starting ? m.newJob.starting : m.newJob.start}<span class="kbd"
-				>{shortcut(m.newJob.startShortcut)}</span
-			>
+			{starting ? m.newJob.starting : m.newJob.start}<span class="kbd">
+				{shortcut(m.newJob.startShortcut)}
+			</span>
 		</button>
 		{#if naming === null}
-			<button class="btn" disabled={!canSave} onclick={() => (naming = '')}
-				>{m.newJob.pipelineSave}</button
-			>
+			<button class="btn" disabled={!canSave} onclick={() => (naming = '')}>
+				{m.newJob.pipelineSave}
+			</button>
 		{:else}
 			<form
 				class="naming"
@@ -109,9 +109,9 @@
 				/>
 				<div class="naming-actions">
 					<button class="btn" type="submit" disabled={!naming.trim()}>{m.common.save}</button>
-					<button class="btn ghost" type="button" onclick={() => (naming = null)}
-						>{m.common.cancel}</button
-					>
+					<button class="btn ghost" type="button" onclick={() => (naming = null)}>
+						{m.common.cancel}
+					</button>
 				</div>
 			</form>
 		{/if}

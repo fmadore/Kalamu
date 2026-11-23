@@ -65,9 +65,9 @@
 			/>
 		</form>
 	{:else}
-		<button class="section add" onclick={() => (naming = { id: null, name: '' })}
-			><Icon name="plus" size={14} />{m.projects.newCollection}</button
-		>
+		<button class="section add" onclick={() => (naming = { id: null, name: '' })}>
+			<Icon name="plus" size={14} />{m.projects.newCollection}
+		</button>
 	{/if}
 
 	<button

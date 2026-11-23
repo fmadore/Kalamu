@@ -159,9 +159,9 @@
 	<div class="head">
 		<h2>{m.dictionary.title}</h2>
 		{#if view && view.rows.length > 0}
-			<button class="btn sm" onclick={exportAll}
-				><Icon name="download" size={14} />{m.dictionary.export}</button
-			>
+			<button class="btn sm" onclick={exportAll}>
+				<Icon name="download" size={14} />{m.dictionary.export}
+			</button>
 		{/if}
 	</div>
 	<p class="muted lede">{m.dictionary.lede}</p>
@@ -182,9 +182,9 @@
 						}}
 					>
 						{#each view.namespaces as n (n.key)}
-							<option value={n.key}
-								>{m.dictionary.fieldCount(fieldLabel(n.label, n.key), n.rows, n.to_review)}</option
-							>
+							<option value={n.key}>
+								{m.dictionary.fieldCount(fieldLabel(n.label, n.key), n.rows, n.to_review)}
+							</option>
 						{/each}
 					</select>
 				</label>
@@ -233,9 +233,9 @@
 			{#if chosen.length > 0}
 				<div class="selection-bar" role="toolbar" aria-label={m.dictionary.selected(chosen.length)}>
 					<span class="num">{m.dictionary.selected(chosen.length)}</span>
-					<button class="btn ghost sm" onclick={() => selection.clear()}
-						>{m.dictionary.clearSelection}</button
-					>
+					<button class="btn ghost sm" onclick={() => selection.clear()}>
+						{m.dictionary.clearSelection}
+					</button>
 					<span class="grow"></span>
 					{#if merging !== null}
 						<form class="merge" onsubmit={merge}>
@@ -250,19 +250,21 @@
 									<option value={label}></option>
 								{/each}
 							</datalist>
-							<button class="btn primary sm" type="submit" disabled={!merging.trim()}
-								>{m.dictionary.mergeConfirm}</button
-							>
-							<button class="btn ghost sm" type="button" onclick={() => (merging = null)}
-								>{m.dictionary.cancel}</button
-							>
+							<button class="btn primary sm" type="submit" disabled={!merging.trim()}>
+								{m.dictionary.mergeConfirm}
+							</button>
+							<button class="btn ghost sm" type="button" onclick={() => (merging = null)}>
+								{m.dictionary.cancel}
+							</button>
 						</form>
 					{:else}
 						<button
 							class="btn primary sm"
 							disabled={chosen.length < 2}
-							onclick={() => (merging = proposedLabel(chosen))}>{m.dictionary.merge}</button
+							onclick={() => (merging = proposedLabel(chosen))}
 						>
+							{m.dictionary.merge}
+						</button>
 						<button
 							class="btn sm"
 							disabled={chosen.length !== 2}
@@ -275,22 +277,28 @@
 										itemOf(chosen[0]),
 										itemOf(chosen[1])
 									)
-								)}>{m.dictionary.keepApart}</button
+								)}
 						>
+							{m.dictionary.keepApart}
+						</button>
 						<button
 							class="btn sm"
 							onclick={() =>
 								action.run(() =>
 									api.dictionarySetReviewed(projectId, namespace, chosen.map(itemOf), true)
-								)}><Icon name="check" size={14} />{m.dictionary.markReviewed}</button
+								)}
 						>
+							<Icon name="check" size={14} />{m.dictionary.markReviewed}
+						</button>
 						<button
 							class="btn ghost sm"
 							onclick={() =>
 								action.run(() =>
 									api.dictionarySetReviewed(projectId, namespace, chosen.map(itemOf), false)
-								)}>{m.dictionary.markToReview}</button
+								)}
 						>
+							{m.dictionary.markToReview}
+						</button>
 					{/if}
 				</div>
 			{/if}
@@ -335,8 +343,10 @@
 										class="link label"
 										aria-expanded={open === row.key}
 										aria-label={m.dictionary.details(row.label)}
-										onclick={() => toggleOpen(row)}>{row.label}</button
+										onclick={() => toggleOpen(row)}
 									>
+										{row.label}
+									</button>
 									{#if row.forms.length > 1 || (row.forms[0] && row.forms[0].form !== row.label)}
 										<div class="forms">
 											{#each row.forms as f (f.form)}
@@ -348,17 +358,17 @@
 										<p class="hint" title={m.dictionary.similarHint}>
 											{m.dictionary.similar}
 											{row.similar.map(labelOf).join(', ')} ·
-											<button class="link" onclick={() => selection.add([row.key, ...row.similar])}
-												>{m.dictionary.selectSimilar}</button
-											>
+											<button class="link" onclick={() => selection.add([row.key, ...row.similar])}>
+												{m.dictionary.selectSimilar}
+											</button>
 										</p>
 									{/if}
 									{#if row.apart.length > 0}
 										<p class="hint">
 											{m.dictionary.apart}
 											{#each row.apart as other (other)}
-												<span class="apart"
-													>{labelOf(other)}<button
+												<span class="apart">
+													{labelOf(other)}<button
 														class="untie"
 														aria-label={m.dictionary.withdraw(labelOf(other))}
 														title={m.dictionary.withdraw(labelOf(other))}
@@ -366,22 +376,24 @@
 															row.entry &&
 															action.run(() =>
 																api.dictionaryUndoApart(projectId, row.entry ?? '', other)
-															)}><Icon name="close" size={11} /></button
-													></span
-												>
+															)}
+													>
+														<Icon name="close" size={11} />
+													</button>
+												</span>
 											{/each}
 										</p>
 									{/if}
 								</td>
 								<td class="num">{row.documents}</td>
-								<td class="num muted" title={m.dictionary.agreementHint}
-									>{m.dictionary.agreement(row.listed, row.read)}</td
-								>
+								<td class="num muted" title={m.dictionary.agreementHint}>
+									{m.dictionary.agreement(row.listed, row.read)}
+								</td>
 								<td>
 									{#if row.unseen}
-										<span class="chip warn" title={m.dictionary.unseenHint}
-											>{m.dictionary.unseen}</span
-										>
+										<span class="chip warn" title={m.dictionary.unseenHint}>
+											{m.dictionary.unseen}
+										</span>
 									{:else if row.reviewed}
 										<span class="chip ok">{m.dictionary.reviewed}</span>
 									{:else}

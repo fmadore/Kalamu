@@ -65,11 +65,11 @@
 					onclick={() => onselect(item.index)}
 				>
 					{#if paged}<PageThumb {jobId} {sourceId} index={item.index} />{/if}
-					<span class="number"
-						>{#if item.done}<Icon name="check" size={12} />{/if}<span class="mono"
-							>{item.number}</span
-						></span
-					>
+					<span class="number">
+						{#if item.done}<Icon name="check" size={12} />{/if}<span class="mono">
+							{item.number}
+						</span>
+					</span>
 				</button>
 			</li>
 		{/each}
@@ -77,9 +77,9 @@
 	{#if tally}
 		<div class="tally">
 			<span>{m.review.reviewedOf(reviewed, items.length)}</span>
-			<span class="tally-bar" aria-hidden="true"
-				><i style:width="{(100 * reviewed) / Math.max(items.length, 1)}%"></i></span
-			>
+			<span class="tally-bar" aria-hidden="true">
+				<i style:width="{(100 * reviewed) / Math.max(items.length, 1)}%"></i>
+			</span>
 		</div>
 	{/if}
 </footer>

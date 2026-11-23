@@ -81,10 +81,11 @@
 				onblur={() => onhover(null)}
 				onpointerenter={() => onhover(r.value)}
 				onpointerleave={() => onhover(null)}
-				>{shown(r.value)}{#if comparing && r.sigla.length < count}<sup class="found"
-						>{r.sigla.join(' ')}</sup
-					>{/if}</button
-			>{/each}
+			>
+				{shown(r.value)}{#if comparing && r.sigla.length < count}<sup class="found">
+						{r.sigla.join(' ')}
+					</sup>{/if}
+			</button>{/each}
 	</p>
 {/if}
 <AddItems
