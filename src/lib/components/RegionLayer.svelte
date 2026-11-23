@@ -9,13 +9,16 @@
 	// End to the first and last, Escape lets the choice go. Each is named by its text. A page of
 	// thousands of words draws only those around the part of the page in view, and the one
 	// holding the tab stop, so zooming and moving stay smooth. Drawing and adjusting a box are
-	// `RegionDraw`'s, over the regions.
+	// `RegionDraw`'s, over the regions. A right click on a region, or the menu key or Shift+F10
+	// on it, chooses it and opens its menu: what its card offers, and copying its text.
 	import { tick } from 'svelte';
+	import ActionMenu, { type Action } from './ActionMenu.svelte';
 	import RegionDraw from './RegionDraw.svelte';
 	import type { ShownRegion } from '#lib/bindings/ShownRegion.js';
 	import { messages } from '#lib/i18n/index.js';
 	import type { Rotation } from '#lib/pdf.js';
 	import { levelFor, overlaps, turnBox, type Box } from '#lib/regions.js';
+	import { copyText, isMenuKey, openFromClick } from '#lib/menu.js';
 	import { focusDraw } from '#lib/regionEdit.svelte.js';
 	import type { List, Regions } from '#lib/regions.svelte.js';
 
@@ -155,7 +158,45 @@
 		if (focus) void tick().then(() => regionEl(i)?.focus());
 	}
 
+	/** The menu of the region chosen, and where it opens. */
+	let menu = $state<{ x: number; y: number; actions: Action[] } | null>(null);
+
+	/** What can be done with the region chosen: as its card offers, and copying its text. */
+	function actions(): Action[] {
+		const r = regions.region;
+		if (!r) return [];
+		const e = m.review.regionEdit;
+		const out: Action[] = [];
+		if (r.text) out.push({ label: e.copyText, icon: 'copy', run: () => void copyText(r.text) });
+		if (regions.adjustable)
+			out.push({ label: e.moveResize, icon: 'grip', run: () => edit.adjustChosen() });
+		if (regions.own) out.push({ label: e.remove, icon: 'close', run: () => void edit.remove(r) });
+		else if (regions.adjusted && regions.drawable)
+			out.push({ label: e.putBack, icon: 'replay', run: () => void edit.putBack(r) });
+		const read = regions.onread;
+		if (read) out.push({ label: e.read, icon: 'search', run: () => read(r) });
+		return out;
+	}
+
+	/** Chooses region `i` and opens its menu at `at`, or under it from the keyboard. */
+	function openMenu(i: number, at: { x: number; y: number } | null) {
+		choose(i, false);
+		// Focused now, so the menu gives the focus back to it.
+		const el = regionEl(i);
+		el?.focus();
+		const box = el?.getBoundingClientRect();
+		const list = actions();
+		if (list.length === 0) return;
+		menu = { x: at?.x ?? box?.left ?? 0, y: at?.y ?? box?.bottom ?? 0, actions: list };
+	}
+
 	function onkeydown(e: KeyboardEvent, i: number) {
+		if (isMenuKey(e)) {
+			e.preventDefault();
+			e.stopPropagation();
+			openMenu(i, null);
+			return;
+		}
 		if (e.altKey || e.ctrlKey || e.metaKey) return;
 		const last = items.length - 1;
 		const to =
@@ -214,6 +255,10 @@
 				aria-label={nameOf(it.list, it.region)}
 				aria-pressed={i === chosenHere}
 				onclick={() => choose(i, true)}
+				oncontextmenu={(e) => {
+					if (menu) e.preventDefault();
+					else openFromClick(e, (at) => openMenu(i, at));
+				}}
 				onkeydown={(e) => onkeydown(e, i)}
 			></button>
 		{/each}
@@ -234,6 +279,15 @@
 	<div class="layer" bind:this={layer} aria-hidden="true"></div>
 {/if}
 <RegionDraw {regions} {zoom} {rotation} />
+{#if menu}
+	<ActionMenu
+		x={menu.x}
+		y={menu.y}
+		label={m.review.regionEdit.menu}
+		actions={menu.actions}
+		onclose={() => (menu = null)}
+	/>
+{/if}
 
 <style>
 	/* Over the page's own box, which the zoom stretches. */

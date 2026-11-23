@@ -10,6 +10,7 @@
 	import { onMount, tick, untrack } from 'svelte';
 	import AudioPane from './AudioPane.svelte';
 	import CompareBar from './CompareBar.svelte';
+	import CompareMenu from './CompareMenu.svelte';
 	import ComparePane from './ComparePane.svelte';
 	import CorrectionEditor from './CorrectionEditor.svelte';
 	import Icon from './Icon.svelte';
@@ -647,6 +648,17 @@
 		/>
 	{/if}
 </ReviewFrame>
+
+{#if comparison.open}
+	<CompareMenu
+		pane={comparePane}
+		compared={comparison.compared}
+		{entries}
+		canUse={!editing && !!lead}
+		onuse={(e, text) => void useReading(e, text)}
+		onshow={(id) => void readings.choose(id, comparePane)}
+	/>
+{/if}
 
 <PassageCorrection
 	bind:this={passage}

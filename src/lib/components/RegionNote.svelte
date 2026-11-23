@@ -7,7 +7,8 @@
 	// drawn or adjusted, what to do and how to leave. On a page with no region, what to do
 	// instead. *Read this region again…* is offered where the review gives a way to. When the
 	// card would cover the region it speaks of (one drawn near the top of the page), it goes to
-	// the foot of the scan.
+	// the foot of the scan. The researcher can drag it up or down out of the way, by its grip or
+	// its empty parts (the grip's arrow keys move it too); a double click puts it back.
 	import { tick } from 'svelte';
 	import Icon from './Icon.svelte';
 	import { messages } from '#lib/i18n/index.js';
@@ -22,10 +23,9 @@
 	const edit = $derived(regions.edit);
 
 	const region = $derived(regions.region);
-	const own = $derived(regions.chosen?.level === 'drawn');
-	const adjusted = $derived(!own && region?.origin === 'manual');
-	/** An engine's region can be given a box where the page's reading is known. */
-	const adjustable = $derived(regions.drawable && (own || !!regions.page?.result));
+	const own = $derived(regions.own);
+	const adjusted = $derived(regions.adjusted);
+	const adjustable = $derived(regions.adjustable);
 	const status = $derived(
 		!region || own
 			? ''
@@ -46,6 +46,66 @@
 	let note = $state<HTMLElement | null>(null);
 	/** Whether the card sits at the foot of the scan, clear of the region chosen. */
 	let atFoot = $state(false);
+	/** Where the researcher dragged the card, from the top of the pane; kept while the review is
+	 * open, so it stays out of the way as other regions are chosen. */
+	let movedTo = $state<number | null>(null);
+	/** What keeps a press for itself rather than moving the card. */
+	const FIELDS = 'button, textarea, input, select, a, .said';
+	/** A drag of the card under way: where the pointer and the card started. */
+	let drag: { pointer: number; y: number; from: number; moving: boolean } | null = null;
+
+	/** The card's top kept inside the pane, under its bar and above its foot. */
+	function within(top: number): number {
+		const pane = note?.closest<HTMLElement>('.pane');
+		if (!note || !pane) return top;
+		const bar = (pane.querySelector<HTMLElement>('.pane-bar')?.offsetHeight ?? 0) + 4;
+		const lowest = Math.max(bar, pane.clientHeight - note.offsetHeight - 4);
+		return Math.min(Math.max(top, bar), lowest);
+	}
+
+	/** A press on the grip, or on the card where nothing else takes it, starts moving the card. */
+	function grab(ev: PointerEvent) {
+		if (!note || ev.button !== 0) return;
+		const target = ev.target as Element;
+		const grip = target.closest<HTMLElement>('.grip');
+		// While a box is drawn, only the grip takes the pointer; the rest reaches the page.
+		if (!grip && (edit.mode !== 'idle' || target.closest(FIELDS))) return;
+		drag = { pointer: ev.pointerId, y: ev.clientY, from: note.offsetTop, moving: !!grip };
+		(grip ?? note).setPointerCapture(ev.pointerId);
+		if (grip) ev.preventDefault();
+	}
+
+	function follow(ev: PointerEvent) {
+		if (!drag || ev.pointerId !== drag.pointer) return;
+		const by = ev.clientY - drag.y;
+		// A press that barely moves stays a click (on the label, it focuses the field).
+		if (!drag.moving && Math.abs(by) < 4) return;
+		drag.moving = true;
+		movedTo = within(drag.from + by);
+	}
+
+	function letGo(ev: PointerEvent) {
+		if (!drag || ev.pointerId !== drag.pointer) return;
+		drag = null;
+		const held = ev.target as Element;
+		if (held.hasPointerCapture(ev.pointerId)) held.releasePointerCapture(ev.pointerId);
+	}
+
+	/** A double click on the grip or the card's empty parts puts it back in its own place. */
+	function putBackCard(ev: MouseEvent) {
+		const target = ev.target as Element;
+		if (!target.closest('.grip') && target.closest(FIELDS)) return;
+		movedTo = null;
+	}
+
+	/** The grip's arrow keys move the card a step, or with Shift a long one. */
+	function onGripKey(ev: KeyboardEvent) {
+		if (!note || (ev.key !== 'ArrowUp' && ev.key !== 'ArrowDown')) return;
+		ev.preventDefault();
+		ev.stopPropagation();
+		const step = (ev.shiftKey ? 80 : 16) * (ev.key === 'ArrowUp' ? -1 : 1);
+		movedTo = within((movedTo ?? note.offsetTop) + step);
+	}
 
 	/** Puts the card under the pane's bar, or at the foot of the scan when it would cover the
 	 * region chosen there, or the box being moved or resized, with what to do. */
@@ -54,6 +114,10 @@
 		const box =
 			pane?.querySelector<HTMLElement>('[data-adjusted-box]') ??
 			pane?.querySelector<HTMLElement>('.layer .region.chosen');
+		if (movedTo !== null) {
+			movedTo = within(movedTo);
+			return;
+		}
 		if (!note || !pane || !box) {
 			atFoot = false;
 			return;
@@ -112,12 +176,29 @@
 </script>
 
 {#if regions.shown && (edit.mode !== 'idle' || region || fallback)}
+	<!-- Dragged by its grip, which the keyboard reaches; the rest of the card is only a larger
+	     place to grab. -->
+	<!-- svelte-ignore a11y_no_static_element_interactions -->
 	<div
 		class="region-note"
 		class:through={edit.mode !== 'idle'}
-		class:foot={atFoot}
+		class:foot={atFoot && movedTo === null}
+		class:moved={movedTo !== null}
+		style:top={movedTo !== null ? `${movedTo}px` : undefined}
 		bind:this={note}
+		onpointerdown={grab}
+		onpointermove={follow}
+		onpointerup={letGo}
+		onpointercancel={letGo}
+		ondblclick={putBackCard}
 	>
+		<button
+			type="button"
+			class="grip"
+			aria-label={e.moveCard}
+			title={e.moveCardHint}
+			onkeydown={onGripKey}><Icon name="grip" size={14} /></button
+		>
 		{#if edit.mode === 'drawing'}
 			<div class="actions row">
 				<p class="status">{e.drawing}</p>
@@ -221,8 +302,12 @@
 	.region-note.through button {
 		pointer-events: auto;
 	}
-	.region-note > :not(.close) {
+	.region-note > :not(.close, .grip) {
 		grid-column: 1;
+	}
+	/* Where the researcher dragged it: neither under the bar nor at the foot. */
+	.region-note.moved {
+		bottom: auto;
 	}
 	p {
 		margin: 0;
@@ -267,6 +352,8 @@
 		font-size: var(--type-sm);
 		line-height: 1.5;
 		color: var(--on-stage);
+		/* The page's caret is drawn for the theme's light; the stage keeps its dark in both. */
+		caret-color: var(--on-stage);
 		background: var(--stage);
 		border: 1px solid var(--stage-line);
 		border-radius: 6px;
@@ -313,6 +400,8 @@
 	.act:focus-visible {
 		outline-color: var(--on-stage);
 	}
+	/* The grip, beside the card's first line, or under the close button when there is one. */
+	.grip,
 	.close {
 		grid-column: 2;
 		grid-row: 1;
@@ -327,9 +416,31 @@
 		color: inherit;
 		cursor: pointer;
 	}
+	.grip:has(~ .close) {
+		grid-row: 2;
+	}
+	.grip {
+		color: var(--on-stage-muted);
+		cursor: grab;
+		touch-action: none;
+	}
+	.region-note:not(.through) {
+		cursor: grab;
+	}
+	.region-note:not(.through) :is(button, textarea, .said) {
+		cursor: auto;
+	}
+	.region-note:not(.through) button {
+		cursor: pointer;
+	}
+	.region-note:not(.through) .grip {
+		cursor: grab;
+	}
+	.grip:hover,
 	.close:hover {
 		background: rgba(255, 255, 255, 0.08);
 	}
+	.grip:focus-visible,
 	.close:focus-visible {
 		outline-color: var(--on-stage);
 	}

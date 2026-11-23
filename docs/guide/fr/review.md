@@ -57,6 +57,11 @@ elles diffèrent, l’une des deux au moins se trompe.
    chaque modèle ; choisissez la bonne avec **Mettre dans le texte**, ou tapez la vôtre.
 3. Passez d’une différence à la suivante au clavier, page après page.
 
+Avec **Comparer**, le texte de l’autre modèle s’ouvre à côté du vôtre, sous le titre **Texte
+comparé**. Un clic droit dedans (ou la touche menu) permet de **Copier** les mots sélectionnés,
+de **Copier tout le texte comparé** et, sur une différence surlignée, de **Mettre dans le
+texte** ou d’**Afficher les versions à cet endroit**.
+
 Une fois quelques pages corrigées, Kalamu affiche aussi le **taux d’erreur** de chaque modèle
 par rapport à votre texte corrigé. C’est une base honnête pour choisir le modèle du reste de la
 collection : il est mesuré sur vos documents, pas sur le banc d’essai de quelqu’un d’autre.
@@ -97,6 +102,11 @@ affichées.
   Au clavier, les flèches le déplacent, avec <kbd>Maj</kbd> elles changent sa taille,
   <kbd>Entrée</kbd> enregistre.
 - Saisissez si vous le voulez **Ce qui est écrit ici**, ou **Supprimer** la zone.
+- Un clic droit sur une zone, ou la touche menu ou <kbd>Maj</kbd>+<kbd>F10</kbd> sur elle,
+  propose ce qu’offre son panneau et **Copier son texte**.
+- Quand le panneau cache ce que vous lisez, faites-le glisser vers le haut ou le bas par sa
+  poignée (**Déplacer ce panneau**) ou ses parties vides ; depuis la poignée, les flèches le
+  déplacent, et un double-clic le remet en place.
 - Un cadre tracé par le modèle peut lui aussi être déplacé ou redimensionné. Son propre cadre
   est conservé, et **Remettre le cadre du modèle** le rétablit.
 

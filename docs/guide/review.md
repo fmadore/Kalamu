@@ -52,6 +52,11 @@ they are usually right; where they differ, at least one is wrong.
    choose the right one with **Use this reading**, or type your own.
 3. Step through the differences from the keyboard, page after page.
 
+With **Compare**, the other model's text opens beside yours as **Text compared**. Right-click
+in it (or press the menu key) to **Copy** the words you selected, **Copy the whole text
+compared**, and, on a highlighted difference, **Use this reading** or **Show the readings
+here**.
+
 Once you have corrected some pages, Kalamu also shows each model's **error rate** against your
 corrected text, which is an honest basis for choosing the model for the rest of a collection:
 measured on your documents, not on someone else's benchmark.
@@ -87,6 +92,11 @@ of this shows until the regions are shown.
 - **Move or resize** a box by dragging it, or its corners and sides. From the keyboard, the
   arrow keys move it, with <kbd>Shift</kbd> they resize it, <kbd>Enter</kbd> saves.
 - Type **What is written here** if you like, or **Remove** the region.
+- Right-click a region, or press the menu key or <kbd>Shift</kbd>+<kbd>F10</kbd> on it, for
+  what its card offers and **Copy its text**.
+- When the card covers what you are reading, drag it up or down by its grip (**Move this
+  card**) or its empty parts; the arrow keys move it from the grip, and a double click puts it
+  back.
 - A box the model drew can be moved or resized too. Its own box is kept, and **Put back the
   model's box** brings it back.
 
