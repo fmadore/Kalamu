@@ -4,7 +4,8 @@
 	One self-contained file with no build step and no front matter, so Jekyll copies it as it is:
 	its styles are below, a few lines of script run the comparison example, and it loads only the
 	fonts and pictures under assets/home, the store screenshots and Microsoft's Store badge. The
-	developers' index stays at docs/README.md, linked in the footer.
+	developers' index stays at docs/README.md, linked in the footer. The French version is
+	docs/fr/index.html, with the same styles and script: change both together.
 
 	Wording follows docs/store-listing.md and the README, the screenshots' captions follow the
 	table of scenes in store-listing.md, and what is sent where follows docs/privacy.md: change
@@ -31,6 +32,8 @@
 		/>
 		<meta property="og:image" content="https://fmadore.github.io/Kalamu/assets/home/hero.jpg" />
 		<meta property="og:url" content="https://fmadore.github.io/Kalamu/" />
+		<link rel="alternate" hreflang="en" href="https://fmadore.github.io/Kalamu/" />
+		<link rel="alternate" hreflang="fr" href="https://fmadore.github.io/Kalamu/fr/" />
 		<link
 			rel="icon"
 			href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 22'%3E%3Crect width='22' height='22' rx='5' fill='%231e1d1b'/%3E%3Cg transform='rotate(-9 8.5 11)'%3E%3Crect x='3.6' y='4.4' width='9.6' height='13' rx='1' fill='%23efe1c3'/%3E%3Crect x='5' y='7' width='5' height='1.3' rx='.65' fill='%238a5a3b'/%3E%3Crect x='5' y='10' width='6' height='1.3' rx='.65' fill='%238a5a3b'/%3E%3C/g%3E%3Cg transform='rotate(6 13.5 11.5)'%3E%3Crect x='8.8' y='4.6' width='9.6' height='13' rx='1' fill='%23fff'/%3E%3Crect x='10.4' y='7' width='6.4' height='1.4' rx='.7' fill='%239a9ea6'/%3E%3Crect x='10' y='10' width='7.2' height='2.4' rx='.8' fill='%23ffd84d'/%3E%3Crect x='10.4' y='14' width='5' height='1.4' rx='.7' fill='%239a9ea6'/%3E%3C/g%3E%3C/svg%3E"
@@ -259,6 +262,10 @@
 				box-decoration-break: clone;
 			}
 			@media (prefers-reduced-motion: no-preference) {
+				/* French words run longer: a step smaller, so the headline keeps to five lines. */
+				.hero h1:lang(fr) {
+					font-size: clamp(2rem, 1.3rem + 2.8vw, 3.15rem);
+				}
 				.hero mark {
 					animation: draw 900ms 350ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
 				}
@@ -1155,7 +1162,7 @@
 						<li><a href="#privacy">Privacy</a></li>
 						<li class="keep"><a href="guide/">Guide</a></li>
 						<li class="keep">
-							<a class="lang" href="guide/fr/" hreflang="fr" lang="fr">Guide en français</a>
+							<a class="lang" href="fr/" hreflang="fr" lang="fr">Français</a>
 						</li>
 					</ul>
 				</nav>
@@ -1213,9 +1220,9 @@
 			<section id="tasks" aria-labelledby="tasks-title">
 				<div class="wrap">
 					<p class="kicker">01 · What it does</p>
-					<h2 id="tasks-title">Three tasks, for the sources researchers actually have</h2>
+					<h2 id="tasks-title">Three tasks, for the sources researchers work with</h2>
 					<p class="lede">
-						Old newspapers in columns, letters and registers in a hand, oral-history interviews,
+						Old newspapers in columns, handwritten letters and registers, oral-history interviews,
 						reports and articles: Kalamu turns them into text you can search, quote and analyse, in
 						any language the chosen model reads.
 					</p>
@@ -1224,10 +1231,10 @@
 							<div class="body">
 								<h3>Extract text</h3>
 								<p>
-									From PDFs and images, printed or handwritten: newspapers, reports, letters,
-									registers and manuscripts. Keep the lines as on the page, to check against the
-									scan, or join them into running text. Photographs of one letter or file are read
-									as one document.
+									Kalamu reads PDFs and images, printed or handwritten: newspapers, reports,
+									letters, registers and manuscripts. Keep the lines as on the page, to check
+									against the scan, or join them into running text. Photographs of one letter or
+									file are read as one document.
 								</p>
 							</div>
 							<div class="sample" aria-hidden="true">
@@ -1243,9 +1250,9 @@
 							<div class="body">
 								<h3>Transcribe audio and video</h3>
 								<p>
-									With speakers and timestamps, and the speakers given their real names. Long
-									recordings are cut at pauses. Offline, Whisper transcribes on your computer;
-									public YouTube videos are transcribed from their link with Gemini.
+									Transcripts show who speaks and when, and you can give the speakers their real
+									names. Long recordings are cut at pauses. Offline, Whisper transcribes on your
+									computer; public YouTube videos are transcribed from their link with Gemini.
 								</p>
 							</div>
 							<div class="sample" aria-hidden="true">
@@ -1263,9 +1270,9 @@
 							<div class="body">
 								<h3>Analyse texts</h3>
 								<p>
-									With fields you define, as you would brief a research assistant: a summary, the
-									people, places and organisations a document names, its tone with a reason, themes
-									from your own list. Ready-made analyses cover the common needs.
+									Define the fields as you would brief a research assistant: a summary, the people,
+									places and organisations a document names, its tone with a reason, themes from
+									your own list. Ready-made analyses cover the common needs.
 								</p>
 							</div>
 							<div class="sample" aria-hidden="true">
@@ -1290,7 +1297,7 @@
 				<div class="wrap">
 					<p class="kicker">02 · Checking</p>
 					<h2 id="check-title">
-						AI text can be fluent and wrong. So every result sits beside its source.
+						AI text can be fluent and wrong, so every result sits beside its source.
 					</h2>
 					<p class="lede">
 						The review puts the page next to its text, or the recording next to its transcript. Read
@@ -1298,7 +1305,13 @@
 						is where to look. Try it on a line from a 1911 newspaper.
 					</p>
 					<div class="compare">
-						<div class="witness" id="demo">
+						<div
+							class="witness"
+							id="demo"
+							data-fixed="Hathawey"
+							data-kept="Kept"
+							data-done="The model’s text is kept; your choice is stored as a correction, as the scan reads."
+						>
 							<div class="label">
 								<span>Source · Page 1</span><span>The Daily Nebraskan, 1911</span>
 							</div>
@@ -1387,16 +1400,16 @@
 
 			<section id="more" aria-labelledby="more-title">
 				<div class="wrap">
-					<p class="kicker">03 · And then</p>
+					<p class="kicker">03 · Projects</p>
 					<h2 id="more-title">From a folder of scans to a project you can search</h2>
 					<div class="cards">
 						<article class="card">
 							<span class="mark" aria-hidden="true"></span>
 							<h3>Projects</h3>
 							<p>
-								Documents in collections and tags, each with every result read from it, whatever job
-								made it, and the one you rely on marked. Describe each source as an archive would:
-								repository, fonds, shelfmark, citation.
+								Group documents in collections and tags. Each keeps every result made from it,
+								whichever job made it, and you mark the one you rely on. Describe each source as an
+								archive would: repository, fonds, shelfmark, citation.
 							</p>
 						</article>
 						<article class="card">
@@ -1421,27 +1434,27 @@
 							<span class="mark" aria-hidden="true"></span>
 							<h3>Interviews, analysed</h3>
 							<p>
-								From a transcript, themes and passages worth quoting, each backed by quotations
-								found word for word, with their speaker and time. Give your own themes or interview
-								guide first.
+								From a transcript, an analysis lists themes and passages worth quoting, each backed
+								by quotations found word for word, with their speaker and time. You can give your
+								own themes or interview guide first.
 							</p>
 						</article>
 						<article class="card">
 							<span class="mark" aria-hidden="true"></span>
 							<h3>Tables of contents and registers</h3>
 							<p>
-								Turn a newspaper issue or an archival file into one entry per article, with its
-								pages, authors and summary; read a directory or register into a table, one row per
-								entry, in your columns.
+								Turn a newspaper issue or an archival file into a table of contents, one entry per
+								article, with its pages, authors and summary; read a directory or register into a
+								table, one row per entry, in your columns.
 							</p>
 						</article>
 						<article class="card">
 							<span class="mark" aria-hidden="true"></span>
 							<h3>A dictionary of names</h3>
 							<p>
-								The people, places and terms your analyses listed, their spellings gathered under
-								the label you choose. A model can propose merges that you accept, change or turn
-								down.
+								The dictionary gathers the people, places and terms your analyses listed, each with
+								its spellings under the label you choose. A model can propose merges that you
+								accept, change or turn down.
 							</p>
 						</article>
 						<article class="card">
@@ -1465,8 +1478,9 @@
 							<span class="mark" aria-hidden="true"></span>
 							<h3>Export, with a record</h3>
 							<p>
-								Text, Markdown, Word, JSON, CSV and Excel, subtitles, searchable PDF, ALTO XML and
-								PAGE XML, each with a <code>provenance.json</code> to cite in a methods section.
+								Export to text, Markdown, Word, JSON, CSV and Excel, subtitles, searchable PDF, ALTO
+								XML and PAGE XML, each with a <code>provenance.json</code> to cite in a methods
+								section.
 							</p>
 						</article>
 					</div>
@@ -1694,37 +1708,41 @@
 								</li>
 								<li>
 									<strong>Gemma 4 E4B, E2B</strong
-									><span>Analyses, tables of contents and corrections; weaker, so check them</span>
+									><span
+										>Analyses, tables of contents and corrections; weaker than the cloud models, so
+										check their answers</span
+									>
 								</li>
 							</ul>
 						</div>
 					</div>
 					<div class="savings">
 						<div class="saving">
-							<span class="figure">0×</span>
+							<span class="figure">1×</span>
 							<p>
-								Paid twice. Work is saved piece by piece; an interrupted job resumes where it
-								stopped.
+								Each page is paid for once: work is saved piece by piece, and an interrupted job
+								resumes where it stopped.
 							</p>
 						</div>
 						<div class="saving">
 							<span class="figure">½</span>
 							<p>
-								The price, about, with the provider's batch service for large collections, answered
-								within a day.
+								About half the price for a large collection, with the provider's batch service,
+								which answers within a day.
 							</p>
 						</div>
 						<div class="saving">
 							<span class="figure">3 pages</span>
 							<p>
-								To try a long document first, with one model or two, before paying for the rest.
+								Try a long document on three pages first, with one model or two, before paying for
+								the rest.
 							</p>
 						</div>
 						<div class="saving">
 							<span class="figure">$0.00</span>
 							<p>
-								The estimate offline. With a cloud model, it is shown per model before anything is
-								sent.
+								The estimate for an offline job. With a cloud model, the cost of each model is
+								estimated before anything is sent.
 							</p>
 						</div>
 					</div>
@@ -1897,8 +1915,8 @@
 				</ul>
 				<p>
 					Kalamu is free and open source, under the MIT licence, by
-					<a href="https://www.frederickmadore.com/">Frédérick Madore</a> (University of Bayreuth).
-					An independent project. Supporting it is optional and unlocks nothing.
+					<a href="https://www.frederickmadore.com/">Frédérick Madore</a> (University of Bayreuth),
+					as an independent project. Supporting it is optional and unlocks nothing.
 				</p>
 				<p>
 					Google Gemini and YouTube are trademarks of Google LLC; OpenAI is a trademark of OpenAI
@@ -1917,22 +1935,24 @@
 				const stateA = document.getElementById('state-a');
 				const note = document.getElementById('note');
 				const reset = document.getElementById('reset');
+				const demo = document.getElementById('demo');
 				const original = note.textContent;
+				const originalWord = word.textContent.trim();
+				const originalState = stateA.textContent;
 				function choose() {
-					word.textContent = 'Hathawey';
+					word.textContent = demo.dataset.fixed;
 					word.classList.add('fixed');
 					use.hidden = true;
-					stateA.textContent = 'Kept';
-					note.textContent =
-						'The model’s text is kept; your choice is stored as a correction, as the scan reads.';
+					stateA.textContent = demo.dataset.kept;
+					note.textContent = demo.dataset.done;
 					note.classList.add('done');
 					reset.hidden = false;
 				}
 				function undo() {
-					word.textContent = 'Hatheway';
+					word.textContent = originalWord;
 					word.classList.remove('fixed');
 					use.hidden = false;
-					stateA.textContent = 'In the text';
+					stateA.textContent = originalState;
 					note.textContent = original;
 					note.classList.remove('done');
 					reset.hidden = true;
