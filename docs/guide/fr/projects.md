@@ -42,8 +42,8 @@ ont été faites.
   montre sa réponse, la raison et les passages. Si vous ajoutez des documents plus tard,
   **Poser cette question aux nouveaux documents** ne fait lire que ceux-là. Si le prompt a été
   modifié depuis la première fois, la fenêtre le dit : les nouvelles réponses sont rangées à
-  part des précédentes, et le filtre montre la question deux fois, chacune suivie de « posée
-  depuis le » et de la date où elle a été posée la première fois.
+  part des précédentes, et le filtre montre la question deux fois, chacune suivie de « posée la
+  première fois le » et de la date.
 - Quand un document a été lu plusieurs fois, choisissez le résultat auquel vous vous fiez avec
   **Retenir**. La recherche, les exports et les analyses utilisent alors celui-là.
 

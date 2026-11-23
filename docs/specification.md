@@ -256,7 +256,7 @@ parts*, and the job reads the rest; the cost said is theirs. **The question is k
 project**: analyses that asked the same question with the same prompt and model are one, a
 document's newest answer counting, the same prompt being the prompt as each run froze it (a
 question asked under a preset edited since is a group of its own, followed in the filter by
-*asked since* and the date it was first asked, and the dialog asking it again says the prompt
+*first asked* and the date it was first asked, and the dialog asking it again says the prompt
 has changed); once documents have been added since, one line under the
 table's filters says *3 documents have not been read against “…” yet* with *Read the new
 documents against this question*, which opens the same dialog over those documents alone with the

@@ -222,7 +222,7 @@ export const en = {
 				: `${n} documents have not been read against “${question}” yet.`,
 		askAgain: 'Read the new documents against this question',
 		/** Beside a question asked under two versions of its prompt, in the filter. */
-		askedSince: (when: string) => `asked since ${when}`,
+		askedSince: (when: string) => `first asked ${when}`,
 		/** Asked again after its prompt was edited: the answers form a group of their own. */
 		promptChanged:
 			'The prompt has changed since this question was asked. The new answers will be kept apart from the earlier ones, in the filter and in the exported table.'

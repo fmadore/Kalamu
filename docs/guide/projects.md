@@ -36,7 +36,7 @@ recording) with every transcription, extraction and analysis made of it.
   row shows its answer, the reason and the passages. When you add documents later, **Read the
   new documents against this question** asks it of those alone. If the prompt has been edited
   since you first asked, the dialog says so: the new answers are kept apart from the earlier
-  ones, and the filter shows the question twice, each followed by "asked since" and the date it
+  ones, and the filter shows the question twice, each followed by "first asked" and the date it
   was first asked.
 - When a document has been read several times, **mark the result you rely on** as preferred.
   Search, exports and analyses then use that one.

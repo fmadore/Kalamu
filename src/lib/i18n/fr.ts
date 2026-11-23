@@ -650,7 +650,7 @@ export const fr: Messages = {
 				? `1 document n’a pas encore été lu avec la question « ${question} ».`
 				: `${n} documents n’ont pas encore été lus avec la question « ${question} ».`,
 		askAgain: 'Poser cette question aux nouveaux documents',
-		askedSince: (when: string) => `posée depuis le ${when}`,
+		askedSince: (when: string) => `posée la première fois le ${when}`,
 		promptChanged:
 			'Le prompt a changé depuis que cette question a été posée. Les nouvelles réponses seront rangées à part des précédentes, dans le filtre comme dans le tableau exporté.'
 	},

@@ -30,7 +30,7 @@ a table of its own when exported.
 
 **Groups are told apart by when they were first asked.** `ChoiceAnswers` carries the group's
 `prompt` fingerprint and `first_asked`, when its oldest analysis was made. When two groups of
-two analyses would have the same title in the filter, each is followed by "asked since" and that
+two analyses would have the same title in the filter, each is followed by "first asked" and that
 date and time (`answerGroups.ts`); the fingerprint itself is never shown in the interface, as it
 means nothing to a researcher. *Read the new documents against this question* is offered for the
 newest version of a question only (same question, provider and model, another prompt): asked
