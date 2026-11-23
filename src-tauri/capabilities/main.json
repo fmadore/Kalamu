@@ -72,6 +72,7 @@
     "allow-inspect-links",
     "allow-estimate-cost",
     "allow-create-job",
+    "allow-prompt-fingerprints",
     "allow-start-job",
     "allow-rest-estimate",
     "allow-rest-of-sample",

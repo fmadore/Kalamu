@@ -62,8 +62,26 @@ impl Fixture {
         schema: AnalysisSchema,
         question: &str,
     ) -> Job {
+        self.screening_as(
+            kalamu_core::JobId::new(),
+            sources,
+            relevance,
+            schema,
+            question,
+        )
+    }
+
+    /// [`Fixture::screening_with`] under a job id given, for golden files.
+    pub(super) fn screening_as(
+        &self,
+        id: kalamu_core::JobId,
+        sources: Vec<SourceFile>,
+        relevance: &[&str],
+        schema: AnalysisSchema,
+        question: &str,
+    ) -> Job {
         let job = Job {
-            id: kalamu_core::JobId::new(),
+            id,
             name: "Screening".into(),
             task: Task::Analysis,
             created_at: Timestamp::now(),
@@ -323,6 +341,8 @@ fn each_answer_carries_its_passages_with_their_pages() {
     assert_eq!(row.passages, vec![passage]);
 }
 
+/// The table matches its golden file: each field under its label, the analysis that gave each
+/// row's answer and the prompt it froze, then the researcher's tags (#51, #241).
 #[test]
 fn an_analysis_is_written_as_one_table_with_the_researchers_tags() {
     let f = fixture();
@@ -333,7 +353,13 @@ fn an_analysis_is_written_as_one_table_with_the_researchers_tags() {
         .projects
         .add_documents(p.id, vec![b.clone(), a.clone()], None)
         .unwrap();
-    let job = f.screening(vec![a, b], &["Relevant", "=Not relevant"]);
+    let job = f.screening_as(
+        super::queue::fixed(7),
+        vec![a, b],
+        &["Relevant", "=Not relevant"],
+        screening(),
+        "Women traders at the market",
+    );
     f.projects.link_job(p.id, job.id, None).unwrap();
     f.projects.tag_documents(p.id, &docs[1..], "Keep").unwrap();
 
@@ -343,14 +369,25 @@ fn an_analysis_is_written_as_one_table_with_the_researchers_tags() {
         .unwrap();
     assert_eq!(
         table.headings,
-        ["document", "file", "Relevance", "Reason", "tags"]
+        [
+            "document",
+            "file",
+            "Relevance",
+            "Reason",
+            "job_id",
+            "prompt_fingerprint",
+            "tags"
+        ]
     );
-    assert_eq!(
-        csv_body(table),
-        "document,file,Relevance,Reason,tags\n\
-         a,a.txt,Relevant,\"Relevant, because.\",Keep\n\
-         b,b.txt,'=Not relevant,\"'=Not relevant, because.\",\n"
+    let prompt = job.setups[0].prompt.short_fingerprint();
+    assert_eq!(prompt.len(), 12);
+    assert!(
+        table
+            .rows
+            .iter()
+            .all(|r| r[4] == job.id.to_string() && r[5] == prompt)
     );
+    super::queue::golden("screening-table.csv", &csv_body(table));
     assert!(matches!(
         f.projects.answers_table(p.id, job.id, SetupId::new()),
         Err(ProjectError::NotFound)

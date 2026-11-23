@@ -31,9 +31,13 @@ recording) with every transcription, extraction and analysis made of it.
   the passages that show it, each found word for word in the text with its page. Filter the
   table by the answer, read the passages, then **Keep** or **Set aside**: your decision is a
   tag, and the model's answer stays as it was. **Export the whole table** writes the whole list for
-  a spreadsheet. With an answer chosen in the filter, each row shows its answer, the reason
-  and the passages. When you add documents later, **Read the new documents against this
-  question** asks it of those alone.
+  a spreadsheet; its `job_id` and `prompt_fingerprint` columns say which job gave each answer
+  and which version of the prompt it was read with. With an answer chosen in the filter, each
+  row shows its answer, the reason and the passages. When you add documents later, **Read the
+  new documents against this question** asks it of those alone. If the prompt has been edited
+  since you first asked, the dialog says so: the new answers are kept apart from the earlier
+  ones, and the filter shows the question twice, each followed by "first asked" and the date it
+  was first asked.
 - When a document has been read several times, **mark the result you rely on** as preferred.
   Search, exports and analyses then use that one.
 

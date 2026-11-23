@@ -6,6 +6,7 @@ import type { JobId } from "./JobId";
 import type { LanguageChoice } from "./LanguageChoice";
 import type { ProviderId } from "./ProviderId";
 import type { SetupId } from "./SetupId";
+import type { Timestamp } from "./Timestamp";
 
 /**
  * One choice field of the analyses that asked a question alike (one job's set-up, or several
@@ -31,6 +32,17 @@ question: string | null,
  * asked again alike.
  */
 provider: ProviderId, model: string, languages: LanguageChoice, 
+/**
+ * The fingerprint of the prompt every analysis of the group froze
+ * ([`kalamu_core::PromptSnapshot::fingerprint`]): its instructions, its request and its
+ * fields. A question asked again under a prompt edited since is another group.
+ */
+prompt: string, 
+/**
+ * When the oldest analysis of the group was made: what tells apart two groups of the same
+ * question asked under two versions of its prompt.
+ */
+first_asked: Timestamp, 
 /**
  * The field as the job froze it.
  */

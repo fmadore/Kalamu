@@ -6,7 +6,9 @@
 //!
 //! Analyses that asked the same question with the same prompt and model are one question kept
 //! with the project: their answers stand together, a document's newest answer counting, so asking
-//! the question again of the documents added since adds to it. The question is kept by the jobs
+//! the question again of the documents added since adds to it. The same prompt is the prompt as
+//! each froze it, not only its preset: once a preset is edited, a question asked again under it
+//! is a group of its own (#241). The question is kept by the jobs
 //! themselves (their set-up's `question`), so no table holds it twice.
 //!
 //! Read from the job store as it stands, the researcher's corrections applied, never stored
@@ -19,7 +21,7 @@ use kalamu_core::analysis::cited::Evidence;
 use kalamu_core::{
     Correction, DocumentId, DocumentLink, Field, FieldAnswer, FieldKind, FieldValue, Job, JobId,
     LanguageChoice, PieceState, ProjectError, ProjectId, ProviderId, Setup, SetupId, SourceId,
-    StoreError, Task,
+    StoreError, Task, Timestamp,
 };
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
@@ -47,6 +49,13 @@ pub struct ChoiceAnswers {
     pub provider: ProviderId,
     pub model: String,
     pub languages: LanguageChoice,
+    /// The fingerprint of the prompt every analysis of the group froze
+    /// ([`kalamu_core::PromptSnapshot::fingerprint`]): its instructions, its request and its
+    /// fields. A question asked again under a prompt edited since is another group.
+    pub prompt: String,
+    /// When the oldest analysis of the group was made: what tells apart two groups of the same
+    /// question asked under two versions of its prompt.
+    pub first_asked: Timestamp,
     /// The field as the job froze it.
     pub field: Field,
     pub answers: Vec<DocumentAnswer>,
@@ -125,14 +134,18 @@ pub(crate) fn question_of(setup: &Setup) -> Option<String> {
         .map(String::from)
 }
 
-/// Whether two set-ups asked the same question alike: the same question, prompt, provider and
-/// model. Set-ups asked no question are never alike: each analysis stands on its own.
+/// Whether two set-ups asked the same question alike: the same question, preset, provider and
+/// model, and the same prompt as each froze it ([`kalamu_core::PromptSnapshot::fingerprint`]):
+/// a preset edited between two runs keeps its id but not its instructions or its fields, and
+/// answers read under two wordings never stand together. Set-ups asked no question are never
+/// alike: each analysis stands on its own.
 pub(crate) fn alike(a: &Setup, b: &Setup) -> bool {
     question_of(a).is_some()
         && question_of(a) == question_of(b)
         && a.prompt.preset_id == b.prompt.preset_id
         && a.provider == b.provider
         && a.model == b.model
+        && a.prompt.fingerprint() == b.prompt.fingerprint()
 }
 
 /// What a row shows beside a choice's answer: its reason, and the passages quoted.
@@ -237,6 +250,8 @@ impl Projects {
                         .iter_mut()
                         .find(|(g, head)| alike(head, setup) && g.field.key == field.key)
                     {
+                        // Jobs come newest first: this one is the oldest yet.
+                        group.first_asked = job.created_at;
                         for answer in answers {
                             if !group.answers.iter().any(|a| a.document == answer.document) {
                                 group.answers.push(answer);
@@ -254,6 +269,8 @@ impl Projects {
                             provider: setup.provider.clone(),
                             model: setup.model.clone(),
                             languages: job.settings.languages.clone(),
+                            prompt: setup.prompt.fingerprint(),
+                            first_asked: job.created_at,
                             field: field.clone(),
                             answers,
                             unread: Vec::new(),
