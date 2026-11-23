@@ -17,7 +17,7 @@ mod snapshot;
 mod workflow_file;
 mod workflows;
 
-pub use beside::markdown_beside;
+pub use beside::{beside, markdown_beside};
 pub use consolidation::CONSOLIDATION_REQUEST;
 pub use dictionary::DICTIONARY_MERGES;
 pub use pipelines::{Pipeline, PipelineLibrary};

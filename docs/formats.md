@@ -484,8 +484,11 @@ Kalamu had), holding one project's rows only, and three tables of its own.
 - `file_name`: its name as the source records it.
 - `sha256`: its fingerprint, lowercase hexadecimal; the bytes carried match it.
 - `size`: its size in bytes when the source was read.
-- `carried`: `1` when its bytes are in the file; `0` when it was not chosen, could not be found,
-  or changed since it was read.
+- `carried`: `1` when its bytes are in the file; `0` for an original not chosen, not found, or
+  changed since it was read. A frozen text is always `1`: one missing or changed fails the
+  save. A file saved by 1.10.0 may hold a frozen text at `0`; it opens, and the summary after
+  opening names each such text and the jobs that read it
+  ([decision](decisions/2026-11-23-frozen-texts-always-carried.md), [#239](https://github.com/fmadore/Kalamu/issues/239)).
 
 **`kalamu_file_chunks`**: the bytes of each carried file, in chunks of at most 4 MiB:
 `file_id` (its `kalamu_files.id`), `seq` (from 0) and `data`.

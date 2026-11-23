@@ -388,6 +388,9 @@ fn assemble(
         embedder,
         keys,
         grants,
+        exports: Arc::new(crate::exports::ExportLedger::open(
+            data.join("exports.json"),
+        )),
         settings: Mutex::new(settings),
         paths,
         http,

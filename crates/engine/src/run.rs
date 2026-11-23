@@ -168,11 +168,14 @@ impl Engine {
 
             // Timed lines are read back against the lines each passage sent, and quotations
             // looked for in the text, which a batch's collection does not do: they are sent at
-            // once, in economy mode too.
+            // once, in economy mode too: the rule the estimate prices by ([`crate::batched`]).
             let (to_batch, work): (Vec<_>, Vec<_>) = work.into_iter().partition(|(setup, _, _)| {
-                batched.contains(&setup.id)
-                    && lines.is_none()
-                    && !(quotable.is_some() && crate::cited::cites(setup))
+                crate::batched::in_batch(
+                    batched.contains(&setup.id),
+                    job.task,
+                    source,
+                    crate::cited::cites(setup),
+                )
             });
             for (setup, state, key) in to_batch {
                 if stop_requested(&control).is_some() {

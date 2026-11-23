@@ -29,7 +29,12 @@ clean print do not need more.
 - **The cheaper mode.** For a large collection that is not urgent, choose **Cheaper** in New
   job: the job goes to the provider's batch service at half price and is answered within a
   day, often sooner. You can close the app in the meantime; the job is collected when you
-  open it again.
+  open it again. Two kinds of work are still sent at once, at the usual price, because Kalamu
+  checks each answer against the text as it arrives: an analysis that quotes the text (such as
+  screening against a research question, or an interview analysis) and a transcript translated
+  line by line with its times. The estimate counts them at the usual price, and under **Speed
+  and price** New job says which models this applies to; when nothing in the job can go in a
+  batch, **Cheaper** is not offered.
 - **Offline models** cost nothing at all. See [Working offline](offline.md).
 
 ## Where your files go

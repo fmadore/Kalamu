@@ -8,6 +8,7 @@ export type Estimate = { rows: Array<EstimateRow>,
  */
 total_usd: number | null, 
 /**
- * The whole job in economy mode, a model without a batch service at its own price.
+ * The whole job in economy mode: a model without a batch service, and the work the run
+ * sends at once whatever the pace ([`crate::batched`]), at the usual price.
  */
 total_economy_usd: number | null, };
