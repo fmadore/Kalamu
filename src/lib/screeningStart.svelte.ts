@@ -32,6 +32,9 @@ export interface Again {
 	provider: string;
 	model: string;
 	languages: LanguageChoice;
+	/** The fingerprint of the prompt it was asked with, for the dialog to say when the prompt
+	 * has changed since. */
+	prompt: string;
 }
 
 export class Screening {
@@ -82,6 +85,9 @@ export class Screening {
 	tooLong = $state<{ sources: string[]; said: string } | null>(null);
 	error = $state<string | null>(null);
 	busy = $state(false);
+	/** Asked again, the prompt would not be the one the question was asked with: its preset
+	 * was edited since, or the language of the answers changed, so the answers will stand apart. */
+	promptChanged = $state(false);
 
 	readonly catalog = $derived(app.catalog!);
 	readonly rule = $derived(rulesFor(app.rules, 'analysis'));
@@ -122,6 +128,24 @@ export class Screening {
 			this.sources = found.sources;
 		} catch (e) {
 			this.error = describeError(e, messages());
+		}
+	}
+
+	/** Asked again, whether the prompt the job would freeze differs from the one the question
+	 * was first asked with (`promptChanged`). Only for the same question: another one is another
+	 * group anyway. Read synchronously up to the call, so an effect follows the choices. */
+	async checkPrompt(again?: Again): Promise<void> {
+		if (!again || this.question.trim() !== again.question.trim()) {
+			this.promptChanged = false;
+			return;
+		}
+		const job = this.job([]);
+		try {
+			const [frozen] = await api.promptFingerprints(job);
+			this.promptChanged = frozen !== undefined && frozen !== again.prompt;
+		} catch {
+			// A model or prompt the engine refuses: Start says why; nothing to compare.
+			this.promptChanged = false;
 		}
 	}
 

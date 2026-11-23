@@ -452,6 +452,28 @@ A page is drawn by ranking every page nothing flags by the SHA-256 of `<seed>:<i
 identity being `<document id>/<task>/<piece>`, and taking the lowest: the manifest's seed and
 identities are enough to check a draw.
 
+## The screening table
+
+Written by **Export the whole table** in a project's table of documents, while the table is
+filtered by an answer: an Excel workbook and a CSV beside it, with the same columns, one row per
+document the analysis read, in title order, whatever the filter shows. A question asked again of
+documents added since is written with every analysis that asked it alike, a document's newest
+answer counting; one asked under a prompt edited since is a table of its own
+([decision](decisions/2026-11-23-answers-grouped-by-frozen-prompt.md)).
+
+The columns are `document` (its title) and `file`, then one column per field of the analysis
+under the label it froze, a `<field> (reason)` column after each field that asks for a reason
+(a field that quotes the text as its quotations, one per line, with where each stands), then:
+
+- `job_id`: the analysis that gave the row's answer, as `provenance.json` names it;
+- `prompt_fingerprint`: the first twelve characters of the SHA-256 of the prompt that analysis
+  froze (its instructions, the request with the researcher's question, and its fields). The same
+  on every row of one table; two tables with different values were read under different criteria;
+- `tags`: the researcher's tags, joined with `; `.
+
+Cells a model wrote that a spreadsheet would read as a formula start with an apostrophe in the
+CSV.
+
 ## The project file (`.kalamu`)
 
 Written by *Save to a file…* in a project, where the researcher chooses, and read by *Open a

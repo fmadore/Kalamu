@@ -411,7 +411,7 @@ fn manifest_item(job: &Job, revision: Option<&str>) -> kalamu_core::QueueItem {
 }
 
 /// An id of any kind with a fixed value, for golden files.
-fn fixed<T: std::str::FromStr>(n: u8) -> T
+pub(super) fn fixed<T: std::str::FromStr>(n: u8) -> T
 where
     T::Err: std::fmt::Debug,
 {
@@ -568,7 +568,7 @@ fn f_source() -> SourceFile {
 
 /// Compares `actual` with `golden/<name>`; `UPDATE_GOLDEN=1` rewrites the file after an intended
 /// change, for the diff to be reviewed.
-fn golden(name: &str, actual: &str) {
+pub(super) fn golden(name: &str, actual: &str) {
     let path = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("golden")
         .join(name);

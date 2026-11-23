@@ -5,6 +5,7 @@
 	// asked with, over those documents alone; Start then asks what it always asks. Its answers
 	// join the question's in the table (`answered`), the others are not paid for again.
 	import ScreeningDialog from './ScreeningDialog.svelte';
+	import { supersededAt } from '#lib/answerGroups.js';
 	import type { ChoiceAnswers } from '#lib/bindings/ChoiceAnswers.js';
 	import { messages } from '#lib/i18n/index.js';
 	import type { Again } from '#lib/screeningStart.svelte.js';
@@ -20,12 +21,14 @@
 	const m = messages();
 	const t = m.screening;
 
-	/** The questions with documents not read against them, one each (a question's first choice). */
+	/** The questions with documents not read against them, one each (a question's first choice);
+	 * a question asked again since under its prompt edited, only as last asked. */
 	const waiting = $derived(
 		choices.filter(
 			(g, i) =>
 				g.question &&
 				g.unread.length > 0 &&
+				!supersededAt(choices, i) &&
 				choices.findIndex((o) => o.job_id === g.job_id && o.setup_id === g.setup_id) === i
 		)
 	);
@@ -39,7 +42,8 @@
 				presetId: group.preset_id,
 				provider: group.provider,
 				model: group.model,
-				languages: group.languages
+				languages: group.languages,
+				prompt: group.prompt
 			}
 		};
 	}

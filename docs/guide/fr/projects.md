@@ -36,10 +36,14 @@ ont été faites.
   une raison et les passages qui le montrent, chacun retrouvé mot pour mot dans le texte avec
   sa page. Filtrez le tableau selon la réponse, lisez les passages, puis choisissez **Garder**
   ou **Écarter** : votre décision est une étiquette, et la réponse du modèle reste telle
-  quelle. **Exporter tout le tableau** écrit toute la liste pour un tableur. Quand une réponse
-  est choisie dans le filtre, chaque ligne montre sa réponse, la raison et les passages. Si
-  vous ajoutez des documents plus tard, **Poser cette question aux nouveaux documents** ne
-  fait lire que ceux-là.
+  quelle. **Exporter tout le tableau** écrit toute la liste pour un tableur ; ses colonnes
+  `job_id` et `prompt_fingerprint` disent quel traitement a donné chaque réponse et avec quelle
+  version du prompt elle a été lue. Quand une réponse est choisie dans le filtre, chaque ligne
+  montre sa réponse, la raison et les passages. Si vous ajoutez des documents plus tard,
+  **Poser cette question aux nouveaux documents** ne fait lire que ceux-là. Si le prompt a été
+  modifié depuis la première fois, la fenêtre le dit : les nouvelles réponses sont rangées à
+  part des précédentes, et le filtre montre la question deux fois, chacune suivie de « posée la
+  première fois le » et de la date.
 - Quand un document a été lu plusieurs fois, choisissez le résultat auquel vous vous fiez avec
   **Retenir**. La recherche, les exports et les analyses utilisent alors celui-là.
 

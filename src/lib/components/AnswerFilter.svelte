@@ -6,7 +6,8 @@
 	import type { ChoiceAnswers } from '#lib/bindings/ChoiceAnswers.js';
 	import type { Action } from '#lib/action.svelte.js';
 	import { askForFolders, pickTableSave, tableExported } from '#lib/dialogs.js';
-	import { messages } from '#lib/i18n/index.js';
+	import { distinctTitles } from '#lib/answerGroups.js';
+	import { formatDateTime, messages } from '#lib/i18n/index.js';
 	import { answerOptions, chosenAnswer, tableName } from '#lib/screening.js';
 	import { toast } from '#lib/state.svelte.js';
 	import { api } from '#lib/tauri.js';
@@ -29,7 +30,17 @@
 	} = $props();
 	const m = messages();
 
-	const groups = $derived(answerOptions(choices, m));
+	// A question asked under two versions of its prompt is two groups, each named by when it
+	// was first asked (`answerGroups`).
+	const groups = $derived.by(() => {
+		const options = answerOptions(choices, m);
+		const titles = distinctTitles(
+			options.map((g) => g.title),
+			choices,
+			(asked) => m.screening.askedSince(formatDateTime(asked))
+		);
+		return options.map((g, i) => ({ ...g, title: titles[i] }));
+	});
 
 	/** The analysis filtered on, one row per document with the researcher's tags. */
 	async function exportAnswers() {

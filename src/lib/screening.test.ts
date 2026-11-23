@@ -32,6 +32,8 @@ function group(over: Partial<ChoiceAnswers> = {}): ChoiceAnswers {
 		provider: 'gemini',
 		model: 'gemini-4-carbon',
 		languages: { mode: 'auto' },
+		prompt: 'a1b2c3',
+		first_asked: 0,
 		unread: [],
 		field: {
 			key: 'relevance',
