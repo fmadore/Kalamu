@@ -164,6 +164,35 @@ fn output_names_are_fixed() {
         ]
     );
 
+    // A source whose own name is another's number is numbered again (#238), whichever comes
+    // first.
+    let template = f.pdf("template.pdf", 1);
+    let job = job_of(
+        &f,
+        extraction,
+        &["fake-model"],
+        vec![
+            at(&f, &template, "janvier", "scan.pdf"),
+            at(&f, &template, "janvier", "scan.tif"),
+            at(&f, &template, "janvier", "scan (2).pdf"),
+            at(&f, &template, "février", "Scan (3).pdf"),
+            at(&f, &template, "février", "scan.pdf"),
+            at(&f, &template, "février", "scan.tif"),
+        ],
+        Some("out"),
+    );
+    assert_eq!(
+        names(&f, &job),
+        [
+            "out/scan",
+            "out/scan (2)",
+            "out/scan (2) (2)",
+            "out/Scan (3)",
+            "out/scan (4)",
+            "out/scan (5)",
+        ]
+    );
+
     // Each task's own ending, after the number.
     for (task, ending) in [
         (Task::Analysis, ".analysis"),
@@ -193,6 +222,139 @@ fn listed(folder: &Path) -> Vec<String> {
         .unwrap_or_default();
     names.sort();
     names
+}
+
+/// Three PDFs whose names meet once numbered, as Windows names copies (#238): `scan.pdf` and
+/// another `scan.pdf` from another folder, which becomes `scan (2)`, and `scan (2).pdf`, whose
+/// own name that is. Each has its own number of pages, so its text and fingerprint are its own.
+fn clashing(f: &Fixture) -> Vec<SourceFile> {
+    [
+        ("a", "scan.pdf", 1),
+        ("b", "scan.pdf", 2),
+        ("a", "scan (2).pdf", 3),
+    ]
+    .into_iter()
+    .map(|(folder, name, pages)| {
+        let dir = f.dir.path().join(folder);
+        std::fs::create_dir_all(&dir).unwrap_or_else(|e| panic!("{e}"));
+        let path = dir.join(name);
+        let bytes = kalamu_media::sample_pdf(&vec![(595.0, 842.0); pages], false);
+        std::fs::write(&path, bytes).unwrap_or_else(|e| panic!("{e}"));
+        kalamu_media::inspect(&path, None).unwrap_or_else(|e| panic!("{e}"))
+    })
+    .collect()
+}
+
+/// A job reading `sources` into `out`, as text and JSON.
+fn job_into(f: &Fixture, sources: &[SourceFile], out: &Path) -> Job {
+    f.engine
+        .create_job(NewJob {
+            name: "Scans".into(),
+            task: Task::TextExtraction,
+            sources: sources.to_vec(),
+            setups: vec![SetupRequest {
+                provider: ProviderId::new("fake"),
+                model: "fake-model".into(),
+                preset_id: None,
+                label: None,
+                options: Default::default(),
+                merge: None,
+            }],
+            settings: Default::default(),
+            output: OutputSettings {
+                formats: vec![ExportFormat::Txt, ExportFormat::Json],
+                destination: OutputDestination::Folder(out.display().to_string()),
+                ..Default::default()
+            },
+        })
+        .unwrap_or_else(|e| panic!("{e}"))
+}
+
+/// The bases [`clashing`]'s sources write under, in their order.
+const CLASHING: [&str; 3] = ["scan", "scan (2)", "scan (2) (2)"];
+
+/// What `out` must hold for [`clashing`]'s sources: under each base, a text, a JSON and a
+/// `provenance.json` of that source's own results, its text running to its last page and no
+/// further, its provenance naming its fingerprint and its pages.
+fn holds_each_its_own(out: &Path, sources: &[SourceFile]) {
+    let mut expected: Vec<String> = CLASHING
+        .iter()
+        .flat_map(|base| ["json", "provenance.json", "txt"].map(|ext| format!("{base}.{ext}")))
+        .collect();
+    expected.sort();
+    assert_eq!(listed(out), expected);
+    let read = |name: String| {
+        std::fs::read_to_string(out.join(&name)).unwrap_or_else(|e| panic!("{name}: {e}"))
+    };
+    for (base, source) in CLASHING.iter().zip(sources) {
+        let pages = source.page_count.unwrap_or_default();
+        let last = format!("fake-model page {pages}");
+        let beyond = format!("fake-model page {}", pages + 1);
+        for ext in ["txt", "json"] {
+            let text = read(format!("{base}.{ext}"));
+            assert!(
+                text.contains(&last) && !text.contains(&beyond),
+                "{base}.{ext} holds another source's text: {text}"
+            );
+        }
+        let provenance: serde_json::Value =
+            serde_json::from_str(&read(format!("{base}.provenance.json")))
+                .unwrap_or_else(|e| panic!("{e}"));
+        assert_eq!(
+            provenance["source"]["sha256"].as_str(),
+            Some(source.sha256.as_str()),
+            "{base}.provenance.json describes another source"
+        );
+        assert_eq!(provenance["pieces"].as_u64(), Some(u64::from(pages)));
+    }
+}
+
+#[tokio::test]
+async fn sources_whose_names_meet_once_numbered_each_write_their_own_files() {
+    let f = fixture();
+    let sources = clashing(&f);
+    let out = f.dir.path().join("out");
+    let job = job_into(&f, &sources, &out);
+    assert_eq!(f.run(job.id).await, JobStatus::Completed);
+    holds_each_its_own(&out, &sources);
+
+    // Written again, as after a correction, each source's files keep their names and content.
+    for source in &job.sources {
+        f.engine
+            .write_outputs(&job, job.setups[0].id, source.id)
+            .unwrap_or_else(|e| panic!("{e}"));
+    }
+    holds_each_its_own(&out, &sources);
+    // The list of the job's files names each once.
+    let outputs = f.engine.outputs(job.id).unwrap_or_default();
+    assert_eq!(outputs.len(), 9);
+}
+
+#[tokio::test]
+async fn a_job_with_names_that_meet_resumed_half_way_names_its_files_as_one_run_through() {
+    let f = fixture();
+    let sources = clashing(&f);
+    // Stopped after its first source, as by a crash: its files written, the two others' pages
+    // in flight. Its files go, and the resumed run writes them all under the same names.
+    let out = f.dir.path().join("resumed");
+    let job = job_into(&f, &sources, &out);
+    assert_eq!(f.run(job.id).await, JobStatus::Completed);
+    holds_each_its_own(&out, &sources);
+    std::fs::remove_dir_all(&out).unwrap_or_else(|e| panic!("{e}"));
+    for mut piece in f.store.pieces(job.id).unwrap_or_default() {
+        if piece.source_id != job.sources[0].id {
+            piece.status = PieceStatus::Running;
+            f.store
+                .upsert_piece(&piece)
+                .unwrap_or_else(|e| panic!("{e}"));
+        }
+    }
+    f.store
+        .set_job_status(job.id, JobStatus::Running)
+        .unwrap_or_else(|e| panic!("{e}"));
+    assert_eq!(f.engine.recover().unwrap_or_default(), vec![job.id]);
+    assert_eq!(f.run(job.id).await, JobStatus::Completed);
+    holds_each_its_own(&out, &sources);
 }
 
 #[tokio::test]

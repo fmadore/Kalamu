@@ -4,6 +4,7 @@
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
+use kalamu_core::file_names::FolderNames;
 use kalamu_core::{
     ExportError, ExportFormat, Job, JobId, OutputDestination, PieceRef, PieceState, PieceStatus,
     ProgressEvent, Setup, SetupId, SourceFile, SourceId, Task,
@@ -380,9 +381,11 @@ fn write_provenance(
 ///
 /// Two sources that would share a name in one folder (`scan.pdf` and `scan.tif`, or two
 /// `scan.pdf` from different folders sent to one) would write over each other's files: the later
-/// ones in the job are numbered, `scan (2)`, as Windows names copies. Windows ignores case, so
-/// the comparison does too. The names follow the job's order of sources alone, so a job resumed
-/// or exported again names its files as the run that first wrote them.
+/// ones in the job are numbered, `scan (2)`, as Windows names copies. The numbered name is kept
+/// too, so a later source whose own name is `scan (2)` is numbered again, `scan (2) (2)` (#238).
+/// Windows ignores case, so the comparison does too ([`FolderNames`]). The names follow the
+/// job's order of sources alone, so a job resumed or exported again names its files as the run
+/// that first wrote them.
 pub(crate) struct OutputNames {
     stems: HashMap<SourceId, (PathBuf, String)>,
 }
@@ -399,20 +402,9 @@ impl OutputNames {
     }
 
     fn through(job: &Job, last: Option<SourceId>) -> Self {
-        let mut seen: HashMap<(String, String), usize> = HashMap::new();
-        let mut stems = HashMap::with_capacity(job.sources.len());
-        for source in &job.sources {
-            let (dir, stem) = place(job, source);
-            let earlier = seen.entry(name_key(&dir, &stem)).or_insert(0);
-            let stem = numbered(stem, *earlier);
-            *earlier += 1;
-            // A source listed twice keeps the name of its first place.
-            stems.entry(source.id).or_insert((dir, stem));
-            if last == Some(source.id) {
-                break;
-            }
+        Self {
+            stems: given(job, last).0,
         }
-        Self { stems }
     }
 
     /// Where a source's results go and the name they share: its name in the job, with the
@@ -428,19 +420,12 @@ impl OutputNames {
     ) -> (PathBuf, String) {
         let (dir, stem) = match self.stems.get(&source.id) {
             Some((dir, stem)) => (dir.clone(), stem.clone()),
-            // A source the job does not list: numbered after every source of its name.
+            // A source the job does not list: given a name after every source of the job.
             None => {
                 let (dir, stem) = place(job, source);
-                let mine = name_key(&dir, &stem);
-                let earlier = job
-                    .sources
-                    .iter()
-                    .filter(|s| {
-                        let (d, s) = place(job, s);
-                        name_key(&d, &s) == mine
-                    })
-                    .count();
-                (dir, numbered(stem, earlier))
+                let (_, mut folders) = given(job, None);
+                let stem = folders.entry(folder_key(&dir)).or_default().give(&stem, "");
+                (dir, stem)
             }
         };
         let mut base = if job.is_comparison() || job.output.labelled {
@@ -477,18 +462,37 @@ impl OutputNames {
     }
 }
 
-/// Two names meet when their folder and name are the same but for case.
-fn name_key(dir: &Path, stem: &str) -> (String, String) {
-    (dir.to_string_lossy().to_lowercase(), stem.to_lowercase())
+/// The folder and name each of the job's sources takes, up to `last`, and the names given in
+/// each folder. Every place of a source listed twice takes a name, as it always did, so the
+/// names after it stay those the job first wrote; the source keeps the name of its first place.
+fn given(
+    job: &Job,
+    last: Option<SourceId>,
+) -> (
+    HashMap<SourceId, (PathBuf, String)>,
+    HashMap<String, FolderNames>,
+) {
+    let mut folders: HashMap<String, FolderNames> = HashMap::new();
+    let mut stems = HashMap::with_capacity(job.sources.len());
+    for source in &job.sources {
+        let (dir, stem) = place(job, source);
+        let stem = folders.entry(folder_key(&dir)).or_default().give(&stem, "");
+        stems.entry(source.id).or_insert((dir, stem));
+        if last == Some(source.id) {
+            break;
+        }
+    }
+    (stems, folders)
 }
 
-/// The name, numbered after the earlier sources of the same name: `scan`, `scan (2)`.
-fn numbered(stem: String, earlier: usize) -> String {
-    if earlier > 0 {
-        format!("{stem} ({})", earlier + 1)
-    } else {
-        stem
-    }
+/// Two folders are one when they are the same but for case.
+fn folder_key(dir: &Path) -> String {
+    dir.to_string_lossy().to_lowercase()
+}
+
+/// Two names meet when their folder and name are the same but for case.
+fn name_key(dir: &Path, stem: &str) -> (String, String) {
+    (folder_key(dir), stem.to_lowercase())
 }
 
 /// The folder a source's results go to, and the name they start from: the source's own.

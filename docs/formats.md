@@ -4,7 +4,8 @@ Every result is written from the job database, with the user's corrections appli
 formats chosen for the job. Each source also gets a `provenance.json`. In comparison mode, file
 names carry the set-up's label: `letter.gemini-3.8-flash.txt`. Two sources that would share a
 name in one folder (`scan.pdf` and `scan.tif`, or two `scan.pdf` sent to one folder) keep apart:
-the later ones in the job are numbered, `scan (2).txt`, regardless of case.
+the later ones in the job are numbered, `scan (2).txt`, regardless of case. A numbered name is
+kept too: a later `scan (2).pdf` in the same folder becomes `scan (2) (2).txt`.
 
 Images read as the pages of one document ([#52](https://github.com/fmadore/Kalamu/issues/52))
 give one result, as a PDF does: one `.txt`, `.md`, `.docx`, `.json`, `.xlsx` and `.csv`, its pages
@@ -515,6 +516,7 @@ Every other table of the schema is there and empty: workflow runs, batches, the 
 out of date, the search by meaning's model and costs. No key, setting, prompt library or
 derived index is in the file. Opened, every identifier is given a new one and the project
 comes in beside the others; the carried originals are written into the data folder's
-`originals/<project id>/`, a folder for each folder they shared, and the paths that named them
-pointed there. Nothing outside Kalamu should rely on more than the manifest and the files'
+`originals/<project id>/`, a folder for each folder they shared, each under its own name made
+safe for this system (one an earlier file of its folder took, regardless of case, numbered:
+`draft_ (2).pdf`), and the paths that named them pointed there. Nothing outside Kalamu should rely on more than the manifest and the files'
 tables.

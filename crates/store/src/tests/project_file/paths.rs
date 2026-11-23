@@ -78,3 +78,83 @@ fn a_file_saved_on_a_mac_opens_with_windows_paths() -> Result<(), ProjectFileErr
     opened_from("/Users/ama/Archives/lettre 1.pdf", true)?;
     opened_from("/Users/ama/Archives/lettre 1.pdf", false)
 }
+
+/// The letter and a second document of the same folder saved as written at `first` and
+/// `second` on the other computer, whose names are one once cleaned for this one, then opened:
+/// each document must point to a file of its own bytes (#238). Returns the two files' names.
+fn two_originals_named(first: &str, second: &str) -> Result<(String, String), ProjectFileError> {
+    let f = fixture()?;
+    let draft = f.dir.path().join("Archives").join("lettre 2.pdf");
+    let source = file_source(&draft, b"%PDF-1.4 a draft of 1916")?;
+    f.store
+        .put_document(&document(f.project, "Draft of 1916", source))?;
+    let path = f.saved(true)?;
+    written_elsewhere(&path, &f.letter.display().to_string(), first)?;
+    written_elsewhere(&path, &draft.display().to_string(), second)?;
+
+    let there = SqliteStore::in_memory()?;
+    let opened = opened(&f, &there, &path, "there")?;
+    assert_eq!(opened.originals, 2);
+    let documents = there.documents(opened.project_id)?;
+    let path_of = |title: &str| -> Result<PathBuf, ProjectFileError> {
+        documents
+            .iter()
+            .find(|d| d.title == title)
+            .map(|d| PathBuf::from(&d.source.path))
+            .ok_or(ProjectFileError::Store(StoreError::NotFound))
+    };
+    let (letter, draft) = (path_of("Letter of 1915")?, path_of("Draft of 1916")?);
+    let folder = f
+        .places("there")
+        .originals
+        .join(opened.project_id.to_string())
+        .join("Archives");
+    assert_eq!(letter.parent(), Some(folder.as_path()));
+    assert_eq!(draft.parent(), Some(folder.as_path()));
+    assert_eq!(
+        std::fs::read(&letter).map_err(corrupt)?,
+        b"%PDF-1.4 a letter of 1915"
+    );
+    assert_eq!(
+        std::fs::read(&draft).map_err(corrupt)?,
+        b"%PDF-1.4 a draft of 1916"
+    );
+    // The job that read the letter reads it where it was written.
+    let job = there.job(there.links(opened.project_id)?[0].job_id)?;
+    assert_eq!(PathBuf::from(&job.sources[0].path), letter);
+    let name = |p: &Path| {
+        p.file_name()
+            .map(|n| n.to_string_lossy().into_owned())
+            .unwrap_or_default()
+    };
+    Ok((name(&letter), name(&draft)))
+}
+
+#[test]
+fn two_originals_whose_names_meet_once_cleaned_are_both_kept() -> Result<(), ProjectFileError> {
+    // A name Windows refuses, cleaned to the other's.
+    assert_eq!(
+        two_originals_named(
+            "/Users/ama/Archives/draft?.pdf",
+            "/Users/ama/Archives/draft_.pdf"
+        )?,
+        ("draft_.pdf".into(), "draft_ (2).pdf".into())
+    );
+    // Names apart only by case, as a case-sensitive volume allows.
+    assert_eq!(
+        two_originals_named(
+            "/Users/ama/Archives/Draft.pdf",
+            "/Users/ama/Archives/draft.pdf"
+        )?,
+        ("Draft.pdf".into(), "draft (2).pdf".into())
+    );
+    // Names apart only by a trailing space or dot, which neither system keeps.
+    assert_eq!(
+        two_originals_named(
+            "/Users/ama/Archives/draft.pdf ",
+            "/Users/ama/Archives/draft.pdf."
+        )?,
+        ("draft.pdf".into(), "draft (2).pdf".into())
+    );
+    Ok(())
+}

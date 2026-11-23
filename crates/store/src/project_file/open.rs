@@ -6,6 +6,7 @@
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::path::{Path, PathBuf};
 
+use kalamu_core::file_names::FolderNames;
 use kalamu_core::project_file::{self as pf, ArchivePlaces, Manifest};
 use kalamu_core::{
     JobId, JobStatus, ProjectFileError, ProjectFileOpened, ProjectFileProgress, ProjectId,
@@ -162,8 +163,9 @@ pub(super) fn open(
 
 /// Writes the files the project file carries: frozen texts into the snapshots folder, named by
 /// their content and never rewritten; originals into a folder of this project, a folder for
-/// each folder they shared, each under its own name. Records the new paths; returns how many
-/// originals were written.
+/// each folder they shared, each under its own name, numbered when an earlier original of its
+/// folder took that name once cleaned (`draft?.pdf` and `draft_.pdf`, or names apart only by
+/// case: `draft_ (2).pdf`). Records the new paths; returns how many originals were written.
 fn write_carried(
     file: &Connection,
     places: &ArchivePlaces,
@@ -179,6 +181,7 @@ fn write_carried(
     let root = places.originals.join(project.to_string());
     let mut folders: HashMap<String, PathBuf> = HashMap::new();
     let mut taken: HashSet<String> = HashSet::new();
+    let mut names: HashMap<PathBuf, FolderNames> = HashMap::new();
     let mut originals = 0;
     for c in &carried {
         let to = if c.role == ROLE_SNAPSHOT {
@@ -186,8 +189,15 @@ fn write_carried(
                 .snapshots
                 .join(pf::portable_name(pf::last_part(&c.path), &c.sha256))
         } else {
-            folder_for(&root, &c.path, &mut folders, &mut taken)
-                .join(pf::portable_name(pf::last_part(&c.path), &fallback_name(c)))
+            let folder = folder_for(&root, &c.path, &mut folders, &mut taken);
+            let name = names
+                .entry(folder.clone())
+                .or_default()
+                .give_file(&pf::portable_name(
+                    pf::last_part(&c.path),
+                    &fallback_name(c),
+                ));
+            folder.join(name)
         };
         if c.role == ROLE_SNAPSHOT && to.is_file() {
             // The same text frozen here already: one file, never rewritten.
