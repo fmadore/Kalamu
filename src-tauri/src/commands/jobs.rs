@@ -432,6 +432,13 @@ pub fn create_job(state: State<'_, AppState>, job: NewJob) -> CmdResult<Job> {
     Ok(state.engine.create_job(job)?)
 }
 
+/// The fingerprint of the prompt each set-up of a job would freeze, nothing created or sent: a
+/// question asked again compares it with the one it was first asked with.
+#[tauri::command]
+pub fn prompt_fingerprints(state: State<'_, AppState>, job: NewJob) -> CmdResult<Vec<String>> {
+    Ok(state.engine.prompt_fingerprints(&job)?)
+}
+
 // `async`, like every command that starts the engine: Tauri runs other commands on the main
 // thread, outside the Tokio runtime the job is spawned on.
 #[tauri::command]

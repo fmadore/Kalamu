@@ -52,6 +52,12 @@
 		}
 	);
 
+	// Asked again: whether the prompt has changed since the question was asked, followed as the
+	// model, the languages or the question change.
+	$effect(() => {
+		void s.checkPrompt(again);
+	});
+
 	async function start() {
 		if (await s.start(project)) onclose();
 	}
@@ -98,6 +104,9 @@
 				{t.cost(formatUsd(s.cost))}
 			</span>{/if}
 	</p>
+	{#if s.promptChanged}
+		<p class="notice" role="status">{t.promptChanged}</p>
+	{/if}
 	{#if !s.keyed}
 		<p class="notice" role="status">
 			{m.newJob.noKey(s.providerName)}

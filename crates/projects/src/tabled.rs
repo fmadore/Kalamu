@@ -2,7 +2,10 @@
 //! document, with the researcher's tags beside the model's answers (the screening table of
 //! #51). An analysis whose question was asked again of documents added since is written with
 //! the answers of every analysis that asked it alike, a document's newest answer counting, as
-//! the table of documents shows them (`answered`).
+//! the table of documents shows them (`answered`); one asked under a prompt edited since is
+//! never written with them (#241).
+
+use std::collections::HashSet;
 
 use kalamu_core::analysis::cited;
 use kalamu_core::{
@@ -17,9 +20,11 @@ impl Projects {
     /// One analysis's answers over the project's documents as a table for a spreadsheet: the
     /// document's title and file, each of its fields under the label the job froze (a choice's
     /// reason beside it when it asks for one, a field that cites the text as its quotations
-    /// with where each stands), then the researcher's tags. One row per document it read, in
-    /// title order, with the documents the same question was asked of again; a document none
-    /// could read is left out. Guarded: the cells hold what a model wrote.
+    /// with where each stands), the analysis that gave the row's answer (`job_id`) and the
+    /// prompt it froze (`prompt_fingerprint`), then the researcher's tags. One row per document
+    /// it read, in title order, with the documents the same question was asked of again under
+    /// the same prompt; a document none could read is left out. Guarded: the cells hold what a
+    /// model wrote.
     pub fn answers_table(
         &self,
         project: ProjectId,
@@ -43,9 +48,12 @@ impl Projects {
         documents.sort_by_key(|d| (d.title.to_lowercase(), d.title.clone()));
 
         // The analyses read, newest first: this one, and those that asked its question alike.
+        // Every job looked at is remembered, an analysis or not, so each is read once however
+        // many documents link to it.
         let mut jobs: Vec<Job> = vec![job.clone()];
+        let mut seen: HashSet<JobId> = HashSet::from([job.id]);
         for link in &links {
-            if jobs.iter().any(|j| j.id == link.job_id) {
+            if !seen.insert(link.job_id) {
                 continue;
             }
             match self.jobs.job(link.job_id) {
@@ -62,6 +70,7 @@ impl Projects {
                     read.push((
                         other.id,
                         s.id,
+                        s.prompt.short_fingerprint(),
                         self.jobs.pieces(other.id)?,
                         self.jobs.corrections(other.id)?,
                     ));
@@ -76,12 +85,16 @@ impl Projects {
                 headings.push(format!("{} (reason)", field.label.trim()));
             }
         }
+        // What each row was read under: the analysis that gave its answer, and the prompt
+        // that analysis froze (the same for every row, as runs under another are another table).
+        headings.push("job_id".into());
+        headings.push("prompt_fingerprint".into());
         headings.push("tags".into());
 
         let mut rows = Vec::new();
         for document in &documents {
             let mut found = None;
-            for (job, setup, pieces, corrections) in &read {
+            for (job, setup, prompt, pieces, corrections) in &read {
                 let Some(link) = links
                     .iter()
                     .find(|l| l.document_id == document.id && l.job_id == *job)
@@ -91,11 +104,11 @@ impl Projects {
                 if let Some(answers) =
                     answers_of(self, pieces, corrections, *setup, link.source_id)?
                 {
-                    found = Some(answers);
+                    found = Some((answers, job, prompt));
                     break;
                 }
             }
-            let Some(answers) = found else {
+            let Some((answers, job, prompt)) = found else {
                 continue;
             };
             let mut row = vec![document.title.clone(), document.source.file_name.clone()];
@@ -106,6 +119,8 @@ impl Projects {
                     row.push(answer.and_then(|a| a.reason.clone()).unwrap_or_default());
                 }
             }
+            row.push(job.to_string());
+            row.push(prompt.clone());
             row.push(document.tags.join("; "));
             rows.push(row);
         }

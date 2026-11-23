@@ -14,6 +14,9 @@ import type { NewJob } from '../bindings/NewJob.js';
 
 export const SCREENING_JOB = '00000000-0000-0000-0000-0000000000s1';
 const SCREENING_SETUP = '00000000-0000-0000-0000-0000000000s2';
+/** The fingerprint of the prompt the sample question was asked with, and would be asked again
+ * with: unchanged since (`screening-prompt-changed` says otherwise). */
+const SCREENING_PROMPT = '3f6c0a9e1b2d4c5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6';
 export const SCREENING_QUESTION =
 	'How Catholic and Muslim associations dealt with the colonial administration';
 
@@ -102,6 +105,8 @@ export function screeningChoices(documents: Document[]): ChoiceAnswers[] {
 			provider: 'gemini',
 			model: 'gemini-4-carbon',
 			languages: { mode: 'explicit', languages: ['fr'] },
+			prompt: SCREENING_PROMPT,
+			first_asked: Date.UTC(2026, 10, 12, 14, 5),
 			unread: documents.filter((d) => added(d.title)).map((d) => d.id),
 			field: {
 				key: 'relevance',
@@ -159,6 +164,11 @@ export function screeningCommand(
 			if (asked.setups[0]?.preset_id !== 'analysis.screening') return undefined;
 			window.__kalamuCreated = asked;
 			return analysisJob();
+		}
+		case 'prompt_fingerprints': {
+			const asked = a.job as NewJob;
+			const changed = new URLSearchParams(location.search).has('screening-prompt-changed');
+			return asked.setups.map(() => (changed ? 'edited-since' : SCREENING_PROMPT));
 		}
 		case 'export_answers':
 			window.__kalamuExportedAnswers = a as unknown as Window['__kalamuExportedAnswers'];

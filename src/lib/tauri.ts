@@ -209,6 +209,8 @@ export const api = {
 	inspectLinks: (links: string[]) => invoke<InspectedFile[]>('inspect_links', { links }),
 	estimateCost: (request: EstimateRequest) => invoke<Estimate>('estimate_cost', { request }),
 	createJob: (job: NewJob) => invoke<Job>('create_job', { job }),
+	/** The fingerprint of the prompt each set-up would freeze, nothing created. */
+	promptFingerprints: (job: NewJob) => invoke<string[]>('prompt_fingerprints', { job }),
 	startJob: (id: string) => invoke<void>('start_job', { id }),
 	/** After a sample (#215): every page with one of its set-ups, the pages it read from the
 	 * cache; and another model on its pages. Each job is made, not started. */
