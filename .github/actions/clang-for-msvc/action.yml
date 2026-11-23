@@ -1,12 +1,13 @@
 name: A Clang the image's standard library accepts
 description: >
   The Windows x64 image's standard library (MSVC 14.52, from 16 November 2026) refuses a Clang
-  older than 22, and the image still ships 20. This installs LLVM 22.1.8 from LLVM's own release
-  on GitHub, checked against its SHA-256, where the image's Clang is older; nothing is done once
-  the image's own is new enough. It replaces `choco upgrade llvm`: Chocolatey's community feed
-  refused CI's requests on 23 November 2026 and choco still exited 0, so the build went on with
-  Clang 20 and failed deep inside whisper.cpp. The step now fails here, saying why. Callers run
-  it on Windows x64 only; ARM64's image is another.
+  older than 22, and the image still ships 20. Where the image's Clang is older, this puts LLVM's
+  latest release in its place, in C:\Program Files\LLVM, so clang-cl and libclang stay where the
+  build looks for them. It replaced `choco upgrade llvm`: Chocolatey's community feed refused
+  CI's requests on 23 November 2026, choco still exited 0, and the build went on with Clang 20 to
+  fail deep inside whisper.cpp. From LLVM 23 the Windows release has no .exe installer, only an
+  MSI and archives; the archive is used, unpacked with the image's 7-Zip, so no installer decides
+  where anything goes. Callers run it on Windows x64 only; ARM64's image is another.
 
 runs:
   using: composite
@@ -14,10 +15,12 @@ runs:
     - name: A Clang the image's standard library accepts
       shell: pwsh
       env:
-        LLVM_VERSION: 22.1.8
-        LLVM_SHA256: 16e5709785fef73c854646241c4a92c5cd574318d1b33c63330dd7721903e55c
+        # LLVM's latest release (17 November 2026) and the SHA-256 GitHub gives for its archive.
+        LLVM_VERSION: 23.1.6
+        LLVM_SHA256: 16af05919cf36958dfb4ddaa4fc4d9d4ff577f5daeb76bc112ea49cd8ced82b2
       run: |
-        $clang = 'C:\Program Files\LLVM\bin\clang-cl.exe'
+        $llvm = 'C:\Program Files\LLVM'
+        $clang = Join-Path $llvm 'bin\clang-cl.exe'
         function Get-ClangMajor {
           if ((Test-Path $clang) -and ((& $clang --version | Out-String) -match 'version (\d+)')) { return [int]$Matches[1] }
           return 0
@@ -26,12 +29,12 @@ runs:
         "clang-cl $major"
         if ($major -ge 22) { return }
 
-        $name = "LLVM-$env:LLVM_VERSION-win64.exe"
-        $url = "https://github.com/llvm/llvm-project/releases/download/llvmorg-$env:LLVM_VERSION/$name"
-        $installer = Join-Path $env:RUNNER_TEMP $name
+        $name = "clang+llvm-$env:LLVM_VERSION-x86_64-pc-windows-msvc"
+        $url = "https://github.com/llvm/llvm-project/releases/download/llvmorg-$env:LLVM_VERSION/$name.tar.xz"
+        $archive = Join-Path $env:RUNNER_TEMP "$name.tar.xz"
         for ($try = 1; $try -le 3; $try++) {
           try {
-            Invoke-WebRequest -Uri $url -OutFile $installer -UseBasicParsing
+            Invoke-WebRequest -Uri $url -OutFile $archive -UseBasicParsing
             break
           } catch {
             if ($try -eq 3) { throw "LLVM $env:LLVM_VERSION could not be downloaded from $url : $_" }
@@ -39,15 +42,30 @@ runs:
             Start-Sleep -Seconds (10 * $try)
           }
         }
-        $hash = (Get-FileHash -Algorithm SHA256 $installer).Hash.ToLowerInvariant()
-        if ($hash -ne $env:LLVM_SHA256) { throw "$name has SHA-256 $hash, not the release's $env:LLVM_SHA256." }
+        $hash = (Get-FileHash -Algorithm SHA256 $archive).Hash.ToLowerInvariant()
+        if ($hash -ne $env:LLVM_SHA256) { throw "$name.tar.xz has SHA-256 $hash, not the release's $env:LLVM_SHA256." }
 
-        # The NSIS installer, silent, into C:\Program Files\LLVM over the image's own: what
-        # Chocolatey's llvm package ran.
-        $process = Start-Process -FilePath $installer -ArgumentList '/S' -Wait -PassThru
-        if ($process.ExitCode -ne 0) { throw "The LLVM installer exited with code $($process.ExitCode)." }
-        Remove-Item $installer
+        # 7-Zip in two steps, the .xz then the .tar: no pipe between native programs to trust.
+        # The runner's temporary folder is on D:, and a folder cannot be moved across drives: the
+        # .tar is unpacked on C:, beside where it goes.
+        $sevenZip = 'C:\Program Files\7-Zip\7z.exe'
+        $unpacked = Join-Path $env:SystemDrive 'llvm-unpacked'
+        & $sevenZip x $archive "-o$env:RUNNER_TEMP" -y -bso0 -bsp0
+        if ($LASTEXITCODE -ne 0) { throw "7-Zip could not unpack $name.tar.xz (exit code $LASTEXITCODE)." }
+        $tar = Join-Path $env:RUNNER_TEMP "$name.tar"
+        & $sevenZip x $tar "-o$unpacked" -y -bso0 -bsp0
+        if ($LASTEXITCODE -ne 0) { throw "7-Zip could not unpack $name.tar (exit code $LASTEXITCODE)." }
+        Remove-Item $archive, $tar
+
+        # The archive holds one folder, named after it: it takes the place of the image's LLVM.
+        $root = Get-ChildItem $unpacked -Directory | Select-Object -First 1
+        foreach ($file in 'bin\clang-cl.exe', 'bin\libclang.dll') {
+          if (-not (Test-Path (Join-Path $root.FullName $file))) { throw "LLVM's archive has no $file under $($root.Name)." }
+        }
+        if (Test-Path $llvm) { Remove-Item $llvm -Recurse -Force }
+        Move-Item $root.FullName $llvm
+        Remove-Item $unpacked -Recurse -Force
 
         $major = Get-ClangMajor
         & $clang --version
-        if ($major -lt 22) { throw "clang-cl is still version $major after installing LLVM $env:LLVM_VERSION." }
+        if ($major -lt 22) { throw "clang-cl is still version $major after unpacking LLVM $env:LLVM_VERSION." }
