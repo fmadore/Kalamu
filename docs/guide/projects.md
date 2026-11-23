@@ -59,17 +59,35 @@ shows how large the file will be before it writes it.
 ![Save this project to a file: what the file holds, what it never holds, and its size](images/en/project-file.png)
 *What goes into a project file, and what never does.*
 
+Before the file is finished, Kalamu checks each file it puts in against the fingerprint taken
+when it was read. When an analysis, a translation or a correction read the corrected text of
+an earlier result, Kalamu kept that text as it was then; if one of these texts is no longer in
+Kalamu's data folder, or has changed since, the save stops and says which document and which
+job it concerns. Nothing is written in that case: a file you saved earlier under the same name
+stays as it was. An original file that cannot be found, or has changed, is simply left out, and
+the dialog says how many.
+
 On the other computer, Windows or Mac, choose **Open a project file…** in the list of
 projects. It opens as a new project beside the others: nothing you already have is changed.
 Anyone who has the file can read everything in it, so look after it as you do the documents.
+A file saved by Kalamu 1.10.0 may lack one of these corrected texts: it still opens, and the
+message shown after opening names each text missing and the jobs that read it. Their results
+are kept, but the text they read is not there.
 
 ## Describe your sources
 
 Each document can be described as an archive would describe it: repository, fonds, shelfmark,
 creator, date, citation, rights. What all the documents of a project share is given once for
-the project. **Export descriptions** writes them as CSV or JSON, in Kalamu's columns or in
-columns of your own that you can save for the next project, beside each document's corrected
-text, review status or analysis answers.
+the project. **Export descriptions** writes them as three files under the name you choose: a
+JSON file (`name.json`), a spreadsheet for Excel (`name.xlsx`) and a CSV (`name.csv`), in
+Kalamu's columns or in columns of your own that you can save for the next project, beside each
+document's corrected text, review status or analysis answers.
+
+Only the JSON file's name is asked about. If a spreadsheet or a CSV of yours already has that
+name in the folder, Kalamu leaves it as it is, writes the table as `name (2).xlsx` and
+`name (2).csv`, and tells you so. Files from an earlier export of Kalamu that you have not
+changed since are simply replaced. **Export the whole table**, **Export the list** and the
+dictionary's export keep your files in the same way.
 
 ## Search a project
 

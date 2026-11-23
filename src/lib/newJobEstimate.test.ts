@@ -5,7 +5,7 @@ import type { Estimate } from './bindings/Estimate.js';
 import type { EstimateRow } from './bindings/EstimateRow.js';
 import type { TextTooLong } from './bindings/TextTooLong.js';
 import { en, fr } from './i18n/index.js';
-import { tooLongOf } from './newJobEstimate.svelte.js';
+import { notBatchedOf, tooLongOf } from './newJobEstimate.svelte.js';
 
 const catalog = JSON.parse(readFileSync('crates/catalog/catalog.json', 'utf8')) as Catalog;
 
@@ -64,5 +64,57 @@ describe('a text too long for a model chosen in New job', () => {
 			row('local-llm', 'gemma-4-e2b', [long('a.txt')])
 		);
 		expect(tooLongOf(second, catalog, en)).toContain('too long for Gemma 4 E2B:');
+	});
+});
+
+// #242: a screening, a timed translation, and a model without a batch service, in economy mode.
+describe('the models that get no discount in economy mode', () => {
+	const priced = (
+		provider: string,
+		model: string,
+		economy: number | null,
+		more: Partial<EstimateRow> = {}
+	): EstimateRow => ({
+		...row(provider, model),
+		estimate: { usd: 0.2, economy_usd: economy },
+		...more
+	});
+
+	it('says nothing when every model is discounted', () => {
+		expect(notBatchedOf([priced('gemini', 'gemini-4-hydrogen', 0.1)], catalog, en)).toEqual([]);
+	});
+
+	it('says an analysis that quotes the text is sent at once, though the model batches', () => {
+		const rows = [
+			priced('gemini', 'gemini-4-hydrogen', null, { at_once: 'quotes' }),
+			priced('local-llm', 'gemma-4-e2b', null)
+		];
+		expect(notBatchedOf(rows, catalog, en)).toEqual([
+			'Gemma 4 E2B has no batch service in Kalamu and still runs page by page, at its usual price.',
+			'With Gemini 4 Hydrogen, an analysis that quotes the text is sent at once, at the usual price, so that Kalamu can check each quotation against the text.'
+		]);
+		expect(notBatchedOf(rows, catalog, fr)[1]).toBe(
+			'Avec Gemini 4 Hydrogen, une analyse qui cite le texte est envoyée tout de suite, au prix habituel, pour que Kalamu puisse retrouver chaque citation dans le texte.'
+		);
+	});
+
+	it('says a transcript translated line by line is sent at once', () => {
+		const rows = [priced('gemini', 'gemini-4-hydrogen', null, { at_once: 'timed_lines' })];
+		expect(notBatchedOf(rows, catalog, en)).toEqual([
+			'With Gemini 4 Hydrogen, a transcript translated line by line is sent at once, at the usual price, so that Kalamu can check that no line is missing.'
+		]);
+		expect(notBatchedOf(rows, catalog, fr)[0]).toContain('qu’aucune ligne ne manque');
+	});
+
+	it('does not name a model for the step after the others, nor twice', () => {
+		const rows = [
+			priced('gemini', 'gemini-4-hydrogen', 0.1),
+			priced('gemini', 'gemini-4-hydrogen', null, { merge: true }),
+			priced('local-llm', 'gemma-4-e2b', null),
+			priced('local-llm', 'gemma-4-e2b', null)
+		];
+		expect(notBatchedOf(rows, catalog, en)).toEqual([
+			'Gemma 4 E2B has no batch service in Kalamu and still runs page by page, at its usual price.'
+		]);
 	});
 });

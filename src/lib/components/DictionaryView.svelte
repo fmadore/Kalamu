@@ -22,7 +22,7 @@
 	import { Paging, rowIndex } from '#lib/paging.svelte.js';
 	import { Selection } from '#lib/selection.svelte.js';
 	import { toast } from '#lib/state.svelte.js';
-	import { askForFolders, pickJsonSave } from '#lib/dialogs.js';
+	import { askForFolders, pickJsonSave, tableExported } from '#lib/dialogs.js';
 	import { api } from '#lib/tauri.js';
 
 	let {
@@ -142,8 +142,8 @@
 		try {
 			// The CSV goes beside the JSON: in the Mac App Store's build, its folder is asked for.
 			if (!(await askForFolders([path]))) return;
-			await api.exportDictionary(projectId, path);
-			toast(m.dictionary.exported);
+			const renamed = await api.exportDictionary(projectId, path);
+			toast(tableExported(m.dictionary.exported, renamed));
 		} catch (e) {
 			action.fail(e);
 		}

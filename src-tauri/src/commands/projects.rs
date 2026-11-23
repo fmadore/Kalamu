@@ -235,9 +235,10 @@ pub fn rename_tag(
     Ok(state.projects.rename_tag(project, &from, &to)?)
 }
 
-/// Writes the documents' descriptions where the researcher chose, as `.json`, `.xlsx` and `.csv`:
-/// every part with where it came from, or the columns of a saved export profile. Off the
-/// window's thread, since it reads every document of the project.
+/// Writes the documents' descriptions where the researcher chose, as `.json`, with `.xlsx` and
+/// `.csv` beside it: every part with where it came from, or the columns of a saved export
+/// profile. Off the window's thread, since it reads every document of the project. Returns the
+/// files written under another name than the JSON's ([`super::write_table`]).
 #[tauri::command]
 pub async fn export_descriptions(
     state: State<'_, AppState>,
@@ -245,7 +246,7 @@ pub async fn export_descriptions(
     collection: Option<CollectionId>,
     profile: Option<String>,
     path: String,
-) -> CmdResult<()> {
+) -> CmdResult<Vec<String>> {
     let profile = match profile {
         Some(id) => Some(
             state
@@ -258,43 +259,61 @@ pub async fn export_descriptions(
     };
     let projects = state.projects.clone();
     let dictionary = state.dictionary.clone();
+    let ledger = state.exports.clone();
     super::off_thread(move || {
         let path = std::path::Path::new(&path);
-        let write = super::write_text;
-        if let Some(profile) = profile {
+        let (json, table) = if let Some(profile) = profile {
             // The dictionary is read only when a column writes through its labels.
             let labels = if profile.columns.iter().any(|c| c.value.reads_labels()) {
                 dictionary.labels(project)?
             } else {
                 kalamu_core::Labels::default()
             };
-            write(
-                path.with_extension("json"),
+            (
                 projects.export_profiled_json(project, collection, &profile, &labels)?,
-            )?;
-            return write_table(
-                path,
-                &projects.profiled_table(project, collection, &profile, &labels)?,
-            );
-        }
-        write(
-            path.with_extension("json"),
-            projects.export_descriptions_json(project, collection)?,
-        )?;
-        write_table(path, &projects.descriptions_table(project, collection)?)
+                projects.profiled_table(project, collection, &profile, &labels)?,
+            )
+        } else {
+            (
+                projects.export_descriptions_json(project, collection)?,
+                projects.descriptions_table(project, collection)?,
+            )
+        };
+        write_descriptions(path, json, &table, &ledger)
     })
     .await
 }
 
-/// A project's table as a workbook and as CSV beside its JSON, a failure said as the project
-/// export's.
-fn write_table(path: &std::path::Path, table: &kalamu_core::Table) -> CmdResult<()> {
-    super::write_table(path, table, |m| kalamu_core::ProjectError::Export(m).into())
+fn write_descriptions(
+    path: &std::path::Path,
+    json: String,
+    table: &kalamu_core::Table,
+    ledger: &crate::exports::ExportLedger,
+) -> CmdResult<Vec<String>> {
+    write_table(path, super::Asked::Json(json), table, ledger)
+}
+
+/// A project's export, its table beside it ([`super::write_table`]), a failure said as the
+/// project export's.
+fn write_table(
+    path: &std::path::Path,
+    asked: super::Asked,
+    table: &kalamu_core::Table,
+    ledger: &crate::exports::ExportLedger,
+) -> CmdResult<Vec<String>> {
+    super::write_table(
+        path,
+        asked,
+        table,
+        |m| kalamu_core::ProjectError::Export(m).into(),
+        ledger,
+    )
 }
 
 /// One analysis's answers over the project's documents, one row per document with the
-/// researcher's tags beside them, as a workbook and as CSV at `path`: the screening table
-/// (#51), or any analysis's. From what is stored only.
+/// researcher's tags beside them, as a workbook at `path` and as CSV beside it: the screening
+/// table (#51), or any analysis's. From what is stored only. Returns the CSV's path when it was
+/// written under another name than the workbook's ([`super::write_table`]).
 #[tauri::command]
 pub async fn export_answers(
     state: State<'_, AppState>,
@@ -302,15 +321,25 @@ pub async fn export_answers(
     job: JobId,
     setup: SetupId,
     path: String,
-) -> CmdResult<()> {
+) -> CmdResult<Vec<String>> {
     let projects = state.projects.clone();
+    let ledger = state.exports.clone();
     super::off_thread(move || {
-        write_table(
+        write_answers(
             std::path::Path::new(&path),
             &projects.answers_table(project, job, setup)?,
+            &ledger,
         )
     })
     .await
+}
+
+fn write_answers(
+    path: &std::path::Path,
+    table: &kalamu_core::Table,
+    ledger: &crate::exports::ExportLedger,
+) -> CmdResult<Vec<String>> {
+    write_table(path, super::Asked::Workbook, table, ledger)
 }
 
 /// The text each chosen document of a project is read in, frozen as sources a new analysis
@@ -561,24 +590,79 @@ pub fn keep_aside(
 }
 
 /// Writes the review manifest of the queue over `selection` where the researcher chose, as
-/// `.json`, `.xlsx` and `.csv`: every item, the sample included, with its identities, reasons and the
-/// researcher's decisions; the JSON also names the results set aside. Read from what is stored: no model is called.
+/// `.json`, with `.xlsx` and `.csv` beside it: every item, the sample included, with its
+/// identities, reasons and the researcher's decisions; the JSON also names the results set
+/// aside. Read from what is stored: no model is called. Returns the files written under another
+/// name than the JSON's ([`super::write_table`]).
 #[tauri::command]
 pub async fn export_review_manifest(
     state: State<'_, AppState>,
     project: ProjectId,
     selection: QueueSelection,
     path: String,
-) -> CmdResult<()> {
+) -> CmdResult<Vec<String>> {
     let view = queue_view(&state, project, &selection).await?;
     let manifest =
         state
             .projects
             .review_manifest(project, &selection, &view.queue, &view.choices)?;
+    let ledger = state.exports.clone();
     super::off_thread(move || {
-        let path = std::path::Path::new(&path);
-        super::write_text(path.with_extension("json"), manifest.json()?)?;
-        write_table(path, &manifest.table())
+        write_manifest(
+            std::path::Path::new(&path),
+            manifest.json()?,
+            &manifest.table(),
+            &ledger,
+        )
     })
     .await
+}
+
+fn write_manifest(
+    path: &std::path::Path,
+    json: String,
+    table: &kalamu_core::Table,
+    ledger: &crate::exports::ExportLedger,
+) -> CmdResult<Vec<String>> {
+    write_table(path, super::Asked::Json(json), table, ledger)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::super::table_export_tests::{
+        keeps_the_researchers_files, replaces_its_own_files, table,
+    };
+    use super::*;
+    use crate::exports::ExportLedger;
+    use std::path::Path;
+
+    fn descriptions(path: &Path, ledger: &ExportLedger) -> CmdResult<Vec<String>> {
+        write_descriptions(path, "[]".into(), &table(), ledger)
+    }
+
+    fn answers(path: &Path, ledger: &ExportLedger) -> CmdResult<Vec<String>> {
+        write_answers(path, &table(), ledger)
+    }
+
+    fn manifest(path: &Path, ledger: &ExportLedger) -> CmdResult<Vec<String>> {
+        write_manifest(path, "{\"items\":[]}".into(), &table(), ledger)
+    }
+
+    #[test]
+    fn descriptions_keep_a_workbook_and_a_csv_they_did_not_write() {
+        keeps_the_researchers_files("inventory.json", &["xlsx", "csv"], &descriptions);
+        replaces_its_own_files("inventory.json", &["xlsx", "csv"], &descriptions);
+    }
+
+    #[test]
+    fn an_analysis_table_keeps_a_csv_it_did_not_write() {
+        keeps_the_researchers_files("screening.xlsx", &["csv"], &answers);
+        replaces_its_own_files("screening.xlsx", &["csv"], &answers);
+    }
+
+    #[test]
+    fn the_review_list_keeps_a_workbook_and_a_csv_it_did_not_write() {
+        keeps_the_researchers_files("review list.json", &["xlsx", "csv"], &manifest);
+        replaces_its_own_files("review list.json", &["xlsx", "csv"], &manifest);
+    }
 }

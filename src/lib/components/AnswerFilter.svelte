@@ -5,7 +5,7 @@
 	import Icon from './Icon.svelte';
 	import type { ChoiceAnswers } from '#lib/bindings/ChoiceAnswers.js';
 	import type { Action } from '#lib/action.svelte.js';
-	import { askForFolders, pickTableSave } from '#lib/dialogs.js';
+	import { askForFolders, pickTableSave, tableExported } from '#lib/dialogs.js';
 	import { distinctTitles } from '#lib/answerGroups.js';
 	import { formatDateTime, messages } from '#lib/i18n/index.js';
 	import { answerOptions, chosenAnswer, tableName } from '#lib/screening.js';
@@ -52,8 +52,8 @@
 		await action.run(async () => {
 			// The CSV goes beside the workbook: in the Mac App Store's build, its folder is asked for.
 			if (!(await askForFolders([path]))) return;
-			await api.exportAnswers(projectId, group.job_id, group.setup_id, path);
-			toast(m.screening.exported);
+			const renamed = await api.exportAnswers(projectId, group.job_id, group.setup_id, path);
+			toast(tableExported(m.screening.exported, renamed));
 		}, null);
 	}
 </script>

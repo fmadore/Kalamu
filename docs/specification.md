@@ -371,7 +371,11 @@ once, not in a batch, since a batch's answers are not checked line by line.
 - **Faster or cheaper.** A job runs at once, page by page, or, for large collections, through
   the provider's batch service at about half the price, with answers within a day. Both costs
   are shown before starting; offline models and those without a batch service run at once
-  either way. Where providers cache a repeated prompt, the cached part is billed at its lower
+  either way, as do an analysis that cites the text and a transcript translated line by line,
+  whose answers are checked as they arrive. One rule decides what goes in a batch, for the run
+  and for the estimate, which prices each source by it and says before starting which models
+  get no discount, and why
+  ([decision](decisions/2026-11-23-economy-estimate-matches-run.md)). Where providers cache a repeated prompt, the cached part is billed at its lower
   price and the cost shown is the cost charged
   ([decision](decisions/2026-10-27-economy-mode-and-prompt-caching.md)).
 - **Pipelines.** A job's settings (task, models, prompts or analysis, languages, line breaks,

@@ -296,7 +296,7 @@ export function dictionaryCommand(cmd: string, a: Record<string, unknown>): unkn
 			apart = apart.filter(([p, q]) => !([a.a, a.b].includes(p) && [a.a, a.b].includes(q)));
 			return null;
 		case 'export_dictionary':
-			return null;
+			return [];
 		case 'dictionary_plan': {
 			const rows = view().rows.filter((r) => r.namespace === namespace).length;
 			if (rows < 2) throw { id: 'dictionary.nothing_to_compare' };

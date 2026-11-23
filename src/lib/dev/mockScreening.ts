@@ -172,7 +172,7 @@ export function screeningCommand(
 		}
 		case 'export_answers':
 			window.__kalamuExportedAnswers = a as unknown as Window['__kalamuExportedAnswers'];
-			return null;
+			return [];
 		case 'plugin:dialog|save':
 			// Where the table goes; every other save keeps the browser's answer, none.
 			return JSON.stringify(a).includes('.xlsx')

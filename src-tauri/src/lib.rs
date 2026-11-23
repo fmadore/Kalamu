@@ -6,6 +6,7 @@ mod activity;
 mod command_names;
 mod commands;
 mod errors;
+mod exports;
 mod grants;
 mod platform;
 mod secrets;
