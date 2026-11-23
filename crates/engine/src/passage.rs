@@ -276,8 +276,10 @@ impl Engine {
         source: kalamu_core::SourceId,
         states: &[PieceState],
     ) -> Result<Vec<kalamu_core::provenance::ProvenancePassage>, EngineError> {
-        // A store that keeps no passages has none to tell of.
-        let proposals = kept(self.store.source_passages(job.id, setup, source))?;
+        let proposals = kept(
+            "the passages corrected by a model",
+            self.store.source_passages(job.id, setup, source),
+        )?;
         Ok(proposals
             .into_iter()
             .filter(|p| p.status == ProposalStatus::Accepted)
