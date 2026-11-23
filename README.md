@@ -142,6 +142,8 @@ while jobs run.
 
 ## Documentation
 
+- [Website](https://fmadore.github.io/Kalamu/): what Kalamu does, a tour and the downloads
+  ([its page](docs/index.html)).
 - [Guide](https://fmadore.github.io/Kalamu/guide/): how to use Kalamu, from a first job to
   exporting checked results ([its pages](docs/guide/)); in French as the
   [Guide en français](https://fmadore.github.io/Kalamu/guide/fr/).
