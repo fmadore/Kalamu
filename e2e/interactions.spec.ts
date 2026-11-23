@@ -795,12 +795,12 @@ test('a right click in the text compared offers its reading, its readings and a 
 	await expect(page.getByRole('dialog', { name: 'Choose the correct reading' })).toBeVisible();
 	await page.keyboard.press('Escape');
 
-	// Away from a difference: only the copy of the whole text.
-	await compared
-		.locator('.page')
-		.evaluate((el) =>
-			el.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }))
-		);
+	// Away from a difference, nothing selected: only the copy of the whole text. (A right click
+	// on a Mac selects the word under the pointer, so the one above may have left a selection.)
+	await compared.locator('.page').evaluate((el) => {
+		getSelection()?.removeAllRanges();
+		el.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
+	});
 	await expect(menu.getByRole('menuitem')).toHaveText(['Copy the whole text compared']);
 	await page.keyboard.press('Escape');
 
