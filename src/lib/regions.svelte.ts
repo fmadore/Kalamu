@@ -73,6 +73,13 @@ export class Regions {
 	readonly anyAtAll = $derived(this.any || (this.page?.drawn.length ?? 0) > 0);
 	/** Whether the researcher can draw on the page shown. */
 	readonly drawable = $derived(this.page !== null && this.place !== null);
+	/** Whether the region chosen is one the researcher drew. */
+	readonly own = $derived(this.chosen?.level === 'drawn');
+	/** Whether the region chosen is the engine's, given a box by the researcher. */
+	readonly adjusted = $derived(!this.own && this.region?.origin === 'manual');
+	/** Whether the region chosen can be moved or resized: the researcher's own, or an engine's
+	 * where the page's reading is known. */
+	readonly adjustable = $derived(this.drawable && (this.own || !!this.page?.result));
 	#asked = '';
 	#fetch: (() => Promise<PageRegions>) | null = null;
 

@@ -416,3 +416,72 @@ test('a region drawn is read again by a model, its reading used as the region’
 	await page.getByRole('button', { name: 'Undo' }).click();
 	await expect(mine).toHaveAccessibleName('Your region');
 });
+
+test('the card is dragged out of the way, kept there, and put back by a double click', async ({
+	page
+}) => {
+	const main = await open(page);
+	await main.getByRole('button', { name: 'Show text regions' }).click();
+	await pageThree(page, main);
+	await main.getByRole('button', { name: 'Draw a region' }).click();
+	await dragOn(page, main, [0.1, 0.6], [0.5, 0.75]);
+	const note = page.locator('.region-note');
+	const field = note.getByRole('textbox', { name: 'What is written here (optional)' });
+	// The caret is drawn in the stage's own light, whatever the theme.
+	expect(await field.evaluate((el) => getComputedStyle(el).caretColor)).toBe(
+		await field.evaluate((el) => getComputedStyle(el).color)
+	);
+	const was = await note.boundingBox();
+	if (!was) throw new Error('no card');
+
+	// Dragged by its title 120 pixels down: it follows, and stays as another region is chosen.
+	const title = note.getByText('Your region', { exact: true });
+	const t = await title.boundingBox();
+	if (!t) throw new Error('no title');
+	await page.mouse.move(t.x + 4, t.y + t.height / 2);
+	await page.mouse.down();
+	await page.mouse.move(t.x + 4, t.y + t.height / 2 + 120, { steps: 6 });
+	await page.mouse.up();
+	const moved = await note.boundingBox();
+	expect(moved && Math.round(moved.y - was.y)).toBeGreaterThanOrEqual(115);
+
+	// The grip moves it from the keyboard; a double click on it puts the card back.
+	const grip = note.getByRole('button', { name: 'Move this card' });
+	await grip.focus();
+	await page.keyboard.press('ArrowUp');
+	const up = await note.boundingBox();
+	expect(up && moved && Math.round(moved.y - up.y)).toBe(16);
+	await grip.dblclick();
+	const back = await note.boundingBox();
+	expect(back && Math.round(back.y)).toBe(Math.round(was.y));
+});
+
+test('a right click on a region opens what its card offers, and copies its text', async ({
+	page
+}) => {
+	const main = await open(page);
+	await main.getByRole('button', { name: 'Show text regions' }).click();
+	const block = regionsOn(main).getByRole('button', { name: /^Le Gouverneur général a reçu/ });
+	await block.click({ button: 'right' });
+	await expect(block).toHaveAttribute('aria-pressed', 'true');
+	const menu = page.getByRole('menu', { name: 'What to do with this region' });
+	await expect(menu).toBeVisible();
+	for (const name of ['Copy its text', 'Move or resize', 'Read this region again…']) {
+		await expect(menu.getByRole('menuitem', { name })).toBeVisible();
+	}
+	await expect(menu.getByRole('menuitem', { name: 'Remove' })).toHaveCount(0);
+	await page.keyboard.press('Escape');
+	await expect(menu).toBeHidden();
+	await expect(block).toBeFocused();
+
+	// From the keyboard on a region drawn by the researcher: Remove is offered, and works.
+	await pageThree(page, main);
+	await main.getByRole('button', { name: 'Draw a region' }).click();
+	await dragOn(page, main, [0.3, 0.42], [0.7, 0.55]);
+	const mine = regionsOn(main).getByRole('button', { name: 'Your region' });
+	await mine.focus();
+	await page.keyboard.press('Shift+F10');
+	await expect(menu).toBeVisible();
+	await menu.getByRole('menuitem', { name: 'Remove' }).click();
+	await expect(mine).toHaveCount(0);
+});

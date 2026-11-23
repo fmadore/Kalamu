@@ -771,3 +771,44 @@ test('a result set aside from what to check stays aside on coming back, until br
 	await expect(choice()).toBeChecked();
 	await expect(items()).toHaveCount(before);
 });
+
+test('a right click in the text compared offers its reading, its readings and a copy', async ({
+	page
+}) => {
+	await open(page, 'review');
+	const main = page.getByRole('main');
+	await main.getByRole('button', { name: 'Compare', exact: true }).click();
+	const compared = main.getByRole('region', { name: 'Text compared' });
+	const mark = compared.locator('[data-entry]').first();
+	await mark.scrollIntoViewIfNeeded();
+	await mark.click({ button: 'right' });
+	const menu = page.getByRole('menu', { name: 'What to do in the text compared' });
+	await expect(menu).toBeVisible();
+	for (const name of [
+		'Use this reading',
+		'Show the readings here',
+		'Copy the whole text compared'
+	]) {
+		await expect(menu.getByRole('menuitem', { name })).toBeVisible();
+	}
+	await menu.getByRole('menuitem', { name: 'Show the readings here' }).click();
+	await expect(page.getByRole('dialog', { name: 'Choose the correct reading' })).toBeVisible();
+	await page.keyboard.press('Escape');
+
+	// Away from a difference, nothing selected: only the copy of the whole text. (A right click
+	// on a Mac selects the word under the pointer, so the one above may have left a selection.)
+	await compared.locator('.page').evaluate((el) => {
+		getSelection()?.removeAllRanges();
+		el.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
+	});
+	await expect(menu.getByRole('menuitem')).toHaveText(['Copy the whole text compared']);
+	await page.keyboard.press('Escape');
+
+	// Use this reading takes it into the text shown, as the readings' own button does.
+	const before = await main.getByRole('region', { name: 'Reading text' }).innerText();
+	await mark.click({ button: 'right' });
+	await menu.getByRole('menuitem', { name: 'Use this reading' }).click();
+	await expect
+		.poll(() => main.getByRole('region', { name: 'Reading text' }).innerText())
+		.not.toBe(before);
+});
