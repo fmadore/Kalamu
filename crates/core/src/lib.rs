@@ -14,6 +14,7 @@ pub mod dictionary;
 pub mod embedding;
 pub mod event;
 pub mod export;
+pub mod file_names;
 pub mod fingerprint;
 pub mod ids;
 pub mod job;
