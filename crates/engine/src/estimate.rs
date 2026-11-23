@@ -1,12 +1,14 @@
 //! What a job will cost before it starts: each set-up's pages or minutes priced from the
 //! catalogue, a records analysis page by page, a table of contents' second step apart, and the
-//! totals at each pace; and, for an analysis, a text too long for its model.
+//! totals at each pace, economy mode's discount counted only on the sources the run batches;
+//! and, for an analysis, a text too long for its model.
 
 use kalamu_catalog::CostEstimate;
 use kalamu_core::{InputKind, MergeModel, ProviderId, SourceFile, Task};
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
+use crate::batched::{AtOnce, at_once, in_batch};
 use crate::{Engine, SetupRequest, TextTooLong};
 
 /// Characters in a page of text to correct, for a text file without pages.
@@ -46,6 +48,13 @@ pub struct EstimateRow {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub parts: Option<u32>,
+    /// Why none of this set-up's work goes in a batch in economy mode although its model has a
+    /// batch service, as the run decides it ([`crate::batched`]): its economy price is then
+    /// absent, as for a model without one. Absent when some of its work is batched, or its model
+    /// has no batch service.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub at_once: Option<AtOnce>,
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
@@ -55,7 +64,8 @@ pub struct Estimate {
     /// The whole job at once; `None` when a row has no price, or a video's length is not yet
     /// known.
     pub total_usd: Option<f64>,
-    /// The whole job in economy mode, a model without a batch service at its own price.
+    /// The whole job in economy mode: a model without a batch service, and the work the run
+    /// sends at once whatever the pace ([`crate::batched`]), at the usual price.
     pub total_economy_usd: Option<f64>,
 }
 
@@ -238,19 +248,44 @@ impl Engine {
                     .as_ref()
                     .and_then(|p| p.schema.as_ref())
                     .is_some_and(kalamu_core::records::is_records);
+            // Economy mode only where Kalamu sends this model's work as a batch, source by
+            // source as the run decides it: the sources whose work is sent at once anyway.
+            let batches = self
+                .provider(&setup.provider)
+                .is_ok_and(|p| p.batches(request.task, &setup.model));
+            let (in_batches, sent_at_once): (Vec<SourceFile>, Vec<SourceFile>) = sources
+                .iter()
+                .cloned()
+                .partition(|s| in_batch(batches, request.task, s, cites));
+            let why_at_once = sent_at_once
+                .iter()
+                .find_map(|s| at_once(request.task, s, cites))
+                .filter(|_| batches && in_batches.is_empty());
             let estimate = match catalog.model(&setup.provider, &setup.model) {
                 Some(model) if !unknown_length => {
-                    let mut estimate = if records {
-                        catalog.estimate_records(model, pages, prompt_chars, reasoning)
-                    } else {
-                        catalog.estimate(model, request.task, &work(read, cached))
+                    let price = |read: Read, cached: u32| {
+                        if records {
+                            let pages = read.pages.saturating_sub(cached);
+                            catalog.estimate_records(model, pages, prompt_chars, reasoning)
+                        } else {
+                            catalog.estimate(model, request.task, &work(read, cached))
+                        }
                     };
-                    // Economy mode only where Kalamu sends this model's work as a batch.
-                    let batches = self
-                        .provider(&setup.provider)
-                        .is_ok_and(|p| p.batches(request.task, &setup.model));
-                    if !batches {
+                    let mut estimate = price(read, cached);
+                    if in_batches.is_empty() {
                         estimate.economy_usd = None;
+                    } else if !sent_at_once.is_empty() {
+                        // Some sources batched, the others sent at once: the discount taken
+                        // back on those, priced alone.
+                        let alone = price(
+                            read_of(request.task, &sent_at_once, request.sample_pages),
+                            0,
+                        );
+                        estimate.economy_usd = estimate
+                            .economy_usd
+                            .zip(alone.usd)
+                            .zip(alone.economy_usd)
+                            .map(|((economy, usd), discounted)| economy + usd - discounted);
                     }
                     estimate
                 }
@@ -304,6 +339,7 @@ impl Engine {
                 merge: false,
                 too_long,
                 parts,
+                at_once: why_at_once,
             });
             if let Some(estimate) = together {
                 rows.push(EstimateRow {
@@ -314,6 +350,7 @@ impl Engine {
                     merge: true,
                     too_long: Vec::new(),
                     parts: None,
+                    at_once: None,
                 });
             }
             // A table of contents' second step, on its own model and never in a batch.
@@ -338,6 +375,7 @@ impl Engine {
                     merge: true,
                     too_long: Vec::new(),
                     parts: None,
+                    at_once: None,
                 });
             }
         }

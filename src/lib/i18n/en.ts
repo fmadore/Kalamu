@@ -1513,6 +1513,10 @@ export const en = {
 		},
 		paceNotBatched: (names: string) =>
 			`${names} has no batch service in Kalamu and still runs page by page, at its usual price.`,
+		paceQuotes: (names: string) =>
+			`With ${names}, an analysis that quotes the text is sent at once, at the usual price, so that Kalamu can check each quotation against the text.`,
+		paceTimedLines: (names: string) =>
+			`With ${names}, a transcript translated line by line is sent at once, at the usual price, so that Kalamu can check that no line is missing.`,
 		start: 'Start',
 		startShortcut: '↵',
 		starting: 'Starting…',
@@ -2594,7 +2598,7 @@ export const en = {
 			},
 			economy: {
 				word: 'Cheaper mode (batches)',
-				text: 'Sends a job to the provider’s batch service, which answers within a day at about half the price. Kalamu collects the answers when it next opens; the app does not need to stay open meanwhile.'
+				text: 'Sends a job to the provider’s batch service, which answers within a day at about half the price. Kalamu collects the answers when it next opens; the app does not need to stay open meanwhile. An analysis that quotes the text, and a transcript translated line by line, are still sent at once, at the usual price, so that Kalamu can check each answer against the text.'
 			},
 			groundTruth: {
 				word: 'Ground truth',
