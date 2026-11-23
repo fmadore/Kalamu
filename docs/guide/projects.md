@@ -16,6 +16,9 @@ description: Organising documents in projects, searching them, reconciling names
 A project holds **documents**. A document is a source (a PDF, a folder of photographs, a
 recording) with every transcription, extraction and analysis made of it.
 
+![A new project with no documents yet: Add files, Add a folder and Add an existing job](images/en/empty-project.png)
+*A new project starts by asking for its documents; the other sections fill themselves.*
+
 - **Add files** before reading them, or **add jobs** you already ran: nothing is paid again.
   You can also drag a finished job from the sidebar onto a project.
 - Group documents in **collections**; one document can be in several. **Tags** work across
@@ -34,6 +37,12 @@ recording) with every transcription, extraction and analysis made of it.
 - When a document has been read several times, **mark the result you rely on** as preferred.
   Search, exports and analyses then use that one.
 
+![The research question asked of ten documents, with the model and the estimated cost](images/en/screening-dialog.png)
+*Which of these speak of my question? The question, how many documents will be read, and what it should cost.*
+
+![The project's documents filtered to the relevant ones, each with its reason and passages](../store/screenshots/windows/en/07-screening.png)
+*The answers in the table: each document's answer, its reason, and the passages found in its text.*
+
 ## Save a project to a file
 
 **Save to a file…** writes the whole project as one file ending in `.kalamu`: to open it on a
@@ -42,6 +51,9 @@ safe. The file holds the text read from your documents, your corrections, what y
 checked, the tags, the descriptions and the dictionary. It never holds your API keys. Your
 scans and recordings are left out unless you tick **Include the original files**; Kalamu
 shows how large the file will be before it writes it.
+
+![Save this project to a file: what the file holds, what it never holds, and its size](images/en/project-file.png)
+*What goes into a project file, and what never does.*
 
 On the other computer, Windows or Mac, choose **Open a project file…** in the list of
 projects. It opens as a new project beside the others: nothing you already have is changed.
@@ -90,11 +102,17 @@ It works from numbers that a model works out from your text, so it has to be pre
 After you correct text, Kalamu says how many pages changed and offers to update them. It never
 does so by itself with a paid model.
 
+![A search by meaning: a question in plain words, and the closest documents with their passages](../store/screenshots/windows/en/05-search.png)
+*A question in your own words finds passages that say it in theirs, each with how close it is.*
+
 The **Map** shows each document of the project as a point, near the documents it resembles,
 grouped by collection or tag. Choose a point to see its nearest documents in the list beside
 it. Read it as a way in, not as a result: positions are approximate, the axes mean nothing,
 and a long document's point is an average of everything in it. Documents that sit almost on
 one another are drawn a little apart, in a small ring; zoom in to see them at their own places.
+
+![The map of a project grouped by collection, one document chosen with its nearest documents](images/en/map.png)
+*The map: a document chosen, and the documents nearest to it.*
 
 > There are no answers and no chat. The search by meaning shows you where to read; the reading
 > stays yours.
@@ -106,7 +124,7 @@ The people, places, organisations and terms your analyses listed are gathered in
 surname first); the dictionary lets you gather those spellings into one entry under the label
 you choose.
 
-![A project's dictionary of names, with proposed merges](../store/screenshots/windows/en/05-dictionary.png)
+![A project's dictionary of names, with proposed merges](images/en/dictionary.png)
 *The dictionary: spellings gathered into entries, with merges a model proposed.*
 
 - You can merge entries by hand, or ask a model to **propose merges**. A proposal is only ever

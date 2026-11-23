@@ -60,7 +60,7 @@ text, for example: *long-text.txt is too long for Gemma 4 E2B: about 48,000 word
 reads about 11,000 at once. Choose another model, or split the text into shorter documents.*
 Nothing is sent and no job is made. An interview is read in parts instead (below).
 
-![An analysis: fields with their answers beside the document](../store/screenshots/windows/en/07-analysis.png)
+![An analysis: fields with their answers beside the document](images/en/analysis.png)
 *An analysis, field by field, with the document it was read from.*
 
 ### An interview
@@ -72,6 +72,9 @@ left empty. Tick **Keep this for my next interviews** to find it there next time
 the estimated cost are said in one line; press **Analyse**. Closed without analysing (with
 **Cancel** or <kbd>Esc</kbd>), the dialog keeps what you typed until you open it again, as long
 as Kalamu stays open.
+
+![Analyse this interview: the research question, the model, the estimated cost and your own themes](images/en/interview-dialog.png)
+*Analyse this interview, with More choices open: the model and your own themes.*
 
 Under **More choices** you can change the model, and type **Your own themes or interview
 guide**, one theme per line. Each theme in the answer then says whether it comes from your list
@@ -86,6 +89,9 @@ file, and two tables, each as a spreadsheet for Excel (`.xlsx`) and as a CSV: th
 `.analysis.xlsx` and `.analysis.csv`, and `.analysis.quotations.xlsx` and
 `.analysis.quotations.csv`, one row per quotation, with a column saying whether you added it.
 The formats you chose in Settings are written as well.
+
+![An interview's analysis beside its transcript: themes, where each comes from, and quotations with speaker and time](images/en/interview-review.png)
+*Each theme says whether it comes from your guide, and each quotation can be heard where it is spoken.*
 
 ### A register or a directory as a table
 
@@ -130,5 +136,5 @@ When you repeat the same chain often, save it:
   project's documents, pausing where you asked to check the text first. Each step is a job of
   its own, and running a workflow again pays only for the steps that changed.
 
-![A workflow of several steps](../store/screenshots/windows/en/04-workflow.png)
+![A workflow run stopped after its first step, with Continue, waiting for the text to be checked](../store/screenshots/windows/en/04-workflow.png)
 *A workflow: extract, check, then analyse.*

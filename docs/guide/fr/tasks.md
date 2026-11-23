@@ -67,7 +67,7 @@ désactivé tant que vous n’avez pas choisi un autre modèle ou découpé le t
 Rien n’est envoyé et aucun traitement n’est créé. Un entretien, lui, est lu en plusieurs parties
 (ci-dessous).
 
-![Une analyse : les champs avec leurs réponses, à côté du document](../../store/screenshots/windows/fr/07-analysis.png)
+![Une analyse : les champs avec leurs réponses, à côté du document](../images/fr/analysis.png)
 *Une analyse, champ par champ, avec le document dont elle est tirée.*
 
 ### Un entretien
@@ -80,6 +80,9 @@ modèle à retenir ce qui compte pour votre travail, et vous pouvez la laisser v
 et le coût estimé tiennent sur une ligne ; cliquez sur **Analyser**. Fermée sans lancer
 l’analyse (avec **Annuler** ou <kbd>Échap</kbd>), la fenêtre garde ce que vous avez écrit
 jusqu’à sa prochaine ouverture, tant que Kalamu reste ouvert.
+
+![Analyser cet entretien  la question de recherche, le modèle, le coût estimé et vos propres thèmes](../images/fr/interview-dialog.png)
+*Analyser cet entretien, avec Plus de choix ouvert  le modèle et vos propres thèmes.*
 
 Sous **Plus de choix**, vous pouvez changer de modèle et saisir **Vos propres thèmes ou votre
 guide d’entretien**, un thème par ligne. Chaque thème de la réponse dit alors s’il vient de
@@ -96,6 +99,9 @@ qui parle et à quel moment), un fichier JSON et deux tableaux, chacun en tableu
 `.analysis.quotations.xlsx` et `.analysis.quotations.csv`, une ligne par citation, avec une
 colonne qui dit si vous l’avez ajoutée. Les formats choisis dans les Paramètres sont écrits
 aussi.
+
+![L’analyse d’un entretien à côté de sa transcription  les thèmes, leur origine, et les citations avec locuteur et minutage](../images/fr/interview-review.png)
+*Chaque thème dit s’il vient de votre guide, et chaque citation s’écoute là où elle est dite.*
 
 ### Un registre ou un annuaire en tableau
 

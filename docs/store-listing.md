@@ -464,9 +464,9 @@ same names as the English one; each caption goes in the screenshot's Description
 | 2 | Gardez ensemble les documents d’un projet, en collections et en étiquettes, chacun avec tous les résultats tirés de lui, quel que soit le traitement. |
 | 3 | Lisez lettres et registres manuscrits ligne par ligne, gardées comme sur la page pour comparer facilement chaque ligne à l’original. |
 | 4 | Enchaînez des étapes : lire les pages, les vérifier, puis analyser le texte corrigé. Rien ne continue tant que vous ne l’avez pas décidé. |
-| 5 | Rassemblez les personnes et les lieux relevés dans tout un projet et regroupez leurs graphies sous votre libellé, ou laissez un modèle vous le proposer. |
+| 5 | Cherchez dans un projet par le sens : décrivez ce que vous cherchez avec vos mots et trouvez les passages qui le disent avec les leurs, chacun ouvrant sa page. |
 | 6 | Transcrivez des entretiens avec les locuteurs et l’horodatage, donnez aux locuteurs leur nom et cliquez sur une ligne pour l’écouter. |
-| 7 | Posez vos propres questions à chaque texte : résumés, personnes, lieux et tonalité, chaque réponse à côté du document dont elle vient. |
+| 7 | Demandez quels documents parlent de votre question de recherche : chaque réponse vient avec sa raison et des passages retrouvés mot pour mot, et vous décidez quoi garder. |
 | 8 | Choisissez vos fichiers, une tâche et un modèle, et voyez le coût estimé avant que quoi que ce soit ne soit envoyé au fournisseur. |
 | 9 | Faites d’un numéro de journal ou d’un dossier d’archives une table des matières détaillée : chaque article avec ses pages, ses auteurs et son résumé. |
 | 10 | Transcrivez avec Whisper et lisez les pages imprimées avec Tesseract, hors ligne : gratuit, sans compte ni clé, et rien ne quitte votre PC. |
@@ -511,9 +511,10 @@ carries no text, so the Store's title and buttons can sit over its right side.
 
 ## Screenshots
 
-One set of ten scenes for both stores, taken again for 1.4.1: 1.4.0's were refused (below),
-and those of 1.2.0 before them do not show the wider views, larger type, projects in the
-sidebar, Jobs link or Settings tabs. Take them from the installed Store package, in one theme
+One set of ten scenes for both stores, taken again for 1.10.0, where search by meaning and
+screening against a question replace the dictionary and the analysis as scenes 5 and 7 (the
+guide keeps those two). The set before it was 1.4.1's, taken because 1.4.0's were refused
+(below). Take them from the installed Store package, in one theme
 throughout (the light one, as the 1.0.0 captures); the Mac App Store's on a Mac, from the
 TestFlight build ([below](#screenshots-1)). Store rules: `.png`, at least 1366 × 768,
 under 50 MB; ten at most, five to eight recommended. The first one or two are what most people
@@ -550,9 +551,10 @@ uses:
 | 1 | `The Daily Nebraskan 1911-04-05.pdf`, the whole issue of the page in `daily-nebraskan-1911.pdf`, so the strip of pages has pages to mark reviewed |
 | 2 | The demo project below |
 | 3 | `dodington-1755.jpg`, with Claude or Mistral |
-| 4, 5 | The *Newspapers* workflow run on the nine issues |
+| 4 | The *Newspapers* workflow run on the nine issues |
+| 5 | The project's search by meaning, prepared with Gemini Embedding 2 (or EmbeddingGemma 2, offline), a question such as *students kept away from classes by illness* |
 | 6 | `interview-two-speakers.wav`, with a cloud model that labels speakers, the two named in the review |
-| 7 | An article of an issue, analysed once its text is corrected: the agricultural students (5 April) or a convocation lecture |
+| 7 | *Which of these speak of my question?* on the project's documents, a question such as *How did students at the University of Nebraska take part in sport and athletics in 1911, and who organised it?*, the table filtered to *Relevant* |
 | 8 | The folder of the nine issues |
 | 9 | `daily-nebraskan-1911-issue.pdf` (24 May 1911, four pages) |
 | 10 | Settings › Offline models, or `bulletin-page.jpg` with Tesseract |
@@ -585,17 +587,17 @@ whose wedding the 24 May issue announces). *Chancellor Avery* and *Dean Burnett*
 issues as well.
 
 **The runs to make**, in this order, since the project, the dictionary and the analysis build on
-the workflow. Six runs; scenes 2, 8 and 10 need none. Name each job as a researcher would
+the workflow. Eight runs; scenes 2, 8 and 10 need none, and runs 1 and 5 also make the guide's dictionary and analysis images. Name each job as a researcher would
 (*Daily Nebraskan, spring 1911*, *Dodington report, 1755*, *Interview, Ouagadougou*), and check
 each estimate before starting: only the first run is large (36 pages read, then analysed).
 
-1. **Workflow *Newspapers*** (scenes 4 and 5). In Workflows, start from the example *Letters:
+1. **Workflow *Newspapers*** (scene 4, and the guide's dictionary). In Workflows, start from the example *Letters:
    read, check, then people and places*, name it *Newspapers*, and set its first step's preset
    to *Newspaper or magazine*; the second stays *People, places and organisations*. Run it on
    the nine issues from the project's selection. Take scene 4 when it stops after the first
    step for review, *Continue* in view; correct a few words, then continue. Once the second step
-   is done, open the project's dictionary, ask a model to propose merges, and take scene 5 with
-   a proposal open.
+   is done, open the project's dictionary, ask a model to propose merges, and take the guide's
+   dictionary image with a proposal open.
 2. **Extract text, two set-ups** (scene 1): `The Daily Nebraskan 1911-04-05.pdf`, for instance
    Gemini and Claude, on *Newspaper or magazine*. Mark a page or two reviewed, then open the
    column on the agricultural students or the dramatic club with one set of readings open.
@@ -603,12 +605,18 @@ each estimate before starting: only the first run is large (36 pages read, then 
    refuses it), lines kept as on the page; correct one word.
 4. **Transcribe audio** (scene 6): `interview-two-speakers.wav` in French with Gemini, which
    labels speakers; give both speakers names in the review.
-5. **Analyse texts, two set-ups** (scene 7): from the corrected result of the 5 April issue,
+5. **Analyse texts, two set-ups** (the guide's analysis image): from the corrected result of the 5 April issue,
    send its text into a new analysis whose prompt asks for a summary, people, places and a tone
    with its reason (in Prompts, a copy of *People, places and organisations* with a summary and
    a tone field added), on two models; point at a name the set-ups disagree on.
 6. **Detailed table of contents** (scene 9): `daily-nebraskan-1911-issue.pdf` on *Newspaper or
    magazine issue*.
+7. **Search by meaning** (scene 5): in the project's **Search**, choose **Meaning**, prepare it
+   with Gemini Embedding 2, then ask *students kept away from classes by illness*, the closest
+   document's passages in view.
+8. **Screening** (scene 7): tick the documents that have been read, choose **Which of these
+   speak of my question?**, ask the athletics question above, then filter the table to
+   *Relevant*, one row open with its reason and passages, and **Keep** it.
 
 Without a run: the project (scene 2), made by hand as above; New job (scene 8), Extract text on
 the folder of the nine issues with Gemini and Mistral OCR, captured before *Start* and left
@@ -621,26 +629,34 @@ or Tesseract on `bulletin-page.jpg` for the $0.00 estimate.
 | 2 | **A project.** *The Daily Nebraskan* project's documents: collections in the side list, tags on a few rows, the results column showing what each was read with and how much is reviewed, one row selected with the selection bar's actions. | Keep a project's documents together in collections and tags, each with every result read from it, whatever job made it. |
 | 3 | **Handwriting.** `dodington-1755.jpg`, read with Claude or Mistral (Gemini refuses it), beside its transcription, lines kept as on the page, one word corrected (blue). | Read handwritten letters and registers line by line, kept as on the page so each line is easy to check against the original. |
 | 4 | **A workflow run.** The *Newspapers* run with its first step done and stopped for review, the next step waiting, and *Continue* in view; or the workflow's drawing of its steps in Workflows. | Chain steps into a workflow: read the pages, check them, then analyse the corrected text. Nothing goes on until you say so. |
-| 5 | **The dictionary.** The People field: rows with their spellings and the documents naming them, look-alikes pointed out, and a model's proposal open (rows, label, reason, certainty) with Accept and Turn down. | Gather the people and places your analyses found across a project, and merge their spellings under your own label, or let a model propose merges you decide on. |
+| 5 | **Search by meaning.** The project's Search on *Meaning*: a question in plain words, the closest documents listed by their best passage, each with how close it is. | Search a project by meaning: describe what you look for in your own words and find the passages that say it in theirs, each opening its page. |
 | 6 | **Transcript.** The player above the transcript, speakers given real names, timestamps, the line being spoken highlighted. | Transcribe interviews with speakers and timestamps, give the speakers their names, and click any line to hear it. |
-| 7 | **Analysis.** An article beside its answers: summary, people, places and tone with its reason, two set-ups' sigla on the names they disagree on, a name pointed at and found in the text. | Ask your own questions of each text: summaries, people, places and tone, every answer shown beside the document it comes from. |
+| 7 | **Screening.** The project's documents after *Which of these speak of my question?*, filtered to *Relevant*: a row with its answer, reason and passages, and the *Kept* tag. | Ask which documents speak of your research question: each answer comes with its reason and passages found word for word in the text, and you decide what to keep. |
 | 8 | **New job, ready to start.** Extract text chosen, a folder of issues added, two set-ups (Gemini and Mistral OCR), the diagram of the task, and the estimate on the right with a cost per model. | Choose your files, a task and a model, and see the estimated cost before anything is sent to the provider. |
 | 9 | **Table of contents.** A *Daily Nebraskan* issue's page on the left, the entries on the right with titles, pages, authors and summaries, the entries on the page shown marked; the strip of pages below. | Turn a whole newspaper issue or archival file into a detailed table of contents: each article with its pages, authors and summary. |
 | 10 | **Offline.** Settings › Offline models with a Whisper model and French for Tesseract downloaded, or New job with Tesseract (on this computer) chosen and the estimate at $0.00. | Transcribe recordings with Whisper and read printed pages with Tesseract, offline: free, no account or key, and nothing leaves your PC. |
 
-Search, the glossary, Prompts, the job's page and the Jobs page are left out of the ten: the
-description and features name them. Name the captures after the rows above
-(`01-comparison.png` … `10-offline.png`).
+The dictionary, the analysis, the glossary, Prompts, the job's page and the Jobs page are left
+out of the ten: the description and features name them, and the guide shows the dictionary and
+the analysis. Name the captures after the rows above (`01-comparison.png`, `02-project.png`,
+`03-handwriting.png`, `04-workflow.png`, `05-search.png`, `06-transcript.png`,
+`07-screening.png`, `08-new-job.png`, `09-contents.png`, `10-offline.png`).
 
-The Microsoft Store set for 1.4.1 is in
+The Microsoft Store set for 1.10.0 is in
 [store/screenshots/windows/](store/screenshots/windows/), `en/` for the English listing and
 `fr/` for the French one; the Mac App Store's go beside it in `store/screenshots/macos/`. The
-Windows set: 1920 × 1080 window captures of version 1.4.1 on
-Windows, light theme. Scene 4 shows the workflow's drawing in Workflows, and scene 10 New job
-with Tesseract on `bulletin-page.jpg`. In scene 1, pages 3 and 4 are marked reviewed without
-corrections, so its footer's error rates score set-up A at 0 %: correct those pages, or retake
-the image, before relying on the figures it shows. Read each image again at full size before
-uploading it.
+Windows set: 1920 × 1080 window captures of 1.10.0-rc1 on Windows 11 ARM64, light theme, taken
+in a second, empty data folder during the test pass of 21 November 2026, at 1536 × 864 at
+125 % and scaled up. Scene 7 and the French scene 4 were retaken on rc2 at 1280 × 720 at 150 %,
+so their type is about a fifth larger. Scene 4 shows, in English, the run stopped after its
+first step with *Continue*, and in French the workflow's drawing with French step names; scene
+10 New job with Tesseract on `bulletin-page.jpg`. In scene 1 the readings open are *Hatheway*
+against *Hathawey* in the 5 April cast list, with no page reviewed yet, so its footer shows no
+error rates. Scene 6's text pane shows the line on the paper's coverage of religious feasts,
+as 1.4.1's did. Read each image again at full size before uploading it.
+
+The guide's own images, from the same session, are in [guide/images/](guide/images/), `en/` and
+`fr/`; the guide also shows the ten above.
 
 Leave out an image rather than show a feature that does not run as shown: certification checks
 that the screenshots match the app.
@@ -791,7 +807,9 @@ At least one, up to ten, 16:10, without transparency, `.png` or `.jpeg`, all one
 on a Mac, of the Mac App Store build, so the window's title bar, traffic lights and menu bar are
 macOS's: screenshots of the Windows app would not show the app as it runs (Guideline 2.3.3).
 Use the same ten scenes, captions and material as the Microsoft Store above, with "your Mac"
-for "your PC" in the tenth, and screen them the same way: App Review reads screenshots as
+for "your PC" in the tenth (the Mac set below still has 1.5.0's scenes 5 and 7, the dictionary
+and the analysis: take search by meaning and screening in their place at the next session on a
+Mac, under the new names), and screen them the same way: App Review reads screenshots as
 metadata too, and asks that metadata suit all audiences (Guideline 2.3.8), Kalamu being rated
 4+. The step-by-step for the day on a Mac is Part F of [mac-test-day.md](mac-test-day.md). Capture the window alone with ⌘⇧4 then Space, which adds a shadow with
 transparency: hold ⌥ while clicking to leave it out, or export the image without alpha. Keep

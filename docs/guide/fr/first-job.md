@@ -34,6 +34,9 @@ dit, ou avec <kbd>Ctrl</kbd> <kbd>Z</kbd> (<kbd>⌘</kbd> <kbd>Z</kbd> sur un Ma
 message est affiché ; il reste tant que la souris est dessus. Tous les messages qui
 proposent **Annuler** font de même.
 
+![Deux photographies qui semblent montrer la même page, côte à côte, avec le choix de celle à garder](../images/fr/photos-twice.png)
+*La même page photographiée deux fois  Kalamu montre les deux et vous laisse en garder une, ou les deux.*
+
 ![L’écran Nouveau traitement, avec les fichiers, un modèle, un prompt et le coût estimé](../../store/screenshots/windows/fr/08-new-job.png)
 *Nouveau traitement : les fichiers, le modèle, le prompt et ce que cela devrait coûter, avant tout envoi.*
 
@@ -105,3 +108,9 @@ comparaison, et aucun ne remplace l’autre.
   résultats sont gardés en mémoire, vous ne payez que ce qui change.
 - Rangez les documents dans un [projet](projects.md) pour garder ensemble tout ce qui en a été
   lu.
+
+![Nouveau traitement avec un PDF de 36 pages, qui propose d’essayer le modèle sur 3 pages d’abord](../images/fr/sample-first.png)
+*Un long PDF  Nouveau traitement propose d’essayer le modèle sur 3 pages d’abord.*
+
+![La page d’un essai sur 3 pages, avec Lancer le reste et Comparer avec un autre modèle](../images/fr/sample-page.png)
+*La page de l’essai  lancer le reste, ou faire lire les trois mêmes pages par un autre modèle.*

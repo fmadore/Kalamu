@@ -90,6 +90,12 @@ of this shows until the regions are shown.
 - A box the model drew can be moved or resized too. Its own box is kept, and **Put back the
   model's box** brings it back.
 
+![A newspaper page with the model's text regions outlined, and a region drawn over a headline](images/en/region.png)
+*Show text regions: the blocks the model found, outlined, and a region of your own over a headline.*
+
+![A region drawn over a headline, its card below it with What is written here and Read this region again](images/en/region-panel.png)
+*A region of your own, with its card: what is written there, move, remove, or read it again.*
+
 **Read this region again…** cuts that part of the page from the original and sends it alone to
 the model you choose, as a picture; nothing else of the document is sent. Kalamu says what it
 should cost first, or that it is free with a model on your computer. The answer is a proposal:
