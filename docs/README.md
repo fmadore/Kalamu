@@ -4,6 +4,7 @@
 
 | Document | What it covers |
 | --- | --- |
+| [Home page](index.html) | The public home page at [fmadore.github.io/Kalamu](https://fmadore.github.io/Kalamu/): one self-contained HTML file with its fonts and pictures in `assets/home/`, its wording taken from the [store listing](store-listing.md) and the README, its screenshots from `store/screenshots/`; change those first, then the page |
 | [Guide](guide/index.md) | How to use Kalamu, chapter by chapter; published at [fmadore.github.io/Kalamu/guide](https://fmadore.github.io/Kalamu/guide/) with its own layout (`_layouts/guide.html`, `assets/guide.css`); in French in [guide/fr](guide/fr/index.md), published at [fmadore.github.io/Kalamu/guide/fr](https://fmadore.github.io/Kalamu/guide/fr/), the same layout listing each language's chapters and quoting the interface's own French labels |
 | [Specification](specification.md) | What the app must do, and why: tasks, review, comparison, resuming, privacy |
 | [Output formats](formats.md) | Every export format and `provenance.json` |

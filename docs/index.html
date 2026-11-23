@@ -1,0 +1,1947 @@
+<!doctype html>
+<!--
+	The public home page on GitHub Pages, served from `main` /docs at https://fmadore.github.io/Kalamu/.
+	One self-contained file with no build step and no front matter, so Jekyll copies it as it is:
+	its styles are below, a few lines of script run the comparison example, and it loads only the
+	fonts and pictures under assets/home, the store screenshots and Microsoft's Store badge. The
+	developers' index stays at docs/README.md, linked in the footer.
+
+	Wording follows docs/store-listing.md and the README, the screenshots' captions follow the
+	table of scenes in store-listing.md, and what is sent where follows docs/privacy.md: change
+	those first, then this page. Interface labels are quoted as src/lib/i18n/en.ts writes them.
+	The look is DESIGN.md's: warm graphite, the highlighter for where models disagree, the hand's
+	blue for the researcher's corrections, a serif for text read from a source and a mono for what
+	a machine wrote. The band at the top keeps the illustration's cream in both themes.
+-->
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="color-scheme" content="light dark" />
+		<title>Kalamu: read, transcribe and analyse sources with AI, checked line by line</title>
+		<meta
+			name="description"
+			content="A free desktop app for researchers on Windows and Mac. Read scanned and handwritten documents, transcribe interviews and analyse texts with Gemini, OpenAI, Claude or Mistral, or offline, and check every result against its source."
+		/>
+		<meta property="og:type" content="website" />
+		<meta property="og:title" content="Kalamu" />
+		<meta
+			property="og:description"
+			content="Read archives, transcribe interviews and analyse texts with the AI provider you choose, or offline, then check every line against its source."
+		/>
+		<meta property="og:image" content="https://fmadore.github.io/Kalamu/assets/home/hero.jpg" />
+		<meta property="og:url" content="https://fmadore.github.io/Kalamu/" />
+		<link
+			rel="icon"
+			href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 22'%3E%3Crect width='22' height='22' rx='5' fill='%231e1d1b'/%3E%3Cg transform='rotate(-9 8.5 11)'%3E%3Crect x='3.6' y='4.4' width='9.6' height='13' rx='1' fill='%23efe1c3'/%3E%3Crect x='5' y='7' width='5' height='1.3' rx='.65' fill='%238a5a3b'/%3E%3Crect x='5' y='10' width='6' height='1.3' rx='.65' fill='%238a5a3b'/%3E%3C/g%3E%3Cg transform='rotate(6 13.5 11.5)'%3E%3Crect x='8.8' y='4.6' width='9.6' height='13' rx='1' fill='%23fff'/%3E%3Crect x='10.4' y='7' width='6.4' height='1.4' rx='.7' fill='%239a9ea6'/%3E%3Crect x='10' y='10' width='7.2' height='2.4' rx='.8' fill='%23ffd84d'/%3E%3Crect x='10.4' y='14' width='5' height='1.4' rx='.7' fill='%239a9ea6'/%3E%3C/g%3E%3C/svg%3E"
+		/>
+		<style>
+			/* The app's three faces (src/routes/+layout.svelte), Latin subset, under the SIL Open
+			   Font License (assets/home/fonts/*-OFL.txt). Served from here: no font service. */
+			@font-face {
+				font-family: 'Instrument Sans Variable';
+				font-style: normal;
+				font-display: swap;
+				font-weight: 400 700;
+				src: url('assets/home/fonts/instrument-sans-latin-wght-normal.woff2') format('woff2');
+			}
+			@font-face {
+				font-family: 'Source Serif 4 Variable';
+				font-style: normal;
+				font-display: swap;
+				font-weight: 200 900;
+				src: url('assets/home/fonts/source-serif-4-latin-opsz-normal.woff2') format('woff2');
+			}
+			@font-face {
+				font-family: 'IBM Plex Mono';
+				font-style: normal;
+				font-display: swap;
+				font-weight: 400;
+				src: url('assets/home/fonts/ibm-plex-mono-latin-400-normal.woff2') format('woff2');
+			}
+
+			/* DESIGN.md's palette: its light theme here, its dark theme when the system asks. */
+			:root {
+				color-scheme: light;
+				--chrome: #efece6;
+				--surface: #fdfcfa;
+				--surface-quiet: #f8f6f2;
+				--line: #e5e1d9;
+				--line-strong: #d6d1c7;
+				--ink: #171612;
+				--ink-hover: #2e2c27;
+				--on-ink: #ffffff;
+				--text-body: #1e1d19;
+				--text-secondary: #4d4a42;
+				--text-muted: #615d54;
+				--marker: #ffd84d;
+				--on-marker: #171612;
+				--hand: #2456d6;
+				--hand-wash: rgba(36, 86, 214, 0.1);
+				--ok: #1f7a4d;
+				--ok-wash: #e3f2ea;
+				--wash: rgba(23, 22, 18, 0.05);
+				--shadow: 0 24px 60px -24px rgba(40, 32, 20, 0.35);
+				--focus: #2456d6;
+
+				/* The band: the hero illustration's own cream and graphite, the same in both themes. */
+				--band: #f2eada;
+				--band-deep: #ebe1cd;
+				--band-ink: #171612;
+				--band-text: #3b3831;
+				--band-line: rgba(23, 22, 18, 0.14);
+
+				--sans: 'Instrument Sans Variable', 'Segoe UI Variable', 'Segoe UI', system-ui, sans-serif;
+				--serif: 'Source Serif 4 Variable', 'Iowan Old Style', Georgia, 'Times New Roman', serif;
+				--mono: 'IBM Plex Mono', ui-monospace, 'Cascadia Mono', Consolas, Menlo, monospace;
+				--radius-control: 7px;
+				--radius-card: 10px;
+				--gutter: 16px;
+				--max: 1160px;
+			}
+			@media (prefers-color-scheme: dark) {
+				:root {
+					color-scheme: dark;
+					--chrome: #171614;
+					--surface: #1d1c1a;
+					--surface-quiet: #222120;
+					--line: #2f2d29;
+					--line-strong: #3d3a35;
+					--ink: #eeece6;
+					--ink-hover: #ffffff;
+					--on-ink: #171612;
+					--text-body: #e4e0d8;
+					--text-secondary: #c4bfb5;
+					--text-muted: #a09a8f;
+					--marker: #e8c547;
+					--hand: #7fa2ff;
+					--hand-wash: rgba(127, 162, 255, 0.14);
+					--ok: #6fcf9a;
+					--ok-wash: rgba(111, 207, 154, 0.12);
+					--wash: rgba(232, 230, 225, 0.06);
+					--shadow: 0 24px 60px -24px rgba(0, 0, 0, 0.75);
+					--focus: #7fa2ff;
+				}
+			}
+			@media (min-width: 720px) {
+				:root {
+					--gutter: 32px;
+				}
+			}
+
+			*,
+			*::before,
+			*::after {
+				box-sizing: border-box;
+			}
+			html {
+				scroll-behavior: smooth;
+				scroll-padding-top: 16px;
+				-webkit-text-size-adjust: 100%;
+			}
+			@media (prefers-reduced-motion: reduce) {
+				html {
+					scroll-behavior: auto;
+				}
+			}
+			body {
+				margin: 0;
+				background: var(--surface);
+				color: var(--text-body);
+				font-family: var(--sans);
+				font-size: 1.0625rem;
+				line-height: 1.55;
+				overflow-x: hidden;
+			}
+			img {
+				max-width: 100%;
+				height: auto;
+				display: block;
+			}
+			a {
+				color: var(--hand);
+				text-underline-offset: 0.18em;
+			}
+			:focus-visible {
+				outline: 2px solid var(--focus);
+				outline-offset: 2px;
+			}
+			code,
+			.mono {
+				font-family: var(--mono);
+				font-size: 0.86em;
+			}
+			h1,
+			h2,
+			h3 {
+				color: var(--ink);
+				line-height: 1.15;
+				margin: 0;
+			}
+			h2 {
+				font-size: clamp(1.65rem, 1.2rem + 1.7vw, 2.4rem);
+				font-weight: 650;
+				letter-spacing: -0.02em;
+			}
+			h3 {
+				font-size: 1.125rem;
+				font-weight: 600;
+				letter-spacing: -0.01em;
+			}
+			p {
+				margin: 0;
+			}
+			.skip {
+				position: absolute;
+				left: var(--gutter);
+				top: -100px;
+				z-index: 10;
+				padding: 8px 12px;
+				background: var(--band-ink);
+				color: #fff;
+				border-radius: var(--radius-control);
+				font-weight: 600;
+			}
+			.skip:focus {
+				top: 12px;
+			}
+			.wrap {
+				max-width: var(--max);
+				margin: 0 auto;
+				padding: 0 var(--gutter);
+			}
+			/* A section's label in the machine's voice, numbered like a page of the guide. */
+			.kicker {
+				display: flex;
+				align-items: center;
+				gap: 10px;
+				font-family: var(--mono);
+				font-size: 0.8125rem;
+				color: var(--text-muted);
+				margin-bottom: 14px;
+			}
+			.kicker::after {
+				content: '';
+				flex: 0 0 40px;
+				height: 1px;
+				background: var(--line-strong);
+			}
+			section {
+				padding: 80px 0;
+			}
+			section + section {
+				border-top: 1px solid var(--line);
+			}
+			.quiet {
+				background: var(--surface-quiet);
+			}
+			.lede {
+				color: var(--text-secondary);
+				max-width: 44rem;
+				margin-top: 16px;
+				font-size: 1.125rem;
+			}
+
+			/* The highlighter: a stroke drawn under the words once the page has loaded. */
+			mark,
+			.marked {
+				color: inherit;
+				background: linear-gradient(
+						transparent 12%,
+						var(--marker) 12%,
+						var(--marker) 88%,
+						transparent 88%
+					)
+					no-repeat 0 0 / 100% 100%;
+				padding: 0 0.12em;
+				margin: 0 -0.06em;
+				-webkit-box-decoration-break: clone;
+				box-decoration-break: clone;
+			}
+			@media (prefers-reduced-motion: no-preference) {
+				.hero mark {
+					animation: draw 900ms 350ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+				}
+			}
+			@keyframes draw {
+				from {
+					background-size: 0% 100%;
+				}
+				to {
+					background-size: 100% 100%;
+				}
+			}
+
+			/* Band: header and hero. */
+			.band {
+				background-color: var(--band);
+				background-image:
+					radial-gradient(
+						70% 90% at 78% 40%,
+						rgba(255, 255, 255, 0.55),
+						rgba(255, 255, 255, 0) 70%
+					),
+					linear-gradient(var(--band), var(--band-deep));
+				color: var(--band-text);
+				color-scheme: light;
+				--focus: #2456d6;
+				border-bottom: 1px solid var(--band-line);
+			}
+			.band a {
+				color: #1f48b8;
+			}
+			.top {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				gap: 16px;
+				padding-top: 18px;
+				padding-bottom: 18px;
+			}
+			.logo {
+				display: flex;
+				align-items: center;
+				gap: 10px;
+				font-weight: 650;
+				font-size: 1.1875rem;
+				letter-spacing: -0.01em;
+				text-decoration: none;
+			}
+			.band .logo {
+				color: var(--band-ink);
+			}
+			.logo svg {
+				width: 32px;
+				height: 32px;
+				flex: none;
+			}
+			.top nav ul {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 4px 22px;
+				list-style: none;
+				margin: 0;
+				padding: 0;
+				font-size: 0.9375rem;
+			}
+			.band .top nav a {
+				color: var(--band-text);
+				text-decoration: none;
+			}
+			.band .top nav a:hover {
+				color: var(--band-ink);
+				text-decoration: underline;
+			}
+			.band .top nav a.lang {
+				font-family: var(--mono);
+				font-size: 0.8125rem;
+				padding: 2px 8px;
+				border: 1px solid var(--band-line);
+				border-radius: 999px;
+			}
+			@media (max-width: 859px) {
+				.top nav li:not(.keep) {
+					display: none;
+				}
+			}
+			.hero {
+				display: grid;
+				gap: 24px;
+				align-items: center;
+				padding-top: 24px;
+				padding-bottom: 64px;
+			}
+			@media (min-width: 980px) {
+				.hero {
+					grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+					gap: 40px;
+					padding-top: 40px;
+					padding-bottom: 88px;
+				}
+			}
+			.hero h1 {
+				color: var(--band-ink);
+				font-size: clamp(2.15rem, 1.35rem + 3.3vw, 3.6rem);
+				font-weight: 650;
+				letter-spacing: -0.03em;
+				line-height: 1.05;
+			}
+			.hero mark {
+				--marker: #ffd84d;
+			}
+			.hero .intro {
+				margin-top: 22px;
+				font-size: 1.1875rem;
+				max-width: 33rem;
+			}
+			.hero .name-note {
+				margin-top: 12px;
+				font-size: 0.9375rem;
+				color: #5d5950;
+			}
+			.hero .name-note i {
+				font-family: var(--serif);
+				font-size: 1.06em;
+			}
+			/* The illustration's cream is the band's, so its edges fade into it. */
+			.hero-art {
+				margin: 0 -8px;
+				-webkit-mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, #000 78%, transparent 100%);
+				mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, #000 78%, transparent 100%);
+			}
+			@media (min-width: 980px) {
+				.hero-art {
+					margin: 0 -48px 0 0;
+				}
+			}
+			.get {
+				display: flex;
+				flex-wrap: wrap;
+				align-items: center;
+				gap: 14px;
+				margin-top: 32px;
+			}
+			.get .badge {
+				display: block;
+				line-height: 0;
+				border-radius: 8px;
+			}
+			.get .badge img {
+				height: 56px;
+				width: auto;
+			}
+			.mac-button {
+				display: inline-flex;
+				flex-direction: column;
+				justify-content: center;
+				min-height: 56px;
+				padding: 8px 18px;
+				border: 1px solid #8a8478;
+				border-radius: 8px;
+				background: rgba(255, 255, 255, 0.55);
+				text-decoration: none;
+				line-height: 1.25;
+			}
+			.band .mac-button {
+				color: var(--band-ink);
+			}
+			.mac-button:hover {
+				background: #fff;
+				border-color: #5d5950;
+			}
+			.mac-button strong {
+				font-weight: 600;
+			}
+			.mac-button span {
+				font-size: 0.8125rem;
+				color: #5d5950;
+			}
+			.facts {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 8px;
+				list-style: none;
+				margin: 24px 0 0;
+				padding: 0;
+				font-size: 0.875rem;
+			}
+			.facts li {
+				padding: 3px 11px;
+				border: 1px solid var(--band-line);
+				border-radius: 999px;
+				background: rgba(255, 255, 255, 0.45);
+			}
+
+			/* The three tasks, each with a sample of what it writes. */
+			.tasks {
+				display: grid;
+				gap: 16px;
+				margin-top: 44px;
+			}
+			@media (min-width: 900px) {
+				.tasks {
+					grid-template-columns: repeat(3, minmax(0, 1fr));
+				}
+			}
+			.task {
+				display: flex;
+				flex-direction: column;
+				background: var(--surface);
+				border: 1px solid var(--line);
+				border-radius: var(--radius-card);
+				overflow: hidden;
+			}
+			.task .body {
+				padding: 22px 22px 24px;
+			}
+			.task h3 {
+				font-size: 1.3125rem;
+				margin-bottom: 8px;
+			}
+			.task p {
+				color: var(--text-secondary);
+				font-size: 0.97rem;
+			}
+			.task .sample {
+				order: -1;
+				margin: 0;
+				padding: 18px 20px;
+				min-height: 152px;
+				background: var(--chrome);
+				border-bottom: 1px solid var(--line);
+				font-size: 0.875rem;
+			}
+			.sample .src {
+				font-family: var(--serif);
+				font-size: 1.0625rem;
+				line-height: 1.5;
+				color: var(--ink);
+			}
+			.sample .machine {
+				display: block;
+				font-family: var(--mono);
+				font-size: 0.75rem;
+				color: var(--text-muted);
+			}
+			.sample .turn + .turn {
+				margin-top: 10px;
+			}
+			.sample .who {
+				font-family: var(--mono);
+				font-size: 0.75rem;
+				color: var(--text-muted);
+			}
+			.sample .who b {
+				font-weight: 400;
+				color: #0b5c54;
+				background: #dcf3ef;
+				padding: 0 5px;
+				border-radius: 4px;
+			}
+			.sample .who b.two {
+				color: #7a4300;
+				background: #ffebcc;
+			}
+			.sample dl {
+				display: grid;
+				grid-template-columns: auto 1fr;
+				gap: 6px 14px;
+				margin: 0;
+			}
+			.sample dt {
+				font-family: var(--mono);
+				font-size: 0.75rem;
+				color: var(--text-muted);
+				padding-top: 2px;
+			}
+			.sample dd {
+				margin: 0;
+				color: var(--ink);
+			}
+			.chip {
+				display: inline-block;
+				padding: 0 7px;
+				margin: 0 3px 3px 0;
+				border: 1px solid var(--line-strong);
+				border-radius: 5px;
+				background: var(--surface);
+				font-size: 0.8125rem;
+			}
+
+			/* The comparison example. */
+			.compare {
+				display: grid;
+				gap: 40px;
+				align-items: start;
+				margin-top: 44px;
+			}
+			@media (min-width: 900px) {
+				.compare {
+					grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+					gap: 32px;
+				}
+			}
+			.witness {
+				margin: 0;
+				border: 1px solid var(--line-strong);
+				border-radius: var(--radius-card);
+				overflow: hidden;
+				background: var(--surface);
+				box-shadow: var(--shadow);
+			}
+			.witness .label {
+				display: flex;
+				justify-content: space-between;
+				gap: 12px;
+				padding: 9px 14px;
+				font-family: var(--mono);
+				font-size: 0.75rem;
+				color: var(--text-muted);
+				border-bottom: 1px solid var(--line);
+				background: var(--chrome);
+			}
+			.witness .scan {
+				background: #f4f1ea;
+			}
+			.witness .scan img {
+				width: 100%;
+				mix-blend-mode: multiply;
+			}
+			.reading {
+				padding: 18px 18px 8px;
+				font-family: var(--serif);
+				font-size: clamp(1rem, 0.9rem + 0.5vw, 1.1875rem);
+				line-height: 1.75;
+				color: var(--ink);
+			}
+			.reading p {
+				display: flex;
+				gap: 14px;
+				white-space: nowrap;
+			}
+			.reading .n {
+				flex: none;
+				width: 1.6em;
+				text-align: right;
+				font-family: var(--mono);
+				font-size: 0.75rem;
+				line-height: 2.2;
+				color: var(--text-muted);
+			}
+			.reading .dots {
+				color: var(--text-muted);
+				letter-spacing: 0.12em;
+			}
+			.word {
+				font: inherit;
+				color: inherit;
+				border: 0;
+				margin: 0;
+				padding: 0 0.1em;
+				border-radius: 2px;
+				background: var(--marker);
+				color: var(--on-marker);
+				cursor: pointer;
+				box-shadow: 0 0 0 1.5px var(--on-marker);
+			}
+			.word.fixed {
+				background: transparent;
+				color: var(--hand);
+				box-shadow: none;
+				text-decoration: underline 2px var(--hand);
+				text-underline-offset: 0.2em;
+			}
+			.readings {
+				margin: 6px 14px 16px;
+				border: 1px solid var(--line);
+				border-radius: var(--radius-card);
+				background: var(--surface);
+				font-size: 0.9375rem;
+			}
+			.readings .head {
+				display: flex;
+				justify-content: space-between;
+				gap: 12px;
+				padding: 10px 14px;
+				color: var(--text-secondary);
+				border-bottom: 1px solid var(--line);
+			}
+			.readings .head .mono {
+				color: var(--text-muted);
+			}
+			.readings ul {
+				list-style: none;
+				margin: 0;
+				padding: 0;
+			}
+			.readings li {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				gap: 12px;
+				padding: 10px 14px;
+			}
+			.readings li + li {
+				border-top: 1px solid var(--line);
+			}
+			.readings .text {
+				font-family: var(--serif);
+				font-size: 1.125rem;
+				font-weight: 600;
+				color: var(--ink);
+			}
+			.readings .model {
+				display: block;
+				font-family: var(--mono);
+				font-size: 0.75rem;
+				color: var(--text-muted);
+			}
+			.readings .state {
+				flex: none;
+				padding: 3px 10px;
+				border-radius: 5px;
+				font-size: 0.8125rem;
+				background: var(--wash);
+				color: var(--text-secondary);
+			}
+			.readings button.state {
+				font: inherit;
+				font-size: 0.875rem;
+				font-weight: 600;
+				padding: 6px 12px;
+				border: 1px solid var(--ink);
+				border-radius: var(--radius-control);
+				background: var(--ink);
+				color: var(--on-ink);
+				cursor: pointer;
+			}
+			.readings button.state:hover {
+				background: var(--ink-hover);
+			}
+			.readings .note {
+				padding: 10px 14px 12px;
+				border-top: 1px solid var(--line);
+				font-size: 0.875rem;
+				color: var(--text-secondary);
+			}
+			.readings .note.done {
+				background: var(--hand-wash);
+				color: var(--ink);
+			}
+			.legend {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 6px 18px;
+				padding: 0 18px 16px;
+				font-size: 0.8125rem;
+				color: var(--text-muted);
+			}
+			.legend span::before {
+				content: '';
+				display: inline-block;
+				width: 12px;
+				height: 10px;
+				margin-right: 6px;
+				border-radius: 2px;
+				background: var(--marker);
+				vertical-align: -1px;
+			}
+			.legend span.yours::before {
+				height: 2px;
+				vertical-align: 3px;
+				background: var(--hand);
+			}
+			.why h3 {
+				margin-top: 28px;
+			}
+			.why h3:first-child {
+				margin-top: 0;
+			}
+			.why p {
+				margin-top: 8px;
+				color: var(--text-secondary);
+			}
+			.reset {
+				margin-top: 20px;
+				font: inherit;
+				font-size: 0.9375rem;
+				padding: 0;
+				border: 0;
+				background: none;
+				color: var(--hand);
+				text-decoration: underline;
+				text-underline-offset: 0.18em;
+				cursor: pointer;
+			}
+			.reset[hidden] {
+				display: none;
+			}
+
+			/* More features. */
+			.cards {
+				display: grid;
+				gap: 16px;
+				margin-top: 44px;
+				grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+			}
+			.card {
+				background: var(--surface);
+				border: 1px solid var(--line);
+				border-radius: var(--radius-card);
+				padding: 22px;
+			}
+			.card h3 {
+				margin-bottom: 8px;
+			}
+			.card p {
+				color: var(--text-secondary);
+				font-size: 0.97rem;
+			}
+			.card .mark {
+				display: block;
+				width: 30px;
+				height: 8px;
+				border-radius: 2px;
+				background: var(--marker);
+				margin-bottom: 16px;
+			}
+
+			/* Tour. The system switch works without script: two radio buttons, and :has() shows the
+			   matching set. Without :has(), the Windows set shows. */
+			.switch {
+				display: inline-flex;
+				margin: 28px 0 0;
+				padding: 3px;
+				border: 1px solid var(--line-strong);
+				border-radius: 999px;
+				background: var(--surface);
+			}
+			.switch legend {
+				position: absolute;
+				width: 1px;
+				height: 1px;
+				overflow: hidden;
+				clip-path: inset(50%);
+			}
+			.switch input {
+				position: absolute;
+				opacity: 0;
+				pointer-events: none;
+			}
+			.switch label {
+				padding: 6px 16px;
+				border-radius: 999px;
+				cursor: pointer;
+				font-size: 0.9375rem;
+				font-weight: 600;
+				color: var(--text-secondary);
+			}
+			.switch input:checked + label {
+				background: var(--ink);
+				color: var(--on-ink);
+			}
+			.switch input:focus-visible + label {
+				outline: 2px solid var(--focus);
+				outline-offset: 2px;
+			}
+			.steps {
+				display: grid;
+				gap: 44px 32px;
+				margin: 32px 0 0;
+				padding: 0;
+				list-style: none;
+				counter-reset: step;
+			}
+			@media (min-width: 860px) {
+				.steps {
+					grid-template-columns: 1fr 1fr;
+				}
+			}
+			.steps li {
+				counter-increment: step;
+			}
+			.steps a.shot {
+				display: block;
+				border-radius: var(--radius-card);
+				overflow: hidden;
+				border: 1px solid var(--line-strong);
+				box-shadow: var(--shadow);
+				background: var(--chrome);
+			}
+			.steps h3 {
+				display: flex;
+				align-items: baseline;
+				gap: 10px;
+				margin-top: 18px;
+			}
+			.steps h3::before {
+				content: counter(step, decimal-leading-zero);
+				font-family: var(--mono);
+				font-size: 0.8125rem;
+				font-weight: 400;
+				color: var(--text-muted);
+			}
+			.steps p {
+				margin-top: 6px;
+				color: var(--text-secondary);
+			}
+			.steps a.shot-mac {
+				display: none;
+			}
+			.tour:has(#os-mac:checked) .steps a.shot-win {
+				display: none;
+			}
+			.tour:has(#os-mac:checked) .steps a.shot-mac {
+				display: block;
+			}
+			.small {
+				margin-top: 32px;
+				font-size: 0.875rem;
+				color: var(--text-muted);
+			}
+
+			/* Cloud or offline. */
+			.ways {
+				display: grid;
+				gap: 16px;
+				margin-top: 44px;
+			}
+			@media (min-width: 860px) {
+				.ways {
+					grid-template-columns: 1fr 1fr;
+				}
+			}
+			.way {
+				border: 1px solid var(--line);
+				border-radius: var(--radius-card);
+				background: var(--surface);
+				padding: 24px;
+			}
+			.way.offline {
+				background: var(--ok-wash);
+				border-color: color-mix(in srgb, var(--ok) 35%, transparent);
+			}
+			.way .tag {
+				display: inline-block;
+				margin-bottom: 12px;
+				padding: 1px 9px;
+				border-radius: 999px;
+				font-family: var(--mono);
+				font-size: 0.75rem;
+				background: var(--wash);
+				color: var(--text-secondary);
+			}
+			.way.offline .tag {
+				background: color-mix(in srgb, var(--ok) 16%, transparent);
+				color: var(--ok);
+			}
+			.way > p {
+				margin-top: 8px;
+				color: var(--text-secondary);
+			}
+			.models {
+				list-style: none;
+				margin: 18px 0 0;
+				padding: 0;
+				display: grid;
+				gap: 12px;
+			}
+			.models li {
+				display: grid;
+				grid-template-columns: minmax(7.5rem, auto) 1fr;
+				gap: 4px 16px;
+				padding-top: 12px;
+				border-top: 1px solid var(--line);
+				font-size: 0.9688rem;
+			}
+			.way.offline .models li {
+				border-top-color: color-mix(in srgb, var(--ok) 22%, transparent);
+			}
+			.models strong {
+				color: var(--ink);
+				font-weight: 600;
+			}
+			.models span {
+				color: var(--text-secondary);
+			}
+			@media (max-width: 480px) {
+				.models li {
+					grid-template-columns: 1fr;
+				}
+			}
+			.savings {
+				display: grid;
+				gap: 16px;
+				margin-top: 16px;
+				grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr));
+			}
+			.saving {
+				padding: 18px 20px;
+				border-radius: var(--radius-card);
+				background: var(--chrome);
+			}
+			.saving .figure {
+				display: block;
+				font-family: var(--mono);
+				font-size: 1.5rem;
+				letter-spacing: -0.02em;
+				color: var(--ink);
+				margin-bottom: 4px;
+			}
+			.saving p {
+				font-size: 0.9375rem;
+				color: var(--text-secondary);
+			}
+
+			/* Privacy and the guide. */
+			.split {
+				display: grid;
+				gap: 32px;
+			}
+			@media (min-width: 860px) {
+				.split {
+					grid-template-columns: 1fr 1fr;
+					gap: 56px;
+				}
+			}
+			.points {
+				margin: 0;
+				padding: 0;
+				list-style: none;
+				display: grid;
+				gap: 16px;
+			}
+			.points li {
+				position: relative;
+				padding-left: 30px;
+				color: var(--text-secondary);
+			}
+			.points li::before {
+				content: '';
+				position: absolute;
+				left: 2px;
+				top: 0.42em;
+				width: 16px;
+				height: 9px;
+				border-radius: 2px;
+				background: var(--marker);
+			}
+			.points strong {
+				color: var(--ink);
+				font-weight: 600;
+			}
+			.guides {
+				margin: 32px 0 0;
+				padding: 0;
+				list-style: none;
+				display: grid;
+				gap: 10px;
+				grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
+				counter-reset: chapter;
+			}
+			.guides li {
+				counter-increment: chapter;
+			}
+			.guides a {
+				display: block;
+				height: 100%;
+				padding: 14px 16px;
+				border: 1px solid var(--line);
+				border-radius: var(--radius-card);
+				background: var(--surface);
+				text-decoration: none;
+			}
+			.guides a:hover {
+				border-color: var(--line-strong);
+				background: var(--wash);
+			}
+			.guides strong {
+				display: flex;
+				gap: 10px;
+				align-items: baseline;
+				color: var(--ink);
+				font-weight: 600;
+			}
+			.guides strong::before {
+				content: counter(chapter);
+				font-family: var(--mono);
+				font-size: 0.75rem;
+				font-weight: 400;
+				color: var(--text-muted);
+			}
+			.guides span {
+				display: block;
+				margin-top: 2px;
+				font-size: 0.875rem;
+				color: var(--text-secondary);
+			}
+			.requirements {
+				display: grid;
+				gap: 16px;
+				margin-top: 36px;
+			}
+			@media (min-width: 720px) {
+				.requirements {
+					grid-template-columns: 1fr 1fr;
+				}
+			}
+			.requirements ul {
+				margin: 10px 0 0;
+				padding-left: 1.2em;
+				color: var(--text-secondary);
+				font-size: 0.97rem;
+			}
+			.requirements li + li {
+				margin-top: 4px;
+			}
+			.cta {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 12px;
+				margin-top: 20px;
+			}
+			.button {
+				display: inline-flex;
+				align-items: center;
+				min-height: 44px;
+				padding: 8px 18px;
+				border-radius: var(--radius-control);
+				border: 1px solid var(--line-strong);
+				background: var(--surface);
+				color: var(--ink);
+				font-weight: 600;
+				text-decoration: none;
+			}
+			.button:hover {
+				background: var(--wash);
+				border-color: var(--text-muted);
+			}
+			.button.primary {
+				background: var(--ink);
+				border-color: var(--ink);
+				color: var(--on-ink);
+			}
+			.button.primary:hover {
+				background: var(--ink-hover);
+			}
+
+			footer {
+				border-top: 1px solid var(--line);
+				background: var(--chrome);
+				padding: 40px 0 56px;
+				font-size: 0.875rem;
+				color: var(--text-muted);
+			}
+			footer ul {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 8px 24px;
+				list-style: none;
+				margin: 0 0 20px;
+				padding: 0;
+			}
+			footer p + p {
+				margin-top: 6px;
+			}
+		</style>
+	</head>
+	<body>
+		<a class="skip" href="#main">Skip to content</a>
+		<div class="band">
+			<header class="wrap top">
+				<a class="logo" href="./" aria-label="Kalamu, home">
+					<svg viewBox="0 0 22 22" aria-hidden="true">
+						<rect width="22" height="22" rx="5" fill="#1e1d1b" />
+						<g transform="rotate(-9 8.5 11)">
+							<rect x="3.6" y="4.4" width="9.6" height="13" rx="1" fill="#efe1c3" />
+							<rect x="5" y="7" width="5" height="1.3" rx="0.65" fill="#8a5a3b" />
+							<rect x="5" y="10" width="6" height="1.3" rx="0.65" fill="#8a5a3b" />
+						</g>
+						<g transform="rotate(6 13.5 11.5)">
+							<rect x="8.8" y="4.6" width="9.6" height="13" rx="1" fill="#ffffff" />
+							<rect x="10.4" y="7" width="6.4" height="1.4" rx="0.7" fill="#9a9ea6" />
+							<rect x="10" y="10" width="7.2" height="2.4" rx="0.8" fill="#ffd84d" />
+							<rect x="10.4" y="14" width="5" height="1.4" rx="0.7" fill="#9a9ea6" />
+						</g>
+					</svg>
+					<span>Kalamu</span>
+				</a>
+				<nav aria-label="Sections">
+					<ul>
+						<li><a href="#tasks">What it does</a></li>
+						<li><a href="#check">Checking</a></li>
+						<li><a href="#tour">Tour</a></li>
+						<li><a href="#offline">Cloud or offline</a></li>
+						<li><a href="#privacy">Privacy</a></li>
+						<li class="keep"><a href="guide/">Guide</a></li>
+						<li class="keep">
+							<a class="lang" href="guide/fr/" hreflang="fr" lang="fr">Guide en français</a>
+						</li>
+					</ul>
+				</nav>
+			</header>
+
+			<div class="wrap hero">
+				<div>
+					<h1>
+						Read archives, transcribe interviews, and
+						<mark>check every line against its source.</mark>
+					</h1>
+					<p class="intro">
+						Kalamu is a free desktop app for researchers. It reads scanned and handwritten
+						documents, transcribes recordings and analyses texts with the AI provider you choose, or
+						offline, without Python, Colab or the command line.
+					</p>
+					<div class="get">
+						<a
+							class="badge"
+							href="https://apps.microsoft.com/detail/9MXT5555BZ1H?referrer=appbadge&amp;mode=direct"
+						>
+							<img
+								src="https://get.microsoft.com/images/en-us%20dark.svg"
+								alt="Get it from Microsoft"
+								width="160"
+								height="56"
+							/>
+						</a>
+						<a class="mac-button" href="https://github.com/fmadore/Kalamu/releases/latest">
+							<strong>Download for Mac</strong>
+							<span>Disk image on GitHub · Apple silicon, macOS 14+</span>
+						</a>
+					</div>
+					<ul class="facts" aria-label="At a glance">
+						<li>Free, every feature included</li>
+						<li>Windows 11, x64 and ARM64</li>
+						<li>macOS on Apple silicon</li>
+						<li>English and French interface</li>
+					</ul>
+					<p class="name-note"><i>Kalamu</i> is Swahili for pen, from the Arabic <i>qalam</i>.</p>
+				</div>
+				<figure class="hero-art">
+					<img
+						src="assets/home/hero.jpg"
+						width="1600"
+						height="900"
+						alt="An illustration of a researcher's desk: a printed newspaper, a handwritten letter and a cassette recorder send ribbons of ink blue and highlighter yellow into neat lines of text on a fresh sheet, one line highlighted."
+						fetchpriority="high"
+					/>
+				</figure>
+			</div>
+		</div>
+
+		<main id="main">
+			<section id="tasks" aria-labelledby="tasks-title">
+				<div class="wrap">
+					<p class="kicker">01 · What it does</p>
+					<h2 id="tasks-title">Three tasks, for the sources researchers actually have</h2>
+					<p class="lede">
+						Old newspapers in columns, letters and registers in a hand, oral-history interviews,
+						reports and articles: Kalamu turns them into text you can search, quote and analyse, in
+						any language the chosen model reads.
+					</p>
+					<div class="tasks">
+						<article class="task">
+							<div class="body">
+								<h3>Extract text</h3>
+								<p>
+									From PDFs and images, printed or handwritten: newspapers, reports, letters,
+									registers and manuscripts. Keep the lines as on the page, to check against the
+									scan, or join them into running text. Photographs of one letter or file are read
+									as one document.
+								</p>
+							</div>
+							<div class="sample" aria-hidden="true">
+								<span class="machine">page 3 · lines kept as on the page</span>
+								<p class="src">
+									The finishing touches are being put on<br />
+									“Christopher Junior,” the play which<br />
+									the Dramatic club will present at the
+								</p>
+							</div>
+						</article>
+						<article class="task">
+							<div class="body">
+								<h3>Transcribe audio and video</h3>
+								<p>
+									With speakers and timestamps, and the speakers given their real names. Long
+									recordings are cut at pauses. Offline, Whisper transcribes on your computer;
+									public YouTube videos are transcribed from their link with Gemini.
+								</p>
+							</div>
+							<div class="sample" aria-hidden="true">
+								<div class="turn">
+									<span class="who"><b>Interviewer</b> 00:04:12</span>
+									<p class="src">When did you first come to the city?</p>
+								</div>
+								<div class="turn">
+									<span class="who"><b class="two">Speaker 2</b> 00:04:16</span>
+									<p class="src">In 1978, the year of the great rains.</p>
+								</div>
+							</div>
+						</article>
+						<article class="task">
+							<div class="body">
+								<h3>Analyse texts</h3>
+								<p>
+									With fields you define, as you would brief a research assistant: a summary, the
+									people, places and organisations a document names, its tone with a reason, themes
+									from your own list. Ready-made analyses cover the common needs.
+								</p>
+							</div>
+							<div class="sample" aria-hidden="true">
+								<dl>
+									<dt>people</dt>
+									<dd>
+										<span class="chip">Byrne Marcellus</span
+										><span class="chip">Mildred Bevins</span>
+									</dd>
+									<dt>places</dt>
+									<dd><span class="chip">Lincoln, Nebraska</span></dd>
+									<dt>tone</dt>
+									<dd>Enthusiastic: the cast is “bound to please”</dd>
+								</dl>
+							</div>
+						</article>
+					</div>
+				</div>
+			</section>
+
+			<section id="check" class="quiet" aria-labelledby="check-title">
+				<div class="wrap">
+					<p class="kicker">02 · Checking</p>
+					<h2 id="check-title">
+						AI text can be fluent and wrong. So every result sits beside its source.
+					</h2>
+					<p class="lede">
+						The review puts the page next to its text, or the recording next to its transcript. Read
+						the same page with two models, and the words where they disagree are highlighted: that
+						is where to look. Try it on a line from a 1911 newspaper.
+					</p>
+					<div class="compare">
+						<div class="witness" id="demo">
+							<div class="label">
+								<span>Source · Page 1</span><span>The Daily Nebraskan, 1911</span>
+							</div>
+							<div class="scan">
+								<img
+									src="assets/home/scan-cast.png"
+									width="512"
+									height="426"
+									loading="lazy"
+									alt="A scanned cast list from The Daily Nebraskan, 5 April 1911. The sixth line reads: Tom Bellaby, Harry Hathawey."
+								/>
+							</div>
+							<div class="label"><span>A · gemini-4-hydrogen</span><span>1 difference</span></div>
+							<div class="reading">
+								<p>
+									<span class="n">47</span
+									><span>Major Hedway <span class="dots">.......</span> C. F. Radcliffe</span>
+								</p>
+								<p>
+									<span class="n">48</span
+									><span
+										>Tom Bellaby <span class="dots">.......</span> Harry
+										<button class="word" type="button" aria-describedby="readings-title" id="word">
+											Hatheway
+										</button></span
+									>
+								</p>
+								<p>
+									<span class="n">49</span
+									><span>Mr. Simpson <span class="dots">.......</span> W. L. Bates</span>
+								</p>
+							</div>
+							<div class="readings" role="group" aria-labelledby="readings-title">
+								<div class="head">
+									<span id="readings-title">The models read this differently</span>
+									<span class="mono">line 48</span>
+								</div>
+								<ul>
+									<li>
+										<span
+											><span class="text" id="text-a">Hatheway</span
+											><span class="model">gemini-4-hydrogen</span></span
+										>
+										<span class="state" id="state-a">In the text</span>
+									</li>
+									<li>
+										<span
+											><span class="text">Hathawey</span
+											><span class="model">gpt-6.2-sol</span></span
+										>
+										<button class="state" type="button" id="use-b">Use this reading</button>
+									</li>
+								</ul>
+								<p class="note" id="note" aria-live="polite">
+									Compare both with the scan above, then choose.
+								</p>
+							</div>
+							<div class="legend" aria-hidden="true">
+								<span>Models disagree</span><span class="yours">Your correction</span>
+							</div>
+						</div>
+						<div class="why">
+							<h3>Your corrections never overwrite the AI's text</h3>
+							<p>
+								A correction is stored as a layer of its own, and you mark each page as reviewed.
+								Exports read the corrected text; <code>provenance.json</code> records both, with the
+								model, prompt and settings, so your method can be described and repeated.
+							</p>
+							<h3>See where the text sits on the page</h3>
+							<p>
+								Show the regions a model found over the scan, draw your own around a marginal note
+								or a faint line, and have just that part read again, as a proposal you accept or
+								leave.
+							</p>
+							<h3>Know how far to trust a model</h3>
+							<p>
+								Compare two or more models on the same documents: their differences are highlighted,
+								with error rates against the pages you have corrected. A project's
+								<em>What to check</em> list gathers what failed, was cut off or is not yet reviewed.
+							</p>
+							<button class="reset" type="button" id="reset" hidden>Show the example again</button>
+						</div>
+					</div>
+				</div>
+			</section>
+
+			<section id="more" aria-labelledby="more-title">
+				<div class="wrap">
+					<p class="kicker">03 · And then</p>
+					<h2 id="more-title">From a folder of scans to a project you can search</h2>
+					<div class="cards">
+						<article class="card">
+							<span class="mark" aria-hidden="true"></span>
+							<h3>Projects</h3>
+							<p>
+								Documents in collections and tags, each with every result read from it, whatever job
+								made it, and the one you rely on marked. Describe each source as an archive would:
+								repository, fonds, shelfmark, citation.
+							</p>
+						</article>
+						<article class="card">
+							<span class="mark" aria-hidden="true"></span>
+							<h3>Search by words or by meaning</h3>
+							<p>
+								Search the corrected text of a whole project, accents and Arabic vowel marks
+								ignored, or describe what you look for and find the passages that say it in other
+								words. A map shows which documents are alike.
+							</p>
+						</article>
+						<article class="card">
+							<span class="mark" aria-hidden="true"></span>
+							<h3>Which of these speak of my question?</h3>
+							<p>
+								A model reads a project's documents against your research question and says which
+								do, why, and with which passages, each found word for word with its page. You keep
+								or set aside each one.
+							</p>
+						</article>
+						<article class="card">
+							<span class="mark" aria-hidden="true"></span>
+							<h3>Interviews, analysed</h3>
+							<p>
+								From a transcript, themes and passages worth quoting, each backed by quotations
+								found word for word, with their speaker and time. Give your own themes or interview
+								guide first.
+							</p>
+						</article>
+						<article class="card">
+							<span class="mark" aria-hidden="true"></span>
+							<h3>Tables of contents and registers</h3>
+							<p>
+								Turn a newspaper issue or an archival file into one entry per article, with its
+								pages, authors and summary; read a directory or register into a table, one row per
+								entry, in your columns.
+							</p>
+						</article>
+						<article class="card">
+							<span class="mark" aria-hidden="true"></span>
+							<h3>A dictionary of names</h3>
+							<p>
+								The people, places and terms your analyses listed, their spellings gathered under
+								the label you choose. A model can propose merges that you accept, change or turn
+								down.
+							</p>
+						</article>
+						<article class="card">
+							<span class="mark" aria-hidden="true"></span>
+							<h3>Correct and translate</h3>
+							<p>
+								Clean up the noisy OCR a digital library supplies, page by page, the spelling of the
+								time kept and every change shown; or translate a text, shown beside its source.
+							</p>
+						</article>
+						<article class="card">
+							<span class="mark" aria-hidden="true"></span>
+							<h3>Pipelines and workflows</h3>
+							<p>
+								Save a job's settings as a pipeline and start the next batch in one click. Chain
+								steps, reading then analysis, with a stop for your review before the next step reads
+								the text.
+							</p>
+						</article>
+						<article class="card">
+							<span class="mark" aria-hidden="true"></span>
+							<h3>Export, with a record</h3>
+							<p>
+								Text, Markdown, Word, JSON, CSV and Excel, subtitles, searchable PDF, ALTO XML and
+								PAGE XML, each with a <code>provenance.json</code> to cite in a methods section.
+							</p>
+						</article>
+					</div>
+				</div>
+			</section>
+
+			<section id="tour" class="tour quiet" aria-labelledby="tour-title">
+				<div class="wrap">
+					<p class="kicker">04 · Tour</p>
+					<h2 id="tour-title">Six screens from the app</h2>
+					<fieldset class="switch">
+						<legend>Show screenshots from</legend>
+						<input type="radio" name="os" id="os-win" checked />
+						<label for="os-win">Windows</label>
+						<input type="radio" name="os" id="os-mac" />
+						<label for="os-mac">macOS</label>
+					</fieldset>
+					<ol class="steps">
+						<li>
+							<a class="shot shot-win" href="store/screenshots/windows/en/01-comparison.png">
+								<img
+									src="store/screenshots/windows/en/01-comparison.png"
+									width="1920"
+									height="1080"
+									loading="lazy"
+									alt="The review on Windows: a 1911 newspaper page scanned on the left, its text on the right with the words two models read differently highlighted, and the two readings open over the text."
+								/>
+							</a>
+							<a class="shot shot-mac" href="store/screenshots/macos/en/01-comparison.png">
+								<img
+									src="store/screenshots/macos/en/01-comparison.png"
+									width="1440"
+									height="900"
+									loading="lazy"
+									alt="The review on a Mac: a scanned newspaper page beside its text, with the words two models read differently highlighted."
+								/>
+							</a>
+							<h3>Check every page beside its scan</h3>
+							<p>
+								Where two models read differently, the words are highlighted and you choose the
+								right reading.
+							</p>
+						</li>
+						<li>
+							<a class="shot shot-win" href="store/screenshots/windows/en/03-handwriting.png">
+								<img
+									src="store/screenshots/windows/en/03-handwriting.png"
+									width="1920"
+									height="1080"
+									loading="lazy"
+									alt="A handwritten report of 1755 beside its transcription on Windows, lines kept as on the page, one word corrected in blue."
+								/>
+							</a>
+							<a class="shot shot-mac" href="store/screenshots/macos/en/03-handwriting.png">
+								<img
+									src="store/screenshots/macos/en/03-handwriting.png"
+									width="1440"
+									height="900"
+									loading="lazy"
+									alt="A handwritten report beside its transcription on a Mac, lines kept as on the page."
+								/>
+							</a>
+							<h3>Read handwriting line by line</h3>
+							<p>
+								Letters and registers, kept as on the page so each line is easy to check against the
+								original.
+							</p>
+						</li>
+						<li>
+							<a class="shot shot-win" href="store/screenshots/windows/en/06-transcript.png">
+								<img
+									src="store/screenshots/windows/en/06-transcript.png"
+									width="1920"
+									height="1080"
+									loading="lazy"
+									alt="An interview transcript on Windows: the player above, speakers given their names, timestamps, and the line being spoken highlighted."
+								/>
+							</a>
+							<a class="shot shot-mac" href="store/screenshots/macos/en/06-transcript.png">
+								<img
+									src="store/screenshots/macos/en/06-transcript.png"
+									width="1440"
+									height="900"
+									loading="lazy"
+									alt="An interview transcript on a Mac, with the player, speakers and timestamps."
+								/>
+							</a>
+							<h3>Transcribe interviews</h3>
+							<p>
+								With speakers and timestamps; give the speakers their names, and click any line to
+								hear it.
+							</p>
+						</li>
+						<li>
+							<a class="shot shot-win" href="store/screenshots/windows/en/09-contents.png">
+								<img
+									src="store/screenshots/windows/en/09-contents.png"
+									width="1920"
+									height="1080"
+									loading="lazy"
+									alt="A detailed table of contents on Windows: a newspaper page on the left, its articles on the right with titles, pages, authors and summaries."
+								/>
+							</a>
+							<a class="shot shot-mac" href="store/screenshots/macos/en/09-contents.png">
+								<img
+									src="store/screenshots/macos/en/09-contents.png"
+									width="1440"
+									height="900"
+									loading="lazy"
+									alt="A detailed table of contents of a newspaper issue on a Mac."
+								/>
+							</a>
+							<h3>Make a table of contents</h3>
+							<p>
+								A whole newspaper issue or archival file: each article with its pages, authors and
+								summary.
+							</p>
+						</li>
+						<li>
+							<a class="shot shot-win" href="store/screenshots/windows/en/02-project.png">
+								<img
+									src="store/screenshots/windows/en/02-project.png"
+									width="1920"
+									height="1080"
+									loading="lazy"
+									alt="A project on Windows: its documents with collections in the side list, tags, and what each was read with and how much is reviewed."
+								/>
+							</a>
+							<a class="shot shot-mac" href="store/screenshots/macos/en/02-project.png">
+								<img
+									src="store/screenshots/macos/en/02-project.png"
+									width="1440"
+									height="900"
+									loading="lazy"
+									alt="A project's documents on a Mac, with collections and tags."
+								/>
+							</a>
+							<h3>Keep a project together</h3>
+							<p>
+								Collections and tags, each document with every result read from it, whatever job
+								made it.
+							</p>
+						</li>
+						<li>
+							<a class="shot shot-win" href="store/screenshots/windows/en/08-new-job.png">
+								<img
+									src="store/screenshots/windows/en/08-new-job.png"
+									width="1920"
+									height="1080"
+									loading="lazy"
+									alt="New job on Windows, ready to start: Extract text on a folder of newspaper issues with two models, and the estimated cost of each."
+								/>
+							</a>
+							<a class="shot shot-mac" href="store/screenshots/macos/en/08-new-job.png">
+								<img
+									src="store/screenshots/macos/en/08-new-job.png"
+									width="1440"
+									height="900"
+									loading="lazy"
+									alt="New job on a Mac, with files, a task, models and the estimated cost."
+								/>
+							</a>
+							<h3>See the cost before you start</h3>
+							<p>
+								Choose your files, a task and a model, and see the estimate before anything is sent.
+							</p>
+						</li>
+					</ol>
+					<p class="small">
+						The Windows screenshots show version 1.10.0; the Mac ones an earlier version. The
+						sources are public-domain newspapers and documents and a synthesized interview, and
+						nothing shows a real API key.
+					</p>
+				</div>
+			</section>
+
+			<section id="offline" aria-labelledby="offline-title">
+				<div class="wrap">
+					<p class="kicker">05 · Cloud or offline</p>
+					<h2 id="offline-title">Your provider, your key, or nothing sent at all</h2>
+					<p class="lede">
+						Kalamu sells no subscription, credits or API access. Use your own account with a cloud
+						provider, which bills you directly, or download a model once and work on your own
+						computer for free.
+					</p>
+					<div class="ways">
+						<div class="way">
+							<span class="tag">With your own API key</span>
+							<h3>The strongest models, billed by the provider</h3>
+							<p>Files go straight from your computer to the provider you choose.</p>
+							<ul class="models">
+								<li>
+									<strong>Google Gemini</strong
+									><span>Text, handwriting, transcription with speakers, YouTube links</span>
+								</li>
+								<li>
+									<strong>OpenAI</strong><span>Text, handwriting, transcription and analyses</span>
+								</li>
+								<li>
+									<strong>Anthropic Claude</strong><span>Text, handwriting and analyses</span>
+								</li>
+								<li>
+									<strong>Mistral</strong
+									><span
+										>Mistral OCR with each word placed on the page, transcription, analyses</span
+									>
+								</li>
+							</ul>
+						</div>
+						<div class="way offline">
+							<span class="tag">On your computer · free</span>
+							<h3>Downloaded once, then nothing leaves</h3>
+							<p>No account, key or connection; faster with a graphics processor.</p>
+							<ul class="models">
+								<li>
+									<strong>Whisper</strong><span>Transcription, skipping silence and music</span>
+								</li>
+								<li>
+									<strong>Tesseract</strong
+									><span>Clean print, each word with its place on the page</span>
+								</li>
+								<li>
+									<strong>LightOnOCR-3, GLM-OCR</strong
+									><span>Degraded print, columns and tables</span>
+								</li>
+								<li>
+									<strong>Gemma 4 E4B, E2B</strong
+									><span>Analyses, tables of contents and corrections; weaker, so check them</span>
+								</li>
+							</ul>
+						</div>
+					</div>
+					<div class="savings">
+						<div class="saving">
+							<span class="figure">0×</span>
+							<p>
+								Paid twice. Work is saved piece by piece; an interrupted job resumes where it
+								stopped.
+							</p>
+						</div>
+						<div class="saving">
+							<span class="figure">½</span>
+							<p>
+								The price, about, with the provider's batch service for large collections, answered
+								within a day.
+							</p>
+						</div>
+						<div class="saving">
+							<span class="figure">3 pages</span>
+							<p>
+								To try a long document first, with one model or two, before paying for the rest.
+							</p>
+						</div>
+						<div class="saving">
+							<span class="figure">$0.00</span>
+							<p>
+								The estimate offline. With a cloud model, it is shown per model before anything is
+								sent.
+							</p>
+						</div>
+					</div>
+				</div>
+			</section>
+
+			<section id="privacy" class="quiet" aria-labelledby="privacy-title">
+				<div class="wrap split">
+					<div>
+						<p class="kicker">06 · Privacy</p>
+						<h2 id="privacy-title">Your sources go where you send them, and nowhere else</h2>
+						<p class="lede">
+							The developer receives no files, results, keys or telemetry from Kalamu, and operates
+							no server or account for it.
+						</p>
+						<div class="cta">
+							<a class="button" href="privacy.html">Read the privacy policy</a>
+						</div>
+					</div>
+					<ul class="points">
+						<li>
+							<strong>Offline, nothing leaves the computer.</strong> Whisper, Tesseract and the
+							offline models need a connection only to download them once.
+						</li>
+						<li>
+							<strong
+								>Before the first job sent to each provider, Kalamu says what will be sent and asks
+								you.</strong
+							>
+							Files then go straight to that provider, under your own key and its terms.
+						</li>
+						<li>
+							<strong>API keys stay in Windows Credential Manager or the macOS Keychain,</strong>
+							and are sent only to their provider.
+						</li>
+						<li>
+							<strong>Originals are never changed.</strong> Results are written beside your sources,
+							and the AI's text is kept apart from your corrections.
+						</li>
+					</ul>
+				</div>
+			</section>
+
+			<section id="guide" aria-labelledby="guide-title">
+				<div class="wrap">
+					<p class="kicker">07 · Guide</p>
+					<h2 id="guide-title">Start with a first job, ten minutes long</h2>
+					<p class="lede">
+						The guide takes you from installing Kalamu to exporting results you have checked. It is
+						also in French: <a href="guide/fr/" hreflang="fr" lang="fr">Guide en français</a>.
+					</p>
+					<ul class="guides">
+						<li>
+							<a href="guide/"
+								><strong>Getting started</strong><span>What Kalamu is, and installing it.</span></a
+							>
+						</li>
+						<li>
+							<a href="guide/first-job.html"
+								><strong>Your first job</strong
+								><span>Read a few scanned pages, check them and export the text.</span></a
+							>
+						</li>
+						<li>
+							<a href="guide/tasks.html"
+								><strong>What Kalamu can do</strong><span>Each task, and which to choose.</span></a
+							>
+						</li>
+						<li>
+							<a href="guide/review.html"
+								><strong>Checking results</strong
+								><span>The review, corrections and comparing models.</span></a
+							>
+						</li>
+						<li>
+							<a href="guide/projects.html"
+								><strong>Projects</strong
+								><span>Collections, search, the dictionary and what to check.</span></a
+							>
+						</li>
+						<li>
+							<a href="guide/offline.html"
+								><strong>Working offline</strong
+								><span>Reading, transcribing and analysing on your computer.</span></a
+							>
+						</li>
+						<li>
+							<a href="guide/costs.html"
+								><strong>Costs and privacy</strong
+								><span>What a job costs, how to pay less, where files go.</span></a
+							>
+						</li>
+						<li>
+							<a href="guide/export.html"
+								><strong>Exporting and citing</strong
+								><span>Formats, and the record of how results were made.</span></a
+							>
+						</li>
+						<li>
+							<a href="guide/help.html"
+								><strong>When something goes wrong</strong><span>Troubleshooting.</span></a
+							>
+						</li>
+					</ul>
+				</div>
+			</section>
+
+			<section id="download" class="quiet" aria-labelledby="download-title">
+				<div class="wrap">
+					<p class="kicker">08 · Download</p>
+					<h2 id="download-title">Get Kalamu</h2>
+					<div class="requirements">
+						<div class="card">
+							<h3>Windows</h3>
+							<ul>
+								<li>Windows 11, with native x64 and ARM64 packages.</li>
+								<li>From the Microsoft Store, signed and updated by the Store.</li>
+								<li>
+									Or an installer from GitHub: not signed, so SmartScreen warns on the first launch;
+									choose <strong>More info</strong>, then <strong>Run anyway</strong>.
+								</li>
+							</ul>
+							<div class="cta">
+								<a
+									class="button primary"
+									href="https://apps.microsoft.com/detail/9MXT5555BZ1H?referrer=appbadge&amp;mode=direct"
+									>Microsoft Store</a
+								>
+								<a class="button" href="https://github.com/fmadore/Kalamu/releases/latest"
+									>Installers on GitHub</a
+								>
+							</div>
+						</div>
+						<div class="card">
+							<h3>macOS</h3>
+							<ul>
+								<li>A Mac with Apple silicon and macOS 14 or later.</li>
+								<li>A disk image signed with an Apple Developer ID and notarised by Apple.</li>
+								<li>Drag Kalamu to Applications; shortcuts use ⌘ where Windows uses Ctrl.</li>
+							</ul>
+							<div class="cta">
+								<a class="button primary" href="https://github.com/fmadore/Kalamu/releases/latest"
+									>Disk image on GitHub</a
+								>
+							</div>
+						</div>
+					</div>
+					<p class="lede">
+						Questions, problems or ideas? Open an issue on
+						<a href="https://github.com/fmadore/Kalamu/issues">GitHub Issues</a>. What changed in
+						each version is in the
+						<a href="https://github.com/fmadore/Kalamu/releases">release notes</a>.
+					</p>
+				</div>
+			</section>
+		</main>
+
+		<footer>
+			<div class="wrap">
+				<ul>
+					<li><a href="privacy.html">Privacy policy</a></li>
+					<li><a href="https://github.com/fmadore/Kalamu/issues">Support</a></li>
+					<li><a href="https://github.com/fmadore/Kalamu">Source code</a></li>
+					<li>
+						<a href="https://github.com/fmadore/Kalamu/blob/main/docs/README.md"
+							>Developer documentation</a
+						>
+					</li>
+					<li><a href="https://buymeacoffee.com/fmadore">Support development</a></li>
+				</ul>
+				<p>
+					Kalamu is free and open source, under the MIT licence, by
+					<a href="https://www.frederickmadore.com/">Frédérick Madore</a> (University of Bayreuth).
+					An independent project. Supporting it is optional and unlocks nothing.
+				</p>
+				<p>
+					Google Gemini and YouTube are trademarks of Google LLC; OpenAI is a trademark of OpenAI
+					OpCo, LLC; Claude is a trademark of Anthropic, PBC; Mistral AI is a trademark of Mistral
+					AI. Kalamu is not affiliated with or endorsed by any of them.
+				</p>
+			</div>
+		</footer>
+
+		<script>
+			// The comparison example: choosing the second reading corrects the word, as the review does,
+			// and the model's text stays listed. Without script, the example simply shows both readings.
+			(() => {
+				const word = document.getElementById('word');
+				const use = document.getElementById('use-b');
+				const stateA = document.getElementById('state-a');
+				const note = document.getElementById('note');
+				const reset = document.getElementById('reset');
+				const original = note.textContent;
+				function choose() {
+					word.textContent = 'Hathawey';
+					word.classList.add('fixed');
+					use.hidden = true;
+					stateA.textContent = 'Kept';
+					note.textContent =
+						'The model’s text is kept; your choice is stored as a correction, as the scan reads.';
+					note.classList.add('done');
+					reset.hidden = false;
+				}
+				function undo() {
+					word.textContent = 'Hatheway';
+					word.classList.remove('fixed');
+					use.hidden = false;
+					stateA.textContent = 'In the text';
+					note.textContent = original;
+					note.classList.remove('done');
+					reset.hidden = true;
+					use.focus();
+				}
+				use.addEventListener('click', choose);
+				word.addEventListener('click', () => use.hidden || use.focus());
+				reset.addEventListener('click', undo);
+			})();
+		</script>
+	</body>
+</html>
