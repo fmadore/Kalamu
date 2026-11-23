@@ -35,6 +35,8 @@ pub(super) struct Selection {
     /// The jobs' ids and the snapshots their sources read, as JSON lists.
     pub job_ids: String,
     pub snapshot_ids: String,
+    /// The titles of the project's documents each `(job, source)` pair read.
+    pub titles: BTreeMap<(String, String), BTreeSet<String>>,
 }
 
 fn store_err(e: kalamu_core::StoreError) -> ProjectFileError {
@@ -53,22 +55,28 @@ pub(super) fn select(conn: &Connection, project: ProjectId) -> Result<Selection,
         .ok_or(ProjectFileError::Store(kalamu_core::StoreError::NotFound))?;
     let documents = documents(conn, project).map_err(store_err)?;
 
-    // The sources each job read that are this project's documents.
+    // The sources each job read that are this project's documents, and those documents' titles.
     let mut kept: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
+    let mut titles: BTreeMap<(String, String), BTreeSet<String>> = BTreeMap::new();
     let mut stmt = conn
         .prepare(
-            "SELECT DISTINCT l.job_id, l.source_id FROM document_links l
+            "SELECT DISTINCT l.job_id, l.source_id, d.title FROM document_links l
              JOIN documents d ON d.id = l.document_id WHERE d.project_id = ?1",
         )
         .map_err(|e| store_err(db(e)))?;
     let rows = stmt
         .query_map([project.to_string()], |row| {
-            Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?))
+            Ok((
+                row.get::<_, String>(0)?,
+                row.get::<_, String>(1)?,
+                row.get::<_, String>(2)?,
+            ))
         })
         .map_err(|e| store_err(db(e)))?;
     for row in rows {
-        let (job, source) = row.map_err(|e| store_err(db(e)))?;
-        kept.entry(job).or_default().insert(source);
+        let (job, source, title) = row.map_err(|e| store_err(db(e)))?;
+        kept.entry(job.clone()).or_default().insert(source.clone());
+        titles.entry((job, source)).or_default().insert(title);
     }
     // The dictionary's proposal jobs, whole.
     let mut whole: BTreeSet<String> = BTreeSet::new();
@@ -141,7 +149,45 @@ pub(super) fn select(conn: &Connection, project: ProjectId) -> Result<Selection,
         pairs: json(&pairs),
         job_ids: json(&job_ids),
         snapshot_ids: json(&snapshot_ids),
+        titles,
     })
+}
+
+impl Selection {
+    /// Who read the file at `path`, to name in a refusal: the documents' titles, then the jobs'
+    /// names, or the file's own name when nothing names it. The researcher's own words, so the
+    /// same in every language.
+    pub fn readers(&self, path: &str) -> String {
+        let mut documents: BTreeSet<&str> = BTreeSet::new();
+        let mut jobs: Vec<&str> = Vec::new();
+        let mut file_name = "";
+        for job in &self.jobs {
+            for source in job.sources.iter().filter(|s| s.path == path) {
+                file_name = &source.file_name;
+                if !jobs.contains(&job.name.as_str()) {
+                    jobs.push(&job.name);
+                }
+                let key = (job.id.to_string(), source.id.to_string());
+                documents.extend(
+                    self.titles
+                        .get(&key)
+                        .into_iter()
+                        .flatten()
+                        .map(String::as_str),
+                );
+            }
+        }
+        let mut named: Vec<&str> = documents.into_iter().collect();
+        if named.is_empty() && !file_name.is_empty() {
+            named.push(file_name);
+        }
+        let named = named.join(", ");
+        match (named.is_empty(), jobs.is_empty()) {
+            (_, true) => named,
+            (true, false) => jobs.join(", "),
+            (false, false) => format!("{named} — {}", jobs.join(", ")),
+        }
+    }
 }
 
 /// A list of strings as JSON, which cannot fail.

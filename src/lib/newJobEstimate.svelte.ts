@@ -5,6 +5,7 @@
 import type { Catalog } from './bindings/Catalog.js';
 import type { Estimate } from './bindings/Estimate.js';
 import type { EstimateRequest } from './bindings/EstimateRequest.js';
+import type { EstimateRow } from './bindings/EstimateRow.js';
 import { modelNameOf } from './catalogText.js';
 import { messages, type Messages } from './i18n/index.js';
 import { api } from './tauri.js';
@@ -31,6 +32,35 @@ export function tooLongOf(
 		count.format(first.most_words),
 		others.length
 	);
+}
+
+/**
+ * What the economy choice says of the models that get no discount in it, one sentence per
+ * reason the engine gives (`at_once`): a model without a batch service, an analysis that quotes
+ * the text, a transcript translated line by line. A step after the others (`merge`) never goes
+ * in a batch and is not named.
+ */
+export function notBatchedOf(
+	rows: EstimateRow[],
+	catalog: Catalog,
+	m: Messages = messages()
+): string[] {
+	const named = (reason: EstimateRow['at_once'] | null) => [
+		...new Set(
+			rows
+				.filter((r) => !r.merge && r.estimate.economy_usd === null)
+				.filter((r) => (r.at_once ?? null) === reason)
+				.map((r) => modelNameOf(catalog, r.provider, r.model))
+		)
+	];
+	const list = (names: string[]) =>
+		new Intl.ListFormat(m.locale.tag, { type: 'conjunction' }).format(names);
+	const sentences: [string[], (names: string) => string][] = [
+		[named(null), m.newJob.paceNotBatched],
+		[named('quotes'), m.newJob.paceQuotes],
+		[named('timed_lines'), m.newJob.paceTimedLines]
+	];
+	return sentences.filter(([names]) => names.length > 0).map(([names, say]) => say(list(names)));
 }
 
 /**

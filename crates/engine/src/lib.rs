@@ -10,6 +10,7 @@ mod aligned;
 mod asked;
 mod attention;
 mod batch;
+mod batched;
 mod check;
 mod cited;
 mod compare;
@@ -59,6 +60,7 @@ use kalamu_prompts::PromptLibrary;
 use tokio::sync::broadcast;
 
 pub use asked::PassageEstimate;
+pub use batched::AtOnce;
 pub use cited::{CitedSource, TextTooLong};
 pub use compare::{
     ComparisonReport, DiffKind, DiffSpan, JobScores, PageComparison, SetupScore, SourceScores,

@@ -67,19 +67,38 @@ taille du fichier avant de l’écrire.
 ![Enregistrer ce projet dans un fichier  ce que le fichier contient, ce qu’il ne contient jamais, et sa taille](../images/fr/project-file.png)
 *Ce qui entre dans un fichier de projet, et ce qui n’y entre jamais.*
 
+Avant de terminer le fichier, Kalamu vérifie chaque fichier qu’il y met en le comparant à
+l’empreinte prise au moment de sa lecture. Quand une analyse, une traduction ou une correction
+a lu le texte corrigé d’un résultat précédent, Kalamu a gardé ce texte tel qu’il était alors ;
+si l’un de ces textes ne se trouve plus dans le dossier de données de Kalamu, ou s’il a été
+modifié depuis, l’enregistrement s’arrête et indique le document et le traitement concernés.
+Rien n’est alors écrit : un fichier que vous aviez enregistré auparavant sous le même nom reste
+tel quel. Un fichier d’origine introuvable ou modifié est simplement laissé de côté, et la
+fenêtre indique combien.
+
 Sur l’autre ordinateur, Windows ou Mac, choisissez **Ouvrir un fichier de projet…** dans la
 liste des projets. Il s’ouvre comme un nouveau projet, à côté des autres : rien de ce que
 vous avez déjà n’est modifié. Toute personne qui a le fichier peut lire tout ce qu’il
-contient : prenez-en soin comme des documents eux-mêmes.
+contient : prenez-en soin comme des documents eux-mêmes. Un fichier enregistré par Kalamu
+1.10.0 peut ne pas contenir l’un de ces textes corrigés : il s’ouvre quand même, et le message
+affiché après l’ouverture indique chaque texte manquant et les traitements qui l’ont lu. Leurs
+résultats sont conservés, mais pas le texte qu’ils ont lu.
 
 ## Décrire vos sources
 
 Chaque document peut être décrit comme le ferait un service d’archives : lieu de conservation,
 fonds, cote, auteur, date, référence, droits. Ce que tous les documents d’un projet ont en
-commun se saisit une seule fois, pour le projet. **Exporter les descriptions** les écrit en CSV
-ou en JSON, dans les colonnes de Kalamu ou dans les vôtres, que vous pouvez enregistrer pour le
-projet suivant, à côté du texte corrigé de chaque document, de son état de relecture ou des
-réponses de ses analyses.
+commun se saisit une seule fois, pour le projet. **Exporter les descriptions** les écrit dans
+trois fichiers portant le nom que vous choisissez : un fichier JSON (`nom.json`), un tableur
+pour Excel (`nom.xlsx`) et un CSV (`nom.csv`), dans les colonnes de Kalamu ou dans les vôtres,
+que vous pouvez enregistrer pour le projet suivant, à côté du texte corrigé de chaque document,
+de son état de relecture ou des réponses de ses analyses.
+
+Seul le nom du fichier JSON vous est demandé. Si vous avez déjà un tableur ou un CSV de ce nom
+dans le dossier, Kalamu n’y touche pas : il écrit le tableau sous `nom (2).xlsx` et
+`nom (2).csv`, et vous le signale. Les fichiers d’un export précédent de Kalamu, que vous
+n’avez pas modifiés depuis, sont simplement remplacés. **Exporter tout le tableau**,
+**Exporter la liste** et l’export du dictionnaire protègent vos fichiers de la même façon.
 
 ## Chercher dans un projet
 

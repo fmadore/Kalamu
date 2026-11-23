@@ -51,6 +51,9 @@ tauri-plugin-opener = "2.7.2"
 # A second launch focuses the running window instead of opening a second job queue on the same
 # database. Registered first in the builder, as the plugin requires.
 tauri-plugin-single-instance = "2.5.4"
+# A table export's files are written whole through a temporary file beside each, renamed at
+# the end (`commands::write_whole`); already in the tree for the tests.
+tempfile.workspace = true
 tokio.workspace = true
 tracing.workspace = true
 tracing-appender = "0.2.5"
@@ -104,6 +107,3 @@ unsafe_code = "deny"
 [lints.clippy]
 unwrap_used = "deny"
 expect_used = "deny"
-
-[dev-dependencies]
-tempfile.workspace = true

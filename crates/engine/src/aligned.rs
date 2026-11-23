@@ -12,7 +12,7 @@ use std::sync::Arc;
 
 use kalamu_core::{
     AnalysisSchema, FieldAnswer, FieldValue, Job, PieceRef, PreparedInput, ProcessOutput, Segment,
-    SourceFile, Task, aligned,
+    SourceFile, aligned,
 };
 
 use crate::Engine;
@@ -136,12 +136,10 @@ impl Engine {
         job: &Job,
         source: &SourceFile,
     ) -> Result<Option<Arc<Lines>>, String> {
-        let Some(from) = source.derived_from.as_ref().filter(|d| d.timed) else {
-            return Ok(None);
+        let from = match source.derived_from.as_ref() {
+            Some(from) if crate::batched::reads_timed_lines(job.task, source) => from,
+            _ => return Ok(None),
         };
-        if job.task != Task::Translation {
-            return Ok(None);
-        }
         match self.store.snapshot(&from.snapshot_id) {
             Ok(snapshot) if !snapshot.lines.is_empty() => {
                 Ok(Some(Arc::new(Lines::new(snapshot.lines))))

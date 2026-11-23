@@ -1,6 +1,9 @@
 # Privacy Policy — Kalamu
 
-**Effective date:** 20 November 2026, which applies from the first version to read a
+**Effective date:** 23 November 2026, which applies from the first version to keep, on the
+computer, the path and a fingerprint of each table file it exported, so that exporting again
+replaces its own files and never the user's. The policy of 20 November 2026 did not say so; it
+applies from the first version to read a
 project's documents against the user's research question, for which each document's text and
 the question are sent to the provider of the model chosen; to read a long interview in several
 parts; to send the user's own themes or interview guide with an interview; and to save a
@@ -296,6 +299,11 @@ turned down. The texts sent for proposals are kept with the frozen text below. A
   recordings straight from the original file; for a format it cannot play, the piece is
   converted on the computer and the copy kept, so it plays at once next time. The folder is
   kept under 256 MB by removing the copies heard longest ago.
+- **Table files exported** (`exports.json`): the path of each spreadsheet, CSV and JSON file a
+  table export (descriptions, an analysis's table, the review list, the dictionary) wrote, with
+  a SHA-256 fingerprint of its bytes, never its contents. A file whose bytes still match is
+  replaced by the next export to the same name; any other file of that name is left as it is.
+  The last 500 files are remembered, the oldest forgotten first.
 - **Folders and files the user granted** to the Mac App Store app (`grants.json`): each path
   with the bookmark macOS gives for it, so the app can reach the folder again at the next launch
   without asking. A folder out of reach at launch (a disk not connected) is kept for the next.

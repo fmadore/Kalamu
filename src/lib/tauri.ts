@@ -371,17 +371,19 @@ export const api = {
 		invoke<void>('describe_document', { project, id, description }),
 	setSourceDefaults: (id: string, defaults: Draft) =>
 		invoke<Project>('set_source_defaults', { id, defaults }),
-	/** Every part with where it came from, or with `profile` the columns of a saved profile. */
+	/** Every part with where it came from, or with `profile` the columns of a saved profile.
+	 *  This and the other table exports return the files beside the chosen one written under
+	 *  another name, a file of the researcher's having theirs (`tableBeside`). */
 	exportDescriptions: (
 		project: string,
 		collection: string | null,
 		profile: string | null,
 		path: string
-	) => invoke<void>('export_descriptions', { project, collection, profile, path }),
-	/** One analysis's answers over the project's documents, with their tags, as a workbook and
-	 *  as CSV at `path`. */
+	) => invoke<string[]>('export_descriptions', { project, collection, profile, path }),
+	/** One analysis's answers over the project's documents, with their tags, as a workbook at
+	 *  `path` and as CSV beside it. */
 	exportAnswers: (project: string, job: string, setup: string, path: string) =>
-		invoke<void>('export_answers', { project, job, setup, path }),
+		invoke<string[]>('export_answers', { project, job, setup, path }),
 	/** The text of each chosen document, frozen as sources an analysis reads, and those left
 	 *  out. */
 	documentSources: (project: string, documents: string[]) =>
@@ -438,7 +440,7 @@ export const api = {
 	dictionaryUndoApart: (project: string, a: string, b: string) =>
 		invoke<void>('dictionary_undo_apart', { project, a, b }),
 	exportDictionary: (project: string, path: string) =>
-		invoke<void>('export_dictionary', { project, path }),
+		invoke<string[]>('export_dictionary', { project, path }),
 	dictionaryPlan: (project: string, collection: string | null, namespace: string) =>
 		invoke<ProposalPlan>('dictionary_plan', { project, collection, namespace }),
 	dictionaryPropose: (
@@ -495,7 +497,7 @@ export const api = {
 	keepAside: (project: string, item: QueueItemKey, revision: string | null, note: string | null) =>
 		invoke<void>('keep_aside', { project, item, revision, note }),
 	exportReviewManifest: (project: string, selection: QueueSelection, path: string) =>
-		invoke<void>('export_review_manifest', { project, selection, path }),
+		invoke<string[]>('export_review_manifest', { project, selection, path }),
 	/** What saving a project to one file would write, with and without its original files. */
 	planProjectFile: (project: string) => invoke<ProjectFilePlan>('plan_project_file', { project }),
 	/** Saves a project to one file at `path`; its progress comes as `project-file-progress`. */
