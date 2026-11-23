@@ -381,11 +381,19 @@ impl Engine {
     }
 }
 
-/// The requests of a kind a store keeps, for provenance; none from a store that keeps none.
-pub(crate) fn kept<T>(found: Result<Vec<T>, StoreError>) -> Result<Vec<T>, EngineError> {
+/// The requests of a kind (`what`) that provenance lists. A store that keeps none answers none;
+/// a job database that cannot be read fails the export, saying what it could not read, rather
+/// than write provenance as if nothing had been asked.
+pub(crate) fn kept<T>(
+    what: &str,
+    found: Result<Vec<T>, StoreError>,
+) -> Result<Vec<T>, EngineError> {
     match found {
         Ok(found) => Ok(found),
-        Err(StoreError::Database(_)) => Ok(Vec::new()),
+        Err(StoreError::Database(e)) => Err(StoreError::Database(format!(
+            "{what} could not be read for the provenance: {e}"
+        ))
+        .into()),
         Err(e) => Err(e.into()),
     }
 }

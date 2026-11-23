@@ -123,8 +123,10 @@ impl Engine {
         source: SourceId,
         states: &[PieceState],
     ) -> Result<Vec<ProvenanceRegionReading>, EngineError> {
-        // A store that keeps no readings has none to tell of.
-        let readings = kept(self.store.source_region_readings(job.id, source))?;
+        let readings = kept(
+            "the regions read again by a model",
+            self.store.source_region_readings(job.id, source),
+        )?;
         Ok(readings
             .into_iter()
             .filter(|r| r.status == ProposalStatus::Accepted)
