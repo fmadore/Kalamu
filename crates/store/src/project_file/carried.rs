@@ -1,28 +1,39 @@
 //! The files a project file carries: Kalamu's frozen texts always, the researcher's originals
-//! when chosen. Each is written in chunks with its fingerprint checked: on saving, a file
-//! changed since it was read is left out; on opening, a file whose bytes no longer match is a
-//! damaged file.
+//! when chosen. Each is written in chunks with its fingerprint checked: on saving, an original
+//! changed since it was read is left out, and a frozen text missing or changed is listed so the
+//! save fails (#239); on opening, a file whose bytes no longer match is a damaged file.
 
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 
-use kalamu_core::ProjectFileError;
 use kalamu_core::ProjectFileProgress;
+use kalamu_core::{MissingText, ProjectFileError};
 use rusqlite::{Connection, params};
 use sha2::{Digest, Sha256};
 
 use super::selection::Listed;
 use super::{CHUNK, ROLE_ORIGINAL, ROLE_SNAPSHOT, read_err, write_err};
 
+/// What writing the files came to.
+#[derive(Debug, Default)]
+pub(super) struct Written {
+    /// Originals carried, and those that could not be (not found, or changed since read).
+    pub originals: u32,
+    pub originals_left: u32,
+    /// The paths of the frozen texts no longer in the data folder, and of those whose bytes
+    /// no longer match what the jobs read: either fails the save.
+    pub frozen_missing: Vec<String>,
+    pub frozen_changed: Vec<String>,
+}
+
 /// Writes the files listed into the project file: the frozen texts, and the originals when
-/// `with_originals`. Returns how many originals it carries and how many it could not (not found,
-/// or changed since they were read).
+/// `with_originals`.
 pub(super) fn write_files(
     file: &Connection,
     listed: &[Listed],
     with_originals: bool,
     progress: &dyn Fn(ProjectFileProgress),
-) -> Result<(u32, u32), ProjectFileError> {
+) -> Result<Written, ProjectFileError> {
     let wanted = |f: &Listed| f.role == ROLE_SNAPSHOT || with_originals;
     let total: u64 = listed
         .iter()
@@ -31,7 +42,7 @@ pub(super) fn write_files(
         .sum();
     let mut done = 0;
     progress(ProjectFileProgress { done, total });
-    let (mut carried, mut left) = (0, 0);
+    let mut out = Written::default();
     for f in listed {
         file.execute(
             "INSERT INTO kalamu_files (role, path, file_name, sha256, size, carried)
@@ -45,7 +56,11 @@ pub(super) fn write_files(
             continue;
         }
         let Ok(mut reader) = std::fs::File::open(&f.path) else {
-            left += u32::from(original);
+            if original {
+                out.originals_left += 1;
+            } else {
+                out.frozen_missing.push(f.path.clone());
+            }
             continue;
         };
         let tx = file.unchecked_transaction().map_err(write_err)?;
@@ -71,15 +86,93 @@ pub(super) fn write_files(
         if hex(hasher.finalize().as_slice()) == f.sha256 {
             tx.execute("UPDATE kalamu_files SET carried = 1 WHERE id = ?1", [id])
                 .map_err(write_err)?;
-            carried += u32::from(original);
+            out.originals += u32::from(original);
         } else {
             tx.execute("DELETE FROM kalamu_file_chunks WHERE file_id = ?1", [id])
                 .map_err(write_err)?;
-            left += u32::from(original);
+            if original {
+                out.originals_left += 1;
+            } else {
+                out.frozen_changed.push(f.path.clone());
+            }
         }
         tx.commit().map_err(write_err)?;
     }
-    Ok((carried, left))
+    Ok(out)
+}
+
+/// The frozen texts a file lists but does not carry, each with the documents and jobs that
+/// read it, read from the file's own rows. A file saved since #239 has none: a save fails
+/// rather than leave one out. One saved by 1.10.0 may.
+pub(super) fn missing(file: &Connection) -> Result<Vec<MissingText>, ProjectFileError> {
+    let mut stmt = file
+        .prepare(
+            "SELECT path, file_name FROM kalamu_files
+             WHERE role = ?1 AND carried = 0 ORDER BY id",
+        )
+        .map_err(read_err)?;
+    let left: Vec<(String, String)> = stmt
+        .query_map([ROLE_SNAPSHOT], |row| Ok((row.get(0)?, row.get(1)?)))
+        .map_err(read_err)?
+        .collect::<Result<_, _>>()
+        .map_err(read_err)?;
+    if left.is_empty() {
+        return Ok(Vec::new());
+    }
+    // Each job's name and its sources, read loosely: only their ids and paths matter.
+    let mut stmt = file
+        .prepare("SELECT id, name, data FROM jobs ORDER BY created_at, id")
+        .map_err(read_err)?;
+    let jobs: Vec<(String, String, String)> = stmt
+        .query_map([], |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)))
+        .map_err(read_err)?
+        .collect::<Result<_, _>>()
+        .map_err(read_err)?;
+    let jobs: Vec<(String, String, serde_json::Value)> = jobs
+        .into_iter()
+        .filter_map(|(id, name, data)| Some((id, name, serde_json::from_str(&data).ok()?)))
+        .collect();
+    let mut titles = file
+        .prepare(
+            "SELECT DISTINCT d.title FROM document_links l JOIN documents d ON d.id = l.document_id
+             WHERE l.job_id = ?1 AND l.source_id = ?2 ORDER BY d.title",
+        )
+        .map_err(read_err)?;
+    let mut out = Vec::new();
+    for (path, file_name) in left {
+        let mut text = MissingText {
+            documents: Vec::new(),
+            jobs: Vec::new(),
+            file_name,
+        };
+        for (id, name, job) in &jobs {
+            let sources = job["sources"].as_array().map(Vec::as_slice).unwrap_or(&[]);
+            let read: Vec<&str> = sources
+                .iter()
+                .filter(|s| s["path"].as_str() == Some(path.as_str()))
+                .filter_map(|s| s["id"].as_str())
+                .collect();
+            if read.is_empty() {
+                continue;
+            }
+            if !text.jobs.contains(name) {
+                text.jobs.push(name.clone());
+            }
+            for source in read {
+                let found = titles
+                    .query_map(params![id, source], |row| row.get::<_, String>(0))
+                    .map_err(read_err)?;
+                for title in found {
+                    let title = title.map_err(read_err)?;
+                    if !text.documents.contains(&title) {
+                        text.documents.push(title);
+                    }
+                }
+            }
+        }
+        out.push(text);
+    }
+    Ok(out)
 }
 
 /// Reads until `buffer` is full or the file ends.

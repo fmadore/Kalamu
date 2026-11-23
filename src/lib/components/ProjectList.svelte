@@ -107,6 +107,21 @@
 		<div class="card opened" role="status">
 			<p>{m.projectFile.opened(project.name, project.documents, project.jobs)}</p>
 			{#if !project.with_originals}<p class="muted">{m.projectFile.openedWithout}</p>{/if}
+			{#if project.missing_texts.length > 0}
+				<div class="missing">
+					<p>{m.projectFile.missingTexts(project.missing_texts.length)}</p>
+					<ul>
+						{#each project.missing_texts as text, i (i)}
+							<li>
+								{m.projectFile.missingText(
+									text.documents.length > 0 ? text.documents.join(', ') : text.file_name,
+									text.jobs.join(', ')
+								)}
+							</li>
+						{/each}
+					</ul>
+				</div>
+			{/if}
 			<div>
 				<button
 					class="btn primary sm"
@@ -190,6 +205,14 @@
 	}
 	.opened p {
 		margin: 0;
+	}
+	.missing {
+		color: var(--text-secondary);
+		font-size: var(--type-sm);
+	}
+	.missing ul {
+		margin: var(--space-1) 0 0;
+		padding-left: var(--space-4);
 	}
 	.create {
 		display: grid;

@@ -411,7 +411,7 @@ export function projectCommand(cmd: string, a: Record<string, unknown>): unknown
 			return { changed, name: to };
 		}
 		case 'export_descriptions':
-			return null;
+			return [];
 		case 'set_preferred':
 			for (const key of [...preferred]) if (key.startsWith(`${a.document}/`)) preferred.delete(key);
 			if (a.setup) preferred.add(`${a.document}/${a.setup}`);

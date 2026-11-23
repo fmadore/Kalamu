@@ -170,7 +170,7 @@ function items(excluded: ResultKey[]): QueueItem[] {
 export function queueCommand(
 	cmd: string,
 	a: Record<string, unknown>
-): QueueView | SampleSpec | null | undefined {
+): QueueView | SampleSpec | string[] | null | undefined {
 	switch (cmd) {
 		case 'review_queue': {
 			const selection = (a.selection as QueueSelection | undefined) ?? { kind: 'project' };
@@ -213,7 +213,7 @@ export function queueCommand(
 			return null;
 		}
 		case 'export_review_manifest':
-			return null;
+			return [];
 		default:
 			return undefined;
 	}

@@ -1513,6 +1513,10 @@ export const en = {
 		},
 		paceNotBatched: (names: string) =>
 			`${names} has no batch service in Kalamu and still runs page by page, at its usual price.`,
+		paceQuotes: (names: string) =>
+			`With ${names}, an analysis that quotes the text is sent at once, at the usual price, so that Kalamu can check each quotation against the text.`,
+		paceTimedLines: (names: string) =>
+			`With ${names}, a transcript translated line by line is sent at once, at the usual price, so that Kalamu can check that no line is missing.`,
 		start: 'Start',
 		startShortcut: '↵',
 		starting: 'Starting…',
@@ -2594,7 +2598,7 @@ export const en = {
 			},
 			economy: {
 				word: 'Cheaper mode (batches)',
-				text: 'Sends a job to the provider’s batch service, which answers within a day at about half the price. Kalamu collects the answers when it next opens; the app does not need to stay open meanwhile.'
+				text: 'Sends a job to the provider’s batch service, which answers within a day at about half the price. Kalamu collects the answers when it next opens; the app does not need to stay open meanwhile. An analysis that quotes the text, and a transcript translated line by line, are still sent at once, at the usual price, so that Kalamu can check each answer against the text.'
 			},
 			groundTruth: {
 				word: 'Ground truth',
@@ -2742,7 +2746,12 @@ export const en = {
 				jobs === 1 ? '1 job' : `${jobs} jobs`
 			}. It is a new project beside your others: nothing of theirs was changed.`,
 		openedWithout:
-			'The original files were not saved in it: the text, your corrections and the exports are all here, and the pages and recordings will show once the project is saved again with its original files.'
+			'The original files were not saved in it: the text, your corrections and the exports are all here, and the pages and recordings will show once the project is saved again with its original files.',
+		missingTexts: (n: number) =>
+			n === 1
+				? 'One corrected text that a job read was not in the file: the job and its results are here, without the text it read.'
+				: `${n} corrected texts that jobs read were not in the file: the jobs and their results are here, without the texts they read.`,
+		missingText: (what: string, jobs: string) => `${what}, read by ${jobs}`
 	},
 	os: {
 		windows: {
@@ -2809,6 +2818,12 @@ export const en = {
 		/** An exported record's Markdown, written under another name than the JSON's. */
 		markdownBeside: (name: string) =>
 			`The Markdown was saved as “${name}”, since a file of yours already had its name.`,
+		/** An exported table's workbook or CSV, written under another name than the file chosen,
+		 *  `names` already listed and quoted. */
+		tableBeside: (names: string, count: number) =>
+			count === 1
+				? `The table was saved as ${names}, since a file of yours already had that name.`
+				: `The table was saved as ${names}, since files of yours already had those names.`,
 		linkFailed: (url: string) => `This page could not be opened in your browser: ${url}`,
 		/** Asked before leaving a correction, a prompt or a workflow with changes not saved. */
 		unsaved: 'Your changes are not saved. Leave and discard them?',
@@ -3017,7 +3032,11 @@ export const en = {
 			'This project file was saved by a newer version of Kalamu. Update Kalamu, then open it again.',
 		'project.file_write':
 			'The project file could not be written. Check that there is enough free space, or choose another place.',
-		'project.file_read': 'The project file could not be read.'
+		'project.file_read': 'The project file could not be read.',
+		'project.frozen_text_missing':
+			'The project was not saved: the corrected text a job read, which Kalamu kept as it was then, is no longer in Kalamu’s data folder. A file saved earlier under this name is unchanged.',
+		'project.frozen_text_changed':
+			'The project was not saved: the corrected text a job read, which Kalamu kept as it was then, has changed since. A file saved earlier under this name is unchanged.'
 	}
 };
 
