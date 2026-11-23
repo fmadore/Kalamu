@@ -100,6 +100,12 @@ affichées.
 - Un cadre tracé par le modèle peut lui aussi être déplacé ou redimensionné. Son propre cadre
   est conservé, et **Remettre le cadre du modèle** le rétablit.
 
+![Une page de journal avec les zones de texte du modèle dessinées, et une zone tracée sur un titre](../images/fr/region.png)
+*Afficher les zones de texte  les blocs trouvés par le modèle, et une zone à vous sur un titre.*
+
+![Une zone tracée sur un titre, sa fiche en dessous avec Ce qui est écrit ici et Relire cette zone](../images/fr/region-panel.png)
+*Une zone à vous, avec sa fiche  ce qui y est écrit, la déplacer, la supprimer ou la faire relire.*
+
 **Relire cette zone…** découpe cette partie de la page dans l’original et l’envoie seule, sous
 forme d’image, au modèle que vous choisissez ; rien d’autre du document n’est envoyé. Kalamu
 indique d’abord ce que cela devrait coûter, ou que c’est gratuit avec un modèle sur votre

@@ -29,6 +29,9 @@ A photo left out can be brought back with **Undo** in the message that says so, 
 <kbd>Ctrl</kbd> <kbd>Z</kbd> (<kbd>⌘</kbd> <kbd>Z</kbd> on a Mac) while the message shows; it
 stays while the mouse is on it. Every message that offers **Undo** works the same way.
 
+![Two photographs that look like the same page, side by side, with the choice of which to keep](images/en/photos-twice.png)
+*The same page photographed twice: Kalamu shows both and lets you keep one, or both.*
+
 ![The New job screen, with files, a model, a prompt and the estimated cost](../store/screenshots/windows/en/08-new-job.png)
 *New job: the files, the model, the prompt and what it should cost, before anything is sent.*
 
@@ -89,3 +92,9 @@ as well, `letter.lightonocr-3-1b.txt`, as a comparison's do, so neither replaces
 - If it is not: try another prompt or a stronger model on the same pages. Because results are
   cached, only what changes is paid for.
 - Put the documents in a [project](projects.md) to keep every reading of them together.
+
+![New job with a 36-page PDF, offering to try the model on 3 pages first](images/en/sample-first.png)
+*A long PDF: New job offers to try the model on 3 pages first.*
+
+![The page of a 3-page sample, with Run the rest and Compare with another model](images/en/sample-page.png)
+*The sample's page: run the rest, or compare the same three pages with another model.*

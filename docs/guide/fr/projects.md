@@ -18,6 +18,9 @@ Un projet contient des **documents**. Un document, c’est une source (un PDF, u
 photographies, un enregistrement) avec toutes les transcriptions, extractions et analyses qui en
 ont été faites.
 
+![Un nouveau projet encore sans documents  Ajouter des fichiers, Ajouter un dossier et Ajouter un traitement existant](../images/fr/empty-project.png)
+*Un nouveau projet commence par demander ses documents  les autres sections se remplissent seules.*
+
 - Ajoutez des fichiers avant de les faire lire (**Ajouter des fichiers**), ou des traitements
   que vous avez déjà lancés (**Ajouter un traitement existant**) : rien n’est payé une seconde
   fois. Vous pouvez aussi faire glisser un traitement terminé de la barre latérale sur un projet.
@@ -40,6 +43,12 @@ ont été faites.
 - Quand un document a été lu plusieurs fois, choisissez le résultat auquel vous vous fiez avec
   **Retenir**. La recherche, les exports et les analyses utilisent alors celui-là.
 
+![La question de recherche posée à dix documents, avec le modèle et le coût estimé](../images/fr/screening-dialog.png)
+*Lesquels parlent de ma question  La question, le nombre de documents à lire, et ce que cela devrait coûter.*
+
+![Les documents du projet filtrés sur les pertinents, chacun avec sa raison et ses passages](../../store/screenshots/windows/fr/07-screening.png)
+*Les réponses dans le tableau  la réponse de chaque document, sa raison, et les passages retrouvés dans son texte.*
+
 ## Enregistrer un projet dans un fichier
 
 **Enregistrer dans un fichier…** écrit tout le projet dans un seul fichier qui finit par
@@ -49,6 +58,9 @@ vos corrections, ce que vous avez marqué comme vérifié, les étiquettes, les 
 dictionnaire. Il ne contient jamais vos clés d’API. Vos numérisations et vos enregistrements
 n’y sont pas, sauf si vous cochez **Inclure les fichiers d’origine** ; Kalamu indique la
 taille du fichier avant de l’écrire.
+
+![Enregistrer ce projet dans un fichier  ce que le fichier contient, ce qu’il ne contient jamais, et sa taille](../images/fr/project-file.png)
+*Ce qui entre dans un fichier de projet, et ce qui n’y entre jamais.*
 
 Sur l’autre ordinateur, Windows ou Mac, choisissez **Ouvrir un fichier de projet…** dans la
 liste des projets. Il s’ouvre comme un nouveau projet, à côté des autres : rien de ce que
@@ -103,12 +115,18 @@ préparer une première fois :
 Quand vous corrigez du texte, Kalamu indique combien de pages ont changé et propose de les mettre
 à jour. Il ne le fait jamais de lui-même avec un modèle payant.
 
+![Une recherche par le sens  une question en mots simples, et les documents les plus proches avec leurs passages](../../store/screenshots/windows/fr/05-search.png)
+*Une question dans vos mots trouve les passages qui le disent dans les leurs, chacun avec sa proximité.*
+
 La **Carte** montre chaque document du projet sous la forme d’un point, près des documents qui
 lui ressemblent, regroupés par collection ou par étiquette. Choisissez un point pour voir ses
 plus proches voisins dans la liste à côté. Voyez-la comme une porte d’entrée, pas comme un
 résultat : les positions sont approximatives, les axes ne veulent rien dire, et le point d’un
 long document est une moyenne de tout ce qu’il contient. Les documents presque superposés sont
 dessinés un peu écartés, en petit cercle ; zoomez pour les voir à leur place.
+
+![La carte d’un projet regroupée par collection, un document choisi avec ses plus proches voisins](../images/fr/map.png)
+*La carte  un document choisi, et les documents les plus proches de lui.*
 
 > Il n’y a ni réponses toutes faites ni conversation. La recherche par le sens vous montre où
 > lire ; la lecture reste la vôtre.
@@ -120,7 +138,7 @@ Les personnes, lieux, organisations et termes relevés par vos analyses sont ras
 translittération, des initiales, le nom de famille en premier) : le dictionnaire vous permet de
 réunir ces graphies en une seule entrée, sous le libellé de votre choix.
 
-![Le dictionnaire des noms d’un projet, avec des regroupements proposés](../../store/screenshots/windows/fr/05-dictionary.png)
+![Le dictionnaire des noms d’un projet, avec des regroupements proposés](../images/fr/dictionary.png)
 *Le dictionnaire : des graphies réunies en entrées, avec les regroupements proposés par un modèle.*
 
 - Vous pouvez regrouper des entrées vous-même, ou cliquer sur

@@ -276,7 +276,10 @@ researcher switching over would.
 
 The ten scenes, captions and the files each one uses are in
 [store-listing.md](store-listing.md#screenshots), with "your Mac" for "your PC" in the tenth.
-They were taken on the first day. Take one again only if its screen has changed since, from the
+They were taken on the first day. Scenes 5 and 7 changed in 1.10.0: take search by meaning
+(`05-search.png`) and screening (`07-screening.png`), and remove `05-dictionary.png` and
+`07-analysis.png` from `store/screenshots/macos/`. Take another again only if its screen has
+changed since, from the
 **TestFlight build**, in light mode, with Do Not Disturb on, at the size of the others.
 Use only the listing's material; nothing else goes in a shot, since everything legible in it
 counts as the listing's text.
