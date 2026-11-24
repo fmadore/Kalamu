@@ -1082,6 +1082,7 @@ first workflow increment.
 | A sample first | Three pages tried, two models compared, the rest run from the sample's page | [#215](https://github.com/fmadore/Kalamu/issues/215) |
 | Duplicate and blurred photographs | Flagged in the file list before anything is sent; with #53's checks | [#216](https://github.com/fmadore/Kalamu/issues/216) |
 | References from Zotero | A CSL-JSON file matched to a project's documents, filling their descriptions | [#217](https://github.com/fmadore/Kalamu/issues/217) |
+| Corrected OCR with ALTO | Tesseract, then a correction that sees the page, line for line, laid back onto the extraction's words so ALTO, PAGE XML and the searchable PDF are kept; for an OCR already readable ([decision](decisions/2026-11-24-correction-keeps-alto.md)) | [#262](https://github.com/fmadore/Kalamu/issues/262) |
 
 Scope is local research preparation, review and export. External collection-system integration
 and publishing are excluded from this work. Implementation follows the architecture checkpoints
@@ -1108,7 +1109,8 @@ in AGENTS.md and updates the specification and user-facing documentation when fe
   and last in line since 20 November: those Kalamu is for do not use TEI, and correcting
   markup in a plain interface is a trap.
 - Importing ALTO XML from elsewhere (a digital library's) to correct it with its coordinates
-  kept; Kalamu's own extractions already keep their words' places when corrected.
+  kept; Kalamu's own extractions already keep their words' places when corrected, and #262
+  gives a model's correction the same.
 - French and German Store listings, with the translated interface.
 - macOS: the application menu's labels through the translation files.
 - Projects: nested collections and saved searches, which
