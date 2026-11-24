@@ -78,7 +78,35 @@ si l’un de ces textes ne se trouve plus dans le dossier de données de Kalamu,
 modifié depuis, l’enregistrement s’arrête et indique le document et le traitement concernés.
 Rien n’est alors écrit : un fichier que vous aviez enregistré auparavant sous le même nom reste
 tel quel. Un fichier d’origine introuvable ou modifié est simplement laissé de côté, et la
-fenêtre indique combien.
+fenêtre indique combien. Une fois le fichier écrit, Kalamu le relit et le vérifie, comme le fait
+**Vérifier un fichier de projet…** : l’enregistrement se termine par « Le projet est enregistré
+dans … et vérifié : tout ce qu’il contient peut être ouvert. », ou indique ce que la
+vérification a trouvé.
+
+### Vérifier un fichier de projet
+
+Avant de compter sur un fichier de projet comme seule copie de votre travail, ou avant de passer
+à un nouvel ordinateur, choisissez **Vérifier un fichier de projet…** dans la liste des projets,
+puis le fichier. Kalamu le lit sur votre ordinateur, sans l’ouvrir comme projet : rien n’est
+envoyé, rien n’est modifié et aucun projet n’est ajouté. Il donne d’abord un avis court, par
+exemple « Ce fichier est complet : tout ce qu’il contient peut être ouvert. », puis indique :
+
+- quelle version de Kalamu l’a enregistré, et combien de documents et de traitements il
+  contient ;
+- si chaque texte corrigé lu par les traitements s’y trouve, intact ; un fichier enregistré par
+  Kalamu 1.10.0 peut en manquer un, et la vérification le nomme avec les traitements qui l’ont
+  lu ;
+- combien de fichiers d’origine s’y trouvent, intacts, s’il a été enregistré sans eux, et
+  combien n’ont pas pu y être mis ;
+- quels documents s’afficheront comme **Fichier introuvable** sur un autre ordinateur, parce que
+  leurs fichiers n’y sont pas ;
+- quels fichiers d’origine prendraient un autre nom sur cet ordinateur, parce que le système
+  refuse leur nom tel quel ou qu’un autre fichier le porte déjà.
+
+Si une partie du fichier ne correspond plus à ce qui a été enregistré (une copie interrompue, un
+disque abîmé), la vérification indique « Ce fichier est abîmé » et nomme cette partie :
+demandez le fichier de nouveau, ou enregistrez-le de nouveau. Un fichier enregistré par une
+version plus récente de Kalamu est refusé, comme à l’ouverture.
 
 Sur l’autre ordinateur, Windows ou Mac, choisissez **Ouvrir un fichier de projet…** dans la
 liste des projets. Il s’ouvre comme un nouveau projet, à côté des autres : rien de ce que

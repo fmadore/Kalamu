@@ -1,11 +1,11 @@
 //! A project saved as one file and opened on another computer (#213): what saving would write,
-//! the save itself and the open, each off the window's thread, telling the interface how far
+//! the save itself, the open and a check without opening (#246), each off the window's thread, telling the interface how far
 //! it has got. The work is the job database's (`ProjectArchive`); this gives it the data
 //! folder's places.
 
 use kalamu_core::{
-    ArchivePlaces, ProjectFileOpened, ProjectFilePlan, ProjectFileProgress, ProjectFileSaved,
-    ProjectId,
+    ArchivePlaces, ProjectFileCheck, ProjectFileOpened, ProjectFilePlan, ProjectFileProgress,
+    ProjectFileSaved, ProjectId,
 };
 use tauri::{AppHandle, Emitter, State};
 
@@ -80,4 +80,17 @@ pub async fn open_project_file(
         Ok(archive.open_project_file(std::path::Path::new(&path), &places, &tell)?)
     })
     .await
+}
+
+/// Checks the file at `path` without opening it: nothing is written and no project created.
+#[tauri::command]
+pub async fn check_project_file(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    path: String,
+) -> CmdResult<ProjectFileCheck> {
+    let archive = state.archive.clone();
+    let tell = tell(&app);
+    super::off_thread(move || Ok(archive.check_project_file(std::path::Path::new(&path), &tell)?))
+        .await
 }

@@ -6,20 +6,22 @@
 //! project, then writes the files it carries without holding it. Opening checks the file,
 //! writes the files it carries, then puts every row in one transaction, each identifier given a
 //! new one, so the same file opened twice comes in beside itself and an open that fails leaves
-//! the store as it was.
+//! the store as it was. Checking reads a file as opening would, writing nothing (#246); every
+//! save ends with that check of the file written.
 
 use std::path::Path;
 
 use kalamu_core::project_file::{self as pf, ArchivePlaces, Manifest};
 use kalamu_core::{
-    ProjectArchive, ProjectFileError, ProjectFileOpened, ProjectFilePlan, ProjectFileProgress,
-    ProjectFileSaved, ProjectId,
+    ProjectArchive, ProjectFileCheck, ProjectFileError, ProjectFileOpened, ProjectFilePlan,
+    ProjectFileProgress, ProjectFileSaved, ProjectId,
 };
 use rusqlite::Connection;
 
 use super::SqliteStore;
 
 mod carried;
+mod check;
 mod open;
 mod remap;
 mod rows;
@@ -158,6 +160,14 @@ impl ProjectArchive for SqliteStore {
         progress: &dyn Fn(ProjectFileProgress),
     ) -> Result<ProjectFileOpened, ProjectFileError> {
         open::open(self, path, places, progress)
+    }
+
+    fn check_project_file(
+        &self,
+        path: &Path,
+        progress: &dyn Fn(ProjectFileProgress),
+    ) -> Result<ProjectFileCheck, ProjectFileError> {
+        check::check(path, progress)
     }
 }
 

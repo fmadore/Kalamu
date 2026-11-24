@@ -14,6 +14,7 @@ use kalamu_core::{
 
 use super::*;
 
+mod check;
 mod failures;
 mod frozen;
 mod paths;

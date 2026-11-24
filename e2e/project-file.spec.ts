@@ -37,8 +37,9 @@ test('a project is saved to one file, its original files only when chosen', asyn
 	await expect(dialog).toContainText('The file will take about 3.4 GB.');
 
 	await dialog.getByRole('button', { name: 'Save…' }).click();
+	// The file written is checked before the save says it is done.
 	await expect(dialog).toContainText(
-		'The project is saved in C:\\Users\\me\\Documents\\Letters from Kayes.kalamu.'
+		'The project is saved in C:\\Users\\me\\Documents\\Letters from Kayes.kalamu and checked: everything in it can be opened.'
 	);
 	await expect(dialog).toContainText('1 original file was left out');
 	await expect(
@@ -90,6 +91,56 @@ test('a complete project file names no missing text', async ({ page }) => {
 	const said = main.getByRole('status').filter({ hasText: 'is open' });
 	await expect(said).toBeVisible();
 	await expect(said).not.toContainText('was not in the file');
+});
+
+test('a project file is checked without opening it, the verdict first', async ({ page }) => {
+	await open(page, '&renamed');
+	const main = page.getByRole('main');
+	const projects = await main.getByRole('listitem').count();
+	await main.getByRole('button', { name: 'Check a project file…' }).click();
+	const dialog = page.getByRole('dialog', { name: 'Check a project file' });
+	const report = dialog.getByRole('status');
+	await expect(report).toContainText('This file is whole: everything in it can be opened.');
+	await expect(report).toContainText('“Mission letters”, saved on');
+	await expect(report).toContainText('The 2 corrected texts the jobs read are in it, intact.');
+	await expect(report).toContainText('It was saved without the original files');
+	// The documents to find again on the other computer, by name.
+	await expect(report).toContainText('these 4 documents will show as “File missing”');
+	await expect(report.getByRole('listitem').filter({ hasText: 'Map of Kayes' })).toBeVisible();
+	await expect(report).toContainText('Draft of 1917: draft?.pdf becomes draft_.pdf');
+	await dialog.getByRole('button', { name: 'Close' }).click();
+	await expect(dialog).toHaveCount(0);
+	// Nothing was opened.
+	await expect(main.getByRole('listitem')).toHaveCount(projects);
+	await expect(main.getByRole('status').filter({ hasText: 'is open' })).toHaveCount(0);
+});
+
+test('a check names what is damaged or missing', async ({ page }) => {
+	await open(page, '&altered-file');
+	let main = page.getByRole('main');
+	await main.getByRole('button', { name: 'Check a project file…' }).click();
+	let dialog = page.getByRole('dialog', { name: 'Check a project file' });
+	await expect(dialog).toContainText('This file is damaged');
+	await expect(dialog).toContainText('This part no longer matches what was saved:');
+	// Named first in the report, before the documents to find again.
+	await expect(
+		dialog.getByRole('listitem').filter({ hasText: 'Letter of 1915' }).first()
+	).toBeVisible();
+
+	await open(page, '&missing-text');
+	main = page.getByRole('main');
+	await main.getByRole('button', { name: 'Check a project file…' }).click();
+	dialog = page.getByRole('dialog', { name: 'Check a project file' });
+	await expect(dialog).toContainText('This file opens, but some texts are missing from it.');
+	await expect(dialog).toContainText('Letter of 1915, read by Mission letters, summary');
+
+	await open(page, '&newer-file');
+	main = page.getByRole('main');
+	await main.getByRole('button', { name: 'Check a project file…' }).click();
+	dialog = page.getByRole('dialog', { name: 'Check a project file' });
+	await expect(dialog.getByRole('alert')).toContainText(
+		'This project file was saved by a newer version of Kalamu'
+	);
 });
 
 test('a damaged project file is refused in plain words', async ({ page }) => {

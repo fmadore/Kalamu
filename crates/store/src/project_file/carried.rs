@@ -116,6 +116,15 @@ pub(super) fn missing(file: &Connection) -> Result<Vec<MissingText>, ProjectFile
         .map_err(read_err)?
         .collect::<Result<_, _>>()
         .map_err(read_err)?;
+    readers(file, left)
+}
+
+/// Who read each frozen text, given by its path and name: the documents it was read for and
+/// the jobs that read it, from the file's own rows.
+pub(super) fn readers(
+    file: &Connection,
+    left: Vec<(String, String)>,
+) -> Result<Vec<MissingText>, ProjectFileError> {
     if left.is_empty() {
         return Ok(Vec::new());
     }
@@ -223,6 +232,32 @@ pub(super) fn carried(file: &Connection) -> Result<Vec<Carried>, ProjectFileErro
     rows.collect::<Result<_, _>>().map_err(read_err)
 }
 
+/// Reads one carried file's bytes, chunk by chunk in order, through `each`, and says whether
+/// they match its fingerprint: what opening writes and what a check reads are checked alike.
+/// `done` counts the bytes read so far, across files.
+pub(super) fn read_through(
+    file: &Connection,
+    carried: &Carried,
+    mut each: impl FnMut(&[u8]) -> Result<(), ProjectFileError>,
+    done: &mut u64,
+    total: u64,
+    progress: &dyn Fn(ProjectFileProgress),
+) -> Result<bool, ProjectFileError> {
+    let mut hasher = Sha256::new();
+    let mut stmt = file
+        .prepare("SELECT data FROM kalamu_file_chunks WHERE file_id = ?1 ORDER BY seq")
+        .map_err(read_err)?;
+    let mut rows = stmt.query([carried.id]).map_err(read_err)?;
+    while let Some(row) = rows.next().map_err(read_err)? {
+        let data: Vec<u8> = row.get(0).map_err(read_err)?;
+        hasher.update(&data);
+        each(&data)?;
+        *done += data.len() as u64;
+        progress(ProjectFileProgress { done: *done, total });
+    }
+    Ok(hex(hasher.finalize().as_slice()) == carried.sha256)
+}
+
 /// Writes one carried file to `to`, through a part renamed once its bytes match its
 /// fingerprint. `done` counts the bytes written so far, across files.
 pub(super) fn extract(
@@ -239,20 +274,16 @@ pub(super) fn extract(
     let part = part_of(to);
     let written = (|| {
         let mut out = std::fs::File::create(&part).map_err(write_err)?;
-        let mut hasher = Sha256::new();
-        let mut stmt = file
-            .prepare("SELECT data FROM kalamu_file_chunks WHERE file_id = ?1 ORDER BY seq")
-            .map_err(read_err)?;
-        let mut rows = stmt.query([carried.id]).map_err(read_err)?;
-        while let Some(row) = rows.next().map_err(read_err)? {
-            let data: Vec<u8> = row.get(0).map_err(read_err)?;
-            hasher.update(&data);
-            out.write_all(&data).map_err(write_err)?;
-            *done += data.len() as u64;
-            progress(ProjectFileProgress { done: *done, total });
-        }
+        let whole = read_through(
+            file,
+            carried,
+            |data| out.write_all(data).map_err(write_err),
+            done,
+            total,
+            progress,
+        )?;
         out.sync_all().map_err(write_err)?;
-        if hex(hasher.finalize().as_slice()) != carried.sha256 {
+        if !whole {
             return Err(ProjectFileError::Damaged(format!(
                 "{} does not match its fingerprint",
                 carried.file_name

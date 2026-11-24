@@ -14,6 +14,7 @@
 	import Dialog from './Dialog.svelte';
 	import Icon from './Icon.svelte';
 	import ProgressBar from './ProgressBar.svelte';
+	import ProjectFileReport from './ProjectFileReport.svelte';
 
 	let { projectId, onclose }: { projectId: string; onclose: () => void } = $props();
 	const m = messages();
@@ -66,8 +67,17 @@
 	{#if action.error}<p class="chip danger" role="alert">{action.error}</p>{/if}
 
 	{#if saved}
-		<p class="done" role="status">{t.saved(saved.path)}</p>
-		{#if saved.originals_left > 0}<p class="muted">{t.leftOut(saved.originals_left)}</p>{/if}
+		{#if saved.check.verdict === 'whole'}
+			<p class="done" role="status">{t.savedChecked(saved.path)}</p>
+			{#if saved.originals_left > 0}<p class="muted">{t.leftOut(saved.originals_left)}</p>{/if}
+		{:else}
+			<!-- The check of the file just written found something: said whole, verdict first. -->
+			<div class="done" role="status">
+				<p>{t.saved(saved.path)}</p>
+				<p>{t.checkFound}</p>
+				<ProjectFileReport check={saved.check} />
+			</div>
+		{/if}
 		<div class="actions">
 			<button class="btn ghost" onclick={() => saved && void revealInFolder(saved.path)}>
 				<Icon name="folder" size={14} />{forSystem(t.show)}
@@ -158,7 +168,12 @@
 		margin-top: var(--space-3);
 	}
 	.done {
+		display: grid;
+		gap: var(--space-2);
 		overflow-wrap: anywhere;
+	}
+	.done p {
+		margin: 0;
 	}
 	.actions {
 		display: flex;

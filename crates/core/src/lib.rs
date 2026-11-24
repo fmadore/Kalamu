@@ -100,8 +100,9 @@ pub use project::{
     ProjectError, ProjectStore, SourceDescription, cleaned, same_tag, tag_name,
 };
 pub use project_file::{
-    ArchivePlaces, MissingText, ProjectArchive, ProjectFileError, ProjectFileOpened,
-    ProjectFilePlan, ProjectFileProgress, ProjectFileSaved,
+    ArchivePlaces, MissingText, ProjectArchive, ProjectFileCheck, ProjectFileError,
+    ProjectFileOpened, ProjectFilePlan, ProjectFileProgress, ProjectFileSaved, ProjectFileVerdict,
+    RenamedOriginal,
 };
 pub use proposal::{Lifecycle, Proposal, ProposalStatus};
 pub use provenance::{Provenance, SourceDocuments};

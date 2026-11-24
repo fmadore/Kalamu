@@ -10,6 +10,7 @@
 	import { pickProjectFile } from '#lib/projectFile.js';
 	import { go, refreshJobs, refreshProjects } from '#lib/state.svelte.js';
 	import { api, listenWhileMounted, on } from '#lib/tauri.js';
+	import CheckProjectDialog from './CheckProjectDialog.svelte';
 	import ProgressBar from './ProgressBar.svelte';
 
 	const m = messages();
@@ -25,6 +26,8 @@
 	/** A project file being opened, how far it has got, and what came in once it is open. */
 	let opening = $state<{ done: number; total: number } | null>(null);
 	let opened = $state<ProjectFileOpened | null>(null);
+	/** A project file being checked without opening it. */
+	let checking = $state<string | null>(null);
 
 	const shown = $derived(projects.filter((p) => showArchived || !p.project.archived));
 	const archivedCount = $derived(projects.filter((p) => p.project.archived).length);
@@ -66,6 +69,11 @@
 		opening = null;
 	}
 
+	/** Checks a project file without opening it, in a dialog that says what it found. */
+	async function checkFile() {
+		checking = await pickProjectFile();
+	}
+
 	onMount(() => {
 		void load();
 		return listenWhileMounted(() =>
@@ -85,6 +93,9 @@
 		<div class="tools">
 			<button class="btn" onclick={openFile} disabled={!!opening}>
 				<Icon name="folder" />{m.projectFile.open}
+			</button>
+			<button class="btn" onclick={checkFile} disabled={!!opening}>
+				<Icon name="check" />{m.projectFile.check}
 			</button>
 			<button class="btn primary" onclick={() => (creating = true)}>
 				<Icon name="plus" />{m.projects.newProject}
@@ -189,6 +200,10 @@
 		</label>
 	{/if}
 </div>
+
+{#if checking}
+	<CheckProjectDialog path={checking} onclose={() => (checking = null)} />
+{/if}
 
 <style>
 	.tools {

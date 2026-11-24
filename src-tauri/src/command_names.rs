@@ -175,6 +175,7 @@ pub const COMMANDS: &[&str] = &[
     "plan_project_file",
     "save_project_file",
     "open_project_file",
+    "check_project_file",
     "dictionary_view",
     "dictionary_evidence",
     "dictionary_merge",

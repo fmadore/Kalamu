@@ -245,6 +245,7 @@ pub fn run() {
             commands::project_file::plan_project_file,
             commands::project_file::save_project_file,
             commands::project_file::open_project_file,
+            commands::project_file::check_project_file,
             commands::dictionary::dictionary_view,
             commands::dictionary::dictionary_evidence,
             commands::dictionary::dictionary_merge,

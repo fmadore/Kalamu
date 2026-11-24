@@ -1,7 +1,8 @@
 //! Saving a project to a file: its rows read under the store's lock into a new database beside
 //! the file chosen (`<name>.kalamu.part`), the files it carries written after, the part renamed
 //! once whole. A failure, a frozen text missing or changed among them, deletes the part and
-//! leaves a file saved earlier under that name as it was.
+//! leaves a file saved earlier under that name as it was. The file written is then checked as
+//! *Check a project file…* checks one, and the save says what the check found (#246).
 
 use std::path::{Path, PathBuf};
 
@@ -14,7 +15,7 @@ use rusqlite::types::Value;
 use rusqlite::{Connection, ToSql};
 
 use super::selection::{self, Selection};
-use super::{ROLE_ORIGINAL, TABLES, carried, create_schema, manifest, rows, write_err};
+use super::{ROLE_ORIGINAL, TABLES, carried, check, create_schema, manifest, rows, write_err};
 use crate::{SqliteStore, db};
 
 /// The rows of each table a project's file holds, by the named arguments `:project` (its id),
@@ -163,23 +164,39 @@ pub(super) fn save(
     progress: &dyn Fn(ProjectFileProgress),
 ) -> Result<ProjectFileSaved, ProjectFileError> {
     let part = part_of(path);
+    // Writing fills the first half of the progress, the check of the file written the second.
+    let writing = |p: ProjectFileProgress| {
+        progress(ProjectFileProgress {
+            done: p.done,
+            total: p.total * 2,
+        })
+    };
     let written =
-        write(store, project, &part, with_originals, places, progress).and_then(|saved| {
+        write(store, project, &part, with_originals, places, &writing).and_then(|saved| {
             std::fs::rename(&part, path).map_err(write_err)?;
             Ok(saved)
         });
-    match written {
-        Ok((originals, originals_left)) => Ok(ProjectFileSaved {
-            path: path.display().to_string(),
-            bytes: std::fs::metadata(path).map(|m| m.len()).unwrap_or_default(),
-            originals,
-            originals_left,
-        }),
+    let (originals, originals_left) = match written {
+        Ok(counts) => counts,
         Err(e) => {
             let _ = std::fs::remove_file(&part);
-            Err(e)
+            return Err(e);
         }
-    }
+    };
+    let checking = |p: ProjectFileProgress| {
+        progress(ProjectFileProgress {
+            done: p.total + p.done,
+            total: p.total * 2,
+        })
+    };
+    let check = check::check(path, &checking)?;
+    Ok(ProjectFileSaved {
+        path: path.display().to_string(),
+        bytes: std::fs::metadata(path).map(|m| m.len()).unwrap_or_default(),
+        originals,
+        originals_left,
+        check,
+    })
 }
 
 /// Writes the whole file at `part`; returns how many originals it carries and how many it

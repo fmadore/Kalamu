@@ -2758,7 +2758,53 @@ export const en = {
 			n === 1
 				? 'One corrected text that a job read was not in the file: the job and its results are here, without the text it read.'
 				: `${n} corrected texts that jobs read were not in the file: the jobs and their results are here, without the texts they read.`,
-		missingText: (what: string, jobs: string) => `${what}, read by ${jobs}`
+		missingText: (what: string, jobs: string) => `${what}, read by ${jobs}`,
+		check: 'Check a project file…',
+		checkTitle: 'Check a project file',
+		checkLede:
+			'Kalamu reads the file and checks that everything in it is intact. It does not open it as a project and changes nothing.',
+		checking: 'Checking the file…',
+		verdict: {
+			whole: 'This file is whole: everything in it can be opened.',
+			incomplete: 'This file opens, but some texts are missing from it.',
+			damaged:
+				'This file is damaged: parts of it no longer match what was saved, so it cannot be opened. Ask for it again, or save it again.'
+		},
+		checkedFile: (name: string, date: string, version: string) =>
+			`“${name}”, saved on ${date} by Kalamu ${version}.`,
+		textsWhole: (n: number) =>
+			n === 1
+				? 'The corrected text the jobs read is in it, intact.'
+				: `The ${n} corrected texts the jobs read are in it, intact.`,
+		checkMissingTexts: (n: number) =>
+			n === 1
+				? 'One corrected text that a job read is not in the file: opening it brings back the job and its results, without the text it read.'
+				: `${n} corrected texts that jobs read are not in the file: opening it brings back the jobs and their results, without the texts they read.`,
+		damagedParts: (n: number): string =>
+			n === 1
+				? 'This part no longer matches what was saved:'
+				: 'These parts no longer match what was saved:',
+		originalsIn: (n: number) =>
+			n === 1 ? '1 original file is in it, intact.' : `${n} original files are in it, intact.`,
+		originalsNotChosen:
+			'It was saved without the original files (scans, recordings): the text and your work on it are all in it.',
+		originalsNotCarried: (n: number) =>
+			n === 1
+				? '1 original file could not be put in it: it could not be found, or it changed since it was read.'
+				: `${n} original files could not be put in it: they could not be found, or they changed since they were read.`,
+		toFind: (n: number, missing: string) =>
+			n === 1
+				? `On another computer, this document will show as “${missing}” until its file is found again:`
+				: `On another computer, these ${n} documents will show as “${missing}” until their files are found again:`,
+		renamed: (n: number) =>
+			n === 1
+				? 'Opened on this computer, 1 original file would take another name, because this system does not accept its name as it is, or another file already has it:'
+				: `Opened on this computer, ${n} original files would take another name, because this system does not accept their names as they are, or another file already has them:`,
+		renamedFile: (documents: string, from: string, to: string) =>
+			`${documents ? `${documents}: ` : ''}${from} becomes ${to}`,
+		savedChecked: (path: string) =>
+			`The project is saved in ${path} and checked: everything in it can be opened.`,
+		checkFound: 'Kalamu checked the saved file and found a problem:'
 	},
 	os: {
 		windows: {

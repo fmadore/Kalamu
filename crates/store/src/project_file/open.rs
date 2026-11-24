@@ -13,84 +13,13 @@ use kalamu_core::{
     Timestamp,
 };
 use rusqlite::types::Value;
-use rusqlite::{Connection, ErrorCode, OpenFlags};
+use rusqlite::{Connection, ErrorCode};
 
 use super::carried::{self, Carried};
+use super::check::{readable, refused};
 use super::remap::Remap;
-use super::{IDENTIFIED, RESULTS, ROLE_SNAPSHOT, TABLES, read_err, rows, schema};
+use super::{IDENTIFIED, RESULTS, ROLE_SNAPSHOT, TABLES, rows};
 use crate::SqliteStore;
-
-/// A copy of the file in the temporary folder, brought up to this schema, deleted when done.
-struct Upgraded(PathBuf);
-
-impl Drop for Upgraded {
-    fn drop(&mut self) {
-        let _ = std::fs::remove_file(&self.0);
-    }
-}
-
-/// What SQLite's refusal says of the file.
-fn refused(e: rusqlite::Error) -> ProjectFileError {
-    match e.sqlite_error_code() {
-        Some(ErrorCode::NotADatabase) => ProjectFileError::NotProjectFile,
-        Some(ErrorCode::DatabaseCorrupt) => ProjectFileError::Damaged(e.to_string()),
-        _ if e.to_string().contains("no such table") => ProjectFileError::NotProjectFile,
-        _ => read_err(e),
-    }
-}
-
-/// The file opened for reading, its manifest, and the upgraded copy it may be read from.
-fn check(path: &Path) -> Result<(Connection, Manifest, Option<Upgraded>), ProjectFileError> {
-    if !path.is_file() {
-        return Err(read_err(format!("{} is not a file", path.display())));
-    }
-    let flags = OpenFlags::SQLITE_OPEN_READ_ONLY | OpenFlags::SQLITE_OPEN_NO_MUTEX;
-    let file = Connection::open_with_flags(path, flags).map_err(refused)?;
-    let (format, version, manifest): (String, i64, String) = file
-        .query_row(
-            "SELECT format, version, manifest FROM kalamu_project_file",
-            [],
-            |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)),
-        )
-        .map_err(refused)?;
-    if format != pf::FORMAT {
-        return Err(ProjectFileError::NotProjectFile);
-    }
-    if version > i64::from(pf::VERSION) {
-        return Err(ProjectFileError::Newer(format!(
-            "file format {version}; this version reads {}",
-            pf::VERSION
-        )));
-    }
-    let manifest: Manifest =
-        serde_json::from_str(&manifest).map_err(|e| ProjectFileError::Damaged(e.to_string()))?;
-    let checked: String = file
-        .query_row("PRAGMA quick_check", [], |row| row.get(0))
-        .map_err(refused)?;
-    if checked != "ok" {
-        return Err(ProjectFileError::Damaged(checked));
-    }
-    let applied: i64 = file
-        .pragma_query_value(None, "user_version", |row| row.get(0))
-        .map_err(refused)?;
-    let known = i64::from(schema());
-    if applied > known {
-        return Err(ProjectFileError::Newer(format!(
-            "schema {applied}; this version knows {known}"
-        )));
-    }
-    if applied == known {
-        return Ok((file, manifest, None));
-    }
-    // Saved by an older Kalamu: its rows are brought up to date on a copy, never in the file.
-    drop(file);
-    let copy = std::env::temp_dir().join(format!("kalamu-open-{}.kalamu", JobId::new()));
-    std::fs::copy(path, &copy).map_err(read_err)?;
-    let upgraded = Upgraded(copy);
-    let file = Connection::open(&upgraded.0).map_err(read_err)?;
-    crate::migrate(&file).map_err(ProjectFileError::Store)?;
-    Ok((file, manifest, Some(upgraded)))
-}
 
 pub(super) fn open(
     store: &SqliteStore,
@@ -98,7 +27,7 @@ pub(super) fn open(
     places: &ArchivePlaces,
     progress: &dyn Fn(ProjectFileProgress),
 ) -> Result<ProjectFileOpened, ProjectFileError> {
-    let (file, manifest, _upgraded) = check(path)?;
+    let (file, manifest, _upgraded) = readable(path)?;
     let mut remap = Remap::default();
     for table in IDENTIFIED {
         let mut stmt = file
@@ -180,9 +109,7 @@ fn write_carried(
     let mut done = 0;
     progress(ProjectFileProgress { done, total });
     let root = places.originals.join(project.to_string());
-    let mut folders: HashMap<String, PathBuf> = HashMap::new();
-    let mut taken: HashSet<String> = HashSet::new();
-    let mut names: HashMap<PathBuf, FolderNames> = HashMap::new();
+    let mut placement = Placement::default();
     let mut originals = 0;
     for c in &carried {
         let to = if c.role == ROLE_SNAPSHOT {
@@ -190,15 +117,7 @@ fn write_carried(
                 .snapshots
                 .join(pf::portable_name(pf::last_part(&c.path), &c.sha256))
         } else {
-            let folder = folder_for(&root, &c.path, &mut folders, &mut taken);
-            let name = names
-                .entry(folder.clone())
-                .or_default()
-                .give_file(&pf::portable_name(
-                    pf::last_part(&c.path),
-                    &fallback_name(c),
-                ));
-            folder.join(name)
+            placement.place(&root, c)
         };
         if c.role == ROLE_SNAPSHOT && to.is_file() {
             // The same text frozen here already: one file, never rewritten.
@@ -224,28 +143,50 @@ fn fallback_name(c: &Carried) -> String {
     }
 }
 
-/// The folder of this computer for the files of one folder of the other: named after it, a
-/// number added when two share a name.
-fn folder_for(
-    root: &Path,
-    path: &str,
-    folders: &mut HashMap<String, PathBuf>,
-    taken: &mut HashSet<String>,
-) -> PathBuf {
-    let old = pf::folder_part(path).to_string();
-    if let Some(folder) = folders.get(&old) {
-        return folder.clone();
+/// Where the originals a file carries are written under a project's folder, given in the order
+/// the file lists them: opening writes them there, and a check names those whose name changes.
+#[derive(Default)]
+pub(super) struct Placement {
+    /// The folder given to each folder of the other computer, and the names taken among them.
+    folders: HashMap<String, PathBuf>,
+    taken: HashSet<String>,
+    /// The file names given in each folder.
+    names: HashMap<PathBuf, FolderNames>,
+}
+
+impl Placement {
+    /// The path the original `c` takes under `root`.
+    pub fn place(&mut self, root: &Path, c: &Carried) -> PathBuf {
+        let folder = self.folder_for(root, &c.path);
+        let name = self
+            .names
+            .entry(folder.clone())
+            .or_default()
+            .give_file(&pf::portable_name(
+                pf::last_part(&c.path),
+                &fallback_name(c),
+            ));
+        folder.join(name)
     }
-    let base = pf::portable_name(pf::last_part(&old), "Files");
-    let mut name = base.clone();
-    let mut n = 2;
-    while !taken.insert(name.to_lowercase()) {
-        name = format!("{base} {n}");
-        n += 1;
+
+    /// The folder of this computer for the files of one folder of the other: named after it, a
+    /// number added when two share a name.
+    fn folder_for(&mut self, root: &Path, path: &str) -> PathBuf {
+        let old = pf::folder_part(path).to_string();
+        if let Some(folder) = self.folders.get(&old) {
+            return folder.clone();
+        }
+        let base = pf::portable_name(pf::last_part(&old), "Files");
+        let mut name = base.clone();
+        let mut n = 2;
+        while !self.taken.insert(name.to_lowercase()) {
+            name = format!("{base} {n}");
+            n += 1;
+        }
+        let folder = root.join(name);
+        self.folders.insert(old, folder.clone());
+        folder
     }
-    let folder = root.join(name);
-    folders.insert(old, folder.clone());
-    folder
 }
 
 /// A document of images names itself in its first page's folder: once its pages are written
