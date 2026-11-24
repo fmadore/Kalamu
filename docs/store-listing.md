@@ -4,9 +4,9 @@ Paste-ready text for Kalamu's two store listings: the Microsoft Store (Partner C
 where 1.10.0 is live and 1.10.1 is the next update, its *What's new* and certification notes
 below (the first version, 1.0.0, was certified on 2 November 2026), in
 [English](#english-united-states) and [French](#french-france), then the
-[Mac App Store](#mac-app-store-app-store-connect) (App Store Connect), where 1.6.0, the first
-submission, is in review and 1.10.1 is the version to submit next. The submission and update
-steps are in [microsoft-store.md](microsoft-store.md) and [mac-app-store.md](mac-app-store.md). Check every block against the app as packaged before
+[Mac App Store](#mac-app-store-app-store-connect) (App Store Connect), where 1.10.1, the first
+version on the store, is in review (1.6.0 was withdrawn after 13 days there). The submission and
+update steps are in [microsoft-store.md](microsoft-store.md) and [mac-app-store.md](mac-app-store.md). Check every block against the app as packaged before
 pasting: a listing that promises what a reviewer cannot find fails certification.
 
 Every paragraph inside a block is one unwrapped line, because Partner Center keeps line breaks;
@@ -704,9 +704,10 @@ that the screenshots match the app.
 # Mac App Store (App Store Connect)
 
 Paste-ready text for the Mac App Store listing. Version 1.6.0, the first submission, was sent
-with an earlier text and is in review; the version to submit next is 1.10.1, whose build is
-uploaded from the `v1.10.1` tag, with the description, *What's New* and the sample files' link
-below, all brought up to what 1.10.1 holds. The steps,
+with an earlier text and withdrawn from review on 24 November 2026; 1.10.1 took its place the
+same day, in review with build 41 and the description and review notes below, the notes'
+bracket answered *No test key is provided: the offline route above shows the app's features
+without one.* The steps,
 the age rating and the App Privacy answers are in [mac-app-store.md](mac-app-store.md).
 App Store Connect's limits, checked when this text was written: name and subtitle 30
 characters, promotional text 170, description 4,000, keywords 100 (comma-separated, without
@@ -718,10 +719,11 @@ review notes 3875.
 Differences from the Microsoft Store text: macOS words (the Keychain, "your Mac"); no Buy Me a
 Coffee line, since the store build hides that link (Guideline 3.1.1); the description in short
 headed sections, since the App Store shows only its first lines before *more*; and the same
-facts otherwise. **Languages**: English (U.S.) first; French can be added as a localisation
+facts otherwise. **Languages**: English first, the primary language set in App Store Connect
+being English (U.K.), which the British spelling suits; French can be added as a localisation
 with its own screenshots.
 
-## English (U.S.)
+## English (U.K.)
 
 ### Name
 
@@ -787,9 +789,10 @@ OCR,HTR,handwriting,transcription,speech to text,interview,archive,historian,dig
 
 ### What's New
 
-Not asked for the first version on the store. For 1.10.1, what was added since 1.6.0, the only
-version sent to this store before it (Apple allows 4,000 characters; this is 1,793). If 1.6.0
-was never released, leave the field out where App Store Connect does not ask for it:
+Not asked for the first version on the store, and App Store Connect did not ask for it when
+1.10.1, the first, was submitted. Kept for the record: what was added since 1.6.0, the version
+withdrawn before it (Apple allows 4,000 characters; this is 1,793). The next version's text
+starts from 1.10.1:
 
 ```text
 Everything added since 1.6.0.

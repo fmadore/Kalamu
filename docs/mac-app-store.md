@@ -8,16 +8,18 @@ policy in [privacy.md](privacy.md). Why the store build is made this way is in t
 [build decision](decisions/2026-11-04-mac-app-store-build.md); the Microsoft Store's own steps
 are in [microsoft-store.md](microsoft-store.md).
 
-## Status (13 November 2026)
+## Status (24 November 2026)
 
-**Version 1.6.0 is in App Review**, the first submission: the *Mac App Store* workflow signed and
-uploaded it from the `v1.6.0` tag on 11 November 2026, after the app was tried on a Mac with
-Apple Silicon (macOS 26), and it was submitted with the listing in
-[store-listing.md](store-listing.md#mac-app-store-app-store-connect). The next version to
-submit is 1.10.1, by the same steps, with the description brought up to it and a *What's New*
-text that covers everything since 1.6.0; its build is uploaded from the `v1.10.1` tag by the
-*Mac App Store* workflow, started on 24 November 2026. What the repository
-provides:
+**Version 1.10.1 is in App Review**, the first version on the store. Version 1.6.0, the first
+submission, uploaded from the `v1.6.0` tag on 11 November 2026 after the app was tried on a Mac
+with Apple Silicon (macOS 26), waited in review for 13 days without an answer; it was withdrawn
+on 24 November 2026 (*Developer Rejected*). Since it was never released, its version record was
+reused: the version number changed to 1.10.1, build 1.10.1 (41) put in place of 1.6.0 (35),
+uploaded from the `v1.10.1` tag by the *Mac App Store* workflow the same morning, and the
+description and review notes replaced by those in
+[store-listing.md](store-listing.md#mac-app-store-app-store-connect). App Store Connect asked for
+no *What's New*, this being the first version, and 1.10.1 was submitted the same day, to be
+released automatically once approved. What the repository provides:
 
 - the sandboxed build, its entitlements, the container migration and FFmpeg signed to inherit
   the sandbox, started and checked in CI by the *Mac App Store* workflow;
@@ -79,7 +81,7 @@ In [App Store Connect](https://appstoreconnect.apple.com):
 4. **Users and Access → Integrations → App Store Connect API**: a team key with the *App
    Manager* role. Keep the `.p8` file (downloadable once), its key ID and the issuer ID.
 5. **Apps → New App**: platform macOS, name `Kalamu` (or `Kalamu for Researchers` if taken),
-   primary language English (U.S.), bundle ID `io.github.fmadore.kalamu`, SKU `kalamu`, full
+   primary language English (U.K.), bundle ID `io.github.fmadore.kalamu`, SKU `kalamu`, full
    access. Then **App Information → General → Apple ID**: the number the upload needs.
 
 Free apps need no paid-apps agreement, tax or banking forms.

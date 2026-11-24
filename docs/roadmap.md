@@ -51,8 +51,9 @@ researcher's own regions and a region read again, a passage corrected by a model
 the fix for the review's scan, which redrew itself without end when a scrollbar came and went
 outside full screen (#192). 1.8.1, prepared for that fix alone, was never published. What
 1.9.0 adds has run against recorded answers only; the live runs and the test pass in the
-packaged app come before its tag. **Version 1.6.0** ([notes](release-1.6.0.md)),
-the first sent to the Mac App Store, is still in App Review there ([steps](mac-app-store.md)).
+packaged app come before its tag. **Version 1.10.1** is in App Review at the
+Mac App Store, the first version there: 1.6.0 ([notes](release-1.6.0.md)), the first sent, was
+withdrawn after 13 days without an answer ([steps](mac-app-store.md)).
 Everything below is tested against recorded provider
 responses. Text extraction, transcription, analyses and translation have also run against the
 live Gemini, OpenAI, Claude and Mistral APIs with real keys, at once and in economy mode
@@ -1017,9 +1018,10 @@ privacy policy's lines on the store build, and the steps in [mac-app-store.md](m
 Done by the maintainer: the App ID, the distribution certificates, the profile, the API key and
 the app in App Store Connect, with their secrets; the screenshots, taken on a Mac from the
 screened material ([store-listing.md](store-listing.md#screenshots)); and the first submission,
-version 1.6.0, uploaded from its tag on 11 November 2026 and still in App Review on
-16 November. Next: Apple's answer, then the latest release with a *What's New* text (1.7.0, or
-1.8.0 if it is tagged by then). After it: a way to grant again the folders of jobs made by
+version 1.6.0, uploaded from its tag on 11 November 2026 and withdrawn from App Review on
+24 November after 13 days without an answer, when 1.10.1 (build 41) was submitted in its place.
+Next: Apple's answer, then each later release with a *What's New* text. After it: a way to
+grant again the folders of jobs made by
 the disk image, a French listing, and optional tips through in-app purchase, the only way
 Apple allows the store build to ask for support
 ([#113](https://github.com/fmadore/Kalamu/issues/113)).
