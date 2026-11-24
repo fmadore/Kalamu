@@ -13,8 +13,10 @@ are in [microsoft-store.md](microsoft-store.md).
 **Version 1.6.0 is in App Review**, the first submission: the *Mac App Store* workflow signed and
 uploaded it from the `v1.6.0` tag on 11 November 2026, after the app was tried on a Mac with
 Apple Silicon (macOS 26), and it was submitted with the listing in
-[store-listing.md](store-listing.md#mac-app-store-app-store-connect). The next version, 1.7.0,
-follows the same steps once Apple has answered, with a *What's New* text. What the repository
+[store-listing.md](store-listing.md#mac-app-store-app-store-connect). The next version to
+submit is 1.10.1, by the same steps, with the description brought up to it and a *What's New*
+text that covers everything since 1.6.0; its build is uploaded from the `v1.10.1` tag by the
+*Mac App Store* workflow, started on 24 November 2026. What the repository
 provides:
 
 - the sandboxed build, its entitlements, the container migration and FFmpeg signed to inherit
