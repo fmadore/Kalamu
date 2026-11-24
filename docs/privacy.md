@@ -1,4 +1,10 @@
-# Privacy Policy — Kalamu
+---
+layout: page
+current: privacy
+title: Privacy policy
+lede: What the app sends, to whom, and what it keeps on your computer.
+description: Kalamu's privacy policy. What the app sends, to whom, and what it keeps on the computer.
+---
 
 **Effective date:** 23 November 2026, which applies from the first version to keep, on the
 computer, the path and a fingerprint of each table file it exported, so that exporting again

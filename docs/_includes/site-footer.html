@@ -1,0 +1,50 @@
+{% comment %}
+  The home page's footer, for the pages Jekyll lays out (the guide, the privacy policy). Takes
+  `root`, `lang` and `t_issue` (a sentence asking readers to report a mistake on this page).
+  Its words are docs/index.html's and docs/fr/index.html's: change them together.
+{% endcomment %}
+<footer class="site-footer">
+  <div class="wrap">
+    {% if include.lang == 'fr' %}
+    <ul>
+      <li><a href="{{ include.root }}privacy.html" hreflang="en">Politique de confidentialité (en anglais)</a></li>
+      <li><a href="https://github.com/fmadore/Kalamu/issues">Assistance</a></li>
+      <li><a href="https://github.com/fmadore/Kalamu">Code source</a></li>
+      <li>
+        <a href="https://github.com/fmadore/Kalamu/blob/main/docs/README.md" hreflang="en">Documentation pour les développeurs (en anglais)</a>
+      </li>
+      <li><a href="https://buymeacoffee.com/fmadore">Soutenir le développement</a></li>
+    </ul>
+    {% if include.t_issue %}<p class="issue">{{ include.t_issue }}</p>{% endif %}
+    <p>
+      Kalamu est un logiciel libre et gratuit, sous licence MIT, de
+      <a href="https://www.frederickmadore.com/">Frédérick Madore</a> (Université de Bayreuth),
+      qui le développe en projet indépendant. Le soutenir est facultatif et ne débloque rien.
+    </p>
+    <p>
+      Google Gemini et YouTube sont des marques de Google LLC ; OpenAI est une marque d’OpenAI
+      OpCo, LLC ; Claude est une marque d’Anthropic, PBC ; Mistral AI est une marque de Mistral
+      AI. Kalamu n’est affilié à aucune de ces sociétés ni approuvé par elles.
+    </p>
+    {% else %}
+    <ul>
+      <li><a href="{{ include.root }}privacy.html">Privacy policy</a></li>
+      <li><a href="https://github.com/fmadore/Kalamu/issues">Support</a></li>
+      <li><a href="https://github.com/fmadore/Kalamu">Source code</a></li>
+      <li><a href="https://github.com/fmadore/Kalamu/blob/main/docs/README.md">Developer documentation</a></li>
+      <li><a href="https://buymeacoffee.com/fmadore">Support development</a></li>
+    </ul>
+    {% if include.t_issue %}<p class="issue">{{ include.t_issue }}</p>{% endif %}
+    <p>
+      Kalamu is free and open source, under the MIT licence, by
+      <a href="https://www.frederickmadore.com/">Frédérick Madore</a> (University of Bayreuth),
+      as an independent project. Supporting it is optional and unlocks nothing.
+    </p>
+    <p>
+      Google Gemini and YouTube are trademarks of Google LLC; OpenAI is a trademark of OpenAI
+      OpCo, LLC; Claude is a trademark of Anthropic, PBC; Mistral AI is a trademark of Mistral
+      AI. Kalamu is not affiliated with or endorsed by any of them.
+    </p>
+    {% endif %}
+  </div>
+</footer>

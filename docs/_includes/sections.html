@@ -1,0 +1,14 @@
+{% comment %}
+  A list of a page's sections, read from its rendered `html`: one link per h2 that has an id,
+  as kramdown gives every heading. Liquid only, so the list is there without script.
+{% endcomment %}
+{% assign parts = include.html | split: '<h2 id="' %}
+{% if parts.size > 1 %}
+<ol class="sections">
+  {% for part in parts offset: 1 %}
+  {% assign id = part | split: '"' | first %}
+  {% assign heading = part | split: '</h2>' | first | remove_first: id | remove_first: '">' | strip_html %}
+  <li><a href="#{{ id }}">{{ heading }}</a></li>
+  {% endfor %}
+</ol>
+{% endif %}

@@ -1,108 +1,107 @@
 <!doctype html>
 {% comment %}
-  One layout for the guide in each language: a chapter in docs/guide/fr/ says `lang: fr` and
-  is listed with the French chapters only (those of its own folder), under French words.
+  One layout for the guide in each language, in the home page's look (assets/site.css): its
+  header on the cream band, the chapter's title under it, the chapters beside the text, its
+  footer. A chapter in docs/guide/fr/ says `lang: fr` and is listed with the French chapters
+  only (those of its own folder), under French words. Every chapter exists in both languages
+  under the same file name, so the header's language switch goes to the same chapter; the
+  chapters' own first line, a link to the other language for readers on GitHub, is hidden here.
 {% endcomment %}
+{% assign chapter_html = page.name | replace: '.md', '.html' %}
+{% if chapter_html == 'index.html' %}{% assign chapter_link = '' %}{% else %}{% assign chapter_link = chapter_html %}{% endif %}
 {% if page.lang == 'fr' %}
   {% assign root = '../../' %}
+  {% assign home = 'fr/' %}
+  {% assign guide = 'guide/fr/' %}
+  {% assign other = '../' | append: chapter_link %}
+  {% assign other_lang = 'en' %}
+  {% assign t_other = 'English' %}
   {% assign t_suffix = 'Guide de Kalamu' %}
   {% assign t_description = 'Un guide de Kalamu, une application de bureau pour lire des documents, transcrire des entretiens et analyser des textes avec l’IA.' %}
   {% assign t_skip = 'Aller au texte' %}
-  {% assign t_guide = 'guide' %}
-  {% assign t_nav = 'Guide' %}
-  {% assign t_download = 'Télécharger' %}
-  {% assign t_source = 'Code source' %}
+  {% assign t_home = 'Kalamu, accueil' %}
+  {% assign t_home_short = 'Accueil' %}
+  {% assign t_site = 'Site' %}
+  {% assign t_guide = 'Guide' %}
   {% assign t_privacy = 'Confidentialité' %}
+  {% assign t_download = 'Télécharger' %}
   {% assign t_chapters = 'Chapitres' %}
   {% assign t_before = 'Précédent' %}
   {% assign t_next = 'Suivant' %}
-  {% assign t_anchor = 'Lien vers cette section : ' %}
+  {% assign t_anchor = 'Lien vers cette section : ' %}
+  {% assign t_issue = 'Une erreur ou un manque dans ce guide ? <a href="https://github.com/fmadore/Kalamu/issues">Signalez-le</a>.' %}
 {% else %}
   {% assign root = '../' %}
+  {% assign home = '' %}
+  {% assign guide = 'guide/' %}
+  {% assign other = 'fr/' | append: chapter_link %}
+  {% assign other_lang = 'fr' %}
+  {% assign t_other = 'Français' %}
   {% assign t_suffix = 'Kalamu guide' %}
   {% assign t_description = 'A guide to Kalamu, a desktop app for reading documents, transcribing interviews and analysing texts with AI.' %}
   {% assign t_skip = 'Skip to the text' %}
-  {% assign t_guide = 'guide' %}
-  {% assign t_nav = 'Guide' %}
-  {% assign t_download = 'Download' %}
-  {% assign t_source = 'Source' %}
+  {% assign t_home = 'Kalamu, home' %}
+  {% assign t_home_short = 'Home' %}
+  {% assign t_site = 'Site' %}
+  {% assign t_guide = 'Guide' %}
   {% assign t_privacy = 'Privacy' %}
+  {% assign t_download = 'Download' %}
   {% assign t_chapters = 'Chapters' %}
   {% assign t_before = 'Before' %}
   {% assign t_next = 'Next' %}
   {% assign t_anchor = 'Link to this section: ' %}
+  {% assign t_issue = 'Something wrong or missing in this guide? <a href="https://github.com/fmadore/Kalamu/issues">Open an issue</a>.' %}
 {% endif %}
+{% assign chapters = site.pages | where: "layout", "guide" | where: "dir", page.dir | sort: "order" %}
+{% assign here = 0 %}
+{% for chapter in chapters %}{% if chapter.url == page.url %}{% assign here = forloop.index0 %}{% endif %}{% endfor %}
+{% assign number = here | plus: 1 %}
 <html lang="{{ page.lang | default: 'en' }}">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
     <title>{{ page.title }} · {{ t_suffix }}</title>
     <meta name="description" content="{{ page.description | default: t_description }}" />
-    <link rel="stylesheet" href="{{ root }}assets/guide.css" />
+    <link rel="alternate" hreflang="{{ other_lang }}" href="{{ other }}" />
+    <link rel="icon" href="{{ root }}assets/home/mark.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="{{ root }}assets/site.css" />
   </head>
   <body>
     <a class="skip" href="#content">{{ t_skip }}</a>
-    <div class="frame">
-      <header class="side">
-        <a class="name" href="index.html">Kalamu <span>{{ t_guide }}</span></a>
-        <nav aria-label="{{ t_nav }}">
-          {% assign chapters = site.pages | where: "layout", "guide" | where: "dir", page.dir | sort: "order" %}
-          <ol>
-            {% for chapter in chapters %}
-            <li>
-              <a href="{{ chapter.name | replace: '.md', '.html' }}"{% if chapter.url == page.url %} aria-current="page"{% endif %}>{{ chapter.nav | default: chapter.title }}</a>
-            </li>
-            {% endfor %}
-          </ol>
-        </nav>
-        <p class="links">
-          <a href="https://github.com/fmadore/Kalamu/releases">{{ t_download }}</a>
-          <a href="https://github.com/fmadore/Kalamu">{{ t_source }}</a>
-          <a href="{{ root }}privacy.html">{{ t_privacy }}</a>
-        </p>
-      </header>
-      <main id="content">
+    <div class="band">
+      {% include site-header.html root=root home=home guide=guide current='guide' other=other other_lang=other_lang t_other=t_other t_home=t_home t_home_short=t_home_short t_site=t_site t_guide=t_guide t_privacy=t_privacy t_download=t_download %}
+      <div class="wrap page-head">
+        <p class="kicker">{{ t_guide }} · {% if number < 10 %}0{% endif %}{{ number }} / {% if chapters.size < 10 %}0{% endif %}{{ chapters.size }}</p>
         <h1>{{ page.title }}</h1>
         {% if page.lede %}<p class="lede">{{ page.lede }}</p>{% endif %}
+      </div>
+    </div>
+
+    <div class="wrap doc">
+      <nav class="side" aria-label="{{ t_chapters }}">
+        <p class="side-title">{{ t_chapters }}</p>
+        <ol class="chapters">
+          {% for chapter in chapters %}
+          <li>
+            <a href="{{ chapter.name | replace: '.md', '.html' }}"{% if chapter.url == page.url %} aria-current="page"{% endif %}>{{ chapter.nav | default: chapter.title }}</a>
+            {% if chapter.url == page.url %}{% include sections.html html=content %}{% endif %}
+          </li>
+          {% endfor %}
+        </ol>
+      </nav>
+      <main id="content" class="prose guide">
         {{ content }}
         <nav class="pager" aria-label="{{ t_chapters }}">
-          {% assign here = 0 %}
-          {% for chapter in chapters %}{% if chapter.url == page.url %}{% assign here = forloop.index0 %}{% endif %}{% endfor %}
           {% assign before = here | minus: 1 %}
           {% assign after = here | plus: 1 %}
           {% if here > 0 %}<a class="prev" href="{{ chapters[before].name | replace: '.md', '.html' }}"><span>{{ t_before }}</span>{{ chapters[before].title }}</a>{% else %}<span></span>{% endif %}
           {% if after < chapters.size %}<a class="next" href="{{ chapters[after].name | replace: '.md', '.html' }}"><span>{{ t_next }}</span>{{ chapters[after].title }}</a>{% endif %}
         </nav>
-        <footer>
-          {% if page.lang == 'fr' %}
-          <p>
-            Kalamu est un logiciel libre et gratuit (licence MIT), de
-            <a href="https://frederickmadore.com">Frédérick Madore</a>.
-            Une erreur ou un manque dans ce guide&#8239;?
-            <a href="https://github.com/fmadore/Kalamu/issues">Signalez-le</a>.
-          </p>
-          {% else %}
-          <p>
-            Kalamu is free and open source (MIT), by
-            <a href="https://frederickmadore.com">Frédérick Madore</a>.
-            Something wrong or missing in this guide?
-            <a href="https://github.com/fmadore/Kalamu/issues">Open an issue</a>.
-          </p>
-          {% endif %}
-        </footer>
       </main>
     </div>
-    <script>
-      // A link after each section's heading, to copy or share the address of that section.
-      // The ids come from Jekyll; without the script the headings simply have no link.
-      for (const heading of document.querySelectorAll('main h2[id], main h3[id]')) {
-        const link = document.createElement('a');
-        link.className = 'anchor';
-        link.href = '#' + heading.id;
-        link.setAttribute('aria-label', '{{ t_anchor }}' + heading.textContent);
-        link.textContent = '#';
-        heading.append(' ', link);
-      }
-    </script>
+
+    {% include site-footer.html root=root lang=page.lang t_issue=t_issue %}
+    {% include anchors.html t_anchor=t_anchor %}
   </body>
 </html>
