@@ -10,22 +10,24 @@ This follows what [Live Translation](https://github.com/fmadore/Live-translation
 the same Partner Center account (its `docs/microsoft-store.md`, `partner-center-walkthrough.md`,
 `store-updates.md` and `packaging-msix.md`); where Kalamu differs, the reason is given here.
 
-## Status (21 November 2026)
+## Status (24 November 2026)
 
-**Version 1.8.0 is in the [Microsoft Store](https://apps.microsoft.com/detail/9MXT5555BZ1H)**
-(product ID `9MXT5555BZ1H`, package version 1.8.0.0), published on 17 November 2026 as an update
-from the `Kalamu_1.8.0.msixbundle` of the
-[v1.8.0 release](https://github.com/fmadore/Kalamu/releases/tag/v1.8.0), tried by hand on
-Windows as `v1.8.0-rc1` ([windows-test-pass.md](windows-test-pass.md)). **1.10.0 is the next
-update** ([notes](release-1.10.0.md)): documents read against a research question, a project
-saved as one file, a sample of three pages first, long interviews in parts, photographs taken
-twice or blurred, and the plain-first round (a welcome, Excel workbooks, French fields and
-guide). It also carries everything of 1.9.0 ([notes](release-1.9.0.md)), published on GitHub on
-20 November and never submitted to the Store: the interview analysis, the search by meaning, the
-researcher's own regions, PAGE XML and the fix for the review's scan. Its
-`Kalamu_1.10.0.msixbundle` comes from the v1.10.0 tag, with What's new (covering both versions)
-and the certification notes in [store-listing.md](store-listing.md); it is tagged once the
-second [test pass on Windows](windows-test-pass.md) is done on `v1.10.0-rc1`. Version 1.4.0 was refused on
+**Version 1.10.0 is in the [Microsoft Store](https://apps.microsoft.com/detail/9MXT5555BZ1H)**
+(product ID `9MXT5555BZ1H`, package version 1.10.0.0), seen live there on 24 November 2026, as
+an update from the `Kalamu_1.10.0.msixbundle` of the
+[v1.10.0 release](https://github.com/fmadore/Kalamu/releases/tag/v1.10.0), published on GitHub
+on 22 November and tried by hand on Windows as `v1.10.0-rc1` and `rc2`
+([windows-test-pass.md](windows-test-pass.md)). It replaced 1.8.0, live since 17 November, and
+carries everything of 1.9.0 ([notes](release-1.9.0.md)), published on GitHub on 20 November and
+never submitted to the Store. **1.10.1 is the next update** ([notes](release-1.10.1.md)): the
+eight bugs a review of the repository found on 23 November, among them a project saved to a
+file without a text its jobs had read and an export that replaced a workbook kept beside it,
+and a project file checked without opening it.
+Its `Kalamu_1.10.1.msixbundle` comes from the v1.10.1 tag, with What's new and the
+certification notes in [store-listing.md](store-listing.md). The privacy policy and website
+addresses given in Partner Center move to `kalamu.frederickmadore.com` with a submission after
+it, once that domain serves them
+([#228](https://github.com/fmadore/Kalamu/issues/228)). Version 1.4.0 was refused on
 5 November 2026 under policy 11.5 (offensive content, found in the "metadata description"): two
 screenshots showed the 1915 masthead of *The Monitor* (Omaha), which names its readers in the
 wording of its time; 1.4.1 replaced it with screenshots of screened material and sample files
