@@ -19,16 +19,16 @@ fournisseurs refusent les appels à l’API sans elle, même pour les modèles b
 
 ## Un traitement s’est arrêté, ou des pages ont échoué
 
-Ouvrez le traitement : chaque page en échec en donne la raison, en toutes lettres. Les causes
+Ouvrez le traitement : chaque page en échec explique la raison en langage clair. Les causes
 habituelles sont une connexion perdue, un fournisseur surchargé (Kalamu attend et réessaie tout
 seul), ou une page que le fournisseur refuse. Relancez le traitement : seul ce qui a échoué est
 renvoyé.
 
-Une analyse qui ne répond rien du tout pour un long texte n’est pas conservée : Kalamu redemande,
-avec davantage de réflexion à chaque fois quand le modèle le permet (*Moyenne*, puis *Élevée*),
-et garde la première réponse complète, dont le relevé indique le niveau envoyé. Si toutes les
-réponses restent vides, la page le dit avec les niveaux essayés : choisissez un autre modèle
-plutôt que de relancer.
+Une analyse qui renvoie une réponse vide pour un long texte n’est pas conservée : Kalamu
+réessaie avec davantage de réflexion à chaque fois quand le modèle le permet (*Moyenne*, puis
+*Élevée*), et garde la première réponse complète en indiquant le niveau utilisé. Si toutes les
+tentatives restent vides, la page liste les niveaux essayés : choisissez un autre modèle plutôt
+que de relancer.
 
 Un traitement mis en pause, ou interrompu parce que l’application a été fermée, se trouve en bas
 de la barre latérale, sous *À reprendre*.

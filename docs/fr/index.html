@@ -1174,8 +1174,7 @@
 					<p class="intro">
 						Kalamu est une application de bureau gratuite pour la recherche. Elle lit les documents
 						numérisés et manuscrits, transcrit les enregistrements et analyse les textes avec le
-						fournisseur d’IA de votre choix, ou hors ligne, sans Python, sans Colab et sans ligne de
-						commande.
+						fournisseur d’IA de votre choix, ou hors ligne, sans Python, Colab ni ligne de commande.
 					</p>
 					<div class="get">
 						<a
@@ -1225,7 +1224,7 @@
 					<p class="lede">
 						Journaux anciens en colonnes, lettres et registres manuscrits, entretiens d’histoire
 						orale, rapports et articles : Kalamu en fait du texte que vous pouvez chercher, citer et
-						analyser, dans toute langue que lit le modèle choisi.
+						analyser, dans toutes les langues que lit le modèle choisi.
 					</p>
 					<div class="tasks">
 						<article class="task">
@@ -1233,9 +1232,10 @@
 								<h3>Extraire le texte</h3>
 								<p>
 									Kalamu lit les PDF et les images, imprimés ou manuscrits : journaux, rapports,
-									lettres, registres et manuscrits. Gardez les lignes comme sur la page, pour les
-									comparer au scan, ou réunissez-les en texte suivi. Les photographies d’une même
-									lettre ou d’un même dossier sont lues comme un seul document.
+									lettres, registres et manuscrits. Conservez les retours à la ligne tels quels pour
+									vérifier sur le scan, ou fusionnez-les en texte continu. Un dossier de
+									photographies d’une même lettre ou d’un même dossier est lu comme un seul
+									document.
 								</p>
 							</div>
 							<div class="sample" aria-hidden="true">
@@ -1251,10 +1251,10 @@
 							<div class="body">
 								<h3>Transcrire l’audio et la vidéo</h3>
 								<p>
-									La transcription indique qui parle et à quel moment, et vous pouvez donner aux
-									locuteurs leur vrai nom. Les longs enregistrements sont coupés aux pauses. Hors
-									ligne, Whisper transcrit sur votre ordinateur ; avec Gemini, les vidéos YouTube
-									publiques sont transcrites à partir de leur lien.
+									La transcription indique qui parle et à quel moment, et vous pouvez remplacer les
+									étiquettes de locuteurs par leur vrai nom. Les longs enregistrements sont découpés
+									aux silences. Hors ligne, Whisper transcrit sur votre ordinateur ; avec Gemini,
+									les vidéos YouTube publiques sont transcrites directement à partir de leur lien.
 								</p>
 							</div>
 							<div class="sample" aria-hidden="true">
@@ -1273,9 +1273,9 @@
 								<h3>Analyser des textes</h3>
 								<p>
 									Définissez les champs comme vous le feriez pour un assistant de recherche : un
-									résumé, les personnes, lieux et organisations qu’un document nomme, sa tonalité
-									avec une justification, des thèmes tirés de votre propre liste. Des analyses
-									toutes prêtes couvrent les besoins courants.
+									résumé, les personnes, lieux et organisations nommés dans le document, sa tonalité
+									avec une justification, ou des thèmes tirés de votre propre liste. Des analyses
+									prêtes à l’emploi couvrent les besoins courants.
 								</p>
 							</div>
 							<div class="sample" aria-hidden="true">
@@ -1300,13 +1300,13 @@
 				<div class="wrap">
 					<p class="kicker">02 · Vérification</p>
 					<h2 id="check-title">
-						Le texte d’une IA peut être fluide et faux : chaque résultat est donc placé à côté de sa
-						source.
+						Une IA peut produire un texte fluide et pourtant faux : chaque résultat s’affiche face à
+						sa source.
 					</h2>
 					<p class="lede">
-						La relecture place la page à côté de son texte, ou l’enregistrement à côté de sa
-						transcription. Faites lire la même page par deux modèles : les mots sur lesquels ils
-						divergent sont surlignés, et c’est là qu’il faut regarder. Essayez sur une ligne d’un
+						L’écran de relecture place chaque page face à son texte, et chaque enregistrement face à
+						sa transcription. Faites lire une même page par deux modèles : leurs divergences sont
+						surlignées, ce qui vous montre immédiatement où regarder. Essayez sur une ligne d’un
 						journal de 1911.
 					</p>
 					<div class="compare">
@@ -1381,23 +1381,23 @@
 						<div class="why">
 							<h3>Vos corrections n’écrasent jamais le texte de l’IA</h3>
 							<p>
-								Une correction est enregistrée à part, et vous marquez chaque page comme relue. Les
-								exports lisent le texte corrigé ; <code>provenance.json</code> consigne les deux,
-								avec le modèle, le prompt et les réglages, pour que votre méthode puisse être
-								décrite et reproduite.
+								Vos corrections sont enregistrées dans une couche distincte, et vous marquez chaque
+								page comme relue. Les exports utilisent le texte corrigé ;
+								<code>provenance.json</code> consigne les deux versions, avec le modèle, le prompt
+								et les réglages, pour que votre méthode reste documentée et reproductible.
 							</p>
 							<h3>Voir où se trouve le texte sur la page</h3>
 							<p>
-								Affichez sur le scan les zones trouvées par un modèle, tracez les vôtres autour
-								d’une note en marge ou d’une ligne pâle, et faites relire cette seule partie : la
-								réponse est une proposition que vous acceptez ou non.
+								Affichez sur le scan les zones détectées par un modèle, ou tracez votre propre cadre
+								autour d’une note marginale ou d’une ligne pâle pour ne faire relire que ce
+								passage ; la réponse apparaît comme une proposition que vous acceptez ou écartez.
 							</p>
 							<h3>Savoir jusqu’où se fier à un modèle</h3>
 							<p>
-								Comparez deux modèles ou plus sur les mêmes documents : leurs différences sont
-								surlignées, avec les taux d’erreur par rapport aux pages que vous avez corrigées. La
-								liste <em>Ce qu’il faut vérifier</em> d’un projet rassemble ce qui a échoué, ce qui
-								a été coupé et ce qui n’est pas encore relu.
+								Comparez deux modèles ou plus sur les mêmes documents : leurs divergences sont
+								surlignées dans le texte, avec les taux d’erreur calculés par rapport aux pages que
+								vous avez corrigées. La liste <em>Ce qu’il faut vérifier</em> d’un projet rassemble
+								ce qui a échoué, ce qui a été tronqué et ce qui reste à relire.
 							</p>
 							<button class="reset" type="button" id="reset" hidden>Revoir l’exemple</button>
 						</div>
@@ -1408,89 +1408,89 @@
 			<section id="more" aria-labelledby="more-title">
 				<div class="wrap">
 					<p class="kicker">03 · Projets</p>
-					<h2 id="more-title">D’un dossier de scans à un projet dans lequel chercher</h2>
+					<h2 id="more-title">D’un dossier de scans à un projet interrogeable</h2>
 					<div class="cards">
 						<article class="card">
 							<span class="mark" aria-hidden="true"></span>
 							<h3>Projets</h3>
 							<p>
-								Rangez les documents en collections et en étiquettes. Chacun garde tous les
-								résultats tirés de lui, quel que soit le traitement qui les a produits, et vous
-								marquez celui sur lequel vous vous appuyez. Décrivez chaque source comme le ferait
-								un service d’archives : dépôt, fonds, cote, référence.
+								Organisez vos documents par collections et par étiquettes. Chaque document conserve
+								tous les résultats produits à partir de lui, quel que soit le traitement, et vous
+								marquez celui qui fait référence. Décrivez chaque source comme un service
+								d’archives : dépôt, fonds, cote, référence.
 							</p>
 						</article>
 						<article class="card">
 							<span class="mark" aria-hidden="true"></span>
 							<h3>Chercher par les mots ou par le sens</h3>
 							<p>
-								Cherchez dans le texte corrigé de tout un projet, sans tenir compte des accents ni
-								des signes de vocalisation de l’arabe, ou décrivez ce que vous cherchez et trouvez
-								les passages qui le disent avec d’autres mots. Une carte montre quels documents se
-								ressemblent.
+								Interrogez le texte corrigé de tout un projet (sans tenir compte des accents ni des
+								signes de vocalisation de l’arabe), ou décrivez un sujet dans vos propres mots pour
+								trouver les passages qui en parlent autrement. Une carte montre les documents qui se
+								rapprochent.
 							</p>
 						</article>
 						<article class="card">
 							<span class="mark" aria-hidden="true"></span>
-							<h3>Lesquels de ces documents parlent de ma question ?</h3>
+							<h3>Trier selon votre question de recherche</h3>
 							<p>
-								Un modèle lit les documents d’un projet au regard de votre question de recherche et
-								dit lesquels en parlent, pourquoi et avec quels passages, chacun retrouvé mot pour
-								mot avec sa page. Vous gardez ou écartez chaque document.
+								Un modèle lit les documents d’un projet au regard de votre question de recherche,
+								indique lesquels sont pertinents et explique pourquoi, passages exacts et numéros de
+								page à l’appui. Vous choisissez ensuite de garder ou d’écarter chaque document.
 							</p>
 						</article>
 						<article class="card">
 							<span class="mark" aria-hidden="true"></span>
-							<h3>Des entretiens analysés</h3>
+							<h3>Analyser des entretiens</h3>
 							<p>
-								À partir d’une transcription, une analyse dégage les thèmes et les passages à citer,
-								chacun appuyé sur des citations retrouvées mot pour mot, avec qui parle et à quel
-								moment. Vous pouvez donner d’abord vos propres thèmes ou votre grille d’entretien.
+								À partir d’une transcription, l’analyse dégage les thèmes et les passages à citer,
+								chacun appuyé sur des citations exactes avec le locuteur et l’horodatage. Vous
+								pouvez fournir d’avance vos propres thèmes ou votre grille d’entretien.
 							</p>
 						</article>
 						<article class="card">
 							<span class="mark" aria-hidden="true"></span>
 							<h3>Tables des matières et registres</h3>
 							<p>
-								Faites d’un numéro de journal ou d’un dossier d’archives une table des matières, une
-								entrée par article avec ses pages, ses auteurs et son résumé ; lisez un annuaire ou
-								un registre sous forme de tableau, une ligne par entrée, dans vos colonnes.
+								Transformez un numéro de journal ou un dossier d’archives en table des matières (une
+								entrée par article avec pages, auteurs et résumé), ou extrayez un annuaire ou un
+								registre en tableau, une ligne par entrée selon vos propres colonnes.
 							</p>
 						</article>
 						<article class="card">
 							<span class="mark" aria-hidden="true"></span>
 							<h3>Un dictionnaire des noms</h3>
 							<p>
-								Le dictionnaire rassemble les personnes, lieux et termes relevés par vos analyses,
-								chacun avec ses graphies sous le libellé que vous choisissez. Un modèle peut
-								proposer des regroupements que vous acceptez, modifiez ou refusez.
+								Rassemblez les personnes, lieux et termes relevés par vos analyses en regroupant
+								leurs graphies sous le libellé de votre choix. Un modèle peut proposer des fusions
+								que vous acceptez, modifiez ou refusez.
 							</p>
 						</article>
 						<article class="card">
 							<span class="mark" aria-hidden="true"></span>
 							<h3>Corriger et traduire</h3>
 							<p>
-								Corrigez page par page l’OCR bruité que fournit une bibliothèque numérique,
-								l’orthographe d’époque gardée et chaque modification montrée ; ou traduisez un
-								texte, affiché en regard de sa source.
+								Nettoyez page par page l’OCR bruité fourni par une bibliothèque numérique, en
+								préservant l’orthographe d’époque et en visualisant chaque modification, ou
+								traduisez un texte en regard de sa source.
 							</p>
 						</article>
 						<article class="card">
 							<span class="mark" aria-hidden="true"></span>
 							<h3>Configurations et chaînes de traitement</h3>
 							<p>
-								Enregistrez les réglages d’un traitement comme configuration et lancez le lot
-								suivant en un clic. Enchaînez des étapes, la lecture puis l’analyse, avec un arrêt
-								pour votre relecture avant que l’étape suivante ne lise le texte.
+								Enregistrez les réglages d’un traitement comme configuration pour lancer le lot
+								suivant en un clic. Enchaînez la lecture puis l’analyse, avec une pause pour votre
+								relecture avant le démarrage de l’étape suivante.
 							</p>
 						</article>
 						<article class="card">
 							<span class="mark" aria-hidden="true"></span>
-							<h3>Exporter, avec une trace</h3>
+							<h3>Exporter avec traçabilité</h3>
 							<p>
 								Exportez en texte, Markdown, Word, JSON, CSV et Excel, sous-titres, PDF
-								interrogeable, ALTO XML et PAGE XML, chaque export avec un
-								<code>provenance.json</code> à citer dans une section de méthodologie.
+								interrogeable, ALTO XML et PAGE XML, chaque export accompagné d’un fichier
+								<code>provenance.json</code> prêt à citer dans une section de méthodologie.
 							</p>
 						</article>
 					</div>
@@ -1673,9 +1673,9 @@
 					<p class="kicker">05 · En ligne ou hors ligne</p>
 					<h2 id="offline-title">Votre fournisseur, votre clé, ou aucun envoi</h2>
 					<p class="lede">
-						Kalamu ne vend ni abonnement, ni crédits, ni accès à une API. Utilisez votre propre
-						compte chez un fournisseur en ligne, qui vous facture directement, ou téléchargez un
-						modèle une fois et travaillez gratuitement sur votre ordinateur.
+						Kalamu ne vend aucun abonnement, crédit ou accès API. Utilisez votre propre compte chez
+						un fournisseur en ligne (qui vous facture directement), ou téléchargez un modèle une
+						seule fois pour travailler gratuitement hors ligne sur votre ordinateur.
 					</p>
 					<div class="ways">
 						<div class="way">
@@ -1711,8 +1711,8 @@
 						</div>
 						<div class="way offline">
 							<span class="tag">Sur votre ordinateur · gratuit</span>
-							<h3>Téléchargé une fois, puis rien ne sort</h3>
-							<p>Ni compte, ni clé, ni connexion ; plus rapide avec un processeur graphique.</p>
+							<h3>Téléchargé une fois, puis tout reste local</h3>
+							<p>Sans compte, clé ni connexion ; plus rapide avec un processeur graphique.</p>
 							<ul class="models">
 								<li>
 									<strong>Whisper</strong
@@ -1729,8 +1729,8 @@
 								<li>
 									<strong>Gemma 4 E4B, E2B</strong
 									><span
-										>Analyses, tables des matières et corrections ; moins bons que les modèles en
-										ligne, alors vérifiez leurs réponses</span
+										>Analyses, tables des matières et corrections ; plus limités que les modèles en
+										ligne, vérifiez leurs réponses</span
 									>
 								</li>
 							</ul>
@@ -1747,22 +1747,22 @@
 						<div class="saving">
 							<span class="figure">½</span>
 							<p>
-								Environ la moitié du prix pour une grande collection, avec le service par lots du
-								fournisseur, qui répond dans la journée.
+								Environ la moitié du tarif habituel pour les grandes collections grâce au service
+								par lots du fournisseur, qui répond sous 24 heures.
 							</p>
 						</div>
 						<div class="saving">
 							<span class="figure">3 pages</span>
 							<p>
-								Essayez d’abord un long document sur trois pages, avec un modèle ou deux, avant de
-								payer le reste.
+								Testez d’abord un long document sur trois pages, avec un modèle ou deux, avant de
+								payer pour le reste.
 							</p>
 						</div>
 						<div class="saving">
 							<span class="figure">0,00 $</span>
 							<p>
-								L’estimation d’un traitement hors ligne. Avec un modèle en ligne, le coût de chaque
-								modèle est estimé avant tout envoi.
+								Le coût d’un traitement hors ligne. Avec un modèle en ligne, Kalamu estime le coût
+								de chaque modèle avant tout envoi.
 							</p>
 						</div>
 					</div>
@@ -1777,8 +1777,8 @@
 							Vos sources vont là où vous les envoyez, et nulle part ailleurs
 						</h2>
 						<p class="lede">
-							Le développeur ne reçoit de Kalamu ni fichiers, ni résultats, ni clés, ni télémétrie,
-							et n’exploite pour elle aucun serveur ni aucun compte.
+							Kalamu ne transmet aucun fichier, résultat, clé ni donnée de télémétrie au
+							développeur, qui n’exploite aucun serveur ni compte utilisateur.
 						</p>
 						<div class="cta">
 							<a class="button" href="../privacy.html" hreflang="en"
@@ -1788,13 +1788,13 @@
 					</div>
 					<ul class="points">
 						<li>
-							<strong>Hors ligne, rien ne quitte l’ordinateur.</strong> Whisper, Tesseract et les
-							modèles hors ligne n’ont besoin d’une connexion que pour être téléchargés, une fois.
+							<strong>Hors ligne, rien ne quitte votre ordinateur.</strong> Whisper, Tesseract et
+							les modèles locaux n’ont besoin d’une connexion que pour le téléchargement initial.
 						</li>
 						<li>
 							<strong
-								>Avant le premier traitement envoyé à chaque fournisseur, Kalamu indique ce qui sera
-								envoyé et vous le demande.</strong
+								>Avant votre premier traitement chez un fournisseur en ligne, Kalamu indique ce qui
+								sera envoyé et vous demande confirmation.</strong
 							>
 							Les fichiers vont ensuite directement à ce fournisseur, sous votre propre clé et selon
 							ses conditions.
@@ -1807,8 +1807,8 @@
 							et ne sont envoyées qu’à leur fournisseur.
 						</li>
 						<li>
-							<strong>Les originaux ne sont jamais modifiés.</strong> Les résultats sont écrits à
-							côté de vos sources, et le texte de l’IA est gardé à part de vos corrections.
+							<strong>Les originaux ne sont jamais modifiés.</strong> Les résultats sont enregistrés
+							à côté de vos sources, et le texte de l’IA reste distinct de vos corrections.
 						</li>
 					</ul>
 				</div>
@@ -1817,7 +1817,7 @@
 			<section id="guide" aria-labelledby="guide-title">
 				<div class="wrap">
 					<p class="kicker">07 · Guide</p>
-					<h2 id="guide-title">Commencez par un premier traitement, en dix minutes</h2>
+					<h2 id="guide-title">Lancez votre premier traitement en dix minutes</h2>
 					<p class="lede">
 						Le guide vous mène de l’installation de Kalamu à l’export de résultats vérifiés. Il
 						existe aussi en anglais : <a href="../guide/" hreflang="en" lang="en">Kalamu guide</a>.
@@ -1960,9 +1960,10 @@
 					<li><a href="https://buymeacoffee.com/fmadore">Soutenir le développement</a></li>
 				</ul>
 				<p>
-					Kalamu est un logiciel libre et gratuit, sous licence MIT, de
-					<a href="https://www.frederickmadore.com/">Frédérick Madore</a> (Université de Bayreuth),
-					qui le développe en projet indépendant. Le soutenir est facultatif et ne débloque rien.
+					Kalamu est un logiciel libre et gratuit sous licence MIT, développé par
+					<a href="https://www.frederickmadore.com/">Frédérick Madore</a> (Université de Bayreuth)
+					comme projet indépendant. Soutenir le développement est facultatif et ne débloque aucune
+					fonctionnalité supplémentaire.
 				</p>
 				<p>
 					Google Gemini et YouTube sont des marques de Google LLC ; OpenAI est une marque d’OpenAI

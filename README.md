@@ -1,10 +1,9 @@
 # Kalamu
 
-A desktop app for Windows and macOS that lets researchers read scanned and handwritten
-documents, transcribe interviews and analyse texts with the AI provider of their choice, or
-offline, without Python, Colab or the command line. Every result is checked against its source
-side by side: where models disagree is highlighted, and corrections never overwrite the AI's
-text.
+A desktop app for Windows and macOS for reading scanned and handwritten documents, transcribing
+interviews, and analysing texts with your choice of AI provider (or offline), without Python,
+Colab, or the command line. Every result opens side by side with its original source: differences
+between models are highlighted, and your corrections never overwrite the AI output.
 
 *Kalamu* is Swahili for pen, from the Arabic *qalam*.
 
@@ -12,134 +11,131 @@ text.
 
 <a href="https://apps.microsoft.com/detail/9MXT5555BZ1H?referrer=appbadge&mode=direct"><img src="https://get.microsoft.com/images/en-us%20dark.svg" alt="Get it from Microsoft" height="48"></a>&nbsp;&nbsp;<a href="https://buymeacoffee.com/fmadore"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy me a coffee" height="48"></a>
 
-Free, with every feature included. If it is useful to you, you can
+Free, with every feature included. If Kalamu is useful to your work, you can
 [support its development](#support-development).
 
-**Status: version 1.10.1**, for Windows and macOS, from the
-[releases page](https://github.com/fmadore/Kalamu/releases); 1.10.0 in the Microsoft Store,
-where 1.10.1 ([notes](docs/release-1.10.1.md)), which fixes what a review found since, follows;
-see [Install](#install). Text
-extraction, transcription, analyses and translation have run against the live Gemini, OpenAI,
-Claude and Mistral APIs; offline Whisper and the cheaper batch mode have had fewer live runs, so
-try a small job first. See the [roadmap](docs/roadmap.md) and the
-[1.10.1 release notes](docs/release-1.10.1.md). The Mac App Store version is in Apple's review
-([steps](docs/mac-app-store.md)).
+**Status: version 1.10.1** is available for Windows and macOS on the
+[releases page](https://github.com/fmadore/Kalamu/releases) ([release notes](docs/release-1.10.1.md)).
+The Microsoft Store carries 1.10.0 while 1.10.1 follows; the Mac App Store build is in Apple's
+review ([progress](docs/mac-app-store.md)). Text extraction, transcription, analysis, and
+translation have been tested live against the Gemini, OpenAI, Claude, and Mistral APIs. Offline
+Whisper and the cheaper batch mode have had fewer live runs, so try a small job first. See the
+[roadmap](docs/roadmap.md) and [Install](#install).
 
 ## What it does
 
-- **Extract text** from PDFs and images, printed or handwritten, with Gemini, OpenAI, Claude or
-  Mistral, or offline with Tesseract for clean print: free, nothing sent, each word with its
-  place on the page; its speed depends on your computer's processor. For degraded print, old
-  newspapers in columns and tables, small OCR vision models (LightOnOCR-3, GLM-OCR) also run
-  offline: much slower on a processor, faster on a graphics processor (a Mac's, or a PC's
-  through Vulkan), and, like
-  any language model, able to write text that is not on the page. Lines kept as on the
-  page, or joined into running text; pages read one at a time or several together, still
-  reviewed page by page. A folder of photographed pages can be read as one document, its pages
-  in the order of their names (page 2 before page 10) or in yours. Choose how much each model thinks; every answer may use the whole
-  output the model allows.
-- **Transcribe audio and video**, with speakers and timestamps, in the cloud or offline with
-  Whisper, on the graphics processor where there is a usable one (Metal on a Mac, Vulkan on
-  Windows), skipping silence and music. Speakers can be given their real names. Public YouTube videos are transcribed from
-  their link with Gemini, without downloading them.
-- **Analyse texts** with fields you define: a summary, the people, places and organisations a
-  document names, its tone with a reason, themes from your own list. Ready-made analyses cover
-  the common needs, including the question, argument, methods and findings of a scholarly
-  publication for a literature review, and a description with keywords of what a photograph,
-  poster or map shows. Offline, small language models from Google (Gemma 4 E4B
-  and E2B) analyse texts and photographed pages, make tables of contents and correct text with
-  nothing sent: far weaker than the cloud models and slow on a processor, faster on a graphics
-  processor, so check their answers.
-- **Turn a directory, a register or a list into a table**: an analysis with *One row per
-  entry* reads each page into one row per entry, in the columns you define (surname, trade,
-  address; date, name, place), each row checked and corrected beside its page and exported as
-  one spreadsheet.
-- **Make a detailed table of contents** of a long document: a newspaper or magazine issue, an
-  archival file scanned in one piece, a book or report. One model reads each page, another,
-  cheaper one (from any provider) combines the pages into one entry per article or item, with
-  its pages, authors, date or summary. Each entry can then become an item of its own, an
-  article or a letter, whose pages are extracted, analysed or exported apart from the rest.
-- **Correct existing text**: the noisy OCR of a PDF's text layer or of a digital library's text
-  file, corrected page by page with its spelling of the time kept, every change shown against
-  the original.
-- **Translate a text**: a text file, a PDF's text layer, or the text of an extraction, a
-  transcription or a correction as you left it, put into the language you choose page by page,
-  nothing summarised or left out, names kept as written; the review shows the translation
-  beside the text, and its own text can be analysed in turn.
-- **Organise your material in projects**: documents grouped in collections (one document can
-  be in several), each with every transcription, extraction and analysis made of it, whatever
-  job made it. Add files before reading them, add jobs you ran before without paying again,
-  start a job on a selection, and mark the result you rely on. Describe each source as an
-  archive would (repository, fonds, shelfmark, citation), with what a project's documents share
-  given once, and export the descriptions as an Excel workbook, CSV or JSON, in Kalamu's
-  columns or in your own, saved for the next project, beside each document's corrected text,
-  review status or analysis answers, these as the model gave them or under your dictionary's
-  labels.
-- **Search a whole project**: every passage of its documents that names a person or an
-  organisation, or holds several words near each other, in the text as you corrected it, accents
-  and Arabic vowel marks ignored, each opening its source where it stands. It runs on your
-  computer.
-- **Search by meaning, and see a project on a map**: find the passages that speak of what you
-  describe, in other words than yours, with a model you choose (Gemini, OpenAI, Mistral, or
-  EmbeddingGemma 2 on your computer, where nothing is sent), and see the project's documents as
-  points, near each other when they are alike. Nothing is prepared before you start it, and
-  its cost is shown first.
-- **Reconcile names in a project's dictionary**: the people, places and terms its analyses
-  listed, their spellings gathered into entries under the label you choose, with merges a
-  model can propose and that you accept, change or turn down.
-- **See what needs checking across a project**: one list of the pages and answers that failed,
-  were cut off, read differently by two models, read from a text corrected since, or are not
-  yet reviewed, each opening its review at the right page. Nothing is sent to a model.
-- **Find any job** on the Jobs page: every job in a table, searched by name, workflow or file
-  name, filtered by task or status and sorted; rename, add to a project or delete several at
-  once.
-- **Check every result against its source**, side by side, with corrections kept apart from the
-  AI output, which is never overwritten. Zoom the scan about the pointer, and choose a
-  difference in either text to bring it level in the other. Where the model placed its text on
-  the page (Tesseract, Mistral OCR, LightOnOCR), show the regions over the scan and choose one
-  to find its words in the text. Draw a region of your own on any scan, and have a model read
-  just that part again: a marginal note, a faint line. Search a document or a recording across all its pages
-  (Ctrl F, or ⌘F on a Mac), and report inappropriate output from the review.
-- **Compare models** on the same documents, with their differences highlighted in the text and
-  error rates against corrected pages.
-- **Never pay twice**: work is saved piece by piece, interrupted jobs resume, and nothing is
-  sent again with the same settings.
-- **Pay half for large collections**: send a job to the provider's batch service, answered
-  within a day, and close the app in the meantime.
-- **Save a job's settings as a pipeline** and start the next batch in one click. Export it,
-  with its models, settings and full prompts, to cite in a methods section or share with
-  colleagues.
-- **Then analyse the text**: at the end of New job, choose an analysis to run once the text is
-  read and you have checked it. For longer chains, **workflows** run your pipelines one after
-  another, from ready-made examples or your own, on a folder or a project's selection; each
-  step is a job of its own, and running again pays only for the steps that changed.
-- **Export** to text, Markdown, Word, JSON, Excel workbooks, CSV, subtitles, searchable PDF,
-  ALTO XML and PAGE XML (each word with its place on the page, corrections included), each with
-  a `provenance.json` recording the model, prompt and settings.
-- **A glossary** explains the words these tools use, from OCR and tokens to error rates and
-  hallucination, for colleagues new to them.
+### Read, transcribe, and analyse
 
-Files go straight from your computer to the provider you choose, with your own API key, kept in
-Windows Credential Manager or the macOS Keychain. Offline, nothing leaves the computer. AI
-output can be fluent and wrong: check a sample against the source before relying on it.
+- **Extract text** from printed or handwritten PDFs and images using Gemini, OpenAI, Claude, or
+  Mistral. Offline, Tesseract handles clean print for free with word-level coordinates on the page
+  (speed depends on your CPU), while local OCR vision models (LightOnOCR-3, GLM-OCR) handle
+  degraded print, multi-column newspapers, and tables. Vision models run slowly on a CPU and much
+  faster on a GPU (Apple Silicon or Vulkan on Windows), and like any language model they can
+  hallucinate text that is not on the page. Keep original line breaks or join lines into running
+  text, process pages individually or in small batches while still reviewing page by page, or read
+  a folder of photographed pages as a single document in natural filename order (page 2 before
+  page 10) or your own order. You can also control reasoning effort and let answers use a model's
+  full output limit.
+- **Transcribe audio and video** with speaker labels and timestamps, in the cloud or offline with
+  Whisper (GPU-accelerated via Metal on macOS and Vulkan on Windows), automatically skipping
+  silence and music. Rename speakers with their real names, or transcribe public YouTube videos
+  directly from their URL with Gemini without downloading them.
+- **Analyse texts** with structured fields you define: summaries, named people, places, and
+  organisations, tone with justifications, or themes from your own controlled list. Built-in
+  presets cover common research tasks, including extracting a scholarly publication's research
+  question, argument, methods, and findings for a literature review, or describing photographs,
+  posters, and maps with keywords. Offline, Google's small language models (Gemma 4 E4B and E2B)
+  can analyse texts and photographed pages, build tables of contents, and correct text locally;
+  they are weaker than cloud models and slower on a CPU, so check their output carefully.
+- **Turn directories, registers, and lists into tables**: an analysis with *One row per entry*
+  extracts each page into structured rows using your own columns (such as surname, trade, and
+  address, or date, name, and place), ready to verify beside the scan and export as a single
+  spreadsheet.
+- **Build tables of contents** for long documents such as newspaper issues, multi-item archival
+  files, books, or reports. One model reads each page and a second, cheaper model (from any
+  provider) merges them into one entry per article or item with page numbers, authors, dates, and
+  summaries. Any entry can then be split out as its own document to extract, analyse, or export
+  separately.
+- **Correct existing text**: clean up noisy OCR from a PDF text layer or digital-library export
+  page by page while preserving historical spelling, with every edit shown against the original.
+- **Translate texts**: translate text files, PDF text layers, or your reviewed extractions,
+  transcriptions, and corrections page by page into your chosen language, without summarising or
+  dropping content and keeping proper names intact. Translations appear beside the source text and
+  can be analysed in turn.
+
+### Organise and search projects
+
+- **Work in projects**: group documents into collections (a document can belong to several) and
+  keep every extraction, transcription, and analysis tied to its source, whichever job produced
+  it. Add files before running anything, attach earlier jobs without paying again, launch a job on
+  a selection, and mark the preferred result for each document. Record archival metadata
+  (repository, fonds, shelfmark, citation), enter shared fields once for the whole project, and
+  export everything as an Excel workbook, CSV, or JSON using Kalamu's columns or a custom layout
+  saved for future projects, alongside corrected text, review status, and analysis fields (raw or
+  normalised through your dictionary).
+- **Search across a project**: find every mention of a person or organisation, or words appearing
+  near one another, across your corrected text. Search runs locally, ignores accents and Arabic
+  diacritics, and jumps straight to the matching passage in its source.
+- **Search by meaning and map a project**: find passages that discuss a topic in different words
+  using Gemini, OpenAI, Mistral, or local EmbeddingGemma 2 (which sends nothing off your
+  computer), and view your project's documents as a 2D map where similar texts cluster together.
+  Nothing is indexed until you start it, and the estimated cost is shown upfront.
+- **Reconcile names in a project dictionary**: gather the people, places, and terms extracted by
+  your analyses under canonical labels. A model can suggest merges for spelling variants, which
+  you accept, edit, or reject.
+- **Track what still needs review**: open one project-wide list of pages and answers that failed,
+  were truncated, differed between two models, relied on text edited since, or have not yet been
+  reviewed. Clicking an item opens the exact page, with nothing sent to a model.
+- **Manage jobs at a glance**: search the Jobs table by name, workflow, or filename, filter by
+  task or status, sort columns, and rename, assign to a project, or delete multiple jobs at once.
+
+### Review, compare, and export
+
+- **Check every result against its source** side by side, keeping your edits separate from the
+  immutable AI output. Zoom the scan around the cursor, click a difference in one pane to align it
+  in the other, and inspect word or block regions overlaid on the scan where the model provides
+  them (Tesseract, Mistral OCR, LightOnOCR). Draw a custom box on any scan to re-read just a
+  marginal note or faint line, search across all pages or timestamps (`Ctrl+F` / `⌘F`), and report
+  inappropriate output directly from the review screen.
+- **Compare models** on the same sources with inline diff highlighting and character/word error
+  rates measured against your corrected pages.
+- **Never pay twice**: results are cached piece by piece, interrupted jobs resume where they left
+  off, and identical requests are never sent twice.
+- **Save half on large batches**: submit jobs to a provider's batch service (answered within 24
+  hours) at roughly half the standard price, and close Kalamu while you wait.
+- **Reuse pipelines and chain workflows**: save a job's models, settings, and full prompts as a
+  pipeline to rerun in one click or export for a methods section. Chain an analysis directly after
+  a reading job in New job, or run multi-step workflows across folders and project selections:
+  each step is a separate job, so rerunning a workflow only pays for steps that changed.
+- **Export with full provenance**: export to plain text, Markdown, Word, JSON, Excel workbooks,
+  CSV, subtitles, searchable PDF, ALTO XML, and PAGE XML (preserving word coordinates alongside
+  your corrections). Every export includes a `provenance.json` file recording the model, prompt,
+  and settings used.
+- **Built-in glossary**: plain-language explanations of OCR, tokens, error rates, hallucination,
+  and related terms for colleagues new to AI workflows.
+
+Files travel directly from your computer to the provider you select, authenticated with your own
+API key stored in Windows Credential Manager or the macOS Keychain. In offline mode, nothing
+leaves your machine. AI output can sound fluent while being wrong, so always check a sample
+against the original source before relying on it.
 
 ## Install
 
-**Windows 11** (x64 and ARM64): install Kalamu from the
-[Microsoft Store](https://apps.microsoft.com/detail/9MXT5555BZ1H), signed and updated through
-the Store. Or download `Kalamu_<version>_x64-setup.exe` (Intel and AMD PCs) or
+**Windows 11 (x64 and ARM64):** install Kalamu from the
+[Microsoft Store](https://apps.microsoft.com/detail/9MXT5555BZ1H) for signed builds and automatic
+updates. Alternatively, download `Kalamu_<version>_x64-setup.exe` (Intel and AMD PCs) or
 `Kalamu_<version>_arm64-setup.exe` (Snapdragon laptops) from the
-[releases page](https://github.com/fmadore/Kalamu/releases). These installers are not signed,
-so Windows SmartScreen warns on the first launch: choose **More info**, then **Run anyway**.
+[releases page](https://github.com/fmadore/Kalamu/releases). Because the standalone installers are
+unsigned, Windows SmartScreen will warn you on first launch: click **More info**, then **Run
+anyway**.
 
-**macOS 14 and later** (Apple Silicon): download `Kalamu_<version>_aarch64.dmg` from the
-[releases page](https://github.com/fmadore/Kalamu/releases) and drag Kalamu to Applications.
-The app is signed with an Apple Developer ID and notarised by Apple, so macOS opens it after
-the usual question about an app downloaded from the internet. If you used version 1.3.0 or
-earlier, which were not signed this way, macOS asks once more to let Kalamu use the keys saved in
-your Keychain: choose **Always Allow**. Shortcuts
-use ⌘ where Windows uses Ctrl; closing the window keeps Kalamu in the Dock, and ⌘Q asks first
-while jobs run.
+**macOS 14 and later (Apple Silicon):** download `Kalamu_<version>_aarch64.dmg` from the
+[releases page](https://github.com/fmadore/Kalamu/releases) and drag Kalamu into Applications. The
+app is signed with an Apple Developer ID and notarised by Apple, so macOS opens it after the
+standard downloaded-app prompt. If you are upgrading from version 1.3.0 or earlier (which were not
+Developer ID signed), macOS will ask once for permission to access your saved Keychain items:
+choose **Always Allow**. Shortcuts use ⌘ in place of Ctrl; closing the window leaves Kalamu in the
+Dock, and ⌘Q prompts before quitting while jobs are running.
 
 ## Documentation
 

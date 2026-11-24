@@ -28,7 +28,7 @@ stands on its own; if you are new, read this one, then [Your first job](first-jo
     sent and nothing is billed, but they are slower and weaker than the cloud models. See
     [Working offline](offline.md).
 
-No Python, no command line and no account with Kalamu.
+You do not need Python, the command line, or a Kalamu account.
 
 ## Install
 

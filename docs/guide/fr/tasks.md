@@ -81,8 +81,8 @@ et le coût estimé tiennent sur une ligne ; cliquez sur **Analyser**. Fermée s
 l’analyse (avec **Annuler** ou <kbd>Échap</kbd>), la fenêtre garde ce que vous avez écrit
 jusqu’à sa prochaine ouverture, tant que Kalamu reste ouvert.
 
-![Analyser cet entretien  la question de recherche, le modèle, le coût estimé et vos propres thèmes](../images/fr/interview-dialog.png)
-*Analyser cet entretien, avec Plus de choix ouvert  le modèle et vos propres thèmes.*
+![Analyser cet entretien : la question de recherche, le modèle, le coût estimé et vos propres thèmes](../images/fr/interview-dialog.png)
+*Analyser cet entretien, avec Plus de choix ouvert : le modèle et vos propres thèmes.*
 
 Sous **Plus de choix**, vous pouvez changer de modèle et saisir **Vos propres thèmes ou votre
 guide d’entretien**, un thème par ligne. Chaque thème de la réponse dit alors s’il vient de
@@ -100,7 +100,7 @@ qui parle et à quel moment), un fichier JSON et deux tableaux, chacun en tableu
 colonne qui dit si vous l’avez ajoutée. Les formats choisis dans les Paramètres sont écrits
 aussi.
 
-![L’analyse d’un entretien à côté de sa transcription  les thèmes, leur origine, et les citations avec locuteur et minutage](../images/fr/interview-review.png)
+![L’analyse d’un entretien à côté de sa transcription : les thèmes, leur origine, et les citations avec locuteur et minutage](../images/fr/interview-review.png)
 *Chaque thème dit s’il vient de votre guide, et chaque citation s’écoute là où elle est dite.*
 
 ### Un registre ou un annuaire en tableau
