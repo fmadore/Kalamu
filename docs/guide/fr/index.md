@@ -31,7 +31,7 @@ vérifiés. Chaque chapitre se lit seul. Si vous débutez, lisez celui-ci, puis
     sont plus lents et moins bons que les modèles en ligne. Voir
     [Travailler hors ligne](offline.md).
 
-Pas besoin de Python, ni de ligne de commande, ni de compte chez Kalamu.
+L’application fonctionne sans Python, ligne de commande ni compte Kalamu.
 
 ## Installer Kalamu
 

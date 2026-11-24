@@ -27,9 +27,10 @@ Every shortcut is listed in the **Glossary**, under *Keyboard*, written for your
 
 ## Correct the text
 
-Correct the text where it stands, then press **Save correction** (<kbd>Ctrl</kbd> <kbd>Enter</kbd>, <kbd>⌘</kbd> <kbd>Enter</kbd> on a
-Mac), which also marks the page reviewed; **Discard changes** leaves it as it was. Both stay
-at the foot of the text while you scroll it, however long the page. Three things follow:
+Edit the text directly in place, then press **Save correction** (<kbd>Ctrl</kbd> <kbd>Enter</kbd>,
+<kbd>⌘</kbd> <kbd>Enter</kbd> on a Mac), which also marks the page reviewed; **Discard changes**
+reverts your edits. Both buttons stay pinned at the foot of the text pane as you scroll, however
+long the page. Three things follow:
 
 - the model's own text is **kept unchanged** underneath, and you can always see it again;
 - exports use your corrected text and record that it was corrected;
@@ -42,9 +43,9 @@ built on it.
 
 ## Compare models
 
-The fastest way to find errors is not to read everything twice: it is to let two models read
-the same pages and look only at where they disagree. Where two independent readings agree,
-they are usually right; where they differ, at least one is wrong.
+The fastest way to spot errors is to run two models on the same pages and check only where they
+disagree. Where two independent readings match, they are usually right; where they differ, at
+least one is wrong.
 
 1. In **New job**, choose **Compare with another model** and add a second model (from another
    provider if you can: their mistakes are less alike).

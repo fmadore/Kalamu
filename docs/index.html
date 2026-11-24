@@ -1225,18 +1225,18 @@
 					<h2 id="tasks-title">Three tasks, for the sources researchers work with</h2>
 					<p class="lede">
 						Old newspapers in columns, handwritten letters and registers, oral-history interviews,
-						reports and articles: Kalamu turns them into text you can search, quote and analyse, in
-						any language the chosen model reads.
+						reports, and articles: Kalamu turns them into text you can search, quote, and analyse,
+						in any language your chosen model reads.
 					</p>
 					<div class="tasks">
 						<article class="task">
 							<div class="body">
 								<h3>Extract text</h3>
 								<p>
-									Kalamu reads PDFs and images, printed or handwritten: newspapers, reports,
-									letters, registers and manuscripts. Keep the lines as on the page, to check
-									against the scan, or join them into running text. Photographs of one letter or
-									file are read as one document.
+									Kalamu reads printed and handwritten PDFs and images: newspapers, reports,
+									letters, registers, and manuscripts. Keep line breaks as on the page to check
+									against the scan, or join them into running text. A folder of photographs from the
+									same letter or file is read as a single document.
 								</p>
 							</div>
 							<div class="sample" aria-hidden="true">
@@ -1252,9 +1252,10 @@
 							<div class="body">
 								<h3>Transcribe audio and video</h3>
 								<p>
-									Transcripts show who speaks and when, and you can give the speakers their real
-									names. Long recordings are cut at pauses. Offline, Whisper transcribes on your
-									computer; public YouTube videos are transcribed from their link with Gemini.
+									Transcripts show who speaks and when, and you can replace speaker labels with real
+									names. Long recordings are split at pauses. Offline, Whisper transcribes on your
+									computer; public YouTube videos can be transcribed directly from their link with
+									Gemini.
 								</p>
 							</div>
 							<div class="sample" aria-hidden="true">
@@ -1273,8 +1274,8 @@
 								<h3>Analyse texts</h3>
 								<p>
 									Define the fields as you would brief a research assistant: a summary, the people,
-									places and organisations a document names, its tone with a reason, themes from
-									your own list. Ready-made analyses cover the common needs.
+									places, and organisations a document names, its tone with a justification, or
+									themes from your own list. Built-in presets cover common research needs.
 								</p>
 							</div>
 							<div class="sample" aria-hidden="true">
@@ -1302,9 +1303,9 @@
 						AI text can be fluent and wrong, so every result sits beside its source.
 					</h2>
 					<p class="lede">
-						The review puts the page next to its text, or the recording next to its transcript. Read
-						the same page with two models, and the words where they disagree are highlighted: that
-						is where to look. Try it on a line from a 1911 newspaper.
+						The review screen places each page beside its text, or each recording beside its
+						transcript. Run two models on the same page and every word where they disagree is
+						highlighted, showing you where to look. Try it on a line from a 1911 newspaper.
 					</p>
 					<div class="compare">
 						<div
@@ -1378,21 +1379,22 @@
 						<div class="why">
 							<h3>Your corrections never overwrite the AI's text</h3>
 							<p>
-								A correction is stored as a layer of its own, and you mark each page as reviewed.
-								Exports read the corrected text; <code>provenance.json</code> records both, with the
-								model, prompt and settings, so your method can be described and repeated.
+								Your edits live in a separate layer, and you mark each page as reviewed. Exports use
+								the corrected text; <code>provenance.json</code> records both versions along with
+								the model, prompt, and settings, so your method can be documented and reproduced.
 							</p>
 							<h3>See where the text sits on the page</h3>
 							<p>
-								Show the regions a model found over the scan, draw your own around a marginal note
-								or a faint line, and have just that part read again, as a proposal you accept or
-								leave.
+								Overlay the regions a model detected on the scan, or draw your own box around a
+								marginal note or faint line to re-read just that section, returned as a suggestion
+								you can accept or discard.
 							</p>
 							<h3>Know how far to trust a model</h3>
 							<p>
-								Compare two or more models on the same documents: their differences are highlighted,
-								with error rates against the pages you have corrected. A project's
-								<em>What to check</em> list gathers what failed, was cut off or is not yet reviewed.
+								Compare two or more models on the same documents: differences are highlighted
+								inline, with error rates calculated against your corrected pages. A project's
+								<em>What to check</em> list gathers everything that failed, was truncated, or still
+								needs review.
 							</p>
 							<button class="reset" type="button" id="reset" hidden>Show the example again</button>
 						</div>
@@ -1409,80 +1411,80 @@
 							<span class="mark" aria-hidden="true"></span>
 							<h3>Projects</h3>
 							<p>
-								Group documents in collections and tags. Each keeps every result made from it,
-								whichever job made it, and you mark the one you rely on. Describe each source as an
-								archive would: repository, fonds, shelfmark, citation.
+								Organise documents with collections and tags. Each document keeps every result
+								produced from it across all jobs, and you mark the one you rely on. Describe each
+								source as an archive would: repository, fonds, shelfmark, citation.
 							</p>
 						</article>
 						<article class="card">
 							<span class="mark" aria-hidden="true"></span>
 							<h3>Search by words or by meaning</h3>
 							<p>
-								Search the corrected text of a whole project, accents and Arabic vowel marks
-								ignored, or describe what you look for and find the passages that say it in other
-								words. A map shows which documents are alike.
+								Search your corrected text across an entire project (ignoring accents and Arabic
+								diacritics), or describe a topic in your own words to find related passages. A map
+								shows which documents cluster together.
 							</p>
 						</article>
 						<article class="card">
 							<span class="mark" aria-hidden="true"></span>
-							<h3>Which of these speak of my question?</h3>
+							<h3>Screen against your research question</h3>
 							<p>
-								A model reads a project's documents against your research question and says which
-								do, why, and with which passages, each found word for word with its page. You keep
-								or set aside each one.
+								Have a model read a project's documents against your research question and explain
+								which ones are relevant, citing exact passages and page numbers. You decide whether
+								to keep or set aside each document.
 							</p>
 						</article>
 						<article class="card">
 							<span class="mark" aria-hidden="true"></span>
-							<h3>Interviews, analysed</h3>
+							<h3>Analyse interviews</h3>
 							<p>
-								From a transcript, an analysis lists themes and passages worth quoting, each backed
-								by quotations found word for word, with their speaker and time. You can give your
-								own themes or interview guide first.
+								Extract themes and quotable passages from a transcript, each backed by verbatim
+								quotes with speaker labels and timestamps. Supply your own codebook or interview
+								guide upfront.
 							</p>
 						</article>
 						<article class="card">
 							<span class="mark" aria-hidden="true"></span>
 							<h3>Tables of contents and registers</h3>
 							<p>
-								Turn a newspaper issue or an archival file into a table of contents, one entry per
-								article, with its pages, authors and summary; read a directory or register into a
-								table, one row per entry, in your columns.
+								Turn a newspaper issue or archival file into a table of contents with one entry per
+								article (pages, authors, summary), or extract a directory or register into a
+								spreadsheet with one row per entry in your own columns.
 							</p>
 						</article>
 						<article class="card">
 							<span class="mark" aria-hidden="true"></span>
 							<h3>A dictionary of names</h3>
 							<p>
-								The dictionary gathers the people, places and terms your analyses listed, each with
-								its spellings under the label you choose. A model can propose merges that you
-								accept, change or turn down.
+								Gather the people, places, and terms extracted by your analyses, grouping spelling
+								variants under your canonical label. A model can suggest merges that you accept,
+								edit, or reject.
 							</p>
 						</article>
 						<article class="card">
 							<span class="mark" aria-hidden="true"></span>
 							<h3>Correct and translate</h3>
 							<p>
-								Clean up the noisy OCR a digital library supplies, page by page, the spelling of the
-								time kept and every change shown; or translate a text, shown beside its source.
+								Clean up noisy OCR from a digital library page by page, preserving historical
+								spelling and showing every edit, or translate a text side by side with its source.
 							</p>
 						</article>
 						<article class="card">
 							<span class="mark" aria-hidden="true"></span>
 							<h3>Pipelines and workflows</h3>
 							<p>
-								Save a job's settings as a pipeline and start the next batch in one click. Chain
-								steps, reading then analysis, with a stop for your review before the next step reads
-								the text.
+								Save a job's settings as a pipeline to rerun on the next batch in one click. Chain
+								reading and analysis into multi-step workflows, pausing for your review before the
+								next step runs.
 							</p>
 						</article>
 						<article class="card">
 							<span class="mark" aria-hidden="true"></span>
-							<h3>Export, with a record</h3>
+							<h3>Export with provenance</h3>
 							<p>
-								Export to text, Markdown, Word, JSON, CSV and Excel, subtitles, searchable PDF, ALTO
-								XML and PAGE XML, each with a <code>provenance.json</code> to cite in a methods
-								section.
+								Export to plain text, Markdown, Word, JSON, CSV, Excel, subtitles, searchable PDF,
+								ALTO XML, and PAGE XML, each accompanied by a <code>provenance.json</code> file
+								ready to cite in a methods section.
 							</p>
 						</article>
 					</div>
@@ -1652,9 +1654,9 @@
 						</li>
 					</ol>
 					<p class="small">
-						The Windows screenshots show version 1.10.0; the Mac ones an earlier version. The
-						sources are public-domain newspapers and documents and a synthesized interview, and
-						nothing shows a real API key.
+						The Windows screenshots show version 1.10.0; the Mac ones show an earlier version. The
+						sources are public-domain newspapers and documents alongside a synthesised interview,
+						and no screenshot contains a real API key.
 					</p>
 				</div>
 			</section>
@@ -1664,15 +1666,15 @@
 					<p class="kicker">05 · Cloud or offline</p>
 					<h2 id="offline-title">Your provider, your key, or nothing sent at all</h2>
 					<p class="lede">
-						Kalamu sells no subscription, credits or API access. Use your own account with a cloud
-						provider, which bills you directly, or download a model once and work on your own
-						computer for free.
+						Kalamu has no subscriptions, credits, or API mark-ups. Connect your own account with a
+						cloud provider (which bills you directly), or download a local model once and work
+						offline on your own computer for free.
 					</p>
 					<div class="ways">
 						<div class="way">
 							<span class="tag">With your own API key</span>
 							<h3>The strongest models, billed by the provider</h3>
-							<p>Files go straight from your computer to the provider you choose.</p>
+							<p>Files travel straight from your computer to the provider you choose.</p>
 							<ul class="models">
 								<li>
 									<strong>Google Gemini</strong
@@ -1694,8 +1696,8 @@
 						</div>
 						<div class="way offline">
 							<span class="tag">On your computer · free</span>
-							<h3>Downloaded once, then nothing leaves</h3>
-							<p>No account, key or connection; faster with a graphics processor.</p>
+							<h3>Download once, then work offline</h3>
+							<p>No account, key, or connection required; faster with a graphics processor.</p>
 							<ul class="models">
 								<li>
 									<strong>Whisper</strong><span>Transcription, skipping silence and music</span>
@@ -1711,7 +1713,7 @@
 								<li>
 									<strong>Gemma 4 E4B, E2B</strong
 									><span
-										>Analyses, tables of contents and corrections; weaker than the cloud models, so
+										>Analyses, tables of contents and corrections; weaker than cloud models, so
 										check their answers</span
 									>
 								</li>
@@ -1722,29 +1724,29 @@
 						<div class="saving">
 							<span class="figure">1×</span>
 							<p>
-								Each page is paid for once: work is saved piece by piece, and an interrupted job
-								resumes where it stopped.
+								Pay for each page once: work is saved piece by piece, and an interrupted job resumes
+								where it stopped.
 							</p>
 						</div>
 						<div class="saving">
 							<span class="figure">½</span>
 							<p>
-								About half the price for a large collection, with the provider's batch service,
-								which answers within a day.
+								Roughly half the standard price for large collections using your provider's batch
+								service (answered within 24 hours).
 							</p>
 						</div>
 						<div class="saving">
 							<span class="figure">3 pages</span>
 							<p>
-								Try a long document on three pages first, with one model or two, before paying for
+								Test a long document on three pages first, with one model or two, before paying for
 								the rest.
 							</p>
 						</div>
 						<div class="saving">
 							<span class="figure">$0.00</span>
 							<p>
-								The estimate for an offline job. With a cloud model, the cost of each model is
-								estimated before anything is sent.
+								The cost of an offline job. With cloud models, Kalamu estimates each model's cost
+								before sending anything.
 							</p>
 						</div>
 					</div>
@@ -1757,8 +1759,8 @@
 						<p class="kicker">06 · Privacy</p>
 						<h2 id="privacy-title">Your sources go where you send them, and nowhere else</h2>
 						<p class="lede">
-							The developer receives no files, results, keys or telemetry from Kalamu, and operates
-							no server or account for it.
+							Kalamu sends no files, results, keys, or telemetry to the developer, who operates no
+							servers or user accounts.
 						</p>
 						<div class="cta">
 							<a class="button" href="privacy.html">Read the privacy policy</a>
@@ -1766,23 +1768,23 @@
 					</div>
 					<ul class="points">
 						<li>
-							<strong>Offline, nothing leaves the computer.</strong> Whisper, Tesseract and the
-							offline models need a connection only to download them once.
+							<strong>Offline, nothing leaves your computer.</strong> Whisper, Tesseract, and the
+							local models need a connection only for the initial download.
 						</li>
 						<li>
 							<strong
-								>Before the first job sent to each provider, Kalamu says what will be sent and asks
-								you.</strong
+								>Before your first job with any cloud provider, Kalamu explains what will be sent
+								and asks for confirmation.</strong
 							>
-							Files then go straight to that provider, under your own key and its terms.
+							Files then go straight to that provider under your own key and terms.
 						</li>
 						<li>
 							<strong>API keys stay in Windows Credential Manager or the macOS Keychain,</strong>
 							and are sent only to their provider.
 						</li>
 						<li>
-							<strong>Originals are never changed.</strong> Results are written beside your sources,
-							and the AI's text is kept apart from your corrections.
+							<strong>Originals are never altered.</strong> Results are saved beside your sources,
+							and raw AI output is kept separate from your corrections.
 						</li>
 					</ul>
 				</div>
@@ -1791,7 +1793,7 @@
 			<section id="guide" aria-labelledby="guide-title">
 				<div class="wrap">
 					<p class="kicker">07 · Guide</p>
-					<h2 id="guide-title">Start with a first job, ten minutes long</h2>
+					<h2 id="guide-title">Run your first job in ten minutes</h2>
 					<p class="lede">
 						The guide takes you from installing Kalamu to exporting results you have checked. It is
 						also in French: <a href="guide/fr/" hreflang="fr" lang="fr">Guide en français</a>.
@@ -1916,9 +1918,10 @@
 					<li><a href="https://buymeacoffee.com/fmadore">Support development</a></li>
 				</ul>
 				<p>
-					Kalamu is free and open source, under the MIT licence, by
-					<a href="https://www.frederickmadore.com/">Frédérick Madore</a> (University of Bayreuth),
-					as an independent project. Supporting it is optional and unlocks nothing.
+					Kalamu is free and open source under the MIT licence, developed by
+					<a href="https://www.frederickmadore.com/">Frédérick Madore</a> (University of Bayreuth)
+					as an independent project. Supporting development is optional and does not unlock
+					additional features.
 				</p>
 				<p>
 					Google Gemini and YouTube are trademarks of Google LLC; OpenAI is a trademark of OpenAI

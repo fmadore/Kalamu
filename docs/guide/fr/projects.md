@@ -18,8 +18,8 @@ Un projet contient des **documents**. Un document, c’est une source (un PDF, u
 photographies, un enregistrement) avec toutes les transcriptions, extractions et analyses qui en
 ont été faites.
 
-![Un nouveau projet encore sans documents  Ajouter des fichiers, Ajouter un dossier et Ajouter un traitement existant](../images/fr/empty-project.png)
-*Un nouveau projet commence par demander ses documents  les autres sections se remplissent seules.*
+![Un nouveau projet encore sans documents : Ajouter des fichiers, Ajouter un dossier et Ajouter un traitement existant](../images/fr/empty-project.png)
+*Un nouveau projet commence par demander ses documents : les autres sections se remplissent seules.*
 
 - Ajoutez des fichiers avant de les faire lire (**Ajouter des fichiers**), ou des traitements
   que vous avez déjà lancés (**Ajouter un traitement existant**) : rien n’est payé une seconde
@@ -29,34 +29,33 @@ ont été faites.
 - **Lancez un traitement sur une sélection** : cochez quelques documents et lancez sur eux une
   extraction, une analyse ou une chaîne de traitement.
 - **Demandez quels documents parlent de votre question** : cochez des documents déjà lus,
-  choisissez **Lesquels parlent de ma question ?** et écrivez votre question de recherche.
-  Fermée sans lancer le traitement, la fenêtre garde votre question jusqu’à sa prochaine
-  ouverture.
-  Chaque document revient avec une réponse (pertinent, en partie, non pertinent ou incertain),
-  une raison et les passages qui le montrent, chacun retrouvé mot pour mot dans le texte avec
-  sa page. Filtrez le tableau selon la réponse, lisez les passages, puis choisissez **Garder**
-  ou **Écarter** : votre décision est une étiquette, et la réponse du modèle reste telle
-  quelle. L’étiquette est écrite dans la langue de l’interface (*Gardé* ou *Écarté* en
-  français, *Kept* ou *Set aside* en anglais), et votre décision tient quelle que soit la
-  langue : après un changement dans les Paramètres, ou quand une collègue qui travaille dans
-  l’autre langue ouvre votre fichier de projet. Un document étiqueté des deux façons affiche
-  **Gardé et écarté : à trancher** à côté des boutons ; **Garder** ou **Écarter** tranche et ne
-  laisse qu’une étiquette. **Exporter tout le tableau** écrit toute la liste pour un tableur ;
-  ses colonnes `job_id` et `prompt_fingerprint` disent quel traitement a donné chaque réponse et
-  avec quelle version du prompt elle a été lue. Quand une réponse est choisie dans le filtre,
-  chaque ligne montre sa réponse, la raison et les passages. Si vous ajoutez des documents plus
-  tard, **Poser cette question aux nouveaux documents** ne fait lire que ceux-là. Si le prompt
-  a été modifié depuis la première fois, la fenêtre le dit : les nouvelles réponses sont rangées
-  à part des précédentes, et le filtre montre la question deux fois, chacune suivie de « posée
-  la première fois le » et de la date.
+  choisissez **Lesquels parlent de ma question ?** et écrivez votre question de recherche (si
+  vous fermez la fenêtre sans lancer le traitement, Kalamu conserve votre question jusqu’à sa
+  prochaine ouverture). Chaque document est classé comme pertinent, en partie pertinent, non
+  pertinent ou incertain, avec une justification et les passages exacts retrouvés dans le texte
+  avec leur numéro de page. Filtrez le tableau par réponse, vérifiez les passages, puis cliquez
+  sur **Garder** ou **Écarter** : votre décision est enregistrée sous forme d’étiquette tandis
+  que la réponse du modèle reste intacte.
+
+  L’étiquette s’affiche dans la langue de l’interface (*Gardé* ou *Écarté* en français, *Kept*
+  ou *Set aside* en anglais), et votre décision est conservée si vous changez de langue dans les
+  Paramètres ou si un collègue ouvre votre fichier de projet dans l’autre langue. Un document
+  portant les deux étiquettes affiche **Gardé et écarté : à trancher** à côté des boutons ;
+  cliquer sur **Garder** ou **Écarter** tranche et ne laisse qu’une étiquette. **Exporter tout le
+  tableau** crée un tableur dont les colonnes `job_id` et `prompt_fingerprint` indiquent quel
+  traitement et quelle version du prompt ont produit chaque réponse. Si vous ajoutez des
+  documents par la suite, **Poser cette question aux nouveaux documents** n’analyse que ceux-là.
+  Si le prompt a été modifié depuis la première interrogation, Kalamu range les nouvelles
+  réponses à part et affiche les deux séries dans le filtre avec la mention « posée la première
+  fois le » suivie de la date.
 - Quand un document a été lu plusieurs fois, choisissez le résultat auquel vous vous fiez avec
   **Retenir**. La recherche, les exports et les analyses utilisent alors celui-là.
 
 ![La question de recherche posée à dix documents, avec le modèle et le coût estimé](../images/fr/screening-dialog.png)
-*Lesquels parlent de ma question  La question, le nombre de documents à lire, et ce que cela devrait coûter.*
+*Lesquels parlent de ma question : La question, le nombre de documents à lire, et ce que cela devrait coûter.*
 
 ![Les documents du projet filtrés sur les pertinents, chacun avec sa raison et ses passages](../../store/screenshots/windows/fr/07-screening.png)
-*Les réponses dans le tableau  la réponse de chaque document, sa raison, et les passages retrouvés dans son texte.*
+*Les réponses dans le tableau : la réponse de chaque document, sa raison, et les passages retrouvés dans son texte.*
 
 ## Enregistrer un projet dans un fichier
 
@@ -68,7 +67,7 @@ dictionnaire. Il ne contient jamais vos clés d’API. Vos numérisations et vos
 n’y sont pas, sauf si vous cochez **Inclure les fichiers d’origine** ; Kalamu indique la
 taille du fichier avant de l’écrire.
 
-![Enregistrer ce projet dans un fichier  ce que le fichier contient, ce qu’il ne contient jamais, et sa taille](../images/fr/project-file.png)
+![Enregistrer ce projet dans un fichier : ce que le fichier contient, ce qu’il ne contient jamais, et sa taille](../images/fr/project-file.png)
 *Ce qui entre dans un fichier de projet, et ce qui n’y entre jamais.*
 
 Avant de terminer le fichier, Kalamu vérifie chaque fichier qu’il y met en le comparant à
@@ -173,7 +172,7 @@ préparer une première fois :
 Quand vous corrigez du texte, Kalamu indique combien de pages ont changé et propose de les mettre
 à jour. Il ne le fait jamais de lui-même avec un modèle payant.
 
-![Une recherche par le sens  une question en mots simples, et les documents les plus proches avec leurs passages](../../store/screenshots/windows/fr/05-search.png)
+![Une recherche par le sens : une question en mots simples, et les documents les plus proches avec leurs passages](../../store/screenshots/windows/fr/05-search.png)
 *Une question dans vos mots trouve les passages qui le disent dans les leurs, chacun avec sa proximité.*
 
 La **Carte** montre chaque document du projet sous la forme d’un point, près des documents qui
@@ -184,7 +183,7 @@ long document est une moyenne de tout ce qu’il contient. Les documents presque
 dessinés un peu écartés, en petit cercle ; zoomez pour les voir à leur place.
 
 ![La carte d’un projet regroupée par collection, un document choisi avec ses plus proches voisins](../images/fr/map.png)
-*La carte  un document choisi, et les documents les plus proches de lui.*
+*La carte : un document choisi, et les documents les plus proches de lui.*
 
 > Il n’y a ni réponses toutes faites ni conversation. La recherche par le sens vous montre où
 > lire ; la lecture reste la vôtre.

@@ -18,14 +18,14 @@ models).
 
 ## A job stopped or some pages failed
 
-Open the job: each failed page says why, in words. The usual causes are a lost connection, the
-provider being busy (Kalamu waits and tries again by itself), or a page the provider refuses.
-Run the job again: only what failed is sent.
+Open the job: each failed page explains why in plain language. The usual causes are a dropped
+connection, a busy provider (Kalamu waits and retries automatically), or a page the provider
+refused. Run the job again and only the failed pages are retried.
 
-An analysis that answers nothing at all for a long text is not kept: Kalamu asks again, with
-more thinking each time where the model has it (*Medium*, then *High*), and keeps the first
-full answer, whose record says the level it was sent at. If every answer is still empty, the
-page says so and which levels were tried: choose another model rather than running it again.
+An analysis that returns an empty answer for a long text is not saved: Kalamu retries with
+higher reasoning effort where supported (*Medium*, then *High*) and keeps the first complete
+answer, recording the level used. If every attempt still comes back empty, the page lists the
+levels tried: choose another model rather than running it again.
 
 A job that was paused, or cut short because the app was closed, is at the foot of the sidebar
 under *To resume*.

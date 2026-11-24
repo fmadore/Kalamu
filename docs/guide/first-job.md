@@ -18,16 +18,16 @@ Open **New job** (<kbd>Ctrl</kbd> <kbd>N</kbd>, or <kbd>⌘</kbd> <kbd>N</kbd> o
 on the window. A folder of photographed pages can be read as one document, its pages in the
 order of their names.
 
-Kalamu looks at the files before anything is sent and tells you about what could spoil the
-reading: two pages photographed as one spread, a very low resolution, a page that leans. Each
-warning comes with a fix you can accept. Your original files are never changed.
+Kalamu inspects your files before sending anything and warns you about issues that could spoil
+the reading: two pages photographed as one spread, very low resolution, or a skewed page. Each
+warning comes with a suggested fix you can accept, and your original files are never modified.
 
-With photographs, Kalamu also compares them on your computer and tells you when two look like
-the same page taken twice, or when one looks blurred. It shows them side by side and suggests
-the sharper one; nothing is left out unless you choose it, and the file stays where it is.
-A photo left out can be brought back with **Undo** in the message that says so, or with
-<kbd>Ctrl</kbd> <kbd>Z</kbd> (<kbd>⌘</kbd> <kbd>Z</kbd> on a Mac) while the message shows; it
-stays while the mouse is on it. Every message that offers **Undo** works the same way.
+For photographs, Kalamu also compares images locally and flags when two look like duplicate
+shots of the same page, or when one appears blurred. It displays them side by side and suggests
+the sharper image; nothing is excluded unless you choose it, and the file stays untouched on
+disk. If you exclude a photo by mistake, click **Undo** in the confirmation banner or press
+<kbd>Ctrl</kbd> <kbd>Z</kbd> (<kbd>⌘</kbd> <kbd>Z</kbd> on a Mac) while the banner is visible
+(hovering over it keeps it open). Every banner with **Undo** works the same way.
 
 ![Two photographs that look like the same page, side by side, with the choice of which to keep](images/en/photos-twice.png)
 *The same page photographed twice: Kalamu shows both and lets you keep one, or both.*
@@ -61,8 +61,8 @@ the right.
 
 - Read a few pages properly, looking at names, numbers and dates first. Those are where models
   go wrong most often and where it matters most.
-- To fix something, correct the text where it stands. Your correction is kept beside what the
-  model wrote, which stays available.
+- To fix an error, edit the text directly in place. Your correction is stored separately from
+  the model's output, which stays preserved underneath.
 - **Mark as reviewed** when a page is right. The job shows how many pages you have reviewed.
 - <kbd>Ctrl</kbd> <kbd>F</kbd> (<kbd>⌘</kbd> <kbd>F</kbd>) searches the whole document.
 
@@ -83,10 +83,10 @@ as well, `letter.lightonocr-3-1b.txt`, as a comparison's do, so neither replaces
 
 ## What to do next
 
-- For a long document, Kalamu does this first job for you: when a PDF has more than 15 pages,
-  New job offers **Try on 3 pages**, taken from here and there in the document. On the page of
-  that job, **Run the rest** reads the other pages without paying for those three again, and
-  **Compare with another model** reads the same three with a second model.
+- For long documents, Kalamu helps you test first: when a PDF has more than 15 pages, New job
+  offers **Try on 3 pages**, sampled from across the document. On the resulting job page,
+  **Run the rest** reads the remaining pages without paying for those three again, and
+  **Compare with another model** runs the same three pages through a second model.
 - If the reading is good: run the rest of the collection, and consider the
   [cheaper mode](costs.md), which costs half for an answer within a day.
 - If it is not: try another prompt or a stronger model on the same pages. Because results are

@@ -6,216 +6,149 @@ lede: What the app sends, to whom, and what it keeps on your computer.
 description: Kalamu's privacy policy. What the app sends, to whom, and what it keeps on the computer.
 ---
 
-**Effective date:** 23 November 2026, which applies from the first version to keep, on the
-computer, the path and a fingerprint of each table file it exported, so that exporting again
-replaces its own files and never the user's. The policy of 20 November 2026 did not say so; it
-applies from the first version to read a
-project's documents against the user's research question, for which each document's text and
-the question are sent to the provider of the model chosen; to read a long interview in several
-parts; to send the user's own themes or interview guide with an interview; and to save a
-project to a file the user moves themselves. With a model run on the computer none of what is
-named here is sent. The policy of 19 November 2026 did not say so; it
-applies from the first version to analyse an interview from its transcript, for which the transcript's text, its speakers' names and times,
-and the sentence the user writes about their research are sent to the provider of the model
-chosen, or to no one with a model run on the computer. The policy of 18 November 2026 did
-not say so; it applies from the first version to offer a search
-by meaning and a map of a project's documents, for which the text of the project's documents
-and each question typed are sent to a provider the user chooses and agrees to, or to no one
-with a model run on the computer, and to send a passage selected in the review to a model
-for correction, to keep the regions the user draws over a scan with the text they give
-them, and to send the part of a page inside such a region to a model the user chooses, to be
-read again; and from the first version to send a large
-batch of the cheaper mode to Google as a file, deleted there afterwards, and to keep with a
-project the results the user sets aside from its list of what to check. The policy of
-17 November 2026 did not say so; it applies from the first version to keep, in a
-project's list of what to check, the items the user keeps aside with their notes and the seed and
-size of a sample drawn at random, and to write that list where the user chooses, and to delete
-at Anthropic a batch of the cheaper mode once it has ended. The policy of
-15 November 2026 did not say so; it applies from the first version to delete what the
-cheaper mode's batches leave in the user's storage at OpenAI and Mistral, and to keep, for a
-job deleted meanwhile, the record of such a batch until that is done. The policy of 11 November
-2026 did not say so; it applies from the first version to translate
-texts: the text a translation reads is sent as a correction's is, to the provider the user
-chose. The policy of 10 November 2026 did not say so; it applies from the first version to write the
-offline models' working files (a page image, a text being read) in a folder of the app's own,
-emptied at each start, and to keep an unfinished model download so that it continues where it
-stopped; to tell a copy installed from the releases page that a newer version is out, from the
-catalogue file it already downloads (nothing new is fetched or sent); to keep a settings file
-it cannot read beside the new one rather than replace it; to keep a month of logs; and to let
-the user clear the stored results no job uses. The policy of 7 November 2026 did not say so;
-it applies from the first version to offer the offline language models: small models from
-Google downloaded from Hugging Face at the user's request and run on the computer, for
-analyses, tables of contents and corrections. The policy of 6 November
-2026, which applies to version 1.5.0, did not list them; it added the offline OCR models. The
-second policy of 4 November 2026, which applies to version
-1.4.1, did not list them; it added the question asked before files are first sent to each cloud
-provider; for the Mac App Store build, the folders the user grants it, kept as bookmarks, and
-its data folder inside the app's own container; and the file paths the logs may hold. Version 1.0.0, the first Microsoft
-Store release, was published under the policy
-of 30 October 2026, which did not list projects or workflows; the policy of 1 November 2026 did
-not list the dictionary's proposed merges, the first of 2 November 2026 did not cover macOS,
-the second named the data folder after the app's bundle identifier, the third did not list the
-items' pages, the fourth, which applies to version 1.2.0, did not list the search index, and
-that of 3 November 2026, which applies to version 1.3.0, did not list Tesseract, and the first
-of 4 November 2026, which applies to version 1.4.0, did not cover the Mac App Store build.
+**Effective date:** 23 November 2026. For earlier versions and what changed in each, see
+[Changes to this policy](#changes-to-this-policy) below.
 
 ## What this app is
 
-Kalamu is a desktop application for Windows and macOS, for researchers. It extracts text from scanned or
-handwritten documents, corrects existing text, makes detailed tables of contents of long
-documents, transcribes recordings and videos, and analyses texts, in one of two ways the user
-chooses for each job:
+Kalamu is a desktop application for Windows and macOS built for researchers. It extracts text from
+scanned or handwritten documents, corrects existing text, builds detailed tables of contents for
+long documents, transcribes audio and video, and analyses texts, using whichever mode you choose
+for each job:
 
-- through a cloud AI provider the user selects and configures with their own API key: Google
-  Gemini, OpenAI, Anthropic Claude or Mistral; or
-- offline, on the user's computer: Whisper for transcription, Tesseract and small OCR vision
-  models (LightOnOCR-3, GLM-OCR) for text extraction from page images, and small language
-  models (Gemma 4 E4B and E2B) for analyses, tables of contents, corrections and translations.
+- **Cloud AI providers** configured with your own API key: Google Gemini, OpenAI, Anthropic
+  Claude, or Mistral; or
+- **Offline on your computer**: Whisper for transcription, Tesseract and small OCR vision models
+  (LightOnOCR-3, GLM-OCR) for reading page images, and small language models (Gemma 4 E4B and
+  E2B) for analyses, tables of contents, corrections, and translations.
 
-The developer operates no server for the app and receives nothing from it.
+The developer operates no server for Kalamu and receives no data from it.
 
-## Files the user chooses
+## Files you choose
 
-Kalamu reads only the files and folders the user adds to a job, and the YouTube links the
-user pastes.
+Kalamu reads only the files and folders you add to a job, and the YouTube links you paste.
 
-**Before the first job, workflow run or dictionary proposal sent to a cloud provider**, the app
-asks once, naming the provider, saying what will be sent (the pages, recordings or text, with
-any personal information they hold), that it goes under the user's own account and the
-provider's terms, and where this policy is. Nothing is sent to a provider the user has not
-agreed to; the answer is kept in the settings. Offline engines are never asked about, since
-they send nothing.
+**First-use confirmation for cloud providers.** Before sending your first job, workflow run, or
+dictionary merge request to any cloud provider, Kalamu asks once for confirmation. The prompt
+names the provider, explains what will be sent (pages, recordings, or text, including any
+personal information they contain), notes that requests run under your own account and the
+provider's terms, and links to this policy. Nothing is sent to a provider until you confirm;
+your choice is saved in your settings. Offline engines never ask because they send nothing.
 
-**With a cloud provider**, each page, recording segment or text is sent directly from the
-user's computer to that provider, with the instructions for the task (the prompt and, for an
-analysis, the fields to answer), and processed under the user's account and the provider's
-terms. Before sending, the app may convert a piece into a form the provider accepts, for
-example cutting a PDF into pages or a recording into segments; the original files are never
-changed. To correct or translate existing text, the app sends the text it reads from the file
-(a PDF's text layer, or a text file's pages or passages) rather than the file. For a detailed table of
-contents, each page goes to the provider chosen to read the pages, and the entries read on
-them, as text, to the provider chosen to combine them, which may be another provider. With a
-YouTube link, Gemini fetches the public video from YouTube itself; Kalamu does not download the
-video. When the user asks a model to **propose merges** in a project's dictionary, the app
-sends that provider the names and terms of the field chosen, as the analyses wrote them, with
-the titles of up to three of the project's documents naming each, and the pairs the user kept
-apart; not the documents themselves. This is sent as a job of its own, with an estimate first,
-only when the user asks.
+**With a cloud provider**, each page, audio segment, or text passage is sent directly from your
+computer to that provider together with the task instructions (the prompt and, for analyses,
+your field definitions), processed under your own account and the provider's terms. Before
+sending, Kalamu may convert an input into a format the provider accepts (for example, splitting a
+PDF into pages or cutting a recording into segments) without modifying your original files. For
+text correction or translation, Kalamu sends only the extracted text (from a PDF text layer or
+text file) rather than the original file. For a detailed table of contents, each page goes to
+the page-reading provider, and the resulting page entries go as text to the merging provider
+(which may be a different provider). For a YouTube link, Gemini fetches the public video
+directly from YouTube; Kalamu does not download it. When you ask a model to **propose merges**
+in a project dictionary, Kalamu sends only the extracted names and terms for the chosen field,
+the titles of up to three documents mentioning each name, and any pairs you marked to keep
+apart, never the documents themselves. This runs as its own job with a cost estimate upfront,
+only when you request it.
 
-**In the cheaper mode** (economy), pieces are sent to the provider's batch service instead of
-one by one. The provider keeps the batch, its input and its answers for a time set by its own
-rules (from about a day to several weeks), in the user's account, and Kalamu collects the
-answers when it next opens. At OpenAI and Mistral a batch also leaves files in the account's
-storage: the requests, with the pages or text they hold, the answers and the errors. Once the
-answers are stored on the computer, or the batch is cancelled or has failed, Kalamu deletes
-the files that batch names, and only those; it never lists or touches anything else in the
-account's storage. If the provider cannot be reached it tries again when the app is next
-opened, a few times, after which the files stay until the provider's own rules remove them
-(30 days at OpenAI; Mistral states no end) or the user deletes them there. Batches sent by
-earlier versions are not cleaned. A Claude batch leaves no such files, but Anthropic keeps the
-batch itself, with its requests and answers, for up to 29 days: Kalamu deletes that batch at
-Anthropic in the same way, once it has ended and its answers are stored on the computer, or it
-was cancelled or has failed, and tries again at later launches if Anthropic cannot be reached.
-A Claude batch sent by an earlier version is not deleted. A Gemini batch of less than 20 MB
-is sent in one request and leaves no file; Google keeps the batch itself by its own rules. A
-larger one is first uploaded as a file of its requests, with the pages or text they hold, to
-the file storage of the user's Gemini API account, and Google writes the answers to a second
-file there. Google deletes an uploaded file after 48 hours and does not say how long it keeps
-the file of answers. Kalamu deletes both, as it does at OpenAI and Mistral, once the answers
-are stored on the computer, or the batch is cancelled, has failed or has expired; a file
-uploaded for a batch that was never made is deleted at once, or when the app is next opened.
+**In cheaper mode (economy)**, pieces are submitted to your provider's batch service rather than
+sent one by one. The provider retains the batch, its inputs, and its answers in your account for
+a period set by its own rules (from roughly a day to several weeks), and Kalamu collects the
+results when you next open the app. At OpenAI and Mistral, batches also create files in your
+account storage (requests, answers, and errors). Once the answers are saved on your computer, or
+the batch is cancelled or fails, Kalamu deletes only the files belonging to that batch; it never
+lists or modifies anything else in your account. If the provider cannot be reached, Kalamu
+retries on subsequent launches a few times, after which the files remain until removed by the
+provider's retention policy (30 days at OpenAI; Mistral states no expiry) or deleted manually.
+Batches created by earlier versions are not cleaned up automatically. A Claude batch creates no
+separate files, though Anthropic retains the batch itself (requests and answers) for up to 29
+days; Kalamu deletes finished, cancelled, or failed Claude batches in the same way, retrying on
+later launches if needed (batches from earlier versions are not deleted). A Gemini batch under
+20 MB is sent in a single request and leaves no file, governed by Google's batch retention rules.
+Larger Gemini batches are uploaded as a request file to your Gemini API file storage, and Google
+writes the answers to a second file there. Google deletes uploaded files after 48 hours and does
+not publish a retention period for answer files; Kalamu deletes both once the answers are saved
+locally or the batch is cancelled, fails, or expires (and deletes any orphaned upload
+immediately or at next launch).
 
-**Offline**, with Whisper, recordings are converted and transcribed on the computer and never
-uploaded; with Tesseract or an offline OCR model, PDF pages and images are drawn and read on the
-computer and never uploaded; with an offline language model, texts and page images are read
-and analysed on the computer and never uploaded. The OCR and language models run in llama.cpp's
-programs, shipped with the app, which open no connection; on Windows, Whisper may run in
-`whisper-vulkan`, a program shipped with the app for the graphics processor, which receives the
-audio through the computer's own memory and opens no connection either.
+**Offline**, Whisper converts and transcribes recordings locally; Tesseract and local OCR models
+render and read PDF pages and images locally; and local language models read and analyse texts
+and page images locally. Nothing is uploaded. The OCR and language models run inside bundled
+llama.cpp executables that open no network connections. On Windows, Whisper may run in
+`whisper-vulkan`, a bundled helper for your graphics processor that receives audio through local
+memory and likewise opens no network connection.
 
-Files and results may contain personal information about the people named or heard in them.
-Choose a provider whose terms suit the material, or work offline.
+Source files and results may contain personal information about the people named or recorded in
+them. Choose a provider whose terms suit your material, or work offline.
 
-### The search by meaning and the map
+### Search by meaning and the project map
 
-A project's search by meaning and its map of documents are made from numbers a model works
-out from the text (embeddings). Nothing is worked out until the user chooses a model and
-starts it.
+A project's search by meaning and document map rely on numerical representations (embeddings)
+computed from the text. Nothing is computed until you choose a model and start preparation.
 
-- **With a model run on the computer** (EmbeddingGemma 2, downloaded on request from Hugging
-  Face), nothing is sent: the passages are written for a moment to a scratch folder in the
-  app's data folder, read by the program shipped with the app, and deleted.
-- **With a cloud model** (Google's Gemini, OpenAI or Mistral), the app asks first, for that
-  project and that model, naming the provider and saying what is sent. Once the user
-  agrees and starts the preparation, the corrected text of the project's documents (what was
-  read, transcribed, corrected or translated; not the analyses) is sent to that provider in
-  stretches of about 1,200 characters, with the model's name and the user's API key. Each
-  later update sends only the text that changed, when the user asks for it. Afterwards,
-  each question typed in the search by meaning is sent to the same provider. No file name,
-  project name or description is sent. The map and the list of nearest documents are worked
-  out on the computer and send nothing.
-- **Kept on the computer**: the numbers, in a file of their own in the app's data folder
-  (`vectors.sqlite`), which the user can remove model by model; and in the job database the
-  model chosen, when the user agreed, how many questions were asked and what they cost, and
-  each preparation with its counts and cost, deleted with the project. The questions
-  themselves are not kept.
-- OpenAI says it keeps API inputs up to 30 days to detect abuse and does not train on them
-  unless the account opts in; Google says it does not use the content of paid API use to
-  improve its products and logs it for a limited period, and that content sent under a free
-  plan may be used and read by reviewers; for Mistral, see its terms below. These are the
-  providers' statements, read on 18 November 2026, and can change.
+- **With a local model** (EmbeddingGemma 2, downloaded on request from Hugging Face), nothing is
+  sent off your computer. Passages are written briefly to a scratch folder inside the app's data
+  folder, read by the bundled program, and deleted.
+- **With a cloud model** (Google Gemini, OpenAI, or Mistral), Kalamu asks for confirmation for
+  that project and model, naming the provider and explaining what will be sent. Once you confirm
+  and start preparation, the corrected text of the project's documents (extractions,
+  transcriptions, corrections, and translations; not analyses) is sent to that provider in chunks
+  of roughly 1,200 characters, along with the model name and your API key. Later updates send
+  only text that changed, and only when you ask. Afterwards, each query you type into search by
+  meaning is sent to the same provider. No filenames, project names, or source descriptions are
+  sent. The 2D map and nearest-document rankings are computed locally and send nothing.
+- **Stored on your computer**: the embedding vectors in `vectors.sqlite` inside the app's data
+  folder (which you can clear model by model), and in the job database the chosen model, when
+  you gave consent, query counts and costs, and preparation counts and costs (deleted when the
+  project is deleted). Your search queries themselves are not stored.
+- **Provider retention (as published on 18 November 2026)**: OpenAI states that it retains API
+  inputs for up to 30 days for abuse detection and does not train on them unless the account opts
+  in; Google states that paid Gemini API content is not used to improve its products and is
+  logged for a limited period, whereas free-tier content may be used and reviewed by humans; for
+  Mistral, see its privacy policy below. Provider terms can change, so verify them directly.
 
-### A passage corrected by a model
+### Correcting a selected passage with a model
 
-When the user selects text in the review and asks a model to correct it, the selected
-passage (at most 4,000 characters) and up to 300 characters before and after it from the same
-page or part are sent to the provider of the model chosen, with the correction prompt, after
-the same question about that provider as for a job. With a model run on the computer nothing
-is sent. The request, the model's proposal and whether it was accepted are kept in the job
-database with the job.
+When you select text in the review screen and ask a model to correct it, Kalamu sends the
+selected passage (up to 4,000 characters) plus up to 300 characters of surrounding context on
+each side from the same page or segment, along with the correction prompt, after the same
+provider confirmation used for jobs. With a local model, nothing is sent. The request, the
+model's suggestion, and whether you accepted it are stored in the job database alongside the job.
 
-### A region of a page read again by a model
+### Re-reading a region of a page
 
-When the user chooses a region over a scan and asks a model to read it again, only that part
-of the page is sent, as a picture cut from the original file (PNG, or JPEG for a model that
-takes nothing else), to the provider of the model chosen, with the text-extraction prompt and
-the job's languages, after the same question about that provider as for a job. Nothing else
-of the document is sent, and with a model run on the computer nothing is sent at all. Drawing,
-moving or removing a region sends nothing. The request (the region's place on the page, the
-model, the prompt), the model's reading, its cost and whether it was used are kept in the job
-database with the job.
+When you select or draw a region on a scan and ask a model to re-read it, only that cropped
+portion of the page is sent, as a PNG (or JPEG where required), to your chosen provider with the
+text-extraction prompt and the job's language settings, after the same provider confirmation.
+Nothing else from the document is sent, and with a local model nothing is sent at all. Drawing,
+moving, or deleting regions sends nothing. The region coordinates, model, prompt, returned
+reading, cost, and whether you used it are stored in the job database with the job.
 
-### An interview analysed from its transcript
+### Analysing an interview transcript
 
-When the user chooses *Analyse this interview*, the transcript as they left it (corrections
-and speakers' names included) is sent to the provider of the model chosen, cut into numbered
-turns, each with its speaker's name and its time in the recording, together with the sentence
-the user wrote about their research and the analysis prompt, after the same question about
-that provider as for a job. The recording itself is not sent. With a model run on the computer
-nothing is sent. The quotations a model returns are looked for in the transcript on the
-computer; those not found are discarded. The sentence, the answers and the quotations kept are
-stored in the job database with the job. When the user chooses to keep the sentence for their
-next interviews, it is kept on the computer with their prompts, and sent with each analysis
-that uses that prompt.
+When you choose *Analyse this interview*, Kalamu sends your reviewed transcript (including
+corrections and speaker names), split into numbered turns with speaker labels and timestamps,
+together with your research-context sentence and the analysis prompt, after the same provider
+confirmation. The audio or video recording itself is never sent. With a local model, nothing is
+sent. Quotations returned by the model are verified locally against the transcript and any
+unmatched quotes are discarded. Your context sentence, answers, and verified quotations are
+saved in the job database. If you choose to save the context sentence for future interviews, it
+is stored locally with your prompts and sent with each analysis using that prompt.
 
-The themes or the interview guide the user types under *More choices* are sent with that
-sentence, and kept with it when it is kept. A transcript too long for the model to read at once
-is sent in several parts of whole turns, each part repeating the last turns of the one before,
-and then one more request is sent to the same provider with what the parts found: their
-answers and the quotations kept, each with its turn, its speaker and its time. A quotation the
-user adds from a passage of the transcript is made on the computer and sends nothing.
+Any themes or interview guide entered under *More choices* are sent alongside that sentence (and
+saved with it if you choose to keep it). If a transcript is too long to fit in a single request,
+it is sent in overlapping sections of whole turns, followed by one synthesis request to the same
+provider containing the section answers and verified quotations. Quotations you add manually
+from the transcript stay local and send nothing.
 
-### A project's documents read against a research question
+### Screening project documents against a research question
 
-When the user chooses *Which of these speak of my question?*, the text of each chosen
-document as they left it (the reading they preferred, corrections included, or the document's
-own words for a text file) is sent to the provider of the model chosen, cut into numbered
-passages, together with the question they typed and the prompt, after the same question about
-that provider as for a job. The scans and photographs themselves are not sent. With a model
-run on the computer nothing is sent. The passages a model returns are looked for in the text
-on the computer; those not found are discarded. The question, the answers and the passages
-kept are stored in the job database with the job. The tags *Kept* and *Set aside* stay on the
-computer with the project.
+When you choose *Which of these speak of my question?*, Kalamu sends the reviewed text of each
+selected document (your preferred result with corrections, or the file's own text), divided into
+numbered passages, together with your research question and the prompt, after the same provider
+confirmation. Scans and photographs are not sent. With a local model, nothing is sent. Cited
+passages are verified locally against the document text, and any unmatched passages are
+discarded. Your question, the model's answers, and the verified passages are saved in the job
+database; the *Kept* and *Set aside* tags stay on your computer with the project.
 
 ## What the app keeps on the computer
 
@@ -384,30 +317,30 @@ leaves the app open in the Dock, as Mac apps do, until the user quits it. Jobs w
 
 ## Support link
 
-Kalamu shows an optional *Buy me a coffee* link to the developer's page on Buy Me a Coffee
-(`https://buymeacoffee.com/fmadore`); the Mac App Store app has none. The app passes that fixed address to the default browser
-and nothing else: it sends no information about the user or the device and contacts no payment
-service itself. Anything entered on that page is between the user and Buy Me a Coffee, under the
-[Buy Me a Coffee privacy policy](https://buymeacoffee.com/privacy-policy). Supporting is optional
-and unlocks nothing.
+Kalamu includes an optional *Buy me a coffee* link to the developer's page on Buy Me a Coffee
+(`https://buymeacoffee.com/fmadore`); the Mac App Store build omits this link. Kalamu passes
+that fixed URL to your default browser and nothing else: it sends no information about you or
+your device and contacts no payment service itself. Anything entered on that page is between you
+and Buy Me a Coffee under the
+[Buy Me a Coffee privacy policy](https://buymeacoffee.com/privacy-policy). Supporting
+development is optional and does not unlock additional features.
 
 ## Report a problem
 
-The flag in each review's header and *Report a problem* in Settings › About open GitHub's choice of
-public issue forms (`https://github.com/fmadore/Kalamu/issues/new/choose`) in the default
-browser: a bug, feedback, or output that is offensive or harmful. The app passes that address to
-the browser and nothing else: it sends no document, result, key, version or other information
-itself. What the user writes in the form, and
-their GitHub account, are published on GitHub under the
+The flag icon in each review header and *Report a problem* in Settings › About open GitHub's
+public issue forms (`https://github.com/fmadore/Kalamu/issues/new/choose`) in your default
+browser (for bugs, feedback, or offensive or harmful output). Kalamu passes only that address to
+the browser: it sends no document, result, key, version, or other information itself. Anything
+you write in the form, along with your GitHub account, is published on GitHub under the
 [GitHub privacy statement](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement);
-the form asks not to paste confidential material.
+the form reminds you not to paste confidential material.
 
 ## What the developer collects
 
 Nothing. The developer operates no server, relay, account system, telemetry, advertising,
-analytics or crash-reporting service for this app, and receives no files, results, keys, device
-identifiers or usage data from it. A problem reported through GitHub reaches the developer only
-as the user wrote it there.
+analytics, or crash-reporting service for Kalamu, and receives no files, results, keys, device
+identifiers, or usage data from it. A problem reported through GitHub reaches the developer only
+as you wrote it there.
 
 ## Third-party processing
 
@@ -429,13 +362,35 @@ and YouTube by the
 
 ## Children
 
-The app is not directed to children, and the developer knowingly collects no personal
-information from anyone.
+Kalamu is not directed at children, and the developer knowingly collects no personal information
+from anyone.
 
 ## Changes to this policy
 
 Material changes are published here with a new effective date. The policy that applies to a
-release is the one dated for it in the repository.
+given release is the one dated for it in the repository.
+
+<details>
+<summary>Previous versions of this policy</summary>
+
+- **23 November 2026**: records paths and SHA-256 fingerprints of exported table files (`exports.json`) so re-exporting never overwrites user-modified files.
+- **20 November 2026**: adds screening project documents against a research question, multi-part interview analysis, custom interview themes/guides, and saving projects to portable `.kalamu` files.
+- **19 November 2026**: adds interview analysis from transcripts (sending transcript text, speaker names, timestamps, and research context to the chosen provider).
+- **18 November 2026**: adds search by meaning and the project document map, model-assisted correction of selected passages, user-drawn scan regions and region re-reading, uploading large Gemini batches as files (deleted afterwards), and storing items set aside from *What to check*.
+- **17 November 2026**: adds storing review-list notes, random-sample seeds and sizes, exporting the review list, and deleting finished Anthropic Claude batches.
+- **15 November 2026**: adds deleting OpenAI and Mistral batch files from account storage once answers are saved locally.
+- **11 November 2026**: adds text translation (sending text to the chosen provider in the same way as text correction).
+- **10 November 2026**: adds `offline-scratch` temporary files, resumable `.part` model downloads, GitHub-release update notices from the existing catalogue file, preserving unreadable settings as `settings.json.bad`, 30-day log retention, and *Clear unused results*.
+- **7 November 2026**: adds offline language models (Google Gemma 4 downloaded from Hugging Face).
+- **6 November 2026** (version 1.5.0): adds offline OCR vision models.
+- **4 November 2026 (second revision, version 1.4.1)**: adds per-provider first-use confirmation, Mac App Store security-scoped bookmarks (`grants.json`) and container paths, and notes file paths in logs.
+- **4 November 2026 (first revision, version 1.4.0)**: adds offline text extraction with Tesseract.
+- **3 November 2026 (version 1.3.0)**: adds the local project search index (`search.sqlite`).
+- **2 November 2026 (four revisions, including version 1.2.0)**: adds macOS coverage, renames the data folder from the bundle identifier to `Kalamu Data`, and adds frozen item pages (`snapshots`).
+- **1 November 2026**: adds dictionary merge proposals and projects/workflows.
+- **30 October 2026** (version 1.0.0): initial Microsoft Store release policy.
+
+</details>
 
 ## Contact
 

@@ -46,10 +46,9 @@ par une personne. Un projet compte les pages relues, et sa liste de
 
 ## Comparer des modèles {#comparer-des-modeles}
 
-Le moyen le plus rapide de trouver les erreurs n’est pas de tout lire deux fois : c’est de faire
-lire les mêmes pages par deux modèles, et de ne regarder que les endroits où ils ne sont pas
-d’accord. Quand deux lectures indépendantes concordent, elles sont en général justes ; quand
-elles diffèrent, l’une des deux au moins se trompe.
+Pour repérer rapidement les erreurs, faites lire les mêmes pages par deux modèles et
+concentrez-vous sur leurs divergences. Quand deux lectures indépendantes concordent, elles sont
+en général justes ; quand elles diffèrent, l’une des deux au moins se trompe.
 
 1. Dans **Nouveau traitement**, choisissez **Comparer avec un autre modèle** et ajoutez un
    second modèle (d’un autre fournisseur si possible : leurs erreurs se ressemblent moins).
@@ -111,10 +110,10 @@ affichées.
   est conservé, et **Remettre le cadre du modèle** le rétablit.
 
 ![Une page de journal avec les zones de texte du modèle dessinées, et une zone tracée sur un titre](../images/fr/region.png)
-*Afficher les zones de texte  les blocs trouvés par le modèle, et une zone à vous sur un titre.*
+*Afficher les zones de texte : les blocs trouvés par le modèle, et une zone à vous sur un titre.*
 
 ![Une zone tracée sur un titre, sa fiche en dessous avec Ce qui est écrit ici et Relire cette zone](../images/fr/region-panel.png)
-*Une zone à vous, avec sa fiche  ce qui y est écrit, la déplacer, la supprimer ou la faire relire.*
+*Une zone à vous, avec sa fiche : ce qui y est écrit, la déplacer, la supprimer ou la faire relire.*
 
 **Relire cette zone…** découpe cette partie de la page dans l’original et l’envoie seule, sous
 forme d’image, au modèle que vous choisissez ; rien d’autre du document n’est envoyé. Kalamu

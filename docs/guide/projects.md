@@ -25,23 +25,23 @@ recording) with every transcription, extraction and analysis made of it.
   collections.
 - **Start a job on a selection**: tick some documents and run an extraction, an analysis or a
   workflow on them.
-- **Ask which documents speak of your question**: tick some documents that have been read,
-  choose **Which of these speak of my question?** and type your research question (closed
-  without starting, it keeps your question until you open it again). Each document comes back as relevant, partly relevant, not relevant or unsure, with a reason and
-  the passages that show it, each found word for word in the text with its page. Filter the
-  table by the answer, read the passages, then **Keep** or **Set aside**: your decision is a
-  tag, and the model's answer stays as it was. The tag is written in the interface's language
-  (*Kept* or *Set aside* in English, *Gardé* or *Écarté* in French), and your decision holds
-  whatever the language: after you change it in Settings, or when a colleague working in the
-  other language opens your project file. A document tagged both ways shows **Kept and set
-  aside: choose one** beside the buttons; **Keep** or **Set aside** settles it and leaves one
-  tag. **Export the whole table** writes the whole list for a spreadsheet; its `job_id` and
-  `prompt_fingerprint` columns say which job gave each answer and which version of the prompt
-  it was read with. With an answer chosen in the filter, each row shows its answer, the reason
-  and the passages. When you add documents later, **Read the new documents against this
-  question** asks it of those alone. If the prompt has been edited since you first asked, the
-  dialog says so: the new answers are kept apart from the earlier ones, and the filter shows the
-  question twice, each followed by "first asked" and the date it was first asked.
+- **Ask which documents speak of your question**: select documents that have already been read,
+  choose **Which of these speak of my question?**, and type your research question (if you close
+  the dialog without starting, Kalamu remembers your question until you reopen it). Each
+  document comes back rated as relevant, partly relevant, not relevant, or unsure, with an
+  explanation and verbatim passages with page numbers. Filter the table by rating, check the
+  passages, and click **Keep** or **Set aside**: your decision is saved as a tag while the
+  model's rating stays untouched.
+
+  The tag uses the interface language (*Kept* or *Set aside* in English, *Gardé* or *Écarté* in
+  French), and your decision persists if you switch languages in Settings or share the project
+  file with a colleague working in the other language. If a document carries both tags, Kalamu
+  shows **Kept and set aside: choose one** beside the buttons; clicking either settles it.
+  **Export the whole table** writes a spreadsheet whose `job_id` and `prompt_fingerprint`
+  columns record which job and prompt version produced each answer. When you add documents
+  later, **Read the new documents against this question** screens only the new ones. If you
+  edited the prompt since first asking, Kalamu stores the new answers separately and lists both
+  runs in the filter with their "first asked" date.
 - When a document has been read several times, **mark the result you rely on** as preferred.
   Search, exports and analyses then use that one.
 
@@ -121,35 +121,36 @@ dictionary's export keep your files in the same way.
 
 ## Search a project
 
-**Search** finds every passage of the project's documents that holds your words, in the text as
-you corrected it. Capitals, accents and Arabic vowel marks are ignored. You can ask for all the
-words anywhere on a page, or within a few words of each other, and narrow the search by
-collection, tag, task or review state. Each match opens its source where it stands. With
-**Also search what models wrote about them: analyses and tables of contents** ticked, matches in
-those answers are marked **Written by a model**, and a name you added to an analysis's list
-yourself **Written by you**.
+**Search** finds every passage across the project's documents that matches your words in the
+text as you corrected it. Capitals, accents, and Arabic diacritics are ignored. Search for words
+anywhere on a page or within a few words of one another, and filter by collection, tag, task, or
+review state. Clicking any match opens its source at that exact passage. With **Also search
+what models wrote about them: analyses and tables of contents** ticked, matches in those answers
+are labelled **Written by a model**, and entries you added yourself are labelled **Written by
+you**.
 
-The search runs on your computer; nothing is sent. With every search, Kalamu says what was
-searched and what was not (documents not read yet, pages that failed), so that finding nothing
-is not mistaken for absence.
+Search runs locally on your computer and sends nothing. Alongside every search, Kalamu reports
+what was searched and what was not (unread documents, failed pages), so an empty result is never
+mistaken for absence.
 
 ## Search by meaning, and the map
 
-The search by words finds what is written. **Meaning** finds passages that speak of what you
-describe in other words than yours: a question such as *disputes over land* can
-find a passage that says *the quarrel about the plot beside the market*.
+Keyword search finds exact wording. **Meaning** finds passages that discuss your topic in
+different words: searching for *disputes over land* can surface a passage about *the quarrel
+about the plot beside the market*.
 
-It works from numbers that a model works out from your text, so it has to be prepared once:
+Because it relies on numerical representations (embeddings) computed from your text, you prepare
+a project once:
 
-1. In the project's **Search**, choose **Meaning**, then a model. EmbeddingGemma 2 runs on your
-   computer after a download in **Settings › Offline models**: nothing is sent and nothing is
-   billed. Gemini, OpenAI and Mistral are faster and cost a little; for those, Kalamu asks
-   first, and says that the corrected text of the project's documents will be sent to that
-   provider, and afterwards each question you type.
-2. Kalamu shows an estimate of what preparing will cost before anything is sent. Start it; you
-   can pause it, and it goes on where it stopped.
-3. Type a question or a description. Documents are listed by their best passage, whatever
-   their length, and each passage opens its source where it stands.
+1. In the project's **Search**, choose **Meaning** and select a model. EmbeddingGemma 2 runs
+   locally after a one-time download in **Settings › Offline models**, sending nothing and
+   costing nothing. Gemini, OpenAI, and Mistral are faster and inexpensive; before sending
+   anything, Kalamu asks for confirmation and explains that the corrected text of your project's
+   documents (and each search query you type afterwards) will be sent to that provider.
+2. Kalamu displays an estimated preparation cost upfront. Start preparation; you can pause at
+   any time and resume where you stopped.
+3. Type a question or description. Documents are ranked by their closest passage regardless of
+   length, and clicking any passage opens its source at that spot.
 
 After you correct text, Kalamu says how many pages changed and offers to update them. It never
 does so by itself with a paid model.

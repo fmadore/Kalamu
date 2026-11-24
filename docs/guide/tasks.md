@@ -119,9 +119,9 @@ manuscript** for a transcription of handwriting.
 
 ## Translate a text
 
-A text file, a PDF's text layer, or the text of an earlier job as you corrected it, put into
-the language you choose, page by page, with nothing summarised or left out and names kept as
-written. The review shows the translation beside the text.
+Translate a text file, a PDF text layer, or your corrected output from an earlier job into your
+chosen language, page by page, without summarising or omitting content and keeping proper names
+as written. The review screen displays the translation beside its source.
 
 ## One job after another
 
