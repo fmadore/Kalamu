@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-11-22",
+  "updated": "2026-11-24",
   "latest_version": "1.9.0",
   "notes": "Prices are USD from each provider's published list, checked on the date above; they change, so the app shows estimates only. Models marked 'preview' may change or be withdrawn. Cached-input and cache-write prices apply to the part of a prompt the provider reads from or writes to its prompt cache; batch_discount is the share taken off every price in economy mode, through the provider's batch service. max_input_tokens is the most a model reads in one request, as its provider documents it (the whole window where the provider gives one for the request and the answer together); for the models run on this computer, what the offline engine sends them, at four characters a token.",
   "providers": [
@@ -385,7 +385,7 @@
       "provider": "gemini",
       "id": "gemini-4-neon",
       "name": "Gemini 4 Neon",
-      "description": "Google's second strongest Gemini 4 model (November 2026), below Carbon and above Hydrogen: made for deeper analysis and long documents, at twice Hydrogen's price. Not yet tried on real pages in Kalamu.",
+      "description": "Google's second strongest Gemini 4 model (November 2026), below Carbon and above Hydrogen: made for deeper analysis and long documents, at twice Hydrogen's price. It has read one printed page and one handwritten page in Kalamu; on the handwriting it reads much as Gemini 4 Hydrogen does, at about twice the cost.",
       "tasks": [
         "text_extraction",
         "audio_transcription",
@@ -437,7 +437,7 @@
       "page_thinking": 1900,
       "translations": {
         "fr": {
-          "description": "Le deuxième modèle Gemini 4 le plus puissant de Google (novembre 2026), sous Carbon et au-dessus de Hydrogen : conçu pour les analyses approfondies et les longs documents, pour le double du prix de Hydrogen. Pas encore essayé sur de vraies pages dans Kalamu."
+          "description": "Le deuxième modèle Gemini 4 le plus puissant de Google (novembre 2026), sous Carbon et au-dessus de Hydrogen : conçu pour les analyses approfondies et les longs documents, pour le double du prix de Hydrogen. Il a lu une page imprimée et une page manuscrite dans Kalamu ; sur l’écriture manuscrite, il lit à peu près comme Gemini 4 Hydrogen, pour environ le double du prix."
         }
       }
     },
@@ -445,7 +445,7 @@
       "provider": "gemini",
       "id": "gemini-4-argon",
       "name": "Gemini 4 Argon",
-      "description": "Google's efficient Gemini 4 model (October 2026): at Carbon's price, it answers faster and thinks with fewer tokens, so each page costs less.",
+      "description": "The earlier efficient Gemini 4 model (October 2026): Gemini 4 Neon replaces it, newer and cheaper from 1 December. Google still serves it.",
       "tasks": [
         "text_extraction",
         "audio_transcription",
@@ -471,6 +471,7 @@
       "languages": "any",
       "status": "stable",
       "tier": "top",
+      "successor": "gemini-4-neon",
       "recommended_for": [],
       "provider_default_for": [],
       "costly": true,
@@ -497,7 +498,7 @@
       "page_thinking": 1400,
       "translations": {
         "fr": {
-          "description": "Le modèle Gemini 4 efficace de Google (octobre 2026) : au prix de Carbon, il répond plus vite et réfléchit avec moins de jetons, si bien que chaque page coûte moins cher."
+          "description": "Le précédent modèle Gemini 4 efficace (octobre 2026) : Gemini 4 Neon le remplace, plus récent et moins cher à partir du 1er décembre. Google le sert toujours."
         }
       }
     },
@@ -505,7 +506,7 @@
       "provider": "gemini",
       "id": "gemini-3.1-pro-preview",
       "name": "Gemini 3.1 Pro",
-      "description": "The previous Pro model, still in preview: Gemini 4 Argon replaces it at a lower price. Google still serves it.",
+      "description": "The previous Pro model, still in preview: Gemini 4 Neon replaces it. Google still serves it.",
       "tasks": [
         "text_extraction",
         "audio_transcription",
@@ -556,7 +557,7 @@
       },
       "translations": {
         "fr": {
-          "description": "Le précédent modèle Pro, toujours en préversion : Gemini 4 Argon le remplace pour moins cher. Google le sert toujours."
+          "description": "Le précédent modèle Pro, toujours en préversion : Gemini 4 Neon le remplace. Google le sert toujours."
         }
       }
     },

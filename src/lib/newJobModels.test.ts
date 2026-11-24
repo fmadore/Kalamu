@@ -61,18 +61,14 @@ describe('new job form', () => {
 		const claude = modelsFor(catalog, analysis, 'anthropic').map((m) => m.id);
 		expect(claude).toContain('claude-fable-5-2');
 		expect(claude).not.toContain('claude-fable-5-1');
-		// Argon, Carbon, Hydrogen and Neon are four lines of Gemini 4, all offered; Hydrogen
-		// replaces 3.8 Flash and Argon 3.1 Pro.
+		// Carbon, Neon and Hydrogen are three lines of Gemini 4, all offered; Hydrogen replaces
+		// 3.8 Flash, and Neon replaces Argon, which had replaced 3.1 Pro.
 		const gemini = modelsFor(catalog, analysis, 'gemini').map((m) => m.id);
 		expect(gemini).toEqual(
-			expect.arrayContaining([
-				'gemini-4-carbon',
-				'gemini-4-argon',
-				'gemini-4-hydrogen',
-				'gemini-4-neon'
-			])
+			expect.arrayContaining(['gemini-4-carbon', 'gemini-4-hydrogen', 'gemini-4-neon'])
 		);
 		expect(gemini).not.toContain('gemini-3.8-flash');
+		expect(gemini).not.toContain('gemini-4-argon');
 		expect(gemini).not.toContain('gemini-3.1-pro-preview');
 		// GPT-6.2 Sol replaces 6.1 Sol, and 6.2 Astra the first Astra.
 		const openai = modelsFor(catalog, analysis, 'openai').map((m) => m.id);
@@ -291,8 +287,8 @@ describe('tables of contents and corrections', () => {
 		expect(mergeModelsFor(catalog, rule('contents'), 'gemini').map((m) => m.id)).toContain(
 			d.mergeModel
 		);
-		// Gemini 4 Argon reads the pages, Mistral combines them.
-		const mixed = { ...d, model: 'gemini-4-argon', mergeProvider: 'mistral' };
+		// Gemini 4 Neon reads the pages, Mistral combines them.
+		const mixed = { ...d, model: 'gemini-4-neon', mergeProvider: 'mistral' };
 		mixed.mergeModel = mergeDefault(catalog, rule('contents'), 'mistral');
 		const request = toRequest(catalog, 'contents', mixed);
 		expect(request.merge).toEqual({ provider: 'mistral', model: mixed.mergeModel });

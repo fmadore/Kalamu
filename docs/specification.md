@@ -1198,7 +1198,7 @@ workbook by default. The same table gives the same workbook, byte for byte
 - **Only the newest model of each line is offered.** When a provider names a newer model as the
   replacement of an older one (Claude Fable 5.2 for 5.1), the older entry stays in the catalogue
   with a `successor` and is no longer offered for new work; models of separate lines (Gemini 4
-  Carbon and Argon, Claude Opus and Sonnet) are all offered. A pipeline, comparison, workflow or
+  Carbon, Neon and Hydrogen, Claude Opus and Sonnet) are all offered. A pipeline, comparison, workflow or
   job that names a replaced model keeps it, shows its name, and runs it while its provider
   serves it, so its results stay comparable; New job marks it and offers its replacement in one
   click, never switching on its own. A model its provider no longer serves is marked `retired`:

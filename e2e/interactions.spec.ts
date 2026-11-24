@@ -205,7 +205,7 @@ test('New job keeps what was chosen across a visit to Settings', async ({ page }
 	await main.getByRole('checkbox', { name: 'Markdown (.md)' }).check();
 	await main.getByRole('radio', { name: /^As on the page/ }).check();
 	await main.getByRole('combobox', { name: 'Model' }).click();
-	await main.getByRole('option', { name: /^Gemini 4 Argon/ }).click();
+	await main.getByRole('option', { name: /^Gemini 4 Neon/ }).click();
 
 	const sidebar = page.getByRole('navigation', { name: 'Jobs' });
 	await sidebar.getByRole('button', { name: 'Settings' }).click();
@@ -218,7 +218,7 @@ test('New job keeps what was chosen across a visit to Settings', async ({ page }
 	);
 	await expect(main.getByRole('checkbox', { name: 'Markdown (.md)' })).toBeChecked();
 	await expect(main.getByRole('radio', { name: /^As on the page/ })).toBeChecked();
-	await expect(main.getByRole('combobox', { name: 'Model' })).toHaveText(/Gemini 4 Argon/);
+	await expect(main.getByRole('combobox', { name: 'Model' })).toHaveText(/Gemini 4 Neon/);
 });
 
 test('a Tesseract language not downloaded is offered at once in Settings', async ({ page }) => {
