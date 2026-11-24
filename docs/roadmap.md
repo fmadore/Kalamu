@@ -193,6 +193,9 @@ order given there.
   18 November, between Hydrogen and Carbon, added beside them at $3 / $15; Hydrogen stays the
   default. Escape while a model answers from the review now stops the wait and leaves the
   dialog open, for a passage as for a region.
+- **Neon in place of Argon** ([decision](decisions/2026-11-24-gemini-4-argon-replaced-by-neon.md)):
+  Gemini 4 Neon replaces Argon, by the maintainer's choice, and with it 3.1 Pro; Argon, which
+  costs more than Neon from 1 December, stays in the pipelines that name it, marked replaced.
 - **Foundations.** Rust workspace and Tauri shell, job database with caching and resuming,
   progress and taskbar progress, model catalogue refreshed from the repository, prompt library,
   keys in Credential Manager, English interface with translation files, CI with `cargo audit`
