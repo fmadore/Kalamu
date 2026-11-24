@@ -4,15 +4,30 @@ What is built, what is next, and what is still open. The [specification](specifi
 what the app must do; [decisions](decisions/) record why it is built as it is. Each stage ends
 with an architecture review (see [AGENTS.md](../AGENTS.md)).
 
-## Status (21 November 2026)
+## Status (24 November 2026)
 
-**Version 1.9.0** ([notes](release-1.9.0.md)) is the latest release on GitHub, published on
-20 November 2026 before its test pass, and was not sent to the Store. **1.10.0**
-([notes](release-1.10.0.md)) is prepared as the next Store update, its version files set and
-`v1.10.0-rc1` to be tried before its tag: what 1.9.0 brought, and since then documents read
-against a research question, a project saved as one file, a sample first, long interviews in
-parts, photographs taken twice or blurred, and the plain-first round. The paragraph below is
-how 1.8.0 and 1.9.0 stood on 20 November.
+**Version 1.10.0** ([notes](release-1.10.0.md)) is the latest release. Three things, each with
+its own date:
+
+- **Published on GitHub**: 22 November 2026, as the
+  [v1.10.0 release](https://github.com/fmadore/Kalamu/releases/tag/v1.10.0), after its test
+  pass on `v1.10.0-rc1` and `rc2`.
+- **Submitted to the Microsoft Store**: after that tag, from its `Kalamu_1.10.0.msixbundle`.
+- **Live in the Microsoft Store**: seen there on 24 November 2026.
+
+It holds what 1.9.0 brought (published on GitHub on 20 November before its test pass, and never
+sent to the Store), and since then documents read against a research question, a project saved
+as one file, a sample first, long interviews in parts, photographs taken twice or blurred, and
+the plain-first round.
+
+**1.10.1** ([notes](release-1.10.1.md)) is prepared as the next update, its version files set
+and not yet tagged: the eight bugs a review of the repository found on 23 November
+([#237](https://github.com/fmadore/Kalamu/issues/237) to
+[#244](https://github.com/fmadore/Kalamu/issues/244)), all fixed on `main` that day and the
+next, and the review's menus on a right click. No test pass by hand has run on it. Once it is
+submitted, the guide and the privacy policy move to `kalamu.frederickmadore.com`
+([#228](https://github.com/fmadore/Kalamu/issues/228)), which waited for 1.10.0 to reach the
+Store. The paragraph below is how 1.8.0 and 1.9.0 stood on 20 November.
 
 **Version 1.8.0** was published on 17 November 2026: unsigned installers for
 Windows x64 and ARM64 and a signed, notarised disk image for macOS on Apple Silicon, each with
@@ -519,7 +534,9 @@ as handwriting). Defaults that
 
 In this order. Work that keeps what has shipped sound comes before new features.
 
-**First, 1.10.0 tried and tagged.** 1.9.0 was published on GitHub without its test pass, and
+**First, 1.10.0 tried and tagged** (tagged on 22 November 2026 and live in the Store; what
+this paragraph leaves is the day on a Mac and the live runs not yet made, and 1.10.1, which
+carries the fixes of 23 November, see *Status*). 1.9.0 was published on GitHub without its test pass, and
 the plain-first round and the research workflows of 20 November joined `main` after it, so the
 pass runs on `v1.10.0-rc1`, which holds both, and 1.10.0 is the next Store update. No new
 feature goes into 1.10.0. Its
@@ -966,7 +983,10 @@ manuscript and a 1915 newspaper in the public domain), and the listing, What's n
 certification notes for 1.0.0, the privacy policy on GitHub Pages, the screenshots and the
 submission. Version 1.0.0 passed certification and is
 [in the Microsoft Store](https://apps.microsoft.com/detail/9MXT5555BZ1H) since 2 November 2026. Later versions follow the update steps
-in [microsoft-store.md](microsoft-store.md); 1.8.0 is live, and 1.10.0 is the next update (1.9.0 was not submitted).
+in [microsoft-store.md](microsoft-store.md); 1.10.0 is live, and 1.10.1 is the next update
+(1.9.0 was not submitted). The addresses given in the listing move to
+`kalamu.frederickmadore.com` with a submission after it
+([#228](https://github.com/fmadore/Kalamu/issues/228)).
 
 ## Toward the Mac App Store
 

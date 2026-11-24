@@ -76,6 +76,12 @@ menus on a right click. For what 1.10.0 brought, see the
   text compared offers **Copy**, and on a difference **Use this reading**. A region's card can
   be dragged out of the way by its grip, and the caret in its text box is now visible.
 
+- **Gemini 4 Neon in place of Gemini 4 Argon**
+  ([decision](https://github.com/fmadore/Kalamu/blob/main/docs/decisions/2026-11-24-gemini-4-argon-replaced-by-neon.md)).
+  New job no longer offers Argon, whose price doubles on 1 December 2026 to more than Neon's.
+  Google still serves it: a pipeline, a workflow or a comparison that names it keeps it,
+  marked as replaced, with Neon a click away.
+
 ## Also
 
 - `cookie` 0.18.3, for the advisory RUSTSEC-2026-0594

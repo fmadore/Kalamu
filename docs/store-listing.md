@@ -1,7 +1,7 @@
 # Store listing text
 
 Paste-ready text for Kalamu's two store listings: the Microsoft Store (Partner Center) first,
-where 1.8.0 is live and 1.10.0 is the next update, its *What's new* and certification notes
+where 1.10.0 is live and 1.10.1 is the next update, its *What's new* and certification notes
 below (the first version, 1.0.0, was certified on 2 November 2026), in
 [English](#english-united-states) and [French](#french-france), then the
 [Mac App Store](#mac-app-store-app-store-connect) (App Store Connect), where 1.6.0, the first
@@ -57,7 +57,25 @@ Requires Windows 11 with the Microsoft Edge WebView2 Runtime, with native x64 an
 Google Gemini and YouTube are trademarks of Google LLC; OpenAI is a trademark of OpenAI OpCo, LLC; Claude is a trademark of Anthropic, PBC; Mistral AI is a trademark of Mistral AI; Microsoft Word is a trademark of the Microsoft group of companies. Kalamu is an independent project, not affiliated with or endorsed by any of them.
 ```
 
-### What's new in this version — 1.10.0
+### What's new in this version — 1.10.1
+
+```text
+Fixes, two days after 1.10.0.
+
+Save to a file: a project is never saved without a text its jobs read. Kalamu says which documents are concerned, and a file saved earlier is left as it was.
+
+Exports never replace a workbook or CSV you kept beside them: the new ones are numbered, and the message says so.
+
+Two files can no longer be given the same name, in a job's results or when a project file is opened.
+
+Cheaper mode: the estimate counts the discount only for what the run really sends in a batch, and says why a model gets none.
+
+Which of these speak of my question: Keep and Set aside hold when the interface changes language, and answers given under a changed prompt stand apart, with their date.
+
+New in the review: a right click on a region or in the text compared offers its actions, and a region's card can be moved out of the way. Gemini 4 Neon replaces Gemini 4 Argon.
+```
+
+The 1.10.0 text, live in the Store since that update:
 
 ```text
 Which of these speak of my question: a model reads a project's documents against your research question and says which do, why, and with which passages, each found word for word with its page. Keep or set aside each one.
@@ -308,7 +326,25 @@ Nécessite Windows 11 avec Microsoft Edge WebView2 Runtime, en versions natives 
 Google Gemini et YouTube sont des marques de Google LLC ; OpenAI est une marque d’OpenAI OpCo, LLC ; Claude est une marque d’Anthropic, PBC ; Mistral AI est une marque de Mistral AI ; Microsoft Word est une marque du groupe Microsoft. Kalamu est un projet indépendant, ni affilié à aucune d’elles ni approuvé par elles.
 ```
 
-### Nouveautés de cette version — 1.10.0
+### Nouveautés de cette version — 1.10.1
+
+```text
+Des corrections, deux jours après la version 1.10.0.
+
+Enregistrer dans un fichier : un projet n’est jamais enregistré sans un texte que ses traitements ont lu. Kalamu dit quels documents sont concernés, et un fichier enregistré auparavant reste tel quel.
+
+Les exports ne remplacent jamais un classeur ou un CSV que vous gardiez à côté : les nouveaux sont numérotés, et le message le dit.
+
+Deux fichiers ne peuvent plus recevoir le même nom, dans les résultats d’un traitement ou à l’ouverture d’un fichier de projet.
+
+Mode économique : l’estimation ne compte la réduction que pour ce qui est vraiment envoyé par lots, et dit pourquoi un modèle n’en a pas.
+
+Lesquels parlent de ma question : Garder et Écarter tiennent quand l’interface change de langue, et les réponses données avec un prompt modifié sont rangées à part, avec leur date.
+
+Nouveau dans la relecture : un clic droit sur une zone ou dans le texte comparé propose ses actions, et le panneau d’une zone peut être déplacé. Gemini 4 Neon remplace Gemini 4 Argon.
+```
+
+Le texte de 1.10.0, en ligne dans le Store depuis cette mise à jour :
 
 ```text
 Lesquels parlent de ma question : un modèle lit les documents d’un projet au regard de votre question de recherche et dit lesquels en parlent, pourquoi et avec quels passages, chacun retrouvé mot pour mot avec sa page. Gardez ou écartez chacun.
@@ -477,9 +513,9 @@ Fill in the bracketed parts at submission. These notes are seen only by the cert
 team; a test key may be given here, never in the listing.
 
 ```text
-Product: Kalamu. Version: 1.10.0.0, native x64 and ARM64. Windows 11 with Edge WebView2 Runtime. Kalamu extracts text from documents, transcribes recordings and analyses texts with an AI provider the user configures with their own API key (Google Gemini, OpenAI, Anthropic Claude or Mistral), or works offline with Whisper (transcription), Tesseract and two small OCR models, LightOnOCR-3 and GLM-OCR (text extraction), and two small language models, Gemma 4 E4B and E2B (analyses, tables of contents, corrections). The app supplies no cloud account or credits; provider usage is billed to the user's own account, as the listing states.
+Product: Kalamu. Version: 1.10.1.0, native x64 and ARM64. Windows 11 with Edge WebView2 Runtime. Kalamu extracts text from documents, transcribes recordings and analyses texts with an AI provider the user configures with their own API key (Google Gemini, OpenAI, Anthropic Claude or Mistral), or works offline with Whisper (transcription), Tesseract and two small OCR models, LightOnOCR-3 and GLM-OCR (text extraction), and two small language models, Gemma 4 E4B and E2B (analyses, tables of contents, corrections). The app supplies no cloud account or credits; provider usage is billed to the user's own account, as the listing states.
 
-Sample files for testing: https://github.com/fmadore/Kalamu/releases/download/v1.10.0/kalamu-samples.zip, with a README.txt: a 20-second spoken recording (interview.wav, made with Windows speech synthesis), a handwritten French report of 1755 (dodington-1755.jpg, Bibliothèque nationale de France, public domain), a 1911 university newspaper page with its machine-read text layer (daily-nebraskan-1911.pdf, Library of Congress, public domain), a whole four-page issue of the same paper, scans only, for a table of contents (daily-nebraskan-1911-issue.pdf), and an invented newspaper page with its text (bulletin-page.jpg, bulletin.txt).
+Sample files for testing: https://github.com/fmadore/Kalamu/releases/download/v1.10.1/kalamu-samples.zip, with a README.txt: a 20-second spoken recording (interview.wav, made with Windows speech synthesis), a handwritten French report of 1755 (dodington-1755.jpg, Bibliothèque nationale de France, public domain), a 1911 university newspaper page with its machine-read text layer (daily-nebraskan-1911.pdf, Library of Congress, public domain), a whole four-page issue of the same paper, scans only, for a table of contents (daily-nebraskan-1911-issue.pdf), and an invented newspaper page with its text (bulletin-page.jpg, bulletin.txt).
 
 Offline route, with no account or key:
 1. On a first launch, with no key and nothing installed, Kalamu opens on Settings with a welcome; choose Use a model on this computer, or the Offline tab, and under Transcription with Whisper download Whisper Base (about 60 MB; internet needed once). The download can be cancelled.
