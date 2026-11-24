@@ -96,6 +96,8 @@ test('a complete project file names no missing text', async ({ page }) => {
 test('a project file is checked without opening it, the verdict first', async ({ page }) => {
 	await open(page, '&renamed');
 	const main = page.getByRole('main');
+	// The list is there before it is counted: a count does not wait for it.
+	await expect(main.getByRole('listitem').first()).toBeVisible();
 	const projects = await main.getByRole('listitem').count();
 	await main.getByRole('button', { name: 'Check a project file…' }).click();
 	const dialog = page.getByRole('dialog', { name: 'Check a project file' });
