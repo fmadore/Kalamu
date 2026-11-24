@@ -14,6 +14,12 @@
         ],
         "createdAt": "2026-10-28T07:59:19.405Z",
         "reason": "Claude: src is bound with {src} to a drawn thumbnail data URL, rendered only when set; alt is empty on purpose because the strip button carries the page's accessible name"
+      },
+      {
+        "rule": "overused-font",
+        "value": "instrument sans",
+        "createdAt": "2026-11-24T10:48:30.403Z",
+        "reason": "DESIGN.md names Instrument Sans as Kalamu's interface face; the site reuses the app's and home page's faces on purpose"
       }
     ]
   }

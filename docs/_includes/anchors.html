@@ -1,0 +1,12 @@
+<script>
+  // A link after each section's heading, to copy or share the address of that section.
+  // The ids come from Jekyll; without the script the headings simply have no link.
+  for (const heading of document.querySelectorAll('main h2[id], main h3[id]')) {
+    const link = document.createElement('a');
+    link.className = 'anchor';
+    link.href = '#' + heading.id;
+    link.setAttribute('aria-label', '{{ include.t_anchor }}' + heading.textContent);
+    link.textContent = '#';
+    heading.append(' ', link);
+  }
+</script>

@@ -1,0 +1,39 @@
+{% comment %}
+  The home page's header, for the pages Jekyll lays out (the guide, the privacy policy): the mark
+  and name back to the home page, a few links, and the other language when the page has one.
+  Takes `root` (the way back to the site's root, e.g. '../'), `current` ('guide' or 'privacy'),
+  `other` (the address of the same page in the other language, if any) and the words below.
+  docs/index.html and docs/fr/index.html draw the same header in their own markup.
+{% endcomment %}
+<header class="wrap top">
+  <a class="logo" href="{{ include.root }}{{ include.home }}" aria-label="{{ include.t_home }}">
+    <svg viewBox="0 0 22 22" aria-hidden="true">
+      <rect width="22" height="22" rx="5" fill="#1e1d1b" />
+      <g transform="rotate(-9 8.5 11)">
+        <rect x="3.6" y="4.4" width="9.6" height="13" rx="1" fill="#efe1c3" />
+        <rect x="5" y="7" width="5" height="1.3" rx="0.65" fill="#8a5a3b" />
+        <rect x="5" y="10" width="6" height="1.3" rx="0.65" fill="#8a5a3b" />
+      </g>
+      <g transform="rotate(6 13.5 11.5)">
+        <rect x="8.8" y="4.6" width="9.6" height="13" rx="1" fill="#ffffff" />
+        <rect x="10.4" y="7" width="6.4" height="1.4" rx="0.7" fill="#9a9ea6" />
+        <rect x="10" y="10" width="7.2" height="2.4" rx="0.8" fill="#ffd84d" />
+        <rect x="10.4" y="14" width="5" height="1.4" rx="0.7" fill="#9a9ea6" />
+      </g>
+    </svg>
+    <span>Kalamu</span>
+  </a>
+  <nav aria-label="{{ include.t_site }}">
+    <ul>
+      <li class="wide"><a href="{{ include.root }}{{ include.home }}">{{ include.t_home_short }}</a></li>
+      <li class="keep"><a href="{{ include.root }}{{ include.guide }}"{% if include.current == 'guide' %} aria-current="page"{% endif %}>{{ include.t_guide }}</a></li>
+      <li class="wide"><a href="{{ include.root }}privacy.html"{% if include.current == 'privacy' %} aria-current="page"{% endif %}>{{ include.t_privacy }}</a></li>
+      <li class="wide"><a href="{{ include.root }}{{ include.home }}#download">{{ include.t_download }}</a></li>
+      {% if include.other %}
+      <li class="keep">
+        <a class="lang" href="{{ include.other }}" hreflang="{{ include.other_lang }}" lang="{{ include.other_lang }}">{{ include.t_other }}</a>
+      </li>
+      {% endif %}
+    </ul>
+  </nav>
+</header>

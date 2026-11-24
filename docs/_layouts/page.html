@@ -1,0 +1,43 @@
+<!doctype html>
+{% comment %}
+  A page for visitors other than the guide (the privacy policy), in the home page's look
+  (assets/site.css): its header on the cream band, the page's title under it, the page's
+  sections beside the text, its footer. English only, at the site's root: a page in a folder
+  says how to reach the root in `root` (e.g. '../').
+{% endcomment %}
+{% assign root = page.root | default: '' %}
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>{{ page.title }} · Kalamu</title>
+    {% if page.description %}<meta name="description" content="{{ page.description }}" />{% endif %}
+    <link rel="icon" href="{{ root }}assets/home/mark.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="{{ root }}assets/site.css" />
+  </head>
+  <body>
+    <a class="skip" href="#content">Skip to the text</a>
+    <div class="band">
+      {% include site-header.html root=root home='' guide='guide/' current=page.current t_home='Kalamu, home' t_home_short='Home' t_site='Site' t_guide='Guide' t_privacy='Privacy' t_download='Download' %}
+      <div class="wrap page-head">
+        {% if page.kicker %}<p class="kicker">{{ page.kicker }}</p>{% endif %}
+        <h1>{{ page.title }}</h1>
+        {% if page.lede %}<p class="lede">{{ page.lede }}</p>{% endif %}
+      </div>
+    </div>
+
+    <div class="wrap doc">
+      <nav class="side side-sections" aria-label="On this page">
+        <p class="side-title">On this page</p>
+        {% include sections.html html=content %}
+      </nav>
+      <main id="content" class="prose {{ page.current }}">
+        {{ content }}
+      </main>
+    </div>
+
+    {% include site-footer.html root=root lang='en' t_issue=page.issue %}
+    {% include anchors.html t_anchor='Link to this section: ' %}
+  </body>
+</html>

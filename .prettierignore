@@ -16,5 +16,6 @@ src/lib/searchRules.json
 src/lib/coreLists.json
 src/lib/matchCases.json
 src/lib/i18n/defaultFields.json
-# A Jekyll layout: Liquid tags Prettier would rewrite
+# Jekyll layouts and includes: Liquid tags Prettier would rewrite
 docs/_layouts/
+docs/_includes/
