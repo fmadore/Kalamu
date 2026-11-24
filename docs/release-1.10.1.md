@@ -1,8 +1,8 @@
-Kalamu 1.10.1 repairs what a review of the whole repository found on 23 November 2026, two days
+Kalamu 1.10.1 repairs what a review of the whole repository found on 23 November 2026, the day
 after 1.10.0: a project could be saved to a file without a text its jobs had read, an export
 could replace a workbook kept beside it, two files could be given one name, and economy mode's
-estimate promised a discount the run did not give. The review of a text extraction also gains
-menus on a right click. For what 1.10.0 brought, see the
+estimate promised a discount the run did not give. A project file can now be checked without
+opening it, and the review of a text extraction gains menus on a right click. For what 1.10.0 brought, see the
 [1.10.0 release](https://github.com/fmadore/Kalamu/releases/tag/v1.10.0).
 
 ## What is fixed since 1.10.0
@@ -70,6 +70,16 @@ menus on a right click. For what 1.10.0 brought, see the
 
 ## What is new
 
+- **Check a project file**
+  ([#260](https://github.com/fmadore/Kalamu/pull/260),
+  [#246](https://github.com/fmadore/Kalamu/issues/246),
+  [decision](https://github.com/fmadore/Kalamu/blob/main/docs/decisions/2026-11-24-check-project-file.md)).
+  Before you rely on a `.kalamu` file as your only copy, or move to a new computer, **Check a
+  project file…** in the list of projects reads it without opening it: whether it is whole,
+  whether every text and original file in it is intact, which documents will have to be found
+  again on the other computer, and which files would take another name there. Nothing is
+  sent, changed or added. **Save to a file…** now checks its own file the same way before the
+  file takes its name, so a file that does not check never replaces one you saved earlier.
 - **Menus on a right click in the review, and a card that moves**
   ([#233](https://github.com/fmadore/Kalamu/pull/233)). A right click on a region of the scan
   (or the menu key) offers what its card offers and **Copy its text**; a right click in the
@@ -125,7 +135,8 @@ still hold. What this version changes among them, and adds:
   afterwards.
 - **A job written by 1.10.0 with two sources under one name** keeps its old files until the
   sources are written again: the later source's results then appear under `name (2) (2)`.
-- **A project file has still not been carried from Windows to a Mac.**
+- **A project file has still not been carried from Windows to a Mac**, nor checked there. The
+  check does not find rows the job database would refuse: those still show only on opening.
 - **The menus on a right click and the card that moves** have run in WebKit in the tests, not
   on a real Mac.
 

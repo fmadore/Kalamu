@@ -21,7 +21,8 @@ on 22 November and tried by hand on Windows as `v1.10.0-rc1` and `rc2`
 carries everything of 1.9.0 ([notes](release-1.9.0.md)), published on GitHub on 20 November and
 never submitted to the Store. **1.10.1 is the next update** ([notes](release-1.10.1.md)): the
 eight bugs a review of the repository found on 23 November, among them a project saved to a
-file without a text its jobs had read and an export that replaced a workbook kept beside it.
+file without a text its jobs had read and an export that replaced a workbook kept beside it,
+and a project file checked without opening it.
 Its `Kalamu_1.10.1.msixbundle` comes from the v1.10.1 tag, with What's new and the
 certification notes in [store-listing.md](store-listing.md). The privacy policy and website
 addresses given in Partner Center move to `kalamu.frederickmadore.com` with a submission after

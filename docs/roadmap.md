@@ -24,7 +24,9 @@ the plain-first round.
 and not yet tagged: the eight bugs a review of the repository found on 23 November
 ([#237](https://github.com/fmadore/Kalamu/issues/237) to
 [#244](https://github.com/fmadore/Kalamu/issues/244)), all fixed on `main` that day and the
-next, and the review's menus on a right click. No test pass by hand has run on it. Once it is
+next, a project file checked without opening it
+([#246](https://github.com/fmadore/Kalamu/issues/246)), Gemini 4 Neon in place of Argon, and
+the review's menus on a right click. No test pass by hand has run on it. Once it is
 submitted, the guide and the privacy policy move to `kalamu.frederickmadore.com`
 ([#228](https://github.com/fmadore/Kalamu/issues/228)), which waited for 1.10.0 to reach the
 Store. The paragraph below is how 1.8.0 and 1.9.0 stood on 20 November.

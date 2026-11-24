@@ -60,9 +60,11 @@ Google Gemini and YouTube are trademarks of Google LLC; OpenAI is a trademark of
 ### What's new in this version — 1.10.1
 
 ```text
-Fixes, two days after 1.10.0.
+Fixes since 1.10.0, and one new check.
 
 Save to a file: a project is never saved without a text its jobs read. Kalamu says which documents are concerned, and a file saved earlier is left as it was.
+
+New: Check a project file reads a saved project without opening it and says whether everything in it is intact, before you rely on it or move to another computer.
 
 Exports never replace a workbook or CSV you kept beside them: the new ones are numbered, and the message says so.
 
@@ -329,9 +331,11 @@ Google Gemini et YouTube sont des marques de Google LLC ; OpenAI est une marque 
 ### Nouveautés de cette version — 1.10.1
 
 ```text
-Des corrections, deux jours après la version 1.10.0.
+Des corrections depuis la version 1.10.0, et une nouvelle vérification.
 
 Enregistrer dans un fichier : un projet n’est jamais enregistré sans un texte que ses traitements ont lu. Kalamu dit quels documents sont concernés, et un fichier enregistré auparavant reste tel quel.
+
+Nouveau : Vérifier un fichier de projet lit un projet enregistré sans l’ouvrir et dit si tout ce qu’il contient est intact, avant de compter dessus ou de changer d’ordinateur.
 
 Les exports ne remplacent jamais un classeur ou un CSV que vous gardiez à côté : les nouveaux sont numérotés, et le message le dit.
 
