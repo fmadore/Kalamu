@@ -162,6 +162,13 @@ Rules that keep this modular:
   is merged, then is rebased onto `main`; or it is retargeted to `main` before it is merged.
   A pull request merged into a branch that already reached `main` never reaches it: #99's
   work was lost that way until #101 replayed it.
+- **Clean up after merging.** Once a pull request is merged, remove its worktree
+  (`git worktree remove`) and delete its local branch; `git fetch --prune` drops the remote
+  one. Every few pull requests, or when `git worktree list` or `git branch` grows past a
+  handful, sweep the lot: a branch can go once `git cherry origin/main <branch>` shows no `+`
+  line (squash merges included) and its worktree has nothing uncommitted. Anything else is
+  asked about, not deleted. Never delete the remote `stats` branch: it is never merged, and
+  `.github/workflows/stats.yml` writes the repository's daily statistics to it.
 
 ## Architecture checkpoints
 
