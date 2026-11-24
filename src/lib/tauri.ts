@@ -88,6 +88,7 @@ import type { MeaningView } from './bindings/MeaningView.js';
 import type { Neighbour } from './bindings/Neighbour.js';
 import type { SpaceChoice } from './bindings/SpaceChoice.js';
 import type { ProjectSummary } from './bindings/ProjectSummary.js';
+import type { ProjectFileCheck } from './bindings/ProjectFileCheck.js';
 import type { ProjectFileOpened } from './bindings/ProjectFileOpened.js';
 import type { ProjectFilePlan } from './bindings/ProjectFilePlan.js';
 import type { ProjectFileProgress } from './bindings/ProjectFileProgress.js';
@@ -507,6 +508,8 @@ export const api = {
 		invoke<ProjectFileSaved>('save_project_file', { project, path, withOriginals }),
 	/** Opens a project file as a new project beside the others. */
 	openProjectFile: (path: string) => invoke<ProjectFileOpened>('open_project_file', { path }),
+	/** Checks a project file without opening it; its progress comes as `project-file-progress`. */
+	checkProjectFile: (path: string) => invoke<ProjectFileCheck>('check_project_file', { path }),
 	setShellLabels: (labels: ShellLabels) => invoke<void>('set_shell_labels', { labels }),
 	hideWindow: () => invoke<void>('hide_window'),
 	quitApp: () => invoke<void>('quit_app')

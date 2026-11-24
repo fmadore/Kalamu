@@ -183,6 +183,7 @@
     "allow-plan-project-file",
     "allow-save-project-file",
     "allow-open-project-file",
+    "allow-check-project-file",
     "allow-dictionary-view",
     "allow-dictionary-evidence",
     "allow-dictionary-merge",

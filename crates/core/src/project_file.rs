@@ -72,6 +72,9 @@ pub struct ProjectFileSaved {
     /// Originals carried, and those that could not be (not found, or changed since).
     pub originals: u32,
     pub originals_left: u32,
+    /// The file written, checked as *Check a project file…* checks one before it took its
+    /// name: a file that does not check fails the save, so this one is whole.
+    pub check: ProjectFileCheck,
 }
 
 /// A project opened from a file: a new project beside the others.
@@ -107,6 +110,68 @@ pub struct MissingText {
     pub jobs: Vec<String>,
     /// The text's name as its source records it, for when no document names it.
     pub file_name: String,
+}
+
+/// What a check of a project file found, in one word: whether opening it would bring back
+/// everything it holds.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "snake_case")]
+#[ts(export)]
+pub enum ProjectFileVerdict {
+    /// Everything in the file can be opened as it was saved.
+    Whole,
+    /// It opens, but frozen texts its jobs read are not in it (a file saved by 1.10.0).
+    Incomplete,
+    /// Files it carries no longer match their fingerprints: opening it would be refused.
+    Damaged,
+}
+
+/// A project file checked without opening it (#246): read, never written, nothing created and
+/// no provider called. A file this version cannot read at all (not a project file, damaged
+/// beyond reading, or newer) is refused with the same error as opening it instead.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct ProjectFileCheck {
+    pub verdict: ProjectFileVerdict,
+    /// The project's name, as the file saved it.
+    pub name: String,
+    pub saved_at: Timestamp,
+    /// The version of Kalamu that saved it.
+    pub app_version: String,
+    pub documents: u32,
+    /// The jobs that read the project's documents, as the project's card counts them.
+    pub jobs: u32,
+    /// The frozen texts carried whole.
+    pub texts: u32,
+    /// The frozen texts the jobs read that the file does not carry, and who read them.
+    pub missing_texts: Vec<MissingText>,
+    /// The files it carries whose bytes no longer match their fingerprints, by their names.
+    pub damaged: Vec<String>,
+    /// Whether the file was saved with its originals.
+    pub with_originals: bool,
+    /// Originals carried whole.
+    pub originals: u32,
+    /// Originals left out because the file was saved without them.
+    pub originals_not_chosen: u32,
+    /// Originals chosen that could not be carried (not found, or changed since read).
+    pub originals_left: u32,
+    /// The documents whose original files are not in the file, by their titles: on another
+    /// computer they show as missing until their files are found again.
+    pub to_find: Vec<String>,
+    /// The originals that opening would write under another name on this computer: a name
+    /// this system refuses, or two names that become one here (#238).
+    pub renamed: Vec<RenamedOriginal>,
+}
+
+/// An original that opening a project file would write under another name.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct RenamedOriginal {
+    /// The documents it belongs to, by their titles; empty when none is linked.
+    pub documents: Vec<String>,
+    /// Its name as it was saved, and the name it would take here.
+    pub from: String,
+    pub to: String,
 }
 
 /// The manifest at the head of a project file.
@@ -169,8 +234,8 @@ impl ProjectFileError {
     }
 }
 
-/// Saves a project to a file and opens one, as a new project. Implemented by the job database,
-/// whose tables the file holds.
+/// Saves a project to a file, checks one, and opens one as a new project. Implemented by the
+/// job database, whose tables the file holds.
 pub trait ProjectArchive: Send + Sync {
     /// What saving `project` would write, with and without its originals.
     fn plan_project_file(
@@ -196,6 +261,15 @@ pub trait ProjectArchive: Send + Sync {
         places: &ArchivePlaces,
         progress: &dyn Fn(ProjectFileProgress),
     ) -> Result<ProjectFileOpened, ProjectFileError>;
+
+    /// Checks the file at `path` without opening it: whether it can be read, whether each file
+    /// it carries matches its fingerprint, and what opening it would not bring back as it was.
+    /// Writes nothing outside the temporary folder and changes nothing in the store.
+    fn check_project_file(
+        &self,
+        path: &Path,
+        progress: &dyn Fn(ProjectFileProgress),
+    ) -> Result<ProjectFileCheck, ProjectFileError>;
 }
 
 /// A path's folders and name, written with either system's separator: a path saved on

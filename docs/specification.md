@@ -954,7 +954,13 @@ analysed, compared. A **project** keeps it together
   the documents show as missing, the text, review and exports work, and the sentence after
   opening says how the pages come back. A file that is not a project file, a damaged one, or
   one saved by a newer Kalamu is refused in a sentence; an open that fails leaves nothing
-  behind. Merging a colleague's corrections into one's own project comes later.
+  behind. *Check a project file…* beside it reads a file without opening it, writing nothing
+  and calling no provider ([#246](https://github.com/fmadore/Kalamu/issues/246)): a verdict
+  first (whole, opens with texts missing, or damaged), then each frozen text and original
+  checked against its fingerprint, the documents whose originals are not in it, and the
+  originals this system would rename. Every save checks its file the same way before the file
+  takes its name, and keeps only one that checks. Merging a colleague's corrections into one's
+  own project comes later.
 - **Search through every document's text**: see [Project search](#project-search).
 
 ### Project dictionary

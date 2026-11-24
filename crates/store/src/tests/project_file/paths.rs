@@ -5,7 +5,7 @@ use super::*;
 
 /// Rewrites, everywhere the file holds it, the letter's path as `to`: in the JSON documents
 /// (escaped as JSON writes it) and in the list of carried files.
-fn written_elsewhere(path: &Path, from: &str, to: &str) -> Result<(), StoreError> {
+pub(super) fn written_elsewhere(path: &Path, from: &str, to: &str) -> Result<(), StoreError> {
     let json = |s: &str| serde_json::to_string(s).map(|q| q[1..q.len() - 1].to_string());
     let (from_json, to_json) = (json(from).map_err(corrupt)?, json(to).map_err(corrupt)?);
     let file = rusqlite::Connection::open(path).map_err(db)?;

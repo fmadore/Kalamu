@@ -1,20 +1,21 @@
 //! Saving a project to a file: its rows read under the store's lock into a new database beside
-//! the file chosen (`<name>.kalamu.part`), the files it carries written after, the part renamed
-//! once whole. A failure, a frozen text missing or changed among them, deletes the part and
-//! leaves a file saved earlier under that name as it was.
+//! the file chosen (`<name>.kalamu.part`), the files it carries written after, then the part
+//! checked as *Check a project file…* checks one (#246), and renamed only once it checks. A
+//! failure, a frozen text missing or changed or a part that does not check among them, deletes
+//! the part and leaves a file saved earlier under that name as it was.
 
 use std::path::{Path, PathBuf};
 
 use kalamu_core::project_file::{self as pf, ArchivePlaces};
 use kalamu_core::{
-    PieceStatus, ProjectFileError, ProjectFilePlan, ProjectFileProgress, ProjectFileSaved,
-    ProjectId,
+    PieceStatus, ProjectFileCheck, ProjectFileError, ProjectFilePlan, ProjectFileProgress,
+    ProjectFileSaved, ProjectFileVerdict, ProjectId,
 };
 use rusqlite::types::Value;
 use rusqlite::{Connection, ToSql};
 
 use super::selection::{self, Selection};
-use super::{ROLE_ORIGINAL, TABLES, carried, create_schema, manifest, rows, write_err};
+use super::{ROLE_ORIGINAL, TABLES, carried, check, create_schema, manifest, rows, write_err};
 use crate::{SqliteStore, db};
 
 /// The rows of each table a project's file holds, by the named arguments `:project` (its id),
@@ -163,22 +164,71 @@ pub(super) fn save(
     progress: &dyn Fn(ProjectFileProgress),
 ) -> Result<ProjectFileSaved, ProjectFileError> {
     let part = part_of(path);
-    let written =
-        write(store, project, &part, with_originals, places, progress).and_then(|saved| {
-            std::fs::rename(&part, path).map_err(write_err)?;
-            Ok(saved)
-        });
-    match written {
-        Ok((originals, originals_left)) => Ok(ProjectFileSaved {
-            path: path.display().to_string(),
-            bytes: std::fs::metadata(path).map(|m| m.len()).unwrap_or_default(),
-            originals,
-            originals_left,
-        }),
+    match write_checked(store, project, &part, with_originals, places, progress) {
+        Ok((originals, originals_left, check)) => {
+            if let Err(e) = std::fs::rename(&part, path) {
+                let _ = std::fs::remove_file(&part);
+                return Err(write_err(e));
+            }
+            Ok(ProjectFileSaved {
+                path: path.display().to_string(),
+                bytes: std::fs::metadata(path).map(|m| m.len()).unwrap_or_default(),
+                originals,
+                originals_left,
+                check,
+            })
+        }
         Err(e) => {
             let _ = std::fs::remove_file(&part);
             Err(e)
         }
+    }
+}
+
+/// Writes the part, then checks it as *Check a project file…* would: only a part that checks
+/// may take the file's name. Writing fills the first half of the progress, the check the
+/// second.
+fn write_checked(
+    store: &SqliteStore,
+    project: ProjectId,
+    part: &Path,
+    with_originals: bool,
+    places: &ArchivePlaces,
+    progress: &dyn Fn(ProjectFileProgress),
+) -> Result<(u32, u32, ProjectFileCheck), ProjectFileError> {
+    let writing = |p: ProjectFileProgress| {
+        progress(ProjectFileProgress {
+            done: p.done,
+            total: p.total * 2,
+        })
+    };
+    let (originals, originals_left) =
+        write(store, project, part, with_originals, places, &writing)?;
+    let checking = |p: ProjectFileProgress| {
+        progress(ProjectFileProgress {
+            done: p.total + p.done,
+            total: p.total * 2,
+        })
+    };
+    let check = checked(check::check(part, &checking))?;
+    Ok((originals, originals_left, check))
+}
+
+/// The check of a part just written, as the save takes it: a part that cannot be read back,
+/// or whose carried files no longer match their fingerprints, was not written as it should
+/// have been, and is refused as a write that failed, naming those files.
+fn checked(
+    check: Result<ProjectFileCheck, ProjectFileError>,
+) -> Result<ProjectFileCheck, ProjectFileError> {
+    match check {
+        Ok(check) if check.verdict == ProjectFileVerdict::Damaged => Err(write_err(format!(
+            "the file written does not match what was read: {}",
+            check.damaged.join("; ")
+        ))),
+        Ok(check) => Ok(check),
+        Err(e) => Err(write_err(format!(
+            "the file written cannot be read back: {e}"
+        ))),
     }
 }
 
@@ -310,5 +360,56 @@ fn trim_job(
     }
     if let Some(at) = rows::column(columns, "status") {
         row[at] = Value::Text((*status).to_string());
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn report(verdict: ProjectFileVerdict, damaged: &[&str]) -> ProjectFileCheck {
+        ProjectFileCheck {
+            verdict,
+            name: "Mission letters".into(),
+            saved_at: kalamu_core::Timestamp(1),
+            app_version: "1.10.0".into(),
+            documents: 1,
+            jobs: 1,
+            texts: 1,
+            missing_texts: Vec::new(),
+            damaged: damaged.iter().map(|d| d.to_string()).collect(),
+            with_originals: true,
+            originals: 1,
+            originals_not_chosen: 0,
+            originals_left: 0,
+            to_find: Vec::new(),
+            renamed: Vec::new(),
+        }
+    }
+
+    #[test]
+    fn a_part_that_does_not_check_is_a_write_that_failed() {
+        let whole = report(ProjectFileVerdict::Whole, &[]);
+        assert_eq!(checked(Ok(whole.clone())).ok(), Some(whole));
+
+        let damaged = checked(Ok(report(
+            ProjectFileVerdict::Damaged,
+            &["Letter of 1915", "Map of Kayes"],
+        )));
+        let Err(e) = damaged else {
+            panic!("a damaged part was kept");
+        };
+        assert_eq!(e.code(), "project.file_write");
+        assert!(
+            e.to_string().contains("Letter of 1915; Map of Kayes"),
+            "{e}"
+        );
+
+        let unreadable = checked(Err(ProjectFileError::Damaged("malformed".into())));
+        let Err(e) = unreadable else {
+            panic!("an unreadable part was kept");
+        };
+        assert_eq!(e.code(), "project.file_write");
+        assert!(e.to_string().contains("malformed"), "{e}");
     }
 }

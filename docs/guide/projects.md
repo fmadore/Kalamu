@@ -69,7 +69,33 @@ an earlier result, Kalamu kept that text as it was then; if one of these texts i
 Kalamu's data folder, or has changed since, the save stops and says which document and which
 job it concerns. Nothing is written in that case: a file you saved earlier under the same name
 stays as it was. An original file that cannot be found, or has changed, is simply left out, and
-the dialog says how many.
+the dialog says how many. Once the file is written, and before it takes its name, Kalamu reads
+it back and checks it, as **Check a project file…** does: the save ends with "The project is
+saved in … and checked: everything in it can be opened." A file that does not check is not
+kept, the save says it could not be written, and a file you saved earlier under the same name
+stays as it was.
+
+### Check a project file
+
+Before you rely on a project file as your only copy, or before you move to a new computer,
+choose **Check a project file…** in the list of projects, then the file. Kalamu reads it on
+your computer, without opening it as a project: nothing is sent, nothing is changed, and no
+project is added. It first gives a short verdict, such as "This file is whole: everything in it
+can be opened.", then says:
+
+- which version of Kalamu saved it, and how many documents and jobs it holds;
+- whether every corrected text the jobs read is in it and intact; a file saved by Kalamu 1.10.0
+  may lack one, and the check names it with the jobs that read it;
+- how many original files are in it and intact, whether it was saved without them, and how many
+  could not be put in it;
+- which documents will show as **File missing** on another computer, because their files are
+  not in it;
+- which original files would take another name on this computer, because the system does not
+  accept their name as it is or another file already has it.
+
+If a part of the file no longer matches what was saved (a copy cut short, a damaged disk), the
+check says "This file is damaged" and names that part: ask for the file again, or save it again.
+A file saved by a newer version of Kalamu is refused as when opening it.
 
 On the other computer, Windows or Mac, choose **Open a project file…** in the list of
 projects. It opens as a new project beside the others: nothing you already have is changed.

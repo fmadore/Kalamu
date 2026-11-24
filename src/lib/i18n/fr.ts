@@ -3172,7 +3172,6 @@ export const fr: Messages = {
 		cancel: 'Annuler',
 		close: 'Fermer',
 		saving: 'Enregistrement du projet…',
-		saved: (path: string) => `Le projet est enregistré dans ${path}.`,
 		leftOut: (n: number) =>
 			n === 1
 				? '1 fichier d’origine a été laissé de côté : il est introuvable, ou il a changé depuis sa lecture.'
@@ -3191,7 +3190,54 @@ export const fr: Messages = {
 			n === 1
 				? 'Un texte corrigé lu par un traitement manquait dans le fichier : le traitement et ses résultats sont là, mais pas le texte qu’il a lu.'
 				: `${n} textes corrigés lus par des traitements manquaient dans le fichier : les traitements et leurs résultats sont là, mais pas les textes qu’ils ont lus.`,
-		missingText: (what: string, jobs: string) => `${what}, lu par ${jobs}`
+		missingText: (what: string, jobs: string) => `${what}, lu par ${jobs}`,
+		check: 'Vérifier un fichier de projet…',
+		checkTitle: 'Vérifier un fichier de projet',
+		checkLede:
+			'Kalamu lit le fichier et vérifie que tout ce qu’il contient est intact. Il ne l’ouvre pas comme projet et ne modifie rien.',
+		checking: 'Vérification du fichier…',
+		verdict: {
+			whole: 'Ce fichier est complet : tout ce qu’il contient peut être ouvert.',
+			incomplete: 'Ce fichier s’ouvre, mais il y manque des textes.',
+			damaged:
+				'Ce fichier est abîmé : certaines parties ne correspondent plus à ce qui a été enregistré, il ne peut donc pas être ouvert. Demandez-le de nouveau, ou enregistrez-le de nouveau.'
+		},
+		checkedFile: (name: string, date: string, version: string) =>
+			`« ${name} », enregistré le ${date} par Kalamu ${version}.`,
+		textsWhole: (n: number) =>
+			n === 1
+				? 'Le texte corrigé lu par les traitements s’y trouve, intact.'
+				: `Les ${n} textes corrigés lus par les traitements s’y trouvent, intacts.`,
+		checkMissingTexts: (n: number) =>
+			n === 1
+				? 'Un texte corrigé lu par un traitement manque dans le fichier : à l’ouverture, le traitement et ses résultats reviennent, mais pas le texte qu’il a lu.'
+				: `${n} textes corrigés lus par des traitements manquent dans le fichier : à l’ouverture, les traitements et leurs résultats reviennent, mais pas les textes qu’ils ont lus.`,
+		damagedParts: (n: number) =>
+			n === 1
+				? 'Cette partie ne correspond plus à ce qui a été enregistré :'
+				: 'Ces parties ne correspondent plus à ce qui a été enregistré :',
+		originalsIn: (n: number) =>
+			n === 1
+				? '1 fichier d’origine s’y trouve, intact.'
+				: `${n} fichiers d’origine s’y trouvent, intacts.`,
+		originalsNotChosen:
+			'Il a été enregistré sans les fichiers d’origine (numérisations, enregistrements) : le texte et votre travail s’y trouvent.',
+		originalsNotCarried: (n: number) =>
+			n === 1
+				? '1 fichier d’origine n’a pas pu y être mis : il était introuvable, ou il avait changé depuis sa lecture.'
+				: `${n} fichiers d’origine n’ont pas pu y être mis : ils étaient introuvables, ou ils avaient changé depuis leur lecture.`,
+		toFind: (n: number, missing: string) =>
+			n === 1
+				? `Sur un autre ordinateur, ce document s’affichera comme « ${missing} » tant que son fichier n’aura pas été retrouvé :`
+				: `Sur un autre ordinateur, ces ${n} documents s’afficheront comme « ${missing} » tant que leurs fichiers n’auront pas été retrouvés :`,
+		renamed: (n: number) =>
+			n === 1
+				? 'Ouvert sur cet ordinateur, 1 fichier d’origine prendrait un autre nom, parce que ce système refuse son nom tel quel ou qu’un autre fichier le porte déjà :'
+				: `Ouvert sur cet ordinateur, ${n} fichiers d’origine prendraient un autre nom, parce que ce système refuse leur nom tel quel ou qu’un autre fichier le porte déjà :`,
+		renamedFile: (documents: string, from: string, to: string) =>
+			`${documents ? `${documents} : ` : ''}${from} devient ${to}`,
+		savedChecked: (path: string) =>
+			`Le projet est enregistré dans ${path} et vérifié : tout ce qu’il contient peut être ouvert.`
 	},
 	os: {
 		windows: {

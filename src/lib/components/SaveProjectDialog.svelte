@@ -66,7 +66,8 @@
 	{#if action.error}<p class="chip danger" role="alert">{action.error}</p>{/if}
 
 	{#if saved}
-		<p class="done" role="status">{t.saved(saved.path)}</p>
+		<!-- Only a file that checks takes its name: one that does not fails the save. -->
+		<p class="done" role="status">{t.savedChecked(saved.path)}</p>
 		{#if saved.originals_left > 0}<p class="muted">{t.leftOut(saved.originals_left)}</p>{/if}
 		<div class="actions">
 			<button class="btn ghost" onclick={() => saved && void revealInFolder(saved.path)}>
