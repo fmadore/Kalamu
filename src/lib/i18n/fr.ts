@@ -3172,7 +3172,6 @@ export const fr: Messages = {
 		cancel: 'Annuler',
 		close: 'Fermer',
 		saving: 'Enregistrement du projet…',
-		saved: (path: string) => `Le projet est enregistré dans ${path}.`,
 		leftOut: (n: number) =>
 			n === 1
 				? '1 fichier d’origine a été laissé de côté : il est introuvable, ou il a changé depuis sa lecture.'
@@ -3238,8 +3237,7 @@ export const fr: Messages = {
 		renamedFile: (documents: string, from: string, to: string) =>
 			`${documents ? `${documents} : ` : ''}${from} devient ${to}`,
 		savedChecked: (path: string) =>
-			`Le projet est enregistré dans ${path} et vérifié : tout ce qu’il contient peut être ouvert.`,
-		checkFound: 'Kalamu a vérifié le fichier enregistré et a trouvé un problème :'
+			`Le projet est enregistré dans ${path} et vérifié : tout ce qu’il contient peut être ouvert.`
 	},
 	os: {
 		windows: {

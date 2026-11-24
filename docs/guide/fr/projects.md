@@ -78,10 +78,12 @@ si l’un de ces textes ne se trouve plus dans le dossier de données de Kalamu,
 modifié depuis, l’enregistrement s’arrête et indique le document et le traitement concernés.
 Rien n’est alors écrit : un fichier que vous aviez enregistré auparavant sous le même nom reste
 tel quel. Un fichier d’origine introuvable ou modifié est simplement laissé de côté, et la
-fenêtre indique combien. Une fois le fichier écrit, Kalamu le relit et le vérifie, comme le fait
-**Vérifier un fichier de projet…** : l’enregistrement se termine par « Le projet est enregistré
-dans … et vérifié : tout ce qu’il contient peut être ouvert. », ou indique ce que la
-vérification a trouvé.
+fenêtre indique combien. Une fois le fichier écrit, et avant qu’il prenne son nom, Kalamu le
+relit et le vérifie, comme le fait **Vérifier un fichier de projet…** : l’enregistrement se
+termine par « Le projet est enregistré dans … et vérifié : tout ce qu’il contient peut être
+ouvert. » Un fichier qui ne passe pas la vérification n’est pas gardé, l’enregistrement indique
+qu’il n’a pas pu être écrit, et un fichier enregistré auparavant sous le même nom reste tel
+quel.
 
 ### Vérifier un fichier de projet
 

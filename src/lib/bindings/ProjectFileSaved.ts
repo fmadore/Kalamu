@@ -14,6 +14,7 @@ path: string, bytes: number,
  */
 originals: number, originals_left: number, 
 /**
- * The file written, checked as *Check a project file…* checks one.
+ * The file written, checked as *Check a project file…* checks one before it took its
+ * name: a file that does not check fails the save, so this one is whole.
  */
 check: ProjectFileCheck, };

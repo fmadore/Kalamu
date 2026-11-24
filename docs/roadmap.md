@@ -845,9 +845,9 @@ A second round the same day, gathered the same way and as little tried:
   anything else: a real file carried from Windows to a Mac and back. *Check a project file…*
   ([#246](https://github.com/fmadore/Kalamu/issues/246)) is written: it reads a file without
   opening it, checks each carried file's fingerprint, and names the frozen texts missing, the
-  documents to find again and the originals renamed on this system, and every save ends with
-  it ([decision](decisions/2026-11-24-check-project-file.md)); not yet tried on a file carried
-  between Windows and a Mac.
+  documents to find again and the originals renamed on this system; a saved file is checked
+  so before it takes its name ([decision](decisions/2026-11-24-check-project-file.md)); not
+  yet tried on a file carried between Windows and a Mac.
 
 Beside them, new from that review and each to be designed in a decision first:
 

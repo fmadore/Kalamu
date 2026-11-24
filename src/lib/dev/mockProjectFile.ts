@@ -86,7 +86,13 @@ export function projectFileCommand(cmd: string, a: Record<string, unknown>): unk
 				bytes: a.withOriginals ? 3_412_400_000 : 12_400_000,
 				originals: a.withOriginals ? 3 : 0,
 				originals_left: a.withOriginals ? 1 : 0,
-				check: checked(Boolean(a.withOriginals))
+				// Only a file that checks is kept: a save that succeeds is whole.
+				check: {
+					...checked(Boolean(a.withOriginals)),
+					verdict: 'whole',
+					damaged: [],
+					missing_texts: []
+				}
 			} satisfies ProjectFileSaved;
 		case 'check_project_file':
 			if (query().has('newer-file'))

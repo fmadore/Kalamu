@@ -37,9 +37,17 @@ check needs: each carried file's role, fingerprint, size and whether it is carri
 - **Nothing is written** but, for a file saved by an older Kalamu, the copy in the temporary
   folder that opening already brings up to date and deletes. Bytes are hashed chunk by chunk
   from the file, never extracted.
-- **Every save ends with the check of the file written**, in `ProjectFileSaved::check`. Writing
-  fills the first half of the progress and the check the second, so one bar covers both. A
-  whole file ends the save with "saved and checked"; anything else shows the report.
+- **A save checks its part before the part takes the file's name.** The part
+  (`<name>.kalamu.part`) is written, checked as above, and renamed only when it reads back and
+  every carried file matches its fingerprint. A part that cannot be read back, or is damaged,
+  is deleted and the save fails as a write that failed (`project.file_write`), the files that
+  did not match named in the error's detail; a file saved earlier under that name stays as it
+  was, as for a frozen text missing ([decision](2026-11-23-frozen-texts-always-carried.md)).
+  Checking after the rename would have replaced a good earlier file before knowing the new
+  one was good. A part with frozen texts missing cannot reach the check: the save already
+  failed. So a save that succeeds is whole, says "saved and checked", and returns the check in
+  `ProjectFileSaved::check`. Writing fills the first half of the progress and the check the
+  second, so one bar covers both.
 - **Only file names are reported as renamed.** A folder numbered because two folders share a
   name (`Archives 2`) changes no document's file name, and is left out.
 

@@ -72,7 +72,8 @@ pub struct ProjectFileSaved {
     /// Originals carried, and those that could not be (not found, or changed since).
     pub originals: u32,
     pub originals_left: u32,
-    /// The file written, checked as *Check a project file…* checks one.
+    /// The file written, checked as *Check a project file…* checks one before it took its
+    /// name: a file that does not check fails the save, so this one is whole.
     pub check: ProjectFileCheck,
 }
 
@@ -233,8 +234,8 @@ impl ProjectFileError {
     }
 }
 
-/// Saves a project to a file, checks one, and opens one as a new project. Implemented by the job database,
-/// whose tables the file holds.
+/// Saves a project to a file, checks one, and opens one as a new project. Implemented by the
+/// job database, whose tables the file holds.
 pub trait ProjectArchive: Send + Sync {
     /// What saving `project` would write, with and without its originals.
     fn plan_project_file(

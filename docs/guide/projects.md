@@ -69,9 +69,11 @@ an earlier result, Kalamu kept that text as it was then; if one of these texts i
 Kalamu's data folder, or has changed since, the save stops and says which document and which
 job it concerns. Nothing is written in that case: a file you saved earlier under the same name
 stays as it was. An original file that cannot be found, or has changed, is simply left out, and
-the dialog says how many. Once the file is written, Kalamu reads it back and checks it, as
-**Check a project file…** does: the save ends with "The project is saved in … and checked:
-everything in it can be opened.", or says what the check found.
+the dialog says how many. Once the file is written, and before it takes its name, Kalamu reads
+it back and checks it, as **Check a project file…** does: the save ends with "The project is
+saved in … and checked: everything in it can be opened." A file that does not check is not
+kept, the save says it could not be written, and a file you saved earlier under the same name
+stays as it was.
 
 ### Check a project file
 

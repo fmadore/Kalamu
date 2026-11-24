@@ -6,8 +6,8 @@
 //! project, then writes the files it carries without holding it. Opening checks the file,
 //! writes the files it carries, then puts every row in one transaction, each identifier given a
 //! new one, so the same file opened twice comes in beside itself and an open that fails leaves
-//! the store as it was. Checking reads a file as opening would, writing nothing (#246); every
-//! save ends with that check of the file written.
+//! the store as it was. Checking reads a file as opening would, writing nothing (#246); a save
+//! checks its part so before the part takes the file's name.
 
 use std::path::Path;
 

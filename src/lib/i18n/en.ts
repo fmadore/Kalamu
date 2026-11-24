@@ -2739,7 +2739,6 @@ export const en = {
 		cancel: 'Cancel',
 		close: 'Close',
 		saving: 'Saving the project…',
-		saved: (path: string) => `The project is saved in ${path}.`,
 		leftOut: (n: number) =>
 			n === 1
 				? '1 original file was left out: it could not be found, or it changed since it was read.'
@@ -2803,8 +2802,7 @@ export const en = {
 		renamedFile: (documents: string, from: string, to: string) =>
 			`${documents ? `${documents}: ` : ''}${from} becomes ${to}`,
 		savedChecked: (path: string) =>
-			`The project is saved in ${path} and checked: everything in it can be opened.`,
-		checkFound: 'Kalamu checked the saved file and found a problem:'
+			`The project is saved in ${path} and checked: everything in it can be opened.`
 	},
 	os: {
 		windows: {

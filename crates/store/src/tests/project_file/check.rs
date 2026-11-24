@@ -68,14 +68,27 @@ fn a_whole_file_passes_and_nothing_is_written_or_created() -> Result<(), Project
 }
 
 #[test]
-fn a_save_ends_with_the_check_of_the_file_written() -> Result<(), ProjectFileError> {
+fn a_save_checks_its_file_before_it_takes_its_name() -> Result<(), ProjectFileError> {
     let f = fixture()?;
     let path = f.dir.path().join("Mission letters.kalamu");
+    let progress = std::cell::RefCell::new(Vec::new());
     let saved = f
         .store
-        .save_project_file(f.project, &path, true, &f.places("here"), &|_| {})?;
+        .save_project_file(f.project, &path, true, &f.places("here"), &|p| {
+            progress.borrow_mut().push(p)
+        })?;
     assert_eq!(saved.check.verdict, ProjectFileVerdict::Whole);
+    // The check read the part, under another name, and found what the file now holds.
     assert_eq!(saved.check, checked(&f, &path)?);
+    assert!(!f.dir.path().join("Mission letters.kalamu.part").exists());
+    // One bar: the writing fills its first half, the check its second, to the end.
+    let progress = progress.into_inner();
+    let last = progress
+        .last()
+        .copied()
+        .unwrap_or(kalamu_core::ProjectFileProgress { done: 0, total: 0 });
+    assert!(last.total > 0 && last.done == last.total, "{last:?}");
+    assert!(progress.windows(2).all(|w| w[0].done <= w[1].done));
     Ok(())
 }
 

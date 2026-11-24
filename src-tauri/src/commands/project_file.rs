@@ -1,7 +1,7 @@
 //! A project saved as one file and opened on another computer (#213): what saving would write,
-//! the save itself, the open and a check without opening (#246), each off the window's thread, telling the interface how far
-//! it has got. The work is the job database's (`ProjectArchive`); this gives it the data
-//! folder's places.
+//! the save itself, the open and a check without opening (#246), each off the window's thread,
+//! telling the interface how far it has got. The work is the job database's
+//! (`ProjectArchive`); this gives it the data folder's places.
 
 use kalamu_core::{
     ArchivePlaces, ProjectFileCheck, ProjectFileOpened, ProjectFilePlan, ProjectFileProgress,
