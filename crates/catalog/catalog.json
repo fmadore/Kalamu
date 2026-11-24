@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "updated": "2026-11-24",
-  "latest_version": "1.10.0",
+  "latest_version": "1.10.1",
   "notes": "Prices are USD from each provider's published list, checked on the date above; they change, so the app shows estimates only. Models marked 'preview' may change or be withdrawn. Cached-input and cache-write prices apply to the part of a prompt the provider reads from or writes to its prompt cache; batch_discount is the share taken off every price in economy mode, through the provider's batch service. max_input_tokens is the most a model reads in one request, as its provider documents it (the whole window where the provider gives one for the request and the answer together); for the models run on this computer, what the offline engine sends them, at four characters a token.",
   "providers": [
     {
