@@ -5,7 +5,7 @@ where 1.10.0 is live and 1.10.1 is the next update, its *What's new* and certifi
 below (the first version, 1.0.0, was certified on 2 November 2026), in
 [English](#english-united-states) and [French](#french-france), then the
 [Mac App Store](#mac-app-store-app-store-connect) (App Store Connect), where 1.6.0, the first
-submission, is in review and 1.7.0 follows once Apple has answered. The submission and update
+submission, is in review and 1.10.1 is the version to submit next. The submission and update
 steps are in [microsoft-store.md](microsoft-store.md) and [mac-app-store.md](mac-app-store.md). Check every block against the app as packaged before
 pasting: a listing that promises what a reviewer cannot find fails certification.
 
@@ -704,15 +704,16 @@ that the screenshots match the app.
 # Mac App Store (App Store Connect)
 
 Paste-ready text for the Mac App Store listing. Version 1.6.0, the first submission, was sent
-with it and is in review; the next version, 1.7.0, keeps the same text, with *What's New* and the
-sample files' link below. The steps,
+with an earlier text and is in review; the version to submit next is 1.10.1, whose build is
+uploaded from the `v1.10.1` tag, with the description, *What's New* and the sample files' link
+below, all brought up to what 1.10.1 holds. The steps,
 the age rating and the App Privacy answers are in [mac-app-store.md](mac-app-store.md).
 App Store Connect's limits, checked when this text was written: name and subtitle 30
 characters, promotional text 170, description 4,000, keywords 100 (comma-separated, without
 spaces after the commas, and no other company's trademark, Guideline 2.3.7), review notes
 4,000. The text here fits: name 6, subtitle 25, promotional
-text 167, description 3785, keywords 100,
-review notes 3874.
+text 167, description 3880, keywords 100,
+review notes 3875.
 
 Differences from the Microsoft Store text: macOS words (the Keychain, "your Mac"); no Buy Me a
 Coffee line, since the store build hides that link (Guideline 3.1.1); the description in short
@@ -747,33 +748,33 @@ Read scanned and handwritten documents, transcribe interviews and analyse texts 
 ### Description
 
 ```text
-Read scanned and handwritten documents, transcribe interviews and analyse texts with the AI provider of your choice, then check every result against its source. Kalamu works with Google Gemini, OpenAI, Anthropic Claude and Mistral under your own account and API key: their usage charges apply and are billed by them, and the app shows an estimated cost before anything is sent. Recordings can also be transcribed offline with Whisper, printed pages read offline with Tesseract or, for difficult print, a small OCR model, and texts analysed offline with a small language model, free, after a one-time download.
+Read scanned and handwritten documents, transcribe interviews and analyse texts with the AI provider of your choice, then check every result against its source. Kalamu works with Google Gemini, OpenAI, Anthropic Claude and Mistral under your own account and API key: their usage charges apply and are billed by them, and the app shows an estimated cost before anything is sent. Recordings can also be transcribed, printed pages read and texts analysed offline, free, after a one-time download.
 
 EXTRACT AND CORRECT TEXT
-Read PDFs and images, printed or handwritten: newspapers, reports, letters, registers, manuscripts. Keep the lines as on the page, or join them into running text. Kalamu checks the files first and suggests fixes for double pages, low resolution and quiet recordings. Correct the noisy text digital libraries supply, with every change shown against the original, or translate a text into another language.
+Read PDFs and images, printed or handwritten: newspapers, reports, letters, registers, manuscripts. Photographs of one file's pages are read as one document. Kalamu checks the files first: double pages, low resolution, photographs taken twice or blurred, quiet recordings. Try a long document on three pages first. Correct the noisy text digital libraries supply, or translate a text, each shown against its source.
 
 TRANSCRIBE
-Recordings and videos with speakers and timestamps; give the speakers their real names. Offline, Whisper transcribes on your Mac's graphics processor with no account or key, skipping silence and music, and nothing leaves the computer; give it the names and words to spell. With Gemini, public YouTube videos are transcribed from their link.
+Recordings and videos with speakers and timestamps; give the speakers their real names. Offline, Whisper transcribes on your Mac's graphics processor with no account or key, and nothing leaves the computer. With Gemini, public YouTube videos are transcribed from their link.
 
-TABLES OF CONTENTS AND ANALYSES
-Turn a newspaper issue, an archival file or a book into a detailed table of contents, one entry per article with its pages, then read each article on its own. Analyse texts with fields you define, as you would brief a research assistant: a summary, the people, places and organisations named, the tone with a reason, themes from your own list. Offline, two small language models from Google, Gemma 4 E4B and E2B, do this on your Mac with nothing sent; they are far weaker than the cloud models, so check their answers.
+CONTENTS AND ANALYSES
+Turn a newspaper issue, an archival file or a book into a table of contents, one entry per article with its pages. Analyse texts with fields you define, as you would brief a research assistant: a summary, the people and places named, themes from your own list. From an interview's transcript, get themes and passages worth quoting, each quotation found word for word in the text. Offline, two small language models, Gemma 4 E4B and E2B, do this on your Mac; they are far weaker than the cloud models, so check their answers.
 
 CHECK EVERY RESULT
-The page beside its text, the recording beside its transcript, line by line. Corrections are kept apart from the AI output, which is never overwritten, and you mark what you have reviewed. Compare two models on the same pages, their differences highlighted, with error rates against your corrections. Search a document, or a whole project, corrections included.
+The page beside its text, the recording beside its transcript, line by line. Corrections are kept apart from the AI output, which is never overwritten. Over a scan, see where the text sits, draw your own regions and have one read again. Compare two models on the same pages, with error rates against your corrections.
 
-PROJECTS AND WORKFLOWS
-Keep documents in collections and tags, each with every result read from it. A project dictionary gathers the people, places and terms your analyses found; merge spellings under your own label. Save a job's settings as a pipeline, or chain steps into a workflow that stops for your review.
+PROJECTS
+Keep documents in collections and tags, each with every result read from it. Search a project by words or by meaning, and see its documents as a map. Ask which documents speak of your research question: a model says which, why, and with which passages, each found word for word. A dictionary gathers the people, places and terms your analyses found. Save a project as one file to open on another computer, and check that file before you rely on it. Save a job's settings as a pipeline, or chain steps into a workflow that stops for your review.
 
 SAFE FOR LARGE JOBS
 Work is saved piece by piece: an interrupted job resumes where it stopped, and nothing is paid twice. The cheaper mode sends large jobs to the provider's batch service at about half the price.
 
 OPEN FORMATS
-Text, Markdown, Word, JSON, CSV, subtitles, searchable PDF and ALTO XML, each with a provenance file recording the model, prompt and settings, for your methods section.
+Text, Markdown, Word, JSON, CSV and Excel, subtitles, searchable PDF, ALTO XML and PAGE XML, each with a provenance file recording the model, prompt and settings, for your methods section.
 
 YOUR DATA
 Before the first job sent to each provider, Kalamu says what will be sent and asks you. Your files go straight from your Mac to the provider you choose; offline, nothing leaves it. API keys are kept in the macOS Keychain. The developer receives no files, results, keys or telemetry, and the app sells no subscription or credits. Results are generated by AI: check a sample against the source before relying on them.
 
-For macOS 14 or later on Apple Silicon. Interface in English and French; documents in any language the chosen model reads. Free and open source (MIT).
+For macOS 14 or later on Apple Silicon. Interface and guide in English and French; documents in any language the chosen model reads. Free and open source (MIT).
 
 Google Gemini and YouTube are trademarks of Google LLC; OpenAI of OpenAI OpCo, LLC; Claude of Anthropic, PBC; Mistral AI of Mistral AI. Kalamu is independent and not affiliated with or endorsed by any of them.
 ```
@@ -786,19 +787,30 @@ OCR,HTR,handwriting,transcription,speech to text,interview,archive,historian,dig
 
 ### What's New
 
-Not asked for the first version on the store (1.6.0). For 1.7.0, the Microsoft Store's text, which
-names no system (Apple allows 4,000 characters):
+Not asked for the first version on the store. For 1.10.1, what was added since 1.6.0, the only
+version sent to this store before it (Apple allows 4,000 characters; this is 1,793). If 1.6.0
+was never released, leave the field out where App Store Connect does not ask for it:
 
 ```text
-Translate a text: a text file, a PDF's own text or a result you have corrected is put into the language you choose, page by page, and shown beside its source to check. A workflow can translate after the pages are read and checked.
+Everything added since 1.6.0.
 
-Photographs of the pages of one letter, register or file can be read as one document, in the order of their names or the one you set by dragging.
+Which of these speak of my question: a model reads a project's documents against your research question and says which do, why, and with which passages, each found word for word with its page. Keep or set aside each one.
 
-Image description and keywords: a ready-made analysis of what a photograph, poster or map shows, with the text written on it and the names that text gives.
+Analyse this interview: themes and passages worth quoting, each backed by quotations found word for word in the transcript. Long interviews are read in parts, with your own themes or interview guide.
 
-New job lists models by provider or by tier, from each provider's most capable to its lightest, and offers only the newest model of each line: Claude Fable 5.2, Gemini 4 Carbon and Hydrogen, Mistral Large 4.
+Search a project by meaning as well as by words, and see its documents as a map. In the review, see where the text sits on a scan, draw your own regions, and have a region or a passage read again by a model.
 
-Also: a job whose model cannot read its files is refused before anything is sent, and large jobs show their progress and write their files faster.
+Save a project as one file and open it on another Mac or a PC. Check a project file reads a saved project without opening it and says whether everything in it is intact.
+
+Translate a text into the language you choose, shown beside its source. Photographs of the pages of one letter, register or file are read as one document. Records: one row per entry of a directory or register.
+
+Try a long document on three pages first, with one model or two. New job flags photographs taken twice or blurred. Every table also comes as an Excel workbook, and scans export as PAGE XML.
+
+A welcome when nothing is set up yet, the ready-made fields in French, and a guide in English and French, reached from the app.
+
+New models: Gemini 4 Hydrogen (the default), Carbon and Neon, GPT-6.2, Claude Fable 5.2, Mistral Large 4; New job offers only the newest model of each line.
+
+Fixed: a project is never saved to a file without a text its jobs read; exports never replace a workbook or CSV you kept beside them; two files can no longer be given the same name; the cheaper mode's estimate counts the discount only for what is really sent in a batch.
 ```
 
 ### URLs and copyright
@@ -821,7 +833,7 @@ given here, never in the listing. Notes:
 ```text
 Kalamu extracts text from documents, transcribes recordings and analyses texts with an AI provider the user sets up with their own API key (Google Gemini, OpenAI, Anthropic Claude or Mistral), or offline with Whisper (transcription), Tesseract and two small OCR models, LightOnOCR-3 and GLM-OCR (printed text), and two small language models, Gemma 4 E4B and E2B (analyses). No sign-in: the app has no account of its own and sells nothing; provider usage is billed to the user's own account.
 
-Sample files: https://github.com/fmadore/Kalamu/releases/download/v1.7.0/kalamu-samples.zip (interview.wav, a recording; bulletin-page.jpg, an invented newspaper page; dodington-1755.jpg, a 1755 manuscript; daily-nebraskan-1911.pdf, a 1911 newspaper page; bulletin.txt).
+Sample files: https://github.com/fmadore/Kalamu/releases/download/v1.10.1/kalamu-samples.zip (interview.wav, a recording; bulletin-page.jpg, an invented newspaper page; dodington-1755.jpg, a 1755 manuscript; daily-nebraskan-1911.pdf, a 1911 newspaper page; bulletin.txt).
 
 Offline route, no key needed:
 1. Settings > Offline > Transcription with Whisper: download Whisper Base (about 60 MB, once).
@@ -833,7 +845,7 @@ Offline route, no key needed:
 
 Cloud features need the user's own key, entered in Settings and kept in the Keychain. [Either: A test Gemini key with a spending cap: <key>. Paste it in Settings under Google Gemini, then New job > Extract text on bulletin-page.jpg, or Analyse texts on bulletin.txt. Or: No test key is provided.] Before the first job sent to a provider, a dialog names the provider, says what is sent (the pages, recordings or text and any personal information in them), that it goes under the user's account and the provider's terms, and links the privacy policy; Send records consent for that provider, Cancel sends nothing (Guideline 5.1.2(i)).
 
-Downloads (2.4.5(iv), 2.5.2): Whisper models, the OCR models and the language models (from Hugging Face) and Tesseract language data (from GitHub) are model weights and data files, not code; the features using them are in this build and are only offered for download in Settings, each verified by SHA-256. The model catalogue refreshed at start is a JSON list of models and prices from the app's GitHub repository, not code. There is no self-updater.
+Downloads (2.4.5(iv), 2.5.2): Whisper models, the OCR, language and embedding models (from Hugging Face) and Tesseract language data (from GitHub) are model weights and data files, not code; the features using them are in this build and are only offered for download in Settings, each verified by SHA-256. The model catalogue refreshed at start is a JSON list of models and prices from the app's GitHub repository, not code. There is no self-updater.
 
 Sandbox: the app reads only files and folders the user picks or drops, and keeps security-scoped bookmarks so jobs resume after a restart. FFmpeg and ffprobe inside the bundle convert audio, and llama.cpp's llama-mtmd-cli and llama-completion, also inside the bundle, run the OCR models once per page and the language models once per text; all four are signed to inherit the sandbox and open no connection. Outgoing connections only: the chosen provider, Hugging Face and GitHub for downloads the user asks for, YouTube's oEmbed and privacy-enhanced player for a public video the user pastes.
 

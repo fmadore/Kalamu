@@ -6,8 +6,9 @@ with an architecture review (see [AGENTS.md](../AGENTS.md)).
 
 ## Status (24 November 2026)
 
-**Version 1.10.0** ([notes](release-1.10.0.md)) is the latest release. Three things, each with
-its own date:
+**Version 1.10.1** ([notes](release-1.10.1.md)) is the latest release on GitHub, and **1.10.0**
+([notes](release-1.10.0.md)) the one in the Microsoft Store. For 1.10.0, three things, each
+with its own date:
 
 - **Published on GitHub**: 22 November 2026, as the
   [v1.10.0 release](https://github.com/fmadore/Kalamu/releases/tag/v1.10.0), after its test
@@ -20,13 +21,16 @@ sent to the Store), and since then documents read against a research question, a
 as one file, a sample first, long interviews in parts, photographs taken twice or blurred, and
 the plain-first round.
 
-**1.10.1** ([notes](release-1.10.1.md)) is prepared as the next update, its version files set
-and not yet tagged: the eight bugs a review of the repository found on 23 November
+**1.10.1** was tagged and **published on GitHub on 24 November 2026**, as the
+[v1.10.1 release](https://github.com/fmadore/Kalamu/releases/tag/v1.10.1), without a
+validation build; it is **not yet submitted to the Microsoft Store**, where it is the next
+update. It holds the eight bugs a review of the repository found on 23 November
 ([#237](https://github.com/fmadore/Kalamu/issues/237) to
 [#244](https://github.com/fmadore/Kalamu/issues/244)), all fixed on `main` that day and the
 next, a project file checked without opening it
 ([#246](https://github.com/fmadore/Kalamu/issues/246)), Gemini 4 Neon in place of Argon, and
-the review's menus on a right click. No test pass by hand has run on it. Once it is
+the review's menus on a right click. No test pass by hand has run on it. The catalogue names
+it as the latest release, so copies installed from the releases page say it is out. Once it is
 submitted, the guide and the privacy policy move to `kalamu.frederickmadore.com`
 ([#228](https://github.com/fmadore/Kalamu/issues/228)), which waited for 1.10.0 to reach the
 Store. The paragraph below is how 1.8.0 and 1.9.0 stood on 20 November.
