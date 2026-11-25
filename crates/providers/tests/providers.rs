@@ -176,6 +176,50 @@ async fn gemini_sends_pages_at_high_resolution_and_reads_the_text() {
     assert_eq!(out.model_version.as_deref(), Some("gemini-3.8-flash-001"));
 }
 
+/// The registry reaches a provider at the address it is handed, the others where they always
+/// are, in the same order as without addresses.
+#[tokio::test]
+async fn the_registry_reaches_a_provider_at_the_address_handed_to_it() {
+    let server = MockServer::start().await;
+    Mock::given(method("POST"))
+        .and(path("/models/gemini-3.8-flash:generateContent"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(fixture("gemini_ok.json")))
+        .expect(1)
+        .mount(&server)
+        .await;
+    let addresses = kalamu_providers::Addresses::default().with("gemini", server.uri());
+    assert_eq!(addresses.of("gemini"), Some(server.uri().as_str()));
+    assert_eq!(addresses.of("openai"), None);
+    assert!(kalamu_providers::Addresses::default().is_empty());
+
+    let ids = |providers: &[std::sync::Arc<dyn Provider>]| {
+        providers.iter().map(|p| p.id()).collect::<Vec<_>>()
+    };
+    let at = kalamu_providers::registry_at(client(), &addresses);
+    assert_eq!(ids(&at), ids(&kalamu_providers::registry(client())));
+    let embedders = kalamu_providers::embedders_at(client(), &addresses);
+    assert_eq!(embedders.len(), kalamu_providers::embedders(client()).len());
+
+    let Some(gemini) = at.iter().find(|p| p.id().as_str() == "gemini") else {
+        panic!("no Gemini in the registry");
+    };
+    let (input, langs, opts) = (page(), LanguageChoice::Auto, SetupOptions::default());
+    let out = gemini
+        .process(
+            &ApiKey::new("test-key"),
+            request(
+                Task::TextExtraction,
+                "gemini-3.8-flash",
+                &input,
+                &langs,
+                &opts,
+            ),
+        )
+        .await
+        .unwrap_or_default();
+    assert_eq!(out.text, "Bamako, le 3 mai 1957\nMonsieur le Gouverneur,");
+}
+
 #[tokio::test]
 async fn gemini_rate_limits_and_recitation_are_reported() {
     let server = MockServer::start().await;
