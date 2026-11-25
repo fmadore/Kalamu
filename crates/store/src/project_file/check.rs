@@ -42,13 +42,15 @@ pub(super) fn refused(e: rusqlite::Error) -> ProjectFileError {
     }
 }
 
-/// The file opened for reading, its manifest, and the upgraded copy it may be read from:
-/// refused when it is not a project file, is damaged beyond reading, or is newer than this
+/// The upgraded copy the file may be read from, the file opened for reading, and its manifest.
+/// The copy comes first so that a caller binding the three in this order closes the connection
+/// before the copy is deleted: Windows deletes no file that is still open, and left the copy
+/// behind when the connection was bound first. Refused when it is not a project file, is damaged beyond reading, or is newer than this
 /// Kalamu.
 pub(super) fn readable(
     path: &Path,
     working: &Path,
-) -> Result<(Connection, Manifest, Option<Upgraded>), ProjectFileError> {
+) -> Result<(Option<Upgraded>, Connection, Manifest), ProjectFileError> {
     if !path.is_file() {
         return Err(read_err(format!("{} is not a file", path.display())));
     }
@@ -88,7 +90,7 @@ pub(super) fn readable(
         )));
     }
     if applied == known {
-        return Ok((file, manifest, None));
+        return Ok((None, file, manifest));
     }
     // Saved by an older Kalamu: its rows are brought up to date on a copy, never in the file.
     drop(file);
@@ -98,7 +100,7 @@ pub(super) fn readable(
     let upgraded = Upgraded(copy);
     let file = Connection::open(&upgraded.0).map_err(read_err)?;
     crate::migrate(&file).map_err(ProjectFileError::Store)?;
-    Ok((file, manifest, Some(upgraded)))
+    Ok((Some(upgraded), file, manifest))
 }
 
 pub(super) fn check(
@@ -106,7 +108,8 @@ pub(super) fn check(
     working: &Path,
     progress: &dyn Fn(ProjectFileProgress),
 ) -> Result<ProjectFileCheck, ProjectFileError> {
-    let (file, manifest, _upgraded) = readable(path, working)?;
+    // The copy first: what is bound first is dropped last, after the connection that holds it.
+    let (_upgraded, file, manifest) = readable(path, working)?;
     let documents = documents(&file)?;
     let titles = |path: &str| -> Vec<String> {
         documents

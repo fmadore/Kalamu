@@ -72,6 +72,10 @@ what changed in `src-tauri`.
   from its first letter (`directionOf`). A block of several paragraphs (a compared text, the
   correction editor) cannot carry one `dir`: in WebKit its Arabic paragraphs are ordered
   rightly and still start on the left, to see on a Mac.
+- **On Windows the working copy of an older project file was never deleted**, in the
+  temporary folder before as in the data folder now: the copy was removed while the
+  connection reading it was still open, which Windows refuses. The new test showed it on
+  CI's Windows lane; the connection is now closed first.
 - To try by hand, none of it having run in the packaged app: an Arabic page and transcript in
   WebView2 and WebKit; closing with a correction open on Windows; ⌘Q and the red button on a
   Mac, with and without jobs; a project opened with its originals, then deleted.
