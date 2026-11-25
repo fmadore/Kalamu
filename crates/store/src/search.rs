@@ -1,8 +1,8 @@
 //! The search index: SQLite full-text search over the folded text of every passage, in a
 //! database file of its own beside the job database.
 //!
-//! Nothing in it is authoritative. A file that cannot be opened, or whose layout is from
-//! another version, is emptied and made again from the job store by the next search; its own
+//! Nothing in it is authoritative. A file SQLite cannot read, or whose layout is from another
+//! version, is emptied and made again from the job store by the next search; its own
 //! connection means indexing never holds the lock the review and the engine use.
 //!
 //! Matching uses FTS5's trigram tokenizer, so a phrase is found anywhere in the text as the
@@ -19,6 +19,7 @@ use std::sync::{Mutex, MutexGuard};
 use kalamu_core::{IndexSize, JobId, Passage, PassageKey, SearchIndex, StoreError};
 use rusqlite::{Connection, OptionalExtension, params};
 
+use super::index_file::{Unreadable, open_index};
 use super::{corrupt, db, to_json};
 
 /// Raised whenever the layout below changes: an index of another version is made again.
@@ -48,47 +49,35 @@ pub struct SqliteIndex {
 }
 
 impl SqliteIndex {
-    /// Opens the index file, or makes it anew when it cannot be read: it holds nothing that
-    /// the job store does not.
+    /// Opens the index file. One SQLite says is not a database, or is damaged, is deleted and
+    /// made anew: it holds nothing that the job store does not. Any other failure is returned
+    /// and the file kept.
     pub fn open(path: &Path) -> Result<Self, StoreError> {
-        match Self::open_file(path) {
-            Ok(index) => Ok(index),
-            Err(_) => {
-                for suffix in ["", "-wal", "-shm"] {
-                    let mut file = path.as_os_str().to_owned();
-                    file.push(suffix);
-                    let _ = std::fs::remove_file(&file);
-                }
-                Self::open_file(path)
-            }
-        }
+        open_index(path, Unreadable::Delete, Self::open_file)
     }
 
-    fn open_file(path: &Path) -> Result<Self, StoreError> {
-        let conn = Connection::open(path).map_err(db)?;
-        conn.pragma_update(None, "journal_mode", "WAL")
-            .map_err(db)?;
-        conn.pragma_update(None, "synchronous", "NORMAL")
-            .map_err(db)?;
+    fn open_file(path: &Path) -> rusqlite::Result<Self> {
+        let conn = Connection::open(path)?;
+        conn.pragma_update(None, "journal_mode", "WAL")?;
+        conn.pragma_update(None, "synchronous", "NORMAL")?;
         Self::init(conn)
     }
 
     /// A private index in memory, for tests.
     pub fn in_memory() -> Result<Self, StoreError> {
-        Self::init(Connection::open_in_memory().map_err(db)?)
+        Connection::open_in_memory()
+            .and_then(Self::init)
+            .map_err(db)
     }
 
-    fn init(conn: Connection) -> Result<Self, StoreError> {
+    fn init(conn: Connection) -> rusqlite::Result<Self> {
         // Reading the schema checks the file is a database at all.
-        let version: i64 = conn
-            .pragma_query_value(None, "user_version", |row| row.get(0))
-            .map_err(db)?;
+        let version: i64 = conn.pragma_query_value(None, "user_version", |row| row.get(0))?;
         if version != VERSION {
             drop_tables(&conn)?;
         }
         create_tables(&conn)?;
-        conn.pragma_update(None, "user_version", VERSION)
-            .map_err(db)?;
+        conn.pragma_update(None, "user_version", VERSION)?;
         Ok(Self {
             conn: Mutex::new(conn),
         })
@@ -101,13 +90,12 @@ impl SqliteIndex {
     }
 }
 
-fn drop_tables(conn: &Connection) -> Result<(), StoreError> {
+fn drop_tables(conn: &Connection) -> rusqlite::Result<()> {
     conn.execute_batch("DROP TABLE IF EXISTS passage_text; DROP TABLE IF EXISTS passages;")
-        .map_err(db)
 }
 
-fn create_tables(conn: &Connection) -> Result<(), StoreError> {
-    conn.execute_batch(SCHEMA).map_err(db)
+fn create_tables(conn: &Connection) -> rusqlite::Result<()> {
+    conn.execute_batch(SCHEMA)
 }
 
 /// Removes one passage and its text, on `conn`, which may be a transaction's.
@@ -284,8 +272,8 @@ impl SearchIndex for SqliteIndex {
 
     fn clear(&self) -> Result<(), StoreError> {
         let conn = self.conn();
-        drop_tables(&conn)?;
-        create_tables(&conn)?;
+        drop_tables(&conn).map_err(db)?;
+        create_tables(&conn).map_err(db)?;
         // Gives the space back to the system.
         conn.execute_batch("VACUUM;").map_err(db)
     }

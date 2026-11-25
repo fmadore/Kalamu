@@ -216,3 +216,27 @@ fn a_damaged_file_is_made_again() {
     let index = SqliteIndex::open(&path).unwrap();
     assert_eq!(index.size().unwrap().passages, 1);
 }
+
+#[test]
+fn a_file_that_fails_to_open_for_another_reason_is_kept() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("search.sqlite");
+    {
+        let index = SqliteIndex::open(&path).unwrap();
+        index
+            .put_passages(&[passage(JobId::new(), 0, "kept")])
+            .unwrap();
+    }
+    let before = std::fs::read(&path).unwrap();
+    // Its log cannot be opened: a passing fault, not a damaged index.
+    let log = dir.path().join("search.sqlite-wal");
+    let _ = std::fs::remove_file(&log);
+    std::fs::create_dir(&log).unwrap();
+    assert!(SqliteIndex::open(&path).is_err());
+    assert_eq!(std::fs::read(&path).unwrap(), before);
+    std::fs::remove_dir(&log).unwrap();
+    assert_eq!(
+        SqliteIndex::open(&path).unwrap().size().unwrap().passages,
+        1
+    );
+}
