@@ -2858,6 +2858,7 @@ dependencies = [
  "tracing-subscriber",
  "ts-rs",
  "windows-sys 0.61.2",
+ "wiremock",
 ]
 
 [[package]]

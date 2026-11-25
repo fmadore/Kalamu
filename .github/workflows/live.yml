@@ -1,0 +1,189 @@
+name: Live check
+
+# The live check (src-tauri/examples/live) against the providers' real services, under a ceiling
+# on what it spends. Once a week, the weekly set: per provider, one page read, one short
+# recording, one analysis, one analysis sent as a batch and collected, and one embedding, each on
+# the cheapest model the catalogue offers for it, about $0.02 a run at the catalogue's prices of
+# 24 November 2026 (docs/development.md#live-checks). By hand (Actions -> Live check -> Run
+# workflow, from main), the weekly set or the roadmap's "Live runs still to do", with a ceiling
+# typed in. See docs/decisions/2026-11-25-scheduled-live-check.md.
+#
+# Keys: the secrets of the `live` environment, which only this workflow names and which admits
+# only `main` (set in the repository's settings, see docs/development.md). There is no
+# `pull_request` trigger, and every job also checks that it runs on main, so no pull request and
+# no other branch reaches them.
+#
+# Secrets and tokens stay away from build code (#145): `build` compiles the tool with a read-only
+# token and no secret, and hands the program on as an artifact; `check`, the only job that sees
+# the keys, runs that program on the repository's samples and nothing else: no `npm ci`, no
+# cargo, no build script, and its token reads only. `report` opens or updates the one issue a
+# failure is reported in, with the one permission that needs and no secret; it runs nothing but
+# `gh`.
+#
+# What a run leaves: the job summary (a table per provider and step: passed or failed, cost
+# against estimate; never a key or a document's text), the `live-summary` artifact holding the
+# same table, and `live-fixtures`, the error answers the providers gave on the way, with keys and
+# identifiers taken out, to commit as test fixtures (docs/development.md#live-checks). Nothing
+# else is uploaded: the job database, which holds the documents' text, stays on the runner.
+
+on:
+  schedule:
+    # Mondays at 06:17 UTC.
+    - cron: "17 6 * * 1"
+  workflow_dispatch:
+    inputs:
+      set:
+        description: "weekly: the smallest set per provider; roadmap: the roadmap's live runs still to do"
+        type: choice
+        options:
+          - weekly
+          - roadmap
+        default: weekly
+      ceiling:
+        description: "The most the run may spend, in US dollars at the catalogue's prices (the weekly set is estimated at $0.023, the roadmap set at $0.55: give it $1.50)"
+        required: true
+        default: "0.05"
+      batch_wait:
+        description: "Minutes a batch is waited for before it is cancelled at the provider"
+        required: true
+        default: "60"
+
+permissions: {}
+
+concurrency:
+  group: live-check
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: github.ref == 'refs/heads/main'
+    runs-on: macos-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # The toolchain pinned in rust-toolchain.toml.
+      - run: rustup toolchain install
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          prefix-key: live-${{ runner.arch }}-v1
+          cache-on-failure: true
+      # `tauri::generate_context!` needs the front-end folder to exist; a stub stands in, as in
+      # CI's Rust lane.
+      - name: Front-end stub
+        run: mkdir -p build && echo '<!doctype html><title>stub</title>' > build/index.html
+      - run: cargo build -p kalamu --example live --locked
+      - name: Stage the program
+        run: mkdir -p tool && cp target/debug/examples/live tool/live
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: live-tool
+          path: tool/
+          retention-days: 1
+          if-no-files-found: error
+
+  check:
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    runs-on: macos-latest
+    # The weekly set waits up to an hour for the batches; the roadmap set reads more pages.
+    timeout-minutes: 150
+    environment: live
+    permissions:
+      contents: read
+    steps:
+      # Only the samples are read.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          sparse-checkout: samples
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: live-tool
+          path: tool
+      # The keys reach this step only, as environment variables GitHub masks in the log; the
+      # program never prints them. The inputs reach it as variables too, never written into the
+      # script, and the program checks the ceiling it is given.
+      - name: Run the live check
+        env:
+          KALAMU_GEMINI_API_KEY: ${{ secrets.KALAMU_GEMINI_API_KEY }}
+          KALAMU_OPENAI_API_KEY: ${{ secrets.KALAMU_OPENAI_API_KEY }}
+          KALAMU_ANTHROPIC_API_KEY: ${{ secrets.KALAMU_ANTHROPIC_API_KEY }}
+          KALAMU_MISTRAL_API_KEY: ${{ secrets.KALAMU_MISTRAL_API_KEY }}
+          LIVE_SET: ${{ inputs.set || 'weekly' }}
+          LIVE_CEILING: ${{ inputs.ceiling || '0.05' }}
+          LIVE_BATCH_WAIT: ${{ inputs.batch_wait || '60' }}
+          LIVE_KEYCHAIN: "off"
+        run: |
+          chmod +x tool/live
+          export LIVE_FIXTURES="$RUNNER_TEMP/live/fixtures" LIVE_SUMMARY="$GITHUB_STEP_SUMMARY"
+          tool/live samples "$RUNNER_TEMP/live/out"
+      - name: Keep the summary
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: live-summary
+          path: ${{ runner.temp }}/live/out/summary.md
+          retention-days: 30
+          if-no-files-found: ignore
+      - name: Keep the error answers as fixtures
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: live-fixtures
+          path: ${{ runner.temp }}/live/fixtures/
+          retention-days: 90
+          if-no-files-found: ignore
+
+  # One issue, found by its title: opened by the first failure, commented on by the next ones,
+  # closed by the next weekly run that passes. Only the weekly set reports; a roadmap run's
+  # failures are read in its summary.
+  report:
+    needs: [build, check]
+    if: >-
+      always() && github.ref == 'refs/heads/main' &&
+      (github.event_name == 'schedule' || inputs.set == 'weekly') &&
+      needs.build.result != 'cancelled' && needs.check.result != 'cancelled'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      issues: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        continue-on-error: true
+        with:
+          name: live-summary
+          path: summary
+      - name: Open, update or close the issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          BUILD: ${{ needs.build.result }}
+          CHECK: ${{ needs.check.result }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          title="Weekly live check failed"
+          number=$(gh issue list --state open --limit 1000 --json number,title \
+            --jq "map(select(.title == \"$title\")) | first | .number // empty")
+          if [ "$BUILD" = success ] && [ "$CHECK" = success ]; then
+            if [ -n "$number" ]; then
+              gh issue comment "$number" --body "The weekly live check passed again: $RUN_URL"
+              gh issue close "$number"
+            fi
+            exit 0
+          fi
+          {
+            echo "The weekly live check of $(date -u +%F) failed (build: $BUILD, check: $CHECK)."
+            echo
+            echo "Run: $RUN_URL"
+            echo
+            if [ -f summary/summary.md ]; then cat summary/summary.md; fi
+          } > body.md
+          if [ -n "$number" ]; then
+            gh issue comment "$number" --body-file body.md
+          else
+            gh issue create --title "$title" --body-file body.md
+          fi
