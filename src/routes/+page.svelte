@@ -25,8 +25,10 @@
 		applyProgress,
 		back,
 		dismissError,
+		draftHeld,
 		go,
 		holdToast,
+		leaveThen,
 		readyToWork,
 		refreshJobs,
 		refreshKeys,
@@ -109,6 +111,25 @@
 			field.focus();
 			field.select();
 		}
+	}
+
+	// The shell asks before the window closes or the app quits while changes are not saved: it
+	// is told each time that changes, and asks back through `closeRequested`.
+	let draftTold = false;
+	$effect(() => {
+		const held = draftHeld();
+		if (held === draftTold) return;
+		draftTold = held;
+		void api.setDraftOpen(held).catch(() => undefined);
+	});
+
+	/** The window closed or the app quit while changes are not saved or jobs run: the changes are
+	 * asked about first, as leaving a screen does; once left, the jobs, or the app quits. */
+	function onCloseRequested(jobs: boolean) {
+		leaveThen(() => {
+			if (jobs) app.closeRequested = true;
+			else void api.quitApp().catch((e: unknown) => toast(describeError(e, m), { kind: 'error' }));
+		});
 	}
 
 	let toasts = $state<HTMLElement | null>(null);
@@ -198,7 +219,7 @@
 			}
 			unlisten.push(await on.progress(applyProgress));
 			unlisten.push(await onDragging((over) => (app.filesOver = over)));
-			unlisten.push(await on.closeRequested(() => (app.closeRequested = true)));
+			unlisten.push(await on.closeRequested(onCloseRequested));
 			unlisten.push(
 				await on.openSettings(() => {
 					if (!shortcutsHeld()) go({ name: 'settings' });

@@ -33,6 +33,7 @@ import { unitCommand } from './mockUnits.js';
 import { mockImageDocument, PHOTO_FOLDER, PHOTOS } from './mockPages.js';
 import { photoCommand, READING_ROOM, READING_ROOM_PHOTOS } from './mockPhotos.js';
 import { sampleCommand } from './mockSample.js';
+import { installClose, windowCommand } from './mockWindow.js';
 
 const catalog = catalogJson as unknown as Catalog;
 /** The engine's rules for the bundled catalogue, written by `cargo test`. */
@@ -113,6 +114,8 @@ export function installMock(): void {
 	};
 	const answer = (cmd: string, args?: unknown): unknown => {
 		const a = (args ?? {}) as Record<string, unknown>;
+		const windowed = windowCommand(cmd, a);
+		if (windowed !== undefined) return windowed;
 		const filed = projectFileCommand(cmd, a);
 		if (filed !== undefined) return filed;
 		// `?long` and `?sample` only: a sample first, its rest and its comparison.
@@ -450,13 +453,18 @@ export function installMock(): void {
 	};
 	// `rows=3000`: thousands of rows in the long tables and the sample job.
 	const rows = largeRows();
-	mockIPC((cmd, args) => {
-		const a = (args ?? {}) as Record<string, unknown>;
-		const result = answer(cmd, args);
-		return result instanceof Promise
-			? result.then((r) => enlarge(cmd, a, r, rows, job))
-			: enlarge(cmd, a, result, rows, job);
-	});
+	// Events are passed on in the page, so the shell's (closing the window) can be sent.
+	mockIPC(
+		(cmd, args) => {
+			const a = (args ?? {}) as Record<string, unknown>;
+			const result = answer(cmd, args);
+			return result instanceof Promise
+				? result.then((r) => enlarge(cmd, a, r, rows, job))
+				: enlarge(cmd, a, result, rows, job);
+		},
+		{ shouldMockEvents: true }
+	);
+	installClose();
 	// `piece_audio` names a blob URL here, not a file, so it is its own address.
 	(
 		window as unknown as { __TAURI_INTERNALS__: { convertFileSrc: (path: string) => string } }

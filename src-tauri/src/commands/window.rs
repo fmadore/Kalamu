@@ -1,10 +1,11 @@
-//! The window: the words of the tray icon and the notifications, hiding and closing.
+//! The window: the words of the tray icon and the notifications, hiding and closing, and
+//! whether closing must ask the interface first.
 
 use std::sync::atomic::Ordering;
 use std::time::{Duration, Instant};
 
 use kalamu_core::JobId;
-use tauri::{AppHandle, Manager};
+use tauri::{AppHandle, Manager, State};
 
 use super::AppState;
 use crate::activity::ShellLabels;
@@ -26,6 +27,13 @@ pub fn hide_window(app: AppHandle) {
     if let Some(window) = app.get_webview_window("main") {
         let _ = window.hide();
     }
+}
+
+/// Says whether the interface holds changes not saved, each time that changes, so closing the
+/// window or quitting asks it first rather than losing them.
+#[tauri::command]
+pub fn set_draft_open(state: State<'_, AppState>, open: bool) {
+    state.draft_open.store(open, Ordering::SeqCst);
 }
 
 /// Closes the app after the user confirmed. Running jobs are paused first so they resume
@@ -55,6 +63,12 @@ pub fn jobs_running(state: &AppState) -> bool {
         .jobs()
         .map(|jobs| jobs.iter().any(|j| state.engine.is_running(j.id)))
         .unwrap_or(false)
+}
+
+/// Whether the interface holds changes not saved, as it last said, so closing or quitting asks
+/// first.
+pub fn draft_open(state: &AppState) -> bool {
+    state.draft_open.load(Ordering::SeqCst)
 }
 
 /// Pauses every running job and returns them.

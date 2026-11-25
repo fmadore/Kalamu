@@ -448,7 +448,9 @@ paying twice.
 - **Jobs survive closing the app.** On the next launch, the app lists unfinished jobs and offers
   to resume them. Closing the window during a job asks first, and can keep the job running in
   the background from the notification area (the menu bar on a Mac, where closing the window
-  never quits and ⌘Q asks first too). Quitting pauses the jobs and waits for the pieces
+  never quits and ⌘Q asks first too). Changes not saved (a correction, a prompt, a workflow)
+  are asked about first, as leaving their screen asks, whenever closing the window or quitting
+  would lose them (not when the red button only hides the window on a Mac). Quitting pauses the jobs and waits for the pieces
   already sent, which are paid for, to come back and be stored, saying how many; "Quit now"
   stops waiting. A pause or cancel also ends a wait between retries, so no further attempt is
   sent.

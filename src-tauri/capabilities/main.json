@@ -213,6 +213,7 @@
     "allow-meaning-neighbours",
     "allow-set-shell-labels",
     "allow-hide-window",
+    "allow-set-draft-open",
     "allow-quit-app"
   ]
 }

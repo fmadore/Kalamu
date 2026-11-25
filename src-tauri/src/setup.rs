@@ -414,6 +414,7 @@ fn assemble(
         workflows: Mutex::new(workflows),
         profiles: Mutex::new(profiles),
         quitting: std::sync::atomic::AtomicBool::new(false),
+        draft_open: std::sync::atomic::AtomicBool::new(false),
     };
     Ok((state, store, waiting))
 }

@@ -21,6 +21,7 @@ import type { Task } from './bindings/Task.js';
 import type { Term } from './glossary.js';
 import type { Example } from './workflows.js';
 import type { QueueFilter } from './queue.js';
+import { SvelteSet } from 'svelte/reactivity';
 import { leaving, samePlace } from './history.js';
 import { messages, resolveLocale, setLocale, type Locale } from './i18n/index.js';
 import { ask } from './dialogs.js';
@@ -201,7 +202,8 @@ export interface Draft {
 	discard: () => void;
 }
 
-const drafts = new Set<Draft>();
+/** Reactive, so that whether any holds changes is followed as drafts come and go. */
+const drafts = new SvelteSet<Draft>();
 let asking: Promise<boolean> | null = null;
 
 /** Keeps a draft from being dropped unasked while it is on screen; the function returned lets
@@ -213,9 +215,16 @@ export function guardDraft(draft: Draft): () => void {
 	};
 }
 
+/** Whether a draft on screen holds changes. Read in an effect, it follows them as they are
+ * typed, for the shell to ask before the window closes or the app quits (`set_draft_open`). */
+export function draftHeld(): boolean {
+	return [...drafts].some((d) => d.dirty());
+}
+
 /** Does `then` at once when no draft holds changes; otherwise asks first, and drops the drafts
  * before doing it only if the researcher agrees. Leaving the screen and turning to another
- * piece in it both go through here, so no way out loses a draft silently. */
+ * piece in it both go through here, and so does closing the window or quitting, so no way out
+ * loses a draft silently. */
 export function leaveThen(then: () => void): void {
 	const dirty = [...drafts].filter((d) => d.dirty());
 	if (dirty.length === 0) {

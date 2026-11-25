@@ -97,6 +97,9 @@ pub struct AppState {
     pub profiles: Mutex<kalamu_prompts::ProfileLibrary>,
     /// Set once quitting has begun: asked to quit again, the app stops waiting.
     pub quitting: std::sync::atomic::AtomicBool,
+    /// Whether the interface holds changes not saved (a correction, a prompt, a workflow), as
+    /// it last said: closing the window or quitting then asks it first.
+    pub draft_open: std::sync::atomic::AtomicBool,
 }
 
 #[derive(Debug, Clone, Serialize, TS)]

@@ -13,7 +13,6 @@ export const NO_RESULT = new Set([
 	'export_presets',
 	'hide_window',
 	'pause_job',
-	'quit_app',
 	'remove_model',
 	'retry_failed',
 	'save_settings',

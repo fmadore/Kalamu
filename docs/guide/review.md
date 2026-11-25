@@ -37,6 +37,11 @@ long the page. Three things follow:
 - anything made later from this text (an analysis, a translation) knows if you corrected the
   text after it was made, and says so.
 
+A correction not saved is never lost unasked. Turning the page, leaving the review, closing the
+window or quitting Kalamu first asks whether to discard it: **Discard changes** goes on, **Keep
+editing** stays with your correction. On a Mac the red button only hides the window, so it does
+not ask; <kbd>⌘</kbd> <kbd>Q</kbd> does.
+
 **Mark as reviewed** tells Kalamu, and later you, that a page has been checked by a person. A
 project counts reviewed pages, and its list of [what to check](projects.md#what-to-check) is
 built on it.
