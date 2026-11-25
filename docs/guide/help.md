@@ -89,6 +89,15 @@ so until you do.
 If a job made by a newer version of Kalamu cannot be read, it is left out of the list and
 named once when Kalamu starts; it is kept as it is.
 
+## A screen stopped working
+
+Kalamu then says *This screen stopped working* in its place. Everything you saved is kept, and
+running jobs carry on. Click **Go back**, or choose another screen in the sidebar; if a screen
+keeps failing, click **Reload the window**. Kalamu writes what went wrong to its log, without
+any of your documents' text: the `logs` folder inside the data folder Settings shows on
+Windows, and `~/Library/Logs/Kalamu` on a Mac. Attach that day's file when you report the
+problem.
+
 ## Questions
 
 **Is Kalamu really free?** Yes: free and open source, with every feature. You pay only the AI

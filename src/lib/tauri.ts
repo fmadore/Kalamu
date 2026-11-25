@@ -105,6 +105,7 @@ import type { Settings } from './bindings/Settings.js';
 import type { TagRenamed } from './bindings/TagRenamed.js';
 import type { Task } from './bindings/Task.js';
 import type { ShellLabels } from './bindings/ShellLabels.js';
+import type { InterfaceError } from './bindings/InterfaceError.js';
 import { localisePreset } from './i18n/index.js';
 
 /** The published privacy policy, named wherever the app asks before sending files. */
@@ -520,7 +521,9 @@ export const api = {
 	hideWindow: () => invoke<void>('hide_window'),
 	/** Whether changes are not saved, so closing the window or quitting asks first. */
 	setDraftOpen: (open: boolean) => invoke<void>('set_draft_open', { open }),
-	quitApp: () => invoke<void>('quit_app')
+	quitApp: () => invoke<void>('quit_app'),
+	/** Writes a failure nobody expected to the log, cut down there to what the log may hold. */
+	logInterfaceError: (error: InterfaceError) => invoke<void>('log_interface_error', { error })
 };
 
 export const on = {

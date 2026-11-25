@@ -14,6 +14,7 @@
 	import GlossaryView from '#lib/components/GlossaryView.svelte';
 	import WorkflowsView from '#lib/components/WorkflowsView.svelte';
 	import Icon from '#lib/components/Icon.svelte';
+	import ScreenFailed from '#lib/components/ScreenFailed.svelte';
 	import Sidebar from '#lib/components/Sidebar.svelte';
 	import { tellUnreadable, watchDatabase } from '#lib/databaseCopies.js';
 	import { describeError } from '#lib/errors.js';
@@ -36,6 +37,7 @@
 		refreshOffline,
 		refreshRelease,
 		refreshWaiting,
+		sayFailure,
 		shortcutsHeld,
 		takeToastAction,
 		toast,
@@ -43,11 +45,20 @@
 		type View
 	} from '#lib/state.svelte.js';
 	import { keep, recall } from '#lib/stored.js';
+	import { installFaultNet } from '#lib/unexpected.js';
 
 	// Read again when the language changes; the screens below are drawn anew with it.
 	const m = $derived.by(() => (app.locale, messages()));
 	let loadError = $state<string | null>(null);
+	/** While the start-up reading is tried again from its failure. */
+	let retrying = $state(false);
 	let startView: View | null = null;
+	/** `?mock&broken=<view>`: that screen fails as it is drawn, for the test of the net for
+	 * unexpected failures; development builds only. */
+	let brokenView = $state<string | null>(null);
+	function breakScreen(): never {
+		throw new Error('A screen made to fail (?mock&broken)');
+	}
 
 	// The theme is always set on the page, so the dark tokens are written once (`app.css`):
 	// the system's until the settings are read, then the one they ask for, following the
@@ -160,34 +171,30 @@
 		back();
 	}
 
-	onMount(() => {
-		const unlisten: (() => void)[] = [];
-		void (async () => {
-			// Sample data for looking at the interface in a browser; development builds only.
-			if (
-				import.meta.env.DEV &&
-				location.search.includes('mock') &&
-				!('__TAURI_INTERNALS__' in window)
-			) {
-				const mock = await import('#lib/dev/mock.js');
-				mock.installMock();
-				startView = mock.mockView();
-				app.filesOver = mock.mockDragging();
-			}
-			try {
-				const [info, catalog, rules, settings] = await Promise.all([
-					api.appInfo(),
-					api.getCatalog(),
-					api.taskRules(),
-					api.getSettings()
-				]);
-				app.info = info;
-				app.catalog = catalog;
-				app.rules = rules;
-				app.settings = settings;
-				applyLanguage();
+	const unlisten: (() => void)[] = [];
+	/** Whether the listeners the first reading needs before it ends are registered. */
+	let listening = false;
+
+	/** Reads what every screen needs, at start-up and again from its failure's Try again: kept
+	 * failing, the failure stays on screen. */
+	async function load() {
+		retrying = true;
+		try {
+			const [info, catalog, rules, settings] = await Promise.all([
+				api.appInfo(),
+				api.getCatalog(),
+				api.taskRules(),
+				api.getSettings()
+			]);
+			app.info = info;
+			app.catalog = catalog;
+			app.rules = rules;
+			app.settings = settings;
+			applyLanguage();
+			if (!listening) {
+				listening = true;
 				// Before the first reading, so a graphics processor found meanwhile is not missed.
-				unlisten.push(await on.offlineChanged(() => void refreshOffline()));
+				unlisten.push(await on.offlineChanged(() => void refreshOffline().catch(sayFailure)));
 				// The model list refreshed at start-up may answer after the first reading.
 				unlisten.push(
 					await on.catalogChanged(() => {
@@ -198,30 +205,53 @@
 						})().catch(() => undefined);
 					})
 				);
-				await Promise.all([
-					refreshKeys(),
-					refreshJobs(),
-					refreshOffline(),
-					refreshWaiting(),
-					refreshRelease()
-				]);
-				// Settings that could not be read were moved aside: said once, until dismissed.
-				if (info.settings_set_aside) {
-					toast(m.settings.setAside(info.settings_set_aside), { kind: 'error' });
-				}
-				// The job database: jobs it holds that this version cannot read, what opening it did,
-				// and damage its check after launch finds, each said once (#275).
-				tellUnreadable(info.unreadable_jobs);
+				// Damage the job database's check after launch finds, said once (#275).
 				unlisten.push(await watchDatabase());
-				// Jobs cut short by the last close: show them first.
-				if (startView) go(startView);
-				else if (info.interrupted.length > 0) go({ name: 'jobs', jobId: info.interrupted[0] });
-				// Nothing to work with yet, neither a key nor anything installed offline: Settings,
-				// which opens with a welcome offering both.
-				else if (!readyToWork()) go({ name: 'settings' });
-			} catch (e) {
-				loadError = describeError(e, m);
 			}
+			await Promise.all([
+				refreshKeys(),
+				refreshJobs(),
+				refreshOffline(),
+				refreshWaiting(),
+				refreshRelease()
+			]);
+			loadError = null;
+			// Settings that could not be read were moved aside: said once, until dismissed.
+			if (info.settings_set_aside) {
+				toast(m.settings.setAside(info.settings_set_aside), { kind: 'error' });
+			}
+			// Jobs the database holds that this version cannot read, named once (#275).
+			tellUnreadable(info.unreadable_jobs);
+			// Jobs cut short by the last close: show them first.
+			if (startView) go(startView);
+			else if (info.interrupted.length > 0) go({ name: 'jobs', jobId: info.interrupted[0] });
+			// Nothing to work with yet, neither a key nor anything installed offline: Settings,
+			// which opens with a welcome offering both.
+			else if (!readyToWork()) go({ name: 'settings' });
+		} catch (e) {
+			loadError = describeError(e, m);
+		} finally {
+			retrying = false;
+		}
+	}
+
+	onMount(() => {
+		// Failures no code caught: to the log, and said once.
+		unlisten.push(installFaultNet());
+		void (async () => {
+			// Sample data for looking at the interface in a browser; development builds only.
+			if (
+				import.meta.env.DEV &&
+				location.search.includes('mock') &&
+				!('__TAURI_INTERNALS__' in window)
+			) {
+				const mock = await import('#lib/dev/mock.js');
+				mock.installMock();
+				startView = mock.mockView();
+				brokenView = mock.mockBroken();
+				app.filesOver = mock.mockDragging();
+			}
+			await load();
 			unlisten.push(await on.progress(applyProgress));
 			unlisten.push(await onDragging((over) => (app.filesOver = over)));
 			unlisten.push(await on.closeRequested(onCloseRequested));
@@ -243,57 +273,73 @@
 		<Sidebar bind:collapsed={() => folded, fold} />
 
 		<main>
-			{#if loadError}
-				<div class="sheet"><p class="chip danger">{loadError}</p></div>
-			{:else if !app.catalog || !app.settings}
-				<div class="sheet"><p class="muted">{m.common.loading}</p></div>
-			{:else if app.view.name === 'new'}
-				<!-- Opened afresh each time it is asked for: with the form left, or blank. -->
-				{#key app.view}
-					<NewJob opening={app.view} />
-				{/key}
-			{:else if app.view.name === 'jobs'}
-				<JobsView jobId={app.view.jobId} />
-			{:else if app.view.name === 'allJobs'}
-				<AllJobs />
-			{:else if app.view.name === 'review'}
-				{@const { jobId, sourceId, index, setupId, find, at } = app.view}
-				{@const task = app.jobs.find((j) => j.id === jobId)?.task}
-				<!-- Another source, or another set-up shown first, is another review, loaded afresh;
+			<!-- A screen that breaks as it is drawn is replaced by what happened and the way out;
+			     the sidebar beside it keeps working, and opening another screen draws it afresh.
+			     The failure goes to the log from `hooks.client.ts`, where it is still whole. -->
+			<svelte:boundary>
+				{#if import.meta.env.DEV && brokenView === app.view.name}{breakScreen()}{/if}
+				{#if loadError}
+					<div class="sheet">
+						<div class="start-failed">
+							<p class="chip danger">{loadError}</p>
+							<button class="btn sm" disabled={retrying} onclick={() => void load()}>
+								{m.unexpected.retry}
+							</button>
+						</div>
+					</div>
+				{:else if !app.catalog || !app.settings}
+					<div class="sheet"><p class="muted">{m.common.loading}</p></div>
+				{:else if app.view.name === 'new'}
+					<!-- Opened afresh each time it is asked for: with the form left, or blank. -->
+					{#key app.view}
+						<NewJob opening={app.view} />
+					{/key}
+				{:else if app.view.name === 'jobs'}
+					<JobsView jobId={app.view.jobId} />
+				{:else if app.view.name === 'allJobs'}
+					<AllJobs />
+				{:else if app.view.name === 'review'}
+					{@const { jobId, sourceId, index, setupId, find, at } = app.view}
+					{@const task = app.jobs.find((j) => j.id === jobId)?.task}
+					<!-- Another source, or another set-up shown first, is another review, loaded afresh;
 				     another page of it is not. -->
-				{#key `${jobId}/${sourceId}/${setupId ?? ''}`}
-					{#if task === 'analysis'}
-						<AnalysisReview {jobId} {sourceId} start={index} lead={setupId} {find} />
-					{:else if task === 'contents'}
-						<ContentsReview {jobId} {sourceId} start={index} lead={setupId} {find} />
-					{:else}
-						<ReviewView {jobId} {sourceId} start={index} lead={setupId} {find} {at} />
-					{/if}
-				{/key}
-			{:else if app.view.name === 'projects'}
-				<ProjectsView
-					projectId={app.view.projectId}
-					collectionId={app.view.collectionId}
-					documentId={app.view.documentId}
-					pane={app.view.pane}
-					selection={app.view.selection}
-				/>
-			{:else if app.view.name === 'workflows'}
-				<WorkflowsView
-					workflowId={app.view.workflowId}
-					example={app.view.example}
-					runId={app.view.runId}
-					paths={app.view.paths}
-					sources={app.view.sources}
-					project={app.view.project}
-				/>
-			{:else if app.view.name === 'prompts'}
-				<PromptsView presetId={app.view.presetId} />
-			{:else if app.view.name === 'settings'}
-				<SettingsView />
-			{:else if app.view.name === 'glossary'}
-				<GlossaryView opening={app.view} />
-			{/if}
+					{#key `${jobId}/${sourceId}/${setupId ?? ''}`}
+						{#if task === 'analysis'}
+							<AnalysisReview {jobId} {sourceId} start={index} lead={setupId} {find} />
+						{:else if task === 'contents'}
+							<ContentsReview {jobId} {sourceId} start={index} lead={setupId} {find} />
+						{:else}
+							<ReviewView {jobId} {sourceId} start={index} lead={setupId} {find} {at} />
+						{/if}
+					{/key}
+				{:else if app.view.name === 'projects'}
+					<ProjectsView
+						projectId={app.view.projectId}
+						collectionId={app.view.collectionId}
+						documentId={app.view.documentId}
+						pane={app.view.pane}
+						selection={app.view.selection}
+					/>
+				{:else if app.view.name === 'workflows'}
+					<WorkflowsView
+						workflowId={app.view.workflowId}
+						example={app.view.example}
+						runId={app.view.runId}
+						paths={app.view.paths}
+						sources={app.view.sources}
+						project={app.view.project}
+					/>
+				{:else if app.view.name === 'prompts'}
+					<PromptsView presetId={app.view.presetId} />
+				{:else if app.view.name === 'settings'}
+					<SettingsView />
+				{:else if app.view.name === 'glossary'}
+					<GlossaryView opening={app.view} />
+				{/if}
+				{#snippet failed(_error, reset)}
+					<ScreenFailed {reset} />
+				{/snippet}
+			</svelte:boundary>
 		</main>
 
 		<!-- Files dragged over the window, over the screen that takes them. -->
@@ -376,6 +422,13 @@
 		overflow: auto;
 		min-width: 0;
 		background: var(--surface-0);
+	}
+	/* The start-up failure, with the way to try again beside it. */
+	.start-failed {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: var(--space-3);
 	}
 	/* The messages, bottom right over the work: a failure kept above a passing confirmation. */
 	.toasts {

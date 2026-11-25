@@ -99,6 +99,16 @@ Paramètres › Général › Copies de sécurité le rappelle tant que ce n’e
 Si un traitement créé par une version plus récente de Kalamu ne peut pas être lu, il n’apparaît
 pas dans la liste et il est signalé une fois au démarrage ; il est gardé tel quel.
 
+## Un écran ne fonctionne plus
+
+Kalamu affiche alors *Cet écran ne fonctionne plus* à sa place. Tout ce que vous avez
+enregistré est conservé, et les traitements en cours continuent. Cliquez sur **Revenir en
+arrière**, ou choisissez un autre écran dans la barre latérale ; si un écran ne marche
+toujours pas, cliquez sur **Recharger la fenêtre**. Kalamu note ce qui s’est passé dans son
+journal, sans rien du texte de vos documents : le dossier `logs` du dossier de données
+qu’indiquent les Paramètres sous Windows, et `~/Library/Logs/Kalamu` sur un Mac. Joignez le
+fichier de ce jour-là quand vous signalez le problème.
+
 ## Questions
 
 **Kalamu est-il vraiment gratuit ?** Oui : gratuit et libre, avec toutes ses fonctions. Vous

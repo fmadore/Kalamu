@@ -40,7 +40,7 @@ const catalog = catalogJson as unknown as Catalog;
 /** The engine's rules for the bundled catalogue, written by `cargo test`. */
 const taskRules = taskRulesJson as TaskRules[];
 
-export { mockDragging, mockView } from './mockViews.js';
+export { mockBroken, mockDragging, mockView } from './mockViews.js';
 
 export function installMock(): void {
 	const params = new URLSearchParams(location.search);

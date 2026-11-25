@@ -21,6 +21,7 @@
 		readyToWork,
 		refreshKeys,
 		refreshRelease,
+		sayFailure,
 		toast,
 		type SettingsTab
 	} from '#lib/state.svelte.js';
@@ -70,7 +71,7 @@
 			status = { ...status, [id]: { ok: false, text: describeError(e, m) } };
 		} finally {
 			busy = null;
-			await refreshKeys();
+			await refreshKeys().catch(sayFailure);
 		}
 	}
 

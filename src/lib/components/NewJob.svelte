@@ -37,6 +37,7 @@
 		go,
 		hasKey,
 		refreshOffline,
+		sayFailure,
 		shortcutsHeld,
 		takeFiles,
 		toast,
@@ -240,7 +241,7 @@
 
 	onMount(() => {
 		// The OCR models' seconds a page and device change as jobs run: read them again.
-		void refreshOffline();
+		void refreshOffline().catch(sayFailure);
 		// Opened from a finished job's "Summarise" button: its results are the files.
 		const fail = (e: unknown) => (error = describeError(e, m));
 		// Coming back to the form left here: only the task's prompts are read again.

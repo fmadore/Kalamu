@@ -287,6 +287,7 @@ pub fn run() {
             commands::window::hide_window,
             commands::window::set_draft_open,
             commands::window::quit_app,
+            commands::interface_errors::log_interface_error,
         ])
         .build(context)
         .map(|app| {

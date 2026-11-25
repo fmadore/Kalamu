@@ -2465,8 +2465,6 @@ export const en = {
 			'Kalamu keeps every answer a model gave, so a page asked for again with the same settings costs nothing. Clearing removes the answers kept from jobs you deleted, to free space on the disk; asking for one of those pages again would be paid for again.',
 		clearUnused: 'Clear unused results',
 		clearUnusedBusy: 'Available once no job is running.',
-		clearUnusedConfirm:
-			'Remove the answers kept from deleted jobs? Asking for the same pages again would be paid for again.',
 		clearUnusedOk: 'Clear',
 		clearUnusedDone: (count: number, answers: string, size: string) =>
 			count === 0
@@ -2533,6 +2531,20 @@ export const en = {
 		link: 'Report a problem',
 		review: 'Report a problem',
 		note: 'A bug, an idea, or offensive output from a model: tell us on GitHub. It opens in your browser; Kalamu sends nothing, so share only what is safe to make public.'
+	},
+	/** A failure nobody expected: a screen that broke as it was drawn, or an error no code
+	 * caught. Both are written to the log. */
+	unexpected: {
+		screenTitle: 'This screen stopped working',
+		screenBody:
+			'Something went wrong in Kalamu while showing it. Everything you saved is kept, and running jobs carry on. Go back, or choose another screen in the sidebar.',
+		back: 'Go back',
+		reload: 'Reload the window',
+		/** In the failure toast, once for a burst of them. */
+		message:
+			'Something went wrong in Kalamu. Everything you saved is kept. If the screen looks wrong, open it again from the sidebar.',
+		/** The start-up failure, tried again. */
+		retry: 'Try again'
 	},
 	glossary: {
 		title: 'Glossary',

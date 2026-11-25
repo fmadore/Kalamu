@@ -210,4 +210,5 @@ pub const COMMANDS: &[&str] = &[
     "hide_window",
     "set_draft_open",
     "quit_app",
+    "log_interface_error",
 ];

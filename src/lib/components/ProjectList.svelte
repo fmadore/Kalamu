@@ -8,7 +8,7 @@
 	import { formatDateTime, messages } from '#lib/i18n/index.js';
 	import type { ProjectFileOpened } from '#lib/bindings/ProjectFileOpened.js';
 	import { pickProjectFile } from '#lib/projectFile.js';
-	import { go, refreshJobs, refreshProjects } from '#lib/state.svelte.js';
+	import { go, refreshJobs, refreshProjects, sayFailure } from '#lib/state.svelte.js';
 	import { api, listenWhileMounted, on } from '#lib/tauri.js';
 	import CheckProjectDialog from './CheckProjectDialog.svelte';
 	import ProgressBar from './ProgressBar.svelte';
@@ -63,7 +63,7 @@
 				await load();
 				// Its jobs, copied in, are listed at once with the others.
 				void refreshProjects();
-				void refreshJobs();
+				void refreshJobs().catch(sayFailure);
 			}
 		);
 		opening = null;

@@ -2909,8 +2909,6 @@ export const fr: Messages = {
 			'Kalamu conserve chaque réponse donnée par un modèle : une page demandée de nouveau avec les mêmes réglages ne coûte rien. Le nettoyage supprime les réponses conservées des traitements que vous avez supprimés, pour libérer de la place sur le disque ; redemander l’une de ces pages serait de nouveau payant.',
 		clearUnused: 'Supprimer les résultats inutilisés',
 		clearUnusedBusy: 'Disponible quand aucun traitement n’est en cours.',
-		clearUnusedConfirm:
-			'Supprimer les réponses conservées des traitements supprimés ? Redemander les mêmes pages serait de nouveau payant.',
 		clearUnusedOk: 'Supprimer',
 		clearUnusedDone: (count: number, answers: string, size: string) =>
 			count === 0
@@ -2974,6 +2972,16 @@ export const fr: Messages = {
 		link: 'Signaler un problème',
 		review: 'Signaler un problème',
 		note: 'Un bogue, une idée, ou un texte choquant écrit par un modèle : dites-le-nous sur GitHub. La page s’ouvre dans votre navigateur ; Kalamu n’envoie rien, ne partagez donc que ce qui peut être rendu public.'
+	},
+	unexpected: {
+		screenTitle: 'Cet écran ne fonctionne plus',
+		screenBody:
+			'Un problème est survenu dans Kalamu pendant son affichage. Tout ce que vous avez enregistré est conservé, et les traitements en cours continuent. Revenez en arrière, ou choisissez un autre écran dans la barre latérale.',
+		back: 'Revenir en arrière',
+		reload: 'Recharger la fenêtre',
+		message:
+			'Un problème est survenu dans Kalamu. Tout ce que vous avez enregistré est conservé. Si l’écran ne s’affiche pas bien, rouvrez-le depuis la barre latérale.',
+		retry: 'Réessayer'
 	},
 	glossary: {
 		title: 'Glossaire',

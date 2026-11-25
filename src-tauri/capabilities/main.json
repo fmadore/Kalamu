@@ -217,6 +217,7 @@
     "allow-set-shell-labels",
     "allow-hide-window",
     "allow-set-draft-open",
-    "allow-quit-app"
+    "allow-quit-app",
+    "allow-log-interface-error"
   ]
 }

@@ -25,6 +25,12 @@ export function mockDragging(): boolean {
 	return new URLSearchParams(location.search).has('dragging');
 }
 
+/** The screen made to fail as it is drawn (`?broken=prompts`, a view's name), for the test of
+ * what the interface does with a failure nobody expected (`e2e/unexpected.spec.ts`). */
+export function mockBroken(): string | null {
+	return new URLSearchParams(location.search).get('broken');
+}
+
 /** The screen to open on, from `?mock&view=…`, for screenshots of each screen. */
 export function mockView(): View | null {
 	switch (new URLSearchParams(location.search).get('view') ?? '') {

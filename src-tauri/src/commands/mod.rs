@@ -3,6 +3,7 @@
 
 pub mod database;
 pub mod dictionary;
+pub mod interface_errors;
 pub mod jobs;
 pub mod keys;
 pub mod meaning;

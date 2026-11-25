@@ -15,7 +15,14 @@
 	import { listNames, messages, readerOrder } from '#lib/i18n/index.js';
 	import { languageLabel } from '#lib/languages.js';
 	import { api } from '#lib/tauri.js';
-	import { app, onGraphics, refreshOffline, secondsPerPage, toast } from '#lib/state.svelte.js';
+	import {
+		app,
+		onGraphics,
+		refreshOffline,
+		sayFailure,
+		secondsPerPage,
+		toast
+	} from '#lib/state.svelte.js';
 	import LanguageDataPicker from './LanguageDataPicker.svelte';
 	import ProgressBar from './ProgressBar.svelte';
 
@@ -28,9 +35,12 @@
 
 	const m = messages();
 
+	/** The status read again; what kept it from being read is said in the failure toast. */
+	const reread = () => refreshOffline().catch(sayFailure);
+
 	let section = $state<HTMLElement | null>(null);
 	onMount(async () => {
-		await refreshOffline();
+		await reread();
 		if (wanted.length === 0) return;
 		await tick();
 		const first = section?.querySelector<HTMLElement>('[data-wanted]');
@@ -89,7 +99,7 @@
 		} catch (e) {
 			toast(describeError(e, m), { kind: 'error' });
 		} finally {
-			await refreshOffline();
+			await reread();
 		}
 	}
 	const missingCpu = $derived((app.offline?.missing_cpu.length ?? 0) > 0);
@@ -121,7 +131,7 @@
 	let poll: ReturnType<typeof setInterval> | null = null;
 	$effect(() => {
 		if (downloading && !poll) {
-			poll = setInterval(() => void refreshOffline(), 500);
+			poll = setInterval(() => void reread(), 500);
 		} else if (!downloading && poll) {
 			clearInterval(poll);
 			poll = null;
@@ -134,7 +144,7 @@
 
 	async function download(id: string) {
 		const started = api.downloadModel(id);
-		await refreshOffline();
+		await reread();
 		try {
 			await started;
 		} catch (e) {
@@ -142,7 +152,7 @@
 				toast(describeError(e, m), { kind: 'error' });
 			}
 		} finally {
-			await refreshOffline();
+			await reread();
 		}
 	}
 
@@ -152,7 +162,7 @@
 		} catch (e) {
 			toast(describeError(e, m), { kind: 'error' });
 		} finally {
-			await refreshOffline();
+			await reread();
 		}
 	}
 </script>
