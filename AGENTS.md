@@ -79,7 +79,7 @@ depends on one it may not; a new crate goes into both.
 | `search` | Project search: the corrected text of every result, kept in a derived local index and searched with the project's filters, each match placed in the text shown; and by meaning: that text cut into chunks, what a preparation must embed, chunks ranked against a question's vector, documents' vectors, their neighbours and their map. Never calls a model or changes a result. | `core` |
 | `export` | One module per output format, each implementing the exporter trait; and the one CSV writer for the tables other crates make (`table_csv`). | `core` |
 | `engine` | Job orchestration: queue, splitting, calls, retries, caching, resume, progress events, cost; workflow runs, each step a job; the search by meaning's calls (preparation runs and questions), consented to, retried, resumable and costed. | all of the above through their traits |
-| `app` | Tauri shell: commands, events, settings, the system keychain, what differs between Windows and macOS (`platform/`), packaging. | `engine`, `projects`, `dictionary`, `search`, and others only to wire them up |
+| `app` | Tauri shell: commands, events, settings, the system keychain, what differs between Windows and macOS (`platform/`), packaging; the test build's overrides (`test_overrides.rs`, debug builds only, never released). | `engine`, `projects`, `dictionary`, `search`, and others only to wire them up |
 
 Beside the crates, `helpers/whisper-vulkan` is a program, not a library: whisper.cpp built with
 Vulkan, shipped next to the app on Windows like llama.cpp's programs and started by `offline`
@@ -160,6 +160,12 @@ Rules that keep this modular:
   commit, plus the front end's lint and type checks.
 - A release that changes the job database's schema or a stored record adds that release's
   database to the fixtures CI migrates (`crates/store/fixtures/make.sh <tag>`).
+- The app driven: `npm run test:app` drives a test build (`--features test-overrides`) against
+  a stand-in provider, on Windows; a renamed English label can break `e2e-app/` as it breaks
+  `e2e/`.
+- The live check (`src-tauri/examples/live`) calls the providers' real services and spends
+  the maintainer's money: it runs by hand or from `live.yml` only, never from an agent without
+  being asked, and its own tests use stand-ins.
 
 ## Pull requests
 
