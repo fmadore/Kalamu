@@ -133,6 +133,7 @@ parameters open a given state:
 | `view=settings-general`, `settings-about` | Opens Settings on its General or About tab |
 | `release` | The model list names a release newer than this copy (the sidebar's line, About) |
 | `set-aside` | The settings file could not be read at launch and was moved aside |
+| `catalog-refused` | The last model list downloaded failed its checks (Settings, General) |
 | `theme=light` or `dark` | Forces the theme |
 | `open=<word>` | Opens the readings of the highlighted words with that text in the review |
 | `compare` | Opens the review with another set-up's text in the compare pane |
@@ -144,6 +145,32 @@ The sample data and `src/lib/newJob.test.ts` take each task's rules (which files
 formats suit it) from `src/lib/dev/taskRules.json`, which `cargo test` writes from the engine's
 `task_rules` for the bundled catalogue, as it writes the TypeScript bindings. Run `cargo test`
 after changing the catalogue or the rules, and commit the file.
+
+## The model list
+
+`crates/catalog/catalog.json` is read by every installed copy from `main`, so a merge reaches
+them all at once ([decision](decisions/2026-11-25-model-list-checked.md)). When changing it:
+
+- **Raise `revision` by one** in every pull request that changes the file, however small the
+  change; never lower or reset it. Copies keep the list with the higher revision, so a change
+  without it reaches no one. Set `updated` to the day of the change as well: it is the date
+  Settings shows, and copies up to 1.10.1 keep the list with the later date, so a change that
+  leaves it as it was never reaches them (nor does a second change made the same day). The
+  *Model list* workflow refuses a pull request that changes the file without raising the
+  revision.
+- **A new model is a new entry**, with a `successor` on the one it replaces, never a removal
+  ([decision](decisions/2026-11-11-model-successors.md)).
+- **The checks** (`crates/catalog/src/checks.rs`) run in `cargo test` on the bundled list and in
+  every copy on a downloaded one: no model or provider, a negative price, a successor or alias
+  naming no model, a task without a model offered, a key page on a host the bundled list does
+  not name, and so on. A list that fails one is not used. A new rule binds every later list.
+- **Older versions read it too.** `scripts/catalog-compat.sh` reads the list with the catalogue
+  crate of every release from 1.0.0 on; the *Model list* workflow runs it when the file
+  changes. A new value of `status`, `tier`, `language_hints` or a task makes every release
+  before this check refuse the whole list (later ones hide that model): add one only with the
+  release that knows it, and only once that release is the oldest the job tolerates, or not at
+  all. Run it locally with `bash scripts/catalog-compat.sh` (it builds in
+  `target/catalog-compat`; delete it afterwards).
 
 ## Releases
 
@@ -179,9 +206,9 @@ git tag v1.0.0 && git push origin v1.0.0
    is in the test pass's checklists ([Windows](windows-test-pass.md#the-sign-off),
    [Mac](mac-test-day.md#the-sign-off)). **Reject** leaves the draft unpublished.
 7. Once the release is published, set `latest_version` at the top of
-   `crates/catalog/catalog.json` to its version and `updated` to the day, and merge. Copies
-   installed from the releases page (not the Store apps) read it at their next refresh and
-   say that the new version is out, with a link to its page here
+   `crates/catalog/catalog.json` to its version and `updated` to the day, raise `revision` by
+   one, and merge. Copies installed from the releases page (not the Store apps) read it at
+   their next refresh and say that the new version is out, with a link to its page here
    ([decision](decisions/2026-11-10-shell.md)). Only a plain version (`1.6.0`) is read; the
    app never names one before its release is public, since the link is made from the number.
 

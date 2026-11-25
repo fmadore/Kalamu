@@ -2421,6 +2421,8 @@ export const en = {
 		catalogUpdated: (date: string) => `Model list from ${date}`,
 		catalogRefresh: 'Check for an updated model list',
 		catalogAuto: 'Check at startup',
+		catalogRefused:
+			'The latest model list from Kalamu’s repository failed Kalamu’s checks, so it is not used. Kalamu keeps the list above.',
 		catalogNote:
 			'Prices are in US dollars, from each provider’s published list on the date above. They change, so Kalamu shows estimates only. A model marked “preview” may change or be withdrawn.',
 		appearanceTitle: 'Appearance and language',
@@ -3071,6 +3073,8 @@ export const en = {
 		'settings.write': 'The settings could not be saved.',
 		'catalog.download': 'The model list could not be downloaded.',
 		'catalog.invalid': 'The downloaded model list could not be read.',
+		'catalog.refused':
+			'The downloaded model list failed Kalamu’s checks, so it is not used. Kalamu keeps the list it has.',
 		'file.read': 'The file could not be read or written.',
 		'file.open': 'This file could not be opened. It may have been moved or deleted.',
 		'file.missing':

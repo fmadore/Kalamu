@@ -120,7 +120,10 @@ impl From<kalamu_engine::MeaningError> for AppError {
 
 impl From<kalamu_catalog::CatalogError> for AppError {
     fn from(e: kalamu_catalog::CatalogError) -> Self {
-        Self::new("catalog.invalid", e)
+        match e {
+            kalamu_catalog::CatalogError::Refused(_) => Self::new(id::CATALOG_REFUSED, e),
+            e => Self::new("catalog.invalid", e),
+        }
     }
 }
 
@@ -131,6 +134,8 @@ pub mod id {
     pub const KEY_FORMAT: &str = "keys.format";
     pub const SETTINGS: &str = "settings.write";
     pub const CATALOG_DOWNLOAD: &str = "catalog.download";
+    /// A model list read but failing its checks of sense, or too large: set aside.
+    pub const CATALOG_REFUSED: &str = "catalog.refused";
     pub const FILE: &str = "file.read";
     /// A result file that could not be opened: moved, deleted, or no app for it.
     pub const OPEN: &str = "file.open";

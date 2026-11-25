@@ -2,8 +2,9 @@
 //! offers and what it costs.
 //!
 //! It is data, not code. A copy ships inside the app (`catalog.json`); the app can download a
-//! newer one from the repository without a release, and [`Catalog::newest`] keeps whichever is
-//! more recent. This crate does no network or file I/O itself.
+//! newer one from the repository without a release, and [`Catalog::newest`] keeps whichever has
+//! the higher revision. Every list is checked before it is used ([`Catalog::from_json`]). This
+//! crate does no network or file I/O itself.
 
 use std::collections::BTreeMap;
 
@@ -12,10 +13,12 @@ use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use ts_rs::TS;
 
+mod checks;
 mod cost;
 mod length;
 mod lineage;
 mod release;
+pub use checks::MAX_BYTES;
 pub use cost::{CostEstimate, Workload, embedding_cost};
 pub use length::{CHARS_PER_TOKEN, CHARS_PER_WORD, TooLong};
 pub use lineage::ModelAlias;
@@ -35,8 +38,14 @@ const SCHEMA_VERSION: u32 = 1;
 #[ts(export)]
 pub struct Catalog {
     pub schema_version: u32,
-    /// `YYYY-MM-DD`; the newer of two catalogues wins.
+    /// `YYYY-MM-DD`: the day the prices were last checked, shown in Settings. Builds older
+    /// than `revision` keep the later of two days; this one compares revisions.
     pub updated: String,
+    /// Raised by one with every change to the file, never lowered or reset: of two lists, the
+    /// one with the higher revision wins, so a correction made the same day arrives. A list
+    /// written before the number reads as revision 0, below every list that carries one.
+    #[serde(default)]
+    pub revision: u32,
     #[serde(default)]
     pub notes: String,
     /// The version of Kalamu last released (`1.5.0`), from which a copy installed from the
@@ -426,6 +435,9 @@ pub enum CatalogError {
     Invalid(String),
     #[error("This model catalogue needs a newer version of Kalamu")]
     TooNew,
+    /// Read, but failing the checks of sense: the problems, in English, for the logs.
+    #[error("The model catalogue failed its checks: {0}")]
+    Refused(String),
 }
 
 impl Catalog {
@@ -434,19 +446,57 @@ impl Catalog {
         Self::from_json(BUNDLED).unwrap_or_else(|_| Self::empty())
     }
 
+    /// Reads a list and checks it, the bundled one and a downloaded one alike: no larger than
+    /// [`MAX_BYTES`], a schema this build knows, and nothing that makes no sense (no model, a
+    /// negative price, a successor or an alias that names no model, a key page on a host the
+    /// bundled list does not name…). A model whose status, tier or way of taking languages this
+    /// build does not know is hidden rather than refusing the list, and so is a task.
     pub fn from_json(json: &str) -> Result<Self, CatalogError> {
-        let catalog: Catalog =
+        let catalog = Self::read(json)?;
+        let hosts = Self::read(BUNDLED)
+            .map(|bundled| checks::hosts(&bundled))
+            .unwrap_or_default();
+        let problems = catalog.problems(&hosts);
+        if problems.is_empty() {
+            Ok(catalog)
+        } else {
+            Err(CatalogError::Refused(problems.join("; ")))
+        }
+    }
+
+    /// Reads a list leniently, without its checks of sense.
+    fn read(json: &str) -> Result<Self, CatalogError> {
+        if json.len() > MAX_BYTES {
+            return Err(CatalogError::Refused(format!(
+                "larger than {MAX_BYTES} bytes"
+            )));
+        }
+        let mut value: serde_json::Value =
             serde_json::from_str(json).map_err(|e| CatalogError::Invalid(e.to_string()))?;
-        if catalog.schema_version > SCHEMA_VERSION {
+        // A newer schema may be written in any way: refused before it is read further.
+        let schema = value
+            .get("schema_version")
+            .and_then(serde_json::Value::as_u64);
+        if schema.is_some_and(|v| v > u64::from(SCHEMA_VERSION)) {
             return Err(CatalogError::TooNew);
         }
+        let hidden = checks::hide_unknown(&mut value);
+        let mut catalog: Catalog =
+            serde_json::from_value(value).map_err(|e| CatalogError::Invalid(e.to_string()))?;
+        catalog.forget_hidden(&hidden);
         Ok(catalog)
+    }
+
+    /// Whether this list replaces `other`: a higher revision.
+    pub fn is_newer_than(&self, other: &Self) -> bool {
+        self.revision > other.revision
     }
 
     fn empty() -> Self {
         Self {
             schema_version: SCHEMA_VERSION,
             updated: String::new(),
+            revision: 0,
             notes: String::new(),
             latest_version: None,
             providers: Vec::new(),
@@ -457,12 +507,12 @@ impl Catalog {
         }
     }
 
-    /// The more recent of the bundled catalogue and a downloaded one, ignoring a download this
-    /// build cannot read.
+    /// The more recent of the bundled catalogue and a downloaded one, by revision, ignoring a
+    /// download this build cannot read or that fails its checks.
     pub fn newest(downloaded: Option<&str>) -> Self {
         let bundled = Self::bundled();
         match downloaded.and_then(|json| Self::from_json(json).ok()) {
-            Some(other) if other.updated > bundled.updated => other,
+            Some(other) if other.is_newer_than(&bundled) => other,
             _ => bundled,
         }
     }

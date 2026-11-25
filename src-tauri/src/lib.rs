@@ -94,6 +94,7 @@ pub fn run() {
             commands::settings::consent_providers,
             commands::settings::get_catalog,
             commands::settings::refresh_catalog,
+            commands::settings::catalog_refused,
             commands::settings::task_rules,
             commands::settings::newer_release,
             commands::settings::clear_unused_results,

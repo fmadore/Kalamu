@@ -149,6 +149,7 @@ export const api = {
 	saveSettings: (settings: Settings) => invoke<void>('save_settings', { settings }),
 	getCatalog: () => invoke<Catalog>('get_catalog'),
 	refreshCatalog: () => invoke<Catalog>('refresh_catalog'),
+	catalogRefused: () => invoke<boolean>('catalog_refused'),
 	taskRules: () => invoke<TaskRules[]>('task_rules'),
 	/** A release newer than this copy, named by the model list; never in a store's copy. */
 	newerRelease: () => invoke<Release | null>('newer_release'),

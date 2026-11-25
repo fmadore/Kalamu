@@ -2867,6 +2867,8 @@ export const fr: Messages = {
 		catalogUpdated: (date: string) => `Liste des modèles du ${date}`,
 		catalogRefresh: 'Chercher une liste de modèles à jour',
 		catalogAuto: 'Vérifier au démarrage',
+		catalogRefused:
+			'La dernière liste de modèles publiée par Kalamu contient des erreurs : elle n’est pas utilisée. Kalamu garde la liste ci-dessus.',
 		catalogNote:
 			'Les prix sont en dollars américains, tirés de la liste que publie chaque fournisseur à la date ci-dessus. Ils changent : Kalamu n’affiche donc que des estimations. Un modèle marqué « préversion » peut changer ou être retiré.',
 		appearanceTitle: 'Apparence et langue',
@@ -3503,6 +3505,8 @@ export const fr: Messages = {
 		'settings.write': 'Les paramètres n’ont pas pu être enregistrés.',
 		'catalog.download': 'La liste des modèles n’a pas pu être téléchargée.',
 		'catalog.invalid': 'La liste des modèles téléchargée n’a pas pu être lue.',
+		'catalog.refused':
+			'La liste des modèles téléchargée contient des erreurs : elle n’est pas utilisée. Kalamu garde celle qu’il a.',
 		'file.read': 'Le fichier n’a pas pu être lu ou écrit.',
 		'file.open': 'Ce fichier n’a pas pu être ouvert. Il a peut-être été déplacé ou supprimé.',
 		'file.missing':

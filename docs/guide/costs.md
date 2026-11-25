@@ -17,6 +17,9 @@ smallest model can cost a tenth or less of its largest.
 Before a job starts, **Estimated cost** shows what it should come to, from the page counts and
 the provider's published prices. After it, the job shows what was actually used. The
 provider's invoice is the reference; prices change, and Kalamu's price list carries its date.
+Kalamu fetches a newer list from its repository at startup (**Check at startup** in **Settings**,
+under **Models**), and checks it before using it: a list that fails Kalamu's checks is not
+used, Settings says so under the list's date, and Kalamu keeps the list it has.
 
 A rule of thumb: try the smallest model first on a few typical pages. Many collections of
 clean print do not need more.

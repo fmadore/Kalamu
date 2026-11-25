@@ -112,13 +112,13 @@ fn bundled_catalogue_is_valid_and_consistent() -> Result<(), CatalogError> {
 #[test]
 fn a_newer_download_replaces_the_bundled_catalogue() {
     let mut newer = Catalog::bundled();
-    newer.updated = "2999-01-01".into();
-    newer.models.truncate(1);
+    newer.revision += 1;
+    newer.models.retain(|m| m.id != "gpt-6-luna");
     let json = serde_json::to_string(&newer).unwrap_or_default();
-    assert_eq!(Catalog::newest(Some(&json)).models.len(), 1);
+    assert_eq!(Catalog::newest(Some(&json)), newer);
 
     let mut older = Catalog::bundled();
-    older.updated = "2000-01-01".into();
+    older.revision -= 1;
     let json = serde_json::to_string(&older).unwrap_or_default();
     assert_eq!(Catalog::newest(Some(&json)), Catalog::bundled());
     assert_eq!(Catalog::newest(Some("not json")), Catalog::bundled());

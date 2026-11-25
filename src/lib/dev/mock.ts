@@ -175,6 +175,9 @@ export function installMock(): void {
 				};
 			case 'get_catalog':
 				return catalog;
+			// `?catalog-refused`: the last model list downloaded failed its checks.
+			case 'catalog_refused':
+				return new URLSearchParams(location.search).has('catalog-refused');
 			case 'task_rules':
 				return taskRules;
 			// `?release`: the model list names a release newer than this copy.

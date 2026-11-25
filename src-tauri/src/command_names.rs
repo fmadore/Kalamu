@@ -18,6 +18,7 @@ pub const COMMANDS: &[&str] = &[
     "consent_providers",
     "get_catalog",
     "refresh_catalog",
+    "catalog_refused",
     "task_rules",
     "newer_release",
     "clear_unused_results",

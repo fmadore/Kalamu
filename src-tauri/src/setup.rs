@@ -252,8 +252,7 @@ fn assemble(
         kalamu_prompts::WorkflowLibrary::open(&data.join("workflows")).map_err(library)?;
     let profiles =
         kalamu_prompts::ProfileLibrary::open(&data.join("export-profiles")).map_err(library)?;
-    let cached = std::fs::read_to_string(&paths.catalog_cache).ok();
-    let catalog = Catalog::newest(cached.as_deref());
+    let catalog: Catalog = commands::settings::cached_catalog(&paths.catalog_cache);
     let http = kalamu_providers::client();
     let keys = Arc::new(CredentialKeys::default());
     let models =

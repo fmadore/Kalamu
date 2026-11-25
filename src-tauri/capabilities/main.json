@@ -24,6 +24,7 @@
     "allow-save-settings",
     "allow-get-catalog",
     "allow-refresh-catalog",
+    "allow-catalog-refused",
     "allow-task-rules",
     "allow-newer-release",
     "allow-clear-unused-results",
