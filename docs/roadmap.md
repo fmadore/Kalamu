@@ -556,16 +556,40 @@ workflows) keeps its own order after them.
    - the originals a project file brought in outlive the project, and an older file is
      copied whole into the system's temporary folder ([#274](https://github.com/fmadore/Kalamu/issues/274)).
 2. **Safety nets**, so that the next release cannot go out as 1.9.0 and 1.10.1 did, and a
-   researcher's corrections cannot be lost to one bad file:
-   - **The job database protected** ([#275](https://github.com/fmadore/Kalamu/issues/275)): a copy before each migration, a rolling
-     backup, an integrity check at launch with a way back, databases of earlier versions
-     migrated in CI, one unreadable row costing one row.
-   - **A release gate** ([#276](https://github.com/fmadore/Kalamu/issues/276)): a tag publishes only after a release candidate and a
-     sign-off.
-   - **The refreshed model list checked** ([#279](https://github.com/fmadore/Kalamu/issues/279)): its sense and size before it is
-     trusted, and today's list read by the versions already installed, in CI.
-   - **The interface's net** ([#280](https://github.com/fmadore/Kalamu/issues/280)): an unexpected failure said and logged; command names
-     checked against the shell's.
+   researcher's corrections cannot be lost to one bad file. The first four are written, tested
+   on Windows and in Chromium and WebKit, and none yet tried in the packaged app or on a Mac;
+   the last two are to do:
+   - **The job database protected** ([#275](https://github.com/fmadore/Kalamu/issues/275),
+     [decision](decisions/2026-11-25-job-database-protected.md)), written: a copy before each
+     update and one each day, the last three kept, in `backups` in the data folder; the whole
+     file checked after launch; a file that cannot be read set aside, never deleted, and the
+     newest copy offered in its place, at launch and from *Settings › General › Safety
+     copies*; databases of 1.0.0 to 1.10.0 migrated in CI, each release that changes the
+     schema or a stored record adding one (`crates/store/fixtures/make.sh <tag>`); one
+     unreadable job costing one job; a frozen text cut short written again from the store.
+     To try in the packaged app: the question asked before the window opens, and the restart
+     that opens a copy.
+   - **A release gate** ([#276](https://github.com/fmadore/Kalamu/issues/276),
+     [decision](decisions/2026-11-25-release-gate.md)), written: a final tag is refused
+     without a `vX.Y.Z-rcN` candidate of its commit, or of an ancestor with only
+     documentation changed since, and publishing waits for the `release` environment's
+     approval. Still to do, by the maintainer: the environment's required reviewer in the
+     repository's settings, without which nothing waits, and the dry run
+     ([development.md](development.md#releases)). Candidate tags are kept from now on.
+   - **The refreshed model list checked** ([#279](https://github.com/fmadore/Kalamu/issues/279),
+     [decision](decisions/2026-11-25-model-list-checked.md)), written: every list, bundled or
+     downloaded, checked for sense and size before it is used; a `revision` compared in place
+     of the date; a list that fails dropped and said once in Settings; an unknown status, tier
+     or task hiding a model, not the list; and the *Model list* workflow reading each change
+     with every release from 1.0.0 on, which has not yet run on GitHub. Copies up to 1.10.1
+     still compare dates and check nothing.
+   - **The interface's net** ([#280](https://github.com/fmadore/Kalamu/issues/280),
+     [decision](decisions/2026-11-25-interface-net.md)), written: a screen that fails says so
+     and leaves the sidebar alive; an error nobody caught is said once and written to the
+     log, cut down to its name, its message without what it quotes and its place in the code;
+     the start-up failure can be tried again; and a test holds the bridge's command and
+     argument names, and the development mock, to the shell's. Generated wrappers stay an
+     option if the bridge is rewritten.
    - **The packaged app driven in CI** against recorded answers ([#277](https://github.com/fmadore/Kalamu/issues/277)), which takes
      about half of the test pass by hand off the maintainer.
    - **A scheduled live check** of each provider under a cost ceiling ([#278](https://github.com/fmadore/Kalamu/issues/278)), which also

@@ -1,0 +1,63 @@
+name: Model list
+
+# Every installed copy downloads crates/catalog/catalog.json from main, so a change to it reaches
+# them all at once, read by each one's own code. This checks, before merging, that every release
+# still in people's hands reads the list (scripts/catalog-compat.sh), and that a change raises
+# its revision, without which copies keep the list they have
+# (docs/decisions/2026-11-25-model-list-checked.md). Today's build checks the list in CI's
+# `cargo test`.
+on:
+  push:
+    branches: [main]
+    paths:
+      - crates/catalog/catalog.json
+      - scripts/catalog-compat.sh
+      - .github/workflows/catalog.yml
+  pull_request:
+    paths:
+      - crates/catalog/catalog.json
+      - scripts/catalog-compat.sh
+      - .github/workflows/catalog.yml
+  # After a release is tagged, or to check by hand.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: catalog-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  installed-versions:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          # The release tags, and the base branch to compare the revision with.
+          fetch-depth: 0
+      - name: A change raises the revision
+        if: github.event_name == 'pull_request'
+        env:
+          BASE: origin/${{ github.base_ref }}
+        run: |
+          if git diff --quiet "$BASE" HEAD -- crates/catalog/catalog.json; then
+            echo "catalog.json unchanged"
+            exit 0
+          fi
+          revision() { python3 -c 'import json, sys; print(json.load(sys.stdin).get("revision", 0))'; }
+          before="$(git show "$BASE:crates/catalog/catalog.json" | revision)"
+          after="$(revision < crates/catalog/catalog.json)"
+          echo "revision $before -> $after"
+          if [ "$after" -le "$before" ]; then
+            echo "::error file=crates/catalog/catalog.json::catalog.json changed but its revision did not rise above $before: installed copies would keep the list they have."
+            exit 1
+          fi
+      # The toolchain pinned in rust-toolchain.toml. No cache: two small crates and what they
+      # use, built once for every release into one folder, what releases share built once. It
+      # runs only when the list changes.
+      - run: rustup toolchain install
+      - name: Every release reads today's list
+        run: scripts/catalog-compat.sh

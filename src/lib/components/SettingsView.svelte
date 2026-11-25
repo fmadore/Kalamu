@@ -21,9 +21,11 @@
 		readyToWork,
 		refreshKeys,
 		refreshRelease,
+		sayFailure,
 		toast,
 		type SettingsTab
 	} from '#lib/state.svelte.js';
+	import DatabaseCopies from './DatabaseCopies.svelte';
 	import ExternalLink from './ExternalLink.svelte';
 	import OfflineModels from './OfflineModels.svelte';
 	import ReportLink from './ReportLink.svelte';
@@ -69,7 +71,7 @@
 			status = { ...status, [id]: { ok: false, text: describeError(e, m) } };
 		} finally {
 			busy = null;
-			await refreshKeys();
+			await refreshKeys().catch(sayFailure);
 		}
 	}
 
@@ -98,7 +100,16 @@
 			await refreshRelease();
 			toast(m.settings.catalogUpdated(formatDay(catalog.updated)));
 		});
+		await readCatalogRefused();
 	}
+
+	/** Whether the last model list downloaded failed Kalamu's checks and was set aside; said
+	 *  under the date of the list in use until one passes. */
+	let catalogRefused = $state(false);
+	async function readCatalogRefused() {
+		catalogRefused = await api.catalogRefused().catch(() => false);
+	}
+	void readCatalogRefused();
 
 	// The engine holds the database while it compacts it, so clearing waits until no job runs.
 	const jobsRunning = $derived(app.jobs.some((j) => j.status === 'running'));
@@ -283,6 +294,7 @@
 						app.catalog ? formatDay(app.catalog.updated) : m.common.unknown.toLowerCase()
 					)}
 				</p>
+				{#if catalogRefused}<p class="notice" role="status">{m.settings.catalogRefused}</p>{/if}
 				<div class="row">
 					<button class="btn sm" onclick={refreshCatalog}>{m.settings.catalogRefresh}</button>
 					<label class="inline small">
@@ -307,6 +319,8 @@
 					{#if jobsRunning}<span class="muted small">{m.settings.clearUnusedBusy}</span>{/if}
 				</div>
 			</section>
+
+			<DatabaseCopies />
 
 			<section class="card block" aria-labelledby="look-settings">
 				<h2 id="look-settings">{m.settings.appearanceTitle}</h2>

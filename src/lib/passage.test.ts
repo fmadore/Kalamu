@@ -7,8 +7,7 @@ import {
 	correctionFor,
 	passageAround,
 	passageProblem,
-	startPreset,
-	withPassage
+	startPreset
 } from './passage.js';
 
 const TEXT = 'Le Gouverneur général a reçu ce matin deux cents fideles de la ville.';
@@ -27,9 +26,6 @@ describe('a passage chosen for a model to correct', () => {
 			after: ' de la ville.',
 			at
 		});
-		expect(withPassage(TEXT, around, 'deux cents fidèles')).toBe(
-			'Le Gouverneur général a reçu ce matin deux cents fidèles de la ville.'
-		);
 	});
 
 	it('cuts a longer context at a word’s edge', () => {

@@ -258,6 +258,11 @@ impl Engine {
         Ok(self.store.list_jobs()?)
     }
 
+    /// The jobs whose record this version cannot read, left out of [`Engine::jobs`].
+    pub fn unreadable_jobs(&self) -> Result<Vec<kalamu_core::UnreadableJob>, EngineError> {
+        Ok(self.store.unreadable_jobs()?)
+    }
+
     /// The names of every job's sources, for finding a job by a file it read.
     pub fn job_sources(&self) -> Result<Vec<kalamu_core::JobSources>, EngineError> {
         Ok(self.store.job_sources()?)

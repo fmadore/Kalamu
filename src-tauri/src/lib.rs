@@ -5,6 +5,7 @@
 mod activity;
 mod command_names;
 mod commands;
+mod database;
 mod errors;
 mod exports;
 mod grants;
@@ -94,10 +95,13 @@ pub fn run() {
             commands::settings::consent_providers,
             commands::settings::get_catalog,
             commands::settings::refresh_catalog,
+            commands::settings::catalog_refused,
             commands::settings::task_rules,
             commands::settings::newer_release,
             commands::settings::clear_unused_results,
             commands::settings::unused_results,
+            commands::database::database_copies,
+            commands::database::open_database_copy,
             commands::keys::key_status,
             commands::keys::set_api_key,
             commands::keys::clear_api_key,
@@ -283,6 +287,7 @@ pub fn run() {
             commands::window::hide_window,
             commands::window::set_draft_open,
             commands::window::quit_app,
+            commands::interface_errors::log_interface_error,
         ])
         .build(context)
         .map(|app| {

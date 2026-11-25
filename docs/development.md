@@ -133,6 +133,7 @@ parameters open a given state:
 | `view=settings-general`, `settings-about` | Opens Settings on its General or About tab |
 | `release` | The model list names a release newer than this copy (the sidebar's line, About) |
 | `set-aside` | The settings file could not be read at launch and was moved aside |
+| `catalog-refused` | The last model list downloaded failed its checks (Settings, General) |
 | `theme=light` or `dark` | Forces the theme |
 | `open=<word>` | Opens the readings of the highlighted words with that text in the review |
 | `compare` | Opens the review with another set-up's text in the compare pane |
@@ -145,6 +146,32 @@ formats suit it) from `src/lib/dev/taskRules.json`, which `cargo test` writes fr
 `task_rules` for the bundled catalogue, as it writes the TypeScript bindings. Run `cargo test`
 after changing the catalogue or the rules, and commit the file.
 
+## The model list
+
+`crates/catalog/catalog.json` is read by every installed copy from `main`, so a merge reaches
+them all at once ([decision](decisions/2026-11-25-model-list-checked.md)). When changing it:
+
+- **Raise `revision` by one** in every pull request that changes the file, however small the
+  change; never lower or reset it. Copies keep the list with the higher revision, so a change
+  without it reaches no one. Set `updated` to the day of the change as well: it is the date
+  Settings shows, and copies up to 1.10.1 keep the list with the later date, so a change that
+  leaves it as it was never reaches them (nor does a second change made the same day). The
+  *Model list* workflow refuses a pull request that changes the file without raising the
+  revision.
+- **A new model is a new entry**, with a `successor` on the one it replaces, never a removal
+  ([decision](decisions/2026-11-11-model-successors.md)).
+- **The checks** (`crates/catalog/src/checks.rs`) run in `cargo test` on the bundled list and in
+  every copy on a downloaded one: no model or provider, a negative price, a successor or alias
+  naming no model, a task without a model offered, a key page on a host the bundled list does
+  not name, and so on. A list that fails one is not used. A new rule binds every later list.
+- **Older versions read it too.** `scripts/catalog-compat.sh` reads the list with the catalogue
+  crate of every release from 1.0.0 on; the *Model list* workflow runs it when the file
+  changes. A new value of `status`, `tier`, `language_hints` or a task makes every release
+  before this check refuse the whole list (later ones hide that model): add one only with the
+  release that knows it, and only once that release is the oldest the job tolerates, or not at
+  all. Run it locally with `bash scripts/catalog-compat.sh` (it builds in
+  `target/catalog-compat`; delete it afterwards).
+
 ## Releases
 
 Releases are built by `.github/workflows/release.yml`, natively on Windows x64 and ARM64 and on
@@ -152,14 +179,111 @@ macOS (Apple Silicon):
 
 1. Move the version in `package.json` (with `npm version <x.y.z> --no-git-tag-version`), the
    workspace `Cargo.toml` and `src-tauri/tauri.conf.json` together, and let Cargo update
-   `Cargo.lock`.
-2. Write the release notes in `docs/release-<x.y.z>.md`: they become the release's body,
-   followed by [checking-downloads.md](checking-downloads.md) with the version filled in.
-3. Merge, then tag `main` and push the tag:
+   `Cargo.lock`. Merge.
+2. Push a release candidate, `v<x.y.z>-rc1`, on that commit of `main`. It builds the draft
+   described below and stays unpublished: no release gate, no approval.
+
+```bash
+git tag v1.0.0-rc1 && git push origin v1.0.0-rc1
+```
+
+3. Run the test pass on the candidate's draft: [windows-test-pass.md](windows-test-pass.md) and
+   [mac-test-day.md](mac-test-day.md). A fix it calls for is merged and tried on a new
+   candidate (`rc2`, and so on).
+4. Write the release notes in `docs/release-<x.y.z>.md`: they become the release's body,
+   followed by [checking-downloads.md](checking-downloads.md) with the version filled in. They
+   may be merged after the candidate: what changes only documentation does not need a new one.
+5. Tag the candidate's commit, or a later commit of `main` that changes only documentation,
+   and push the tag:
 
 ```bash
 git tag v1.0.0 && git push origin v1.0.0
 ```
+
+6. When every asset is on the draft, the run waits at *Publish the release* for the `release`
+   environment's approval: open the run (Actions → Release → the run of the tag), choose
+   **Review deployments**, tick `release` and **Approve and deploy**. What the approval asserts
+   is in the test pass's checklists ([Windows](windows-test-pass.md#the-sign-off),
+   [Mac](mac-test-day.md#the-sign-off)). **Reject** leaves the draft unpublished.
+7. Once the release is published, set `latest_version` at the top of
+   `crates/catalog/catalog.json` to its version and `updated` to the day, raise `revision` by
+   one, and merge. Copies installed from the releases page (not the Store apps) read it at
+   their next refresh and say that the new version is out, with a link to its page here
+   ([decision](decisions/2026-11-10-shell.md)). Only a plain version (`1.6.0`) is read; the
+   app never names one before its release is public, since the link is made from the number.
+
+Keep the candidate tags once the version is out: the gate reads them, and a rebuild of the
+final tag finds them again. Their drafts can be deleted.
+
+### The release gate
+
+`prepare` refuses a final tag (`vX.Y.Z`, no hyphen) before any build time is spent unless a
+candidate of the same version, `vX.Y.Z-rcN`, points at the tag's commit, or at an ancestor of it
+whose later commits change only files under `docs/` and Markdown files at the repository's root
+([decision](decisions/2026-11-25-release-gate.md)). The refusal names each candidate it
+weighed, the commits since it and the files they changed. The rule is
+`scripts/release-gate.sh`, run in a clone with every tag; `bash scripts/release-gate.test.sh`
+tries it against throwaway repositories, as CI's `scripts` job does.
+
+To publish a final version without a candidate, which the release notes then say at their top:
+Actions → Release → **Run workflow**, choose the tag itself under *Use workflow from* (Tags →
+`vX.Y.Z`; the `release` environment admits tags only), give the tag again in the first box, and
+type in the last one, exactly, `publish vX.Y.Z without a candidate`. The run still waits for the
+approval.
+
+### Setting up the `release` environment, once
+
+The publish job names the environment `release`; GitHub creates it on the first run that does,
+with no protection, and **until the environment has a required reviewer the job does not wait**.
+In the repository on GitHub:
+
+1. **Settings → Environments → New environment**, name it `release`, **Configure environment**.
+2. Under *Deployment protection rules*, tick **Required reviewers** and add yourself. Leave
+   **Prevent self-review** unticked: the person who pushes the tag is the one who approves.
+   Leave *Wait timer* off.
+3. Under *Deployment branches and tags*, choose **Selected branches and tags**, then **Add
+   deployment branch or tag rule**: *Ref type* **Tag**, *Name pattern* `v*`, **Add rule**. No
+   branch rule: a manual run that is to publish starts from the tag.
+4. **Save protection rules**. The environment needs no secret.
+
+A run waits up to 30 days for the approval, then fails; the draft stays and the job can be
+re-run.
+
+### A dry run of the gate and the approval
+
+The issue's acceptance: a test tag stops at the approval. It uses version `0.0.1`, which the
+workflow would publish only as a pre-release, never as the latest, and spends one full build
+(the Mac's sent to Apple's notary service like any other).
+
+1. On a branch of its own: `git switch -c dry-run/release-gate main`, then
+   `npm version 0.0.1 --no-git-tag-version`, `version = "0.0.1"` under `[workspace.package]` in
+   `Cargo.toml`, `"version": "0.0.1"` in `src-tauri/tauri.conf.json`, `cargo update --workspace`
+   for `Cargo.lock`, and a `docs/release-0.0.1.md` of one line ("Dry run of the release gate;
+   never published"). Commit, `git push origin dry-run/release-gate`.
+2. The refusal: `git tag v0.0.1 && git push origin v0.0.1`. *Version check and draft release*
+   fails at *Release gate*, "v0.0.1 has no release candidate", within minutes, with nothing built
+   and no draft made. Remove the tag: `git push origin :refs/tags/v0.0.1 && git tag -d v0.0.1`.
+3. The candidate: `git tag v0.0.1-rc1 && git push origin v0.0.1-rc1`. Its run makes a draft and
+   asks for no approval; once *Version check and draft release* has passed, its run can be
+   cancelled (the gate reads the tag, not the build).
+4. The final tag: `git tag v0.0.1 && git push origin v0.0.1`. *Release gate* says "v0.0.1 is on
+   the commit of release candidate v0.0.1-rc1", the builds run, and *Publish the release* shows
+   **Waiting** with **Review deployments**. That is the acceptance. Choose **Review
+   deployments** → tick `release` → **Reject**.
+5. Clean up:
+
+```bash
+gh release delete v0.0.1 --cleanup-tag --yes -R fmadore/Kalamu
+gh release delete v0.0.1-rc1 --cleanup-tag --yes -R fmadore/Kalamu
+git tag -d v0.0.1 v0.0.1-rc1
+git push origin --delete dry-run/release-gate
+git switch main && git branch -D dry-run/release-gate
+```
+
+The build attestations of the test assets and the environment's record of the rejected
+deployment stay on GitHub; neither is public on the releases page.
+
+### What the workflow builds
 
 The workflow checks the tag against the version files and builds, into a draft release, both
 installers, both Store packages and the `.msixbundle` for Partner Center
@@ -168,9 +292,10 @@ installers, both Store packages and the `.msixbundle` for Partner Center
 ticket, Gatekeeper's verdict, FFmpeg and licences: [the decision](decisions/2026-11-04-macos-notarisation.md)
 lists the six `APPLE_*` repository secrets it needs), and `kalamu-samples.zip`
 from `samples/`; it
-publishes the release once every asset is attached, as a pre-release while the version starts
-with 0. A hyphenated tag (`v1.0.0-rc1`) builds the same draft and leaves it unpublished. To
-rebuild a tag, run the workflow by hand from the Actions tab; a tag cut before the workflow took
+publishes the release once every asset is attached and the approval given, as a pre-release
+while the version starts with 0. A hyphenated tag (`v1.0.0-rc1`) builds the same draft and
+leaves it unpublished. To rebuild a tag, run the workflow by hand from the Actions tab: a
+release already published gets its assets replaced, with no gate and no approval; a tag cut before the workflow took
 its present shape (November 2026) lacks `.github/actions/windows-packages` and cannot be rebuilt
 this way.
 
@@ -194,12 +319,7 @@ programs' pins, the scripts that fetch, build or package them, `release.yml`) ru
 them, from a debug build and for x64, with nothing signed or uploaded. Run it by hand from the
 Actions tab for both architectures before tagging a release whose packaging changed.
 
-4. Once the release is published, set `latest_version` at the top of
-   `crates/catalog/catalog.json` to its version and `updated` to the day, and merge. Copies
-   installed from the releases page (not the Store apps) read it at their next refresh and
-   say that the new version is out, with a link to its page here
-   ([decision](decisions/2026-11-10-shell.md)). Only a plain version (`1.6.0`) is read; the
-   app never names one before its release is public, since the link is made from the number.
+### Building an installer locally
 
 To build an installer locally, fetch the bundled FFmpeg and llama.cpp first; they come from the
 builds in `.github/workflows/ffmpeg.yml` and `.github/workflows/llama.yml`

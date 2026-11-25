@@ -265,3 +265,38 @@ async fn texts_kalamu_wrote_are_read_as_any_source_under_the_dictionarys_own_pro
         "{read:?}"
     );
 }
+
+/// A frozen text cut short on the disk (a power cut as it was written) is not refused as
+/// changed for ever: the store still gives the same text, so it is written again and read.
+#[tokio::test]
+async fn a_frozen_text_cut_short_is_written_again_from_the_store() {
+    let f = fixture();
+    let extraction = f.new_job(vec![f.pdf("journal.pdf", 2)], &["fake-model"]);
+    assert_eq!(f.run(extraction.id).await, JobStatus::Completed);
+    let sources = f
+        .engine
+        .snapshot(extraction.id, extraction.setups[0].id)
+        .unwrap_or_else(|e| panic!("{e}"));
+    let path = std::path::PathBuf::from(&sources[0].path);
+    let whole = std::fs::read(&path).unwrap_or_default();
+    std::fs::write(&path, &whole[..whole.len() / 2]).unwrap_or_else(|e| panic!("{e}"));
+
+    let analysis = analysis_of(&f, sources.clone());
+    assert_eq!(f.run(analysis.id).await, JobStatus::Completed);
+    assert_eq!(std::fs::read(&path).unwrap_or_default(), whole);
+
+    // Freezing the same text again also mends a file emptied since.
+    std::fs::write(&path, b"").unwrap_or_else(|e| panic!("{e}"));
+    f.engine
+        .snapshot(extraction.id, extraction.setups[0].id)
+        .unwrap_or_else(|e| panic!("{e}"));
+    assert_eq!(std::fs::read(&path).unwrap_or_default(), whole);
+
+    // Corrected since: the store no longer gives the text frozen, so nothing is written under
+    // its fingerprint and the job that reads it is refused as before.
+    correct(&f, &extraction, 0, "Une autre lecture.");
+    std::fs::write(&path, b"cut").unwrap_or_else(|e| panic!("{e}"));
+    let later = analysis_of(&f, sources);
+    assert_ne!(f.run(later.id).await, JobStatus::Completed);
+    assert_eq!(std::fs::read(&path).unwrap_or_default(), b"cut");
+}

@@ -24,10 +24,13 @@
     "allow-save-settings",
     "allow-get-catalog",
     "allow-refresh-catalog",
+    "allow-catalog-refused",
     "allow-task-rules",
     "allow-newer-release",
     "allow-clear-unused-results",
     "allow-unused-results",
+    "allow-database-copies",
+    "allow-open-database-copy",
     "allow-key-status",
     "allow-set-api-key",
     "allow-clear-api-key",
@@ -214,6 +217,7 @@
     "allow-set-shell-labels",
     "allow-hide-window",
     "allow-set-draft-open",
-    "allow-quit-app"
+    "allow-quit-app",
+    "allow-log-interface-error"
   ]
 }

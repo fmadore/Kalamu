@@ -45,10 +45,13 @@ pub(crate) fn setup(app: &mut tauri::App, moved: platform::Moved) -> SetupResult
             Some(logs.as_path()),
         );
     }
-    let (state, store, waiting) = match assemble(data, logs.clone()) {
+    let (state, store, waiting, database) = match assemble(data, logs.clone()) {
         Ok(assembled) => assembled,
         Err(e) => fail(app, &e, Some(logs.as_path())),
     };
+    // Checked whole, and copied for the day, once the window is up (#275).
+    app.manage(database);
+    crate::database::check_after_launch(app.handle());
     forward_progress(app, &state.engine, &store);
     forward_meaning(app, &state.meaning);
     // The tray, the taskbar and the notifications follow the engine here, not in the webview.
@@ -170,7 +173,15 @@ fn folders(app: &mut tauri::App, moved: platform::Moved) -> SetupResult<(PathBuf
 fn assemble(
     data: PathBuf,
     logs: PathBuf,
-) -> Result<(AppState, Arc<SqliteStore>, Vec<JobId>), StartError> {
+) -> Result<
+    (
+        AppState,
+        Arc<SqliteStore>,
+        Vec<JobId>,
+        crate::database::Database,
+    ),
+    StartError,
+> {
     let paths = Paths {
         settings: data.join("settings.json"),
         catalog_cache: data.join("catalog.json"),
@@ -186,8 +197,10 @@ fn assemble(
     if open > 0 {
         tracing::info!(count = open, "granted folders and files opened again");
     }
-    let store =
-        Arc::new(SqliteStore::open(&data.join("jobs.sqlite")).map_err(StartError::database)?);
+    // The job database, copied before an update changes it, and offered back from a copy
+    // when it cannot be read (#275).
+    let (store, database) = crate::database::open(&data, &paths.logs)?;
+    let store = Arc::new(store);
     // What a crash or an earlier version left of project files (#274): working copies of older
     // files, and the originals copied in for projects since deleted. Swept before anything can
     // open or check a file, so nothing removed is in use.
@@ -252,8 +265,7 @@ fn assemble(
         kalamu_prompts::WorkflowLibrary::open(&data.join("workflows")).map_err(library)?;
     let profiles =
         kalamu_prompts::ProfileLibrary::open(&data.join("export-profiles")).map_err(library)?;
-    let cached = std::fs::read_to_string(&paths.catalog_cache).ok();
-    let catalog = Catalog::newest(cached.as_deref());
+    let catalog: Catalog = commands::settings::cached_catalog(&paths.catalog_cache);
     let http = kalamu_providers::client();
     let keys = Arc::new(CredentialKeys::default());
     let models =
@@ -416,7 +428,7 @@ fn assemble(
         quitting: std::sync::atomic::AtomicBool::new(false),
         draft_open: std::sync::atomic::AtomicBool::new(false),
     };
-    Ok((state, store, waiting))
+    Ok((state, store, waiting, database))
 }
 
 /// The embedders the search by meaning calls, given to the engine as values so that it never

@@ -25,6 +25,7 @@ import { SvelteSet } from 'svelte/reactivity';
 import { leaving, samePlace } from './history.js';
 import { messages, resolveLocale, setLocale, type Locale } from './i18n/index.js';
 import { ask } from './dialogs.js';
+import { describeError } from './errors.js';
 import { api, openUrl } from './tauri.js';
 
 /** A project New job was opened from: the job it starts is tied to the project's documents. */
@@ -476,7 +477,7 @@ function scheduleRefresh(): void {
 	if (refreshTimer) return;
 	refreshTimer = setTimeout(() => {
 		refreshTimer = null;
-		void refreshJobs();
+		void refreshJobs().catch(sayFailure);
 	}, 500);
 }
 
@@ -523,7 +524,7 @@ export function applyProgress(event: ProgressEvent): void {
 		// The notification it sends is the app's own (`activity.rs`), like the tray's line.
 		case 'job_finished':
 			app.runs++;
-			void refreshJobs();
+			void refreshJobs().catch(sayFailure);
 			void refreshWaiting();
 			// The offline models and language data it held are free again: Settings shows them
 			// no longer in use, and they can be removed.
@@ -599,6 +600,13 @@ export function undoFromToast(): boolean {
 	if (!app.toast || !app.toastAction) return false;
 	takeToastAction();
 	return true;
+}
+
+/** Says, in the failure toast, why work nobody asked for just now failed (a list read again
+ * in the background), in the interface language; not again while the same failure shows. */
+export function sayFailure(e: unknown): void {
+	const text = describeError(e, messages());
+	if (app.toastError?.text !== text) toast(text, { kind: 'error' });
 }
 
 /** Puts away the failure shown. */

@@ -88,16 +88,25 @@ impl Engine {
         // A file changed since it was added is refused: its pieces would be cached under the
         // fingerprint of what it held then.
         // Opened with the job's stop signal, so a pause ends FFmpeg's work on a recording.
-        let opened = {
+        let open = || {
             let (source, stop) = (source.clone(), run.stop.clone());
             let ffmpeg = self.config.ffmpeg.clone();
             tokio::task::spawn_blocking(move || {
                 kalamu_media::check_unchanged(&source)?;
                 OpenSource::open_with_stop(&source, ffmpeg.as_ref(), &stop)
             })
-            .await
-            .map_err(|e| EngineError::Output(e.to_string()))?
         };
+        let mut opened = open()
+            .await
+            .map_err(|e| EngineError::Output(e.to_string()))?;
+        // A frozen text whose file was lost or cut short is written again from the store when
+        // the result it was frozen from still gives the same text, then opened again.
+        // A text that cannot be written again is reported as unread, as before.
+        if opened.is_err() && matches!(self.rewrite_frozen(source), Ok(true)) {
+            opened = open()
+                .await
+                .map_err(|e| EngineError::Output(e.to_string()))?;
+        }
         let unread = |tally: &mut Tally, error: &str| {
             tally.failed = true;
             tally.unread.insert(source.id);

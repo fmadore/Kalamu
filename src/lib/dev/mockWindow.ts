@@ -2,7 +2,9 @@
 // while changes are not saved (`set_draft_open`), the interface is asked first with the
 // `close-requested` event; otherwise the window closes. The tests close it through
 // `window.__kalamuCloseWindow()` and read what came of it on `window.__kalamuWindow`. No job
-// runs in the preview, so the event never asks about jobs. Development builds only.
+// runs in the preview, so the event never asks about jobs. A failure the interface sends to the
+// log (`log_interface_error`) is kept on `window.__kalamuLoggedErrors`, for the tests to read.
+// Development builds only.
 
 import { emit } from '@tauri-apps/api/event';
 
@@ -13,6 +15,8 @@ declare global {
 		/** Whether changes are not saved, as the interface last said; and what closing did:
 		 * whether the window closed at once, or the app quit once asked. */
 		__kalamuWindow?: { draft: boolean; closed: boolean; quit: boolean };
+		/** The failures the interface sent to the log, as it sent them. */
+		__kalamuLoggedErrors?: unknown[];
 	}
 }
 
@@ -33,6 +37,9 @@ export function windowCommand(cmd: string, a: Record<string, unknown>): unknown 
 			return null;
 		case 'quit_app':
 			outcome().quit = true;
+			return null;
+		case 'log_interface_error':
+			(window.__kalamuLoggedErrors ??= []).push(a.error);
 			return null;
 		default:
 			return undefined;

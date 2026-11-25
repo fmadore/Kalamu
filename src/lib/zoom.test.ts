@@ -1,5 +1,19 @@
 import { describe, expect, it } from 'vitest';
-import { between, clampZoom, keepUnder, MAX_ZOOM, MIN_ZOOM, wheelFactor } from './zoom.js';
+import {
+	between,
+	clampZoom,
+	MAX_ZOOM,
+	MIN_ZOOM,
+	placeUnder,
+	scrollToPlace,
+	wheelFactor
+} from './zoom.js';
+
+type Box = { left: number; top: number; width: number; height: number };
+type Point = { x: number; y: number };
+/** The scroll that brings the place under `at` before a zoom back under it after. */
+const keepUnder = (before: Box, after: Box, at: Point) =>
+	scrollToPlace(after, placeUnder(before, at), at);
 
 describe('zoom', () => {
 	it('zooms in proportion to the wheel, the same in and out', () => {

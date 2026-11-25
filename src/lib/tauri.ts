@@ -100,10 +100,12 @@ import type { ProgressEvent } from './bindings/ProgressEvent.js';
 import type { PrunedResults } from './bindings/PrunedResults.js';
 import type { UnusedResults } from './bindings/UnusedResults.js';
 import type { Release } from './bindings/Release.js';
+import type { DatabaseCopies } from './bindings/DatabaseCopies.js';
 import type { Settings } from './bindings/Settings.js';
 import type { TagRenamed } from './bindings/TagRenamed.js';
 import type { Task } from './bindings/Task.js';
 import type { ShellLabels } from './bindings/ShellLabels.js';
+import type { InterfaceError } from './bindings/InterfaceError.js';
 import { localisePreset } from './i18n/index.js';
 
 /** The published privacy policy, named wherever the app asks before sending files. */
@@ -149,12 +151,17 @@ export const api = {
 	saveSettings: (settings: Settings) => invoke<void>('save_settings', { settings }),
 	getCatalog: () => invoke<Catalog>('get_catalog'),
 	refreshCatalog: () => invoke<Catalog>('refresh_catalog'),
+	catalogRefused: () => invoke<boolean>('catalog_refused'),
 	taskRules: () => invoke<TaskRules[]>('task_rules'),
 	/** A release newer than this copy, named by the model list; never in a store's copy. */
 	newerRelease: () => invoke<Release | null>('newer_release'),
 	/** Deletes the answers no job refers to any more; refused while a job runs. */
 	clearUnusedResults: () => invoke<PrunedResults>('clear_unused_results'),
 	unusedResults: () => invoke<UnusedResults>('unused_results'),
+	/** The copies of the job database, where they are kept, and what this launch did to it. */
+	databaseCopies: () => invoke<DatabaseCopies>('database_copies'),
+	/** Opens a copy in place of the job database: Kalamu restarts, the database set aside. */
+	openDatabaseCopy: (name: string) => invoke<void>('open_database_copy', { name }),
 	keyStatus: () => invoke<KeyStatus[]>('key_status'),
 	setApiKey: (provider: string, key: string) => invoke<void>('set_api_key', { provider, key }),
 	clearApiKey: (provider: string) => invoke<void>('clear_api_key', { provider }),
@@ -514,7 +521,9 @@ export const api = {
 	hideWindow: () => invoke<void>('hide_window'),
 	/** Whether changes are not saved, so closing the window or quitting asks first. */
 	setDraftOpen: (open: boolean) => invoke<void>('set_draft_open', { open }),
-	quitApp: () => invoke<void>('quit_app')
+	quitApp: () => invoke<void>('quit_app'),
+	/** Writes a failure nobody expected to the log, cut down there to what the log may hold. */
+	logInterfaceError: (error: InterfaceError) => invoke<void>('log_interface_error', { error })
 };
 
 export const on = {
@@ -534,7 +543,9 @@ export const on = {
 	catalogChanged: (handler: () => void) => listen<null>('catalog-changed', handler),
 	/** How far a project file is written or opened, in bytes of the files it carries. */
 	projectFileProgress: (handler: (event: ProjectFileProgress) => void) =>
-		listen('project-file-progress', handler)
+		listen('project-file-progress', handler),
+	/** The job database's check after launch has run: read its copies again. */
+	databaseChecked: (handler: () => void) => listen<null>('database-checked', handler)
 };
 
 export async function revealInFolder(path: string): Promise<void> {

@@ -1,6 +1,6 @@
 //! App information, settings and the model catalogue.
 
-use kalamu_catalog::{Catalog, Release};
+use kalamu_catalog::{Catalog, CatalogError, Release};
 use kalamu_core::{ProviderId, PrunedResults, UnusedResults};
 use kalamu_engine::{EngineError, TaskRules};
 use tauri::State;
@@ -30,6 +30,13 @@ pub fn app_info(state: State<'_, AppState>) -> AppInfo {
             .map(|p| p.clone())
             .unwrap_or_default()
             .map(|p| platform::shown_path(&p).display().to_string()),
+        unreadable_jobs: match state.engine.unreadable_jobs() {
+            Ok(jobs) => jobs,
+            Err(e) => {
+                tracing::warn!(error = %e, "jobs that cannot be read not looked for");
+                Vec::new()
+            }
+        },
     }
 }
 
@@ -121,29 +128,85 @@ pub fn task_rules(state: State<'_, AppState>) -> Vec<TaskRules> {
     state.engine.task_rules()
 }
 
-/// Downloads the catalogue from the repository and keeps it when it is newer than the one in use.
+/// Whether the last model list downloaded, or the one kept from before, failed its checks and
+/// was set aside: Settings says so under its list's date until a list passes.
+static CATALOG_REFUSED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+fn catalog_refused_now(refused: bool) {
+    CATALOG_REFUSED.store(refused, std::sync::atomic::Ordering::Relaxed);
+}
+
+/// The list to start with: the one kept from the last download when it passes its checks and
+/// is newer than the bundled one, else the bundled one. A kept list that fails its checks is
+/// deleted, so it is not read again at every launch.
+pub(crate) fn cached_catalog(cache: &std::path::Path) -> Catalog {
+    let Ok(text) = std::fs::read_to_string(cache) else {
+        return Catalog::bundled();
+    };
+    if let Err(e) = Catalog::from_json(&text) {
+        tracing::warn!(error = %e, "the model list kept from before is set aside");
+        let _ = std::fs::remove_file(cache);
+        catalog_refused_now(!matches!(e, CatalogError::TooNew));
+    }
+    Catalog::newest(Some(&text))
+}
+
+/// Whether a model list was set aside for failing its checks (see [`CATALOG_REFUSED`]).
+#[tauri::command]
+pub fn catalog_refused() -> bool {
+    CATALOG_REFUSED.load(std::sync::atomic::Ordering::Relaxed)
+}
+
+/// Downloads the catalogue from the repository and keeps it when its revision is higher than
+/// the one in use. A list larger than [`kalamu_catalog::MAX_BYTES`] is not downloaded further,
+/// and one that fails its checks is dropped: the list in use stays, and Settings says so.
 #[tauri::command]
 pub async fn refresh_catalog(state: State<'_, AppState>) -> CmdResult<Catalog> {
-    let response = state
+    let download = |e: &dyn std::fmt::Display| AppError::new(id::CATALOG_DOWNLOAD, e);
+    let too_large = || {
+        catalog_refused_now(true);
+        let detail = format!("larger than {} bytes", kalamu_catalog::MAX_BYTES);
+        tracing::warn!(detail, "the downloaded model list is set aside");
+        AppError::new(id::CATALOG_REFUSED, detail)
+    };
+    let mut response = state
         .http
         .get(kalamu_catalog::UPDATE_URL)
         .send()
         .await
-        .map_err(|e| AppError::new(id::CATALOG_DOWNLOAD, e))?;
+        .map_err(|e| download(&e))?;
     if !response.status().is_success() {
-        return Err(AppError::new(id::CATALOG_DOWNLOAD, response.status()));
+        return Err(download(&response.status()));
     }
-    let text = response
-        .text()
-        .await
-        .map_err(|e| AppError::new(id::CATALOG_DOWNLOAD, e))?;
-    Catalog::from_json(&text)?;
+    let limit = kalamu_catalog::MAX_BYTES;
+    if response.content_length().is_some_and(|n| n > limit as u64) {
+        return Err(too_large());
+    }
+    let mut body = Vec::new();
+    while let Some(chunk) = response.chunk().await.map_err(|e| download(&e))? {
+        body.extend_from_slice(&chunk);
+        if body.len() > limit {
+            return Err(too_large());
+        }
+    }
+    let text = String::from_utf8(body)
+        .map_err(|e| AppError::from(CatalogError::Invalid(e.to_string())))?;
+    let downloaded = match Catalog::from_json(&text) {
+        Ok(downloaded) => downloaded,
+        // A list for a newer version of Kalamu is not a bad one: nothing to say in Settings.
+        Err(e @ CatalogError::TooNew) => return Err(e.into()),
+        Err(e) => {
+            tracing::warn!(error = %e, "the downloaded model list is set aside");
+            catalog_refused_now(true);
+            return Err(e.into());
+        }
+    };
+    catalog_refused_now(false);
     let current = state.engine.catalog();
-    let newest = Catalog::newest(Some(&text));
-    if newest.updated > current.updated {
+    if downloaded.is_newer_than(&current) {
         let _ = std::fs::write(&state.paths.catalog_cache, &text);
-        state.engine.set_catalog(newest.clone());
-        return Ok(newest);
+        state.engine.set_catalog(downloaded.clone());
+        return Ok(downloaded);
     }
     Ok(current)
 }

@@ -93,7 +93,13 @@ pub enum StoreError {
 pub trait JobStore: Send + Sync {
     fn create_job(&self, job: &Job) -> Result<(), StoreError>;
     fn job(&self, id: JobId) -> Result<Job, StoreError>;
+    /// Every job this version can read; one whose record it cannot is left out, so one bad row
+    /// costs that row alone ([`JobStore::unreadable_jobs`] names it).
     fn list_jobs(&self) -> Result<Vec<JobSummary>, StoreError>;
+    /// The jobs [`JobStore::list_jobs`] left out because their record could not be read.
+    fn unreadable_jobs(&self) -> Result<Vec<crate::UnreadableJob>, StoreError> {
+        Ok(Vec::new())
+    }
     /// The names of every job's sources, newest job first; a job without sources is left out.
     fn job_sources(&self) -> Result<Vec<JobSources>, StoreError>;
     fn set_job_status(&self, id: JobId, status: JobStatus) -> Result<(), StoreError>;

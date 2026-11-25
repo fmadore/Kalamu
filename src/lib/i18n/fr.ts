@@ -2867,6 +2867,8 @@ export const fr: Messages = {
 		catalogUpdated: (date: string) => `Liste des modèles du ${date}`,
 		catalogRefresh: 'Chercher une liste de modèles à jour',
 		catalogAuto: 'Vérifier au démarrage',
+		catalogRefused:
+			'La dernière liste de modèles publiée par Kalamu contient des erreurs : elle n’est pas utilisée. Kalamu garde la liste ci-dessus.',
 		catalogNote:
 			'Les prix sont en dollars américains, tirés de la liste que publie chaque fournisseur à la date ci-dessus. Ils changent : Kalamu n’affiche donc que des estimations. Un modèle marqué « préversion » peut changer ou être retiré.',
 		appearanceTitle: 'Apparence et langue',
@@ -2907,8 +2909,6 @@ export const fr: Messages = {
 			'Kalamu conserve chaque réponse donnée par un modèle : une page demandée de nouveau avec les mêmes réglages ne coûte rien. Le nettoyage supprime les réponses conservées des traitements que vous avez supprimés, pour libérer de la place sur le disque ; redemander l’une de ces pages serait de nouveau payant.',
 		clearUnused: 'Supprimer les résultats inutilisés',
 		clearUnusedBusy: 'Disponible quand aucun traitement n’est en cours.',
-		clearUnusedConfirm:
-			'Supprimer les réponses conservées des traitements supprimés ? Redemander les mêmes pages serait de nouveau payant.',
 		clearUnusedOk: 'Supprimer',
 		clearUnusedDone: (count: number, answers: string, size: string) =>
 			count === 0
@@ -2929,10 +2929,59 @@ export const fr: Messages = {
 						}`
 			}) ? Redemander les mêmes pages serait de nouveau payant.`
 	},
+	database: {
+		title: 'Copies de sécurité',
+		hint: 'Kalamu garde des copies de sa base de données, qui contient vos traitements, vos corrections, vos projets et les réponses que vous avez payées : une chaque jour où vous ouvrez Kalamu, les trois dernières étant gardées, et une avant qu’une mise à jour ne la modifie. Elles restent sur cet ordinateur, dans ce dossier :',
+		show: { windows: 'Afficher dans l’Explorateur de fichiers', macos: 'Afficher dans le Finder' },
+		none: 'Aucune copie pour l’instant : la première est faite peu après l’ouverture de Kalamu.',
+		listLabel: 'Copies gardées',
+		kinds: {
+			daily: 'Copie du jour',
+			before_update: 'Avant une mise à jour',
+			set_aside: 'Mise de côté'
+		},
+		line: (date: string, kind: string, size: string) => `${date} · ${kind} · ${size}`,
+		setAsideHint:
+			'Un fichier mis de côté est votre base de données telle qu’elle était quand une copie a pris sa place, ou quand elle ne pouvait pas être lue. Kalamu ne l’efface jamais : vous pouvez l’effacer vous-même quand vous n’en avez plus besoin.',
+		open: 'Ouvrir cette copie…',
+		openBusy: 'Disponible quand aucun traitement n’est en cours.',
+		openAsk: (date: string) =>
+			`Ouvrir la copie du ${date} à la place de votre base de données ? Kalamu va redémarrer. Votre base telle qu’elle est maintenant est gardée dans le dossier des copies, rien n’est donc effacé, mais ce que vous avez fait après le ${date} n’apparaîtra pas.`,
+		openOk: 'Ouvrir et redémarrer',
+		skipped: (free: string) =>
+			`Aucune copie n’a été faite cette fois : il serait resté trop peu de place libre sur le disque (${free} libres). Libérez de la place pour que Kalamu puisse de nouveau faire des copies.`,
+		damaged:
+			'Kalamu a trouvé un problème dans sa base de données peu après son ouverture. Ouvrez la copie la plus récente ci-dessous pour revenir à elle.',
+		damagedAsk: (date: string) =>
+			`Kalamu a trouvé un problème dans sa base de données. Ouvrir à sa place la copie du ${date} ? Kalamu va redémarrer. Le fichier abîmé est gardé dans le dossier des copies, rien n’est donc effacé, mais ce que vous avez fait après le ${date} n’apparaîtra pas.`,
+		damagedNoCopy:
+			'Kalamu a trouvé un problème dans sa base de données, et il n’en existe encore aucune copie. Exportez dès maintenant ce qui compte pour vous ; les journaux de Kalamu en disent plus.',
+		later: 'Pas maintenant',
+		restored: (date: string) =>
+			`La copie du ${date} est ouverte à la place de votre base de données. La base qu’elle remplace est gardée dans le dossier des copies.`,
+		restoreFailed:
+			'La copie choisie n’a pas pu être ouverte : Kalamu a donc ouvert votre base de données telle qu’elle était. Les journaux de Kalamu disent pourquoi.',
+		startedEmpty:
+			'Votre base de données n’a pas pu être lue : Kalamu a donc démarré avec une liste vide. Le fichier abîmé est gardé dans le dossier des copies.',
+		unreadable: (names: string, count: number) =>
+			count === 1
+				? `Un traitement n’a pas pu être lu par cette version de Kalamu ; il n’apparaît donc pas dans la liste : ${names}. Il est gardé tel quel ; une version plus récente de Kalamu pourra peut-être le lire.`
+				: `${count} traitements n’ont pas pu être lus par cette version de Kalamu ; ils n’apparaissent donc pas dans la liste : ${names}. Ils sont gardés tels quels ; une version plus récente de Kalamu pourra peut-être les lire.`
+	},
 	report: {
 		link: 'Signaler un problème',
 		review: 'Signaler un problème',
 		note: 'Un bogue, une idée, ou un texte choquant écrit par un modèle : dites-le-nous sur GitHub. La page s’ouvre dans votre navigateur ; Kalamu n’envoie rien, ne partagez donc que ce qui peut être rendu public.'
+	},
+	unexpected: {
+		screenTitle: 'Cet écran ne fonctionne plus',
+		screenBody:
+			'Un problème est survenu dans Kalamu pendant son affichage. Tout ce que vous avez enregistré est conservé, et les traitements en cours continuent. Revenez en arrière, ou choisissez un autre écran dans la barre latérale.',
+		back: 'Revenir en arrière',
+		reload: 'Recharger la fenêtre',
+		message:
+			'Un problème est survenu dans Kalamu. Tout ce que vous avez enregistré est conservé. Si l’écran ne s’affiche pas bien, rouvrez-le depuis la barre latérale.',
+		retry: 'Réessayer'
 	},
 	glossary: {
 		title: 'Glossaire',
@@ -3503,6 +3552,8 @@ export const fr: Messages = {
 		'settings.write': 'Les paramètres n’ont pas pu être enregistrés.',
 		'catalog.download': 'La liste des modèles n’a pas pu être téléchargée.',
 		'catalog.invalid': 'La liste des modèles téléchargée n’a pas pu être lue.',
+		'catalog.refused':
+			'La liste des modèles téléchargée contient des erreurs : elle n’est pas utilisée. Kalamu garde celle qu’il a.',
 		'file.read': 'Le fichier n’a pas pu être lu ou écrit.',
 		'file.open': 'Ce fichier n’a pas pu être ouvert. Il a peut-être été déplacé ou supprimé.',
 		'file.missing':

@@ -381,6 +381,31 @@ Chrome where you are signed in.
   other projects are untouched. Open the same file twice. Open the `.kalamu` in a text
   editor and search it for your API key: it is not there.
 
+## The sign-off
+
+A version is published only after this pass, by an approval given on GitHub, not here: the
+`release` environment's ([development.md](development.md#releases)). Once the pass is written up,
+tag the candidate's commit `v<version>` (or a later commit that changes only documentation,
+such as these results and the release notes) and push it. Its run builds the release again
+into a draft, then waits at *Publish the release*: in that run, **Review deployments** → tick
+`release` → **Approve and deploy**. **Reject** leaves the draft unpublished. The maintainer gives
+it; Claude, running the pass, never does.
+
+Approving asserts that:
+
+- the candidate the run's *Release gate* step names (`v<version>-rcN`) is the build this pass
+  installed and tried, and the [Mac day](mac-test-day.md#the-sign-off) tried the same one, or
+  the release notes say it was not held;
+- every step was run or is listed under *Not tried* in [Results](#results), with a reason;
+- no failure in Results that should hold the release is left open: each is fixed, which needs
+  a new candidate and a new pass of what it touched, or is written in the release notes'
+  *Known limitations*;
+- the commits since the candidate, which the *Release gate* step lists, change only
+  documentation.
+
+A version published without a candidate (the run started by hand with "publish vX.Y.Z without a
+candidate") had no pass to sign off; its release notes say so at their top.
+
 ## Results
 
 One line per failure, and an issue for each real problem. The first pass's steps are named as

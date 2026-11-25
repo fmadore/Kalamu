@@ -7,9 +7,16 @@ import type { ProviderInfo } from "./ProviderInfo";
 
 export type Catalog = { schema_version: number, 
 /**
- * `YYYY-MM-DD`; the newer of two catalogues wins.
+ * `YYYY-MM-DD`: the day the prices were last checked, shown in Settings. Builds older
+ * than `revision` keep the later of two days; this one compares revisions.
  */
-updated: string, notes: string, 
+updated: string, 
+/**
+ * Raised by one with every change to the file, never lowered or reset: of two lists, the
+ * one with the higher revision wins, so a correction made the same day arrives. A list
+ * written before the number reads as revision 0, below every list that carries one.
+ */
+revision: number, notes: string, 
 /**
  * The version of Kalamu last released (`1.5.0`), from which a copy installed from the
  * releases page learns that a newer one is out ([`Catalog::newer_release`]).

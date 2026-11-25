@@ -37,14 +37,6 @@ export function scrollToPlace(page: Box, place: Place, at: Point): Point {
 	return { x: page.left + place.u * page.width - at.x, y: page.top + place.v * page.height - at.y };
 }
 
-/**
- * How far to scroll, across and down, so that the point of the page under `at` before a zoom is
- * under it again after: the page's box on screen before and after.
- */
-export function keepUnder(before: Box, after: Box, at: Point): Point {
-	return scrollToPlace(after, placeUnder(before, at), at);
-}
-
 /** The zoom `t` of the way (0 to 1, eased) from one zoom to another, in equal ratios so zooming
  * in and out feel alike. */
 export function between(from: number, to: number, t: number): number {

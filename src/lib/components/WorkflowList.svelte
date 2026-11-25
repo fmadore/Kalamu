@@ -66,7 +66,12 @@
 	// A run moving on (a step started, finished or approved) is read again.
 	$effect(() => {
 		void app.runs;
-		if (loaded) void api.listRuns().then((r) => (runs = r));
+		if (loaded) {
+			void api
+				.listRuns()
+				.then((r) => (runs = r))
+				.catch((e: unknown) => action.fail(e));
+		}
 	});
 </script>
 

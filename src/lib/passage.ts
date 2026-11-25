@@ -87,11 +87,6 @@ export function charCount(text: string): number {
 	return [...text].length;
 }
 
-/** `text` with the passage of `around` replaced by `with`, as the engine writes it. */
-export function withPassage(text: string, around: Around, replacement: string): string {
-	return text.slice(0, around.at) + replacement + text.slice(around.at + around.passage.length);
-}
-
 /**
  * The selection in the text shown, as offsets in `base`: null when nothing is selected there.
  * `pane` shows `base` one line per `.line`, its words in the line's `.t` (`MarkedText`). A

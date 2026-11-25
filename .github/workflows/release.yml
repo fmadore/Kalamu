@@ -15,16 +15,20 @@ name: Release
 #                 kalamu-samples.zip                 samples/, the files the certification notes use
 #                 SHA256SUMS                         the SHA-256 of each asset above, attested
 #
-# Normal flow: bump the version files, add docs/release-<version>.md, merge, then
-# `git tag v1.0.0 && git push origin v1.0.0`. `prepare` checks the tag against the version files
-# and creates the draft; `windows` builds each architecture once and makes its installer and
-# Store package, `bundle` the Store bundle, `macos` the app and `notarise` the signed and
-# notarised disk image; `checksums` lists every asset's SHA-256, `attest` attests them and
-# `upload` attaches them all; `publish` makes the release public with docs/release-<version>.md
-# from the tagged commit (and docs/checking-downloads.md after it) as its body, as a pre-release
-# while the version starts with 0. Until that last step nothing is public, so a failed job leaves
-# a draft to re-run rather than a spent version. A hyphenated tag (v0.3.0-rc1) is a validation
-# build: the same assets in a draft that stays unpublished until someone promotes it by hand.
+# Normal flow: bump the version files, merge, push a release candidate (v1.0.0-rc1), run the test
+# pass on its draft, add docs/release-<version>.md, then `git tag v1.0.0 && git push origin
+# v1.0.0` on the candidate's commit or a later one that changes only documentation. `prepare`
+# checks the tag against the version files, holds a final tag that has no such candidate (the
+# release gate, scripts/release-gate.sh) and creates the draft; `windows` builds each
+# architecture once and makes its installer and Store package, `bundle` the Store bundle,
+# `macos` the app and `notarise` the signed and notarised disk image; `checksums` lists every
+# asset's SHA-256, `attest` attests them and `upload` attaches them all; `publish` waits for the
+# `release` environment's approval, then makes the release public with
+# docs/release-<version>.md from the tagged commit (and docs/checking-downloads.md after it) as
+# its body, as a pre-release while the version starts with 0. Until that last step nothing is
+# public, so a failed job leaves a draft to re-run rather than a spent version. A hyphenated tag
+# (v0.3.0-rc1) is a validation build: the same assets in a draft that stays unpublished, with no
+# gate and no approval.
 #
 # Secrets and tokens stay away from build code (#145): every job that runs `npm ci`, a build
 # script or the compiler has a read-only token and no secret. Only `notarise` sees Apple's
@@ -34,7 +38,8 @@ name: Release
 #
 # Rebuild a tag: run this workflow manually (Actions tab -> Run workflow) with an existing tag.
 # A release that is already published keeps its title, body and state; only its assets are
-# replaced.
+# replaced, with no gate and no approval. A manual run that is to publish starts from the tag
+# itself ("Use workflow from"), which the `release` environment admits.
 
 on:
   push:
@@ -45,6 +50,12 @@ on:
       tag:
         description: "Existing tag to build installers for (e.g. v0.3.0)"
         required: true
+      # A sentence to type, not a box to tick: scripts/release-gate.sh accepts only
+      # "publish vX.Y.Z without a candidate" for the tag above, and the release notes then say so.
+      without_candidate:
+        description: 'Leave empty. Only to publish a final version that had no release candidate: type "publish vX.Y.Z without a candidate" with the tag above'
+        required: false
+        default: ""
 
 permissions:
   contents: read
@@ -70,11 +81,16 @@ jobs:
       contents: write
     outputs:
       release_id: ${{ steps.release.outputs.id }}
+      release_state: ${{ steps.release.outputs.state }}
       version: ${{ steps.version.outputs.version }}
+      candidate: ${{ steps.gate.outputs.candidate }}
+      without_candidate: ${{ steps.gate.outputs.without_candidate }}
     steps:
+      # The whole history and every tag, which the release gate reads.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ env.TAG }}
+          fetch-depth: 0
           persist-credentials: false
 
       - name: Check the tag against the version files
@@ -107,6 +123,30 @@ jobs:
           fi
 
           echo "version=$package" >> "$GITHUB_OUTPUT"
+
+      # A final version goes public only after a release candidate (vX.Y.Z-rcN) of the same
+      # commit, or of an ancestor with nothing but documentation changed since
+      # (docs/decisions/2026-11-25-release-gate.md), checked here before any build time is spent.
+      # A hyphenated tag is a candidate or another validation build, which this workflow never
+      # publishes; a rebuild of a release already published replaces its assets only. Neither is
+      # held.
+      - name: Release gate
+        id: gate
+        if: ${{ !contains(env.TAG, '-') }}
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # The manual run's sentence, read by the script as an environment value.
+          RELEASE_WITHOUT_CANDIDATE: ${{ inputs.without_candidate }}
+        run: |
+          # GET /releases/tags/{tag} answers for a published release only, never for a draft.
+          if gh api "repos/$GITHUB_REPOSITORY/releases/tags/$TAG" > /dev/null 2>&1; then
+            echo "::notice::$TAG is already published: a rebuild replaces its assets, and the release gate does not apply."
+            echo "candidate=" >> "$GITHUB_OUTPUT"
+            echo "without_candidate=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          bash scripts/release-gate.sh "$TAG"
 
       # As in Live Translation, the release is found or created here, and `upload` attaches every
       # asset to it.
@@ -165,6 +205,7 @@ jobs:
             exit 1
           fi
           echo "id=$id" >> "$GITHUB_OUTPUT"
+          echo "state=$state" >> "$GITHUB_OUTPUT"
 
       # The files the Store's certification notes point reviewers to (samples/README.txt).
       - name: Zip the sample files
@@ -538,13 +579,21 @@ jobs:
 
   # The last step: every asset is attached and attested, so the draft can go public with the
   # prepared body from the tagged commit. A hyphenated tag is never published here, and a release
-  # that is already published is left as it is.
+  # that is already published is left as it is, so neither reaches this job.
+  #
+  # It runs in the `release` environment, whose required reviewer approves it after the test
+  # pass (docs/development.md#releases): the run waits here, every asset already on the draft,
+  # until the approval is given. Until the environment has a required reviewer in the
+  # repository's settings, the job does not wait.
   publish:
     name: Publish the release
     needs: [prepare, windows, bundle, notarise, upload, attest]
-    if: ${{ !contains(inputs.tag || github.ref_name, '-') }}
+    if: ${{ !contains(inputs.tag || github.ref_name, '-') && needs.prepare.outputs.release_state != 'published' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 10
+    environment:
+      name: release
+      url: ${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ inputs.tag || github.ref_name }}
     permissions:
       contents: write
     steps:
@@ -559,6 +608,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VERSION: ${{ needs.prepare.outputs.version }}
           RELEASE_ID: ${{ needs.prepare.outputs.release_id }}
+          WITHOUT_CANDIDATE: ${{ needs.prepare.outputs.without_candidate }}
         run: |
           draft=$(gh api "repos/$GITHUB_REPOSITORY/releases/$RELEASE_ID" --jq .draft)
           if [ "$draft" != true ]; then
@@ -576,10 +626,18 @@ jobs:
             fi
           done
 
-          # The notes written for this version, then how to check a download, the same for every
+          # A version let through the release gate without a candidate says so first; then the
+          # notes written for this version, then how to check a download, the same for every
           # release with the version filled in (a tag cut before that page existed has the notes
           # alone).
-          cp "docs/release-$VERSION.md" "$RUNNER_TEMP/notes.md"
+          : > "$RUNNER_TEMP/notes.md"
+          if [ "$WITHOUT_CANDIDATE" = true ]; then
+            {
+              echo "> **Published without a release candidate.** No validation build of this commit (v$VERSION-rcN) was tried before it went public."
+              echo
+            } >> "$RUNNER_TEMP/notes.md"
+          fi
+          cat "docs/release-$VERSION.md" >> "$RUNNER_TEMP/notes.md"
           if [ -s docs/checking-downloads.md ]; then
             { echo; sed "s/<version>/$VERSION/g" docs/checking-downloads.md; } >> "$RUNNER_TEMP/notes.md"
           fi

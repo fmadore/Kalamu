@@ -19,7 +19,10 @@ voire moins encore.
 Avant le lancement d’un traitement, le **Coût estimé** indique ce qu’il devrait coûter, à partir
 du nombre de pages et des prix publiés par le fournisseur. Une fois le traitement fini, vous
 voyez ce qui a été réellement consommé. La facture du fournisseur fait foi : les prix changent,
-et la liste de prix de Kalamu porte sa date.
+et la liste de prix de Kalamu porte sa date. Au démarrage, Kalamu va chercher une liste plus
+récente sur son dépôt (**Vérifier au démarrage** dans **Paramètres**, sous **Modèles**) et la
+vérifie avant de s’en servir : si elle contient des erreurs, elle n’est pas utilisée,
+**Paramètres** l’indique sous la date de la liste, et Kalamu garde celle qu’il a.
 
 Un conseil simple : essayez d’abord le plus petit modèle sur quelques pages représentatives.
 Pour beaucoup de collections d’imprimés nets, il n’en faut pas plus.

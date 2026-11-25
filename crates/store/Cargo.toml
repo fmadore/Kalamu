@@ -7,6 +7,9 @@ rust-version.workspace = true
 license.workspace = true
 
 [dependencies]
+# The free space on the disk, asked before a copy of the job database is made (`protect`).
+# Already in the tree for the offline models' downloads, so nothing new is compiled.
+fs4.workspace = true
 rusqlite.workspace = true
 kalamu-core.workspace = true
 serde.workspace = true

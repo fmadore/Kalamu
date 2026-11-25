@@ -158,10 +158,9 @@ impl Engine {
             std::fs::create_dir_all(&self.config.snapshots)
                 .map_err(|e| EngineError::Output(e.to_string()))?;
             let path = self.config.snapshots.join(format!("{sha256}.txt"));
-            // Named by its content: the same text frozen twice is one file, never rewritten.
-            if !path.is_file() {
-                crate::output::write_atomic(&path, text.as_bytes())?;
-            }
+            // Named by its content: the same text frozen twice is one file, written again only
+            // when the file there no longer holds it.
+            write_frozen(&path, &text, &sha256)?;
             let snapshot = Snapshot {
                 id: Snapshot::new_id(),
                 job_id,
@@ -220,9 +219,7 @@ impl Engine {
         for (file_name, text) in texts {
             let sha256 = kalamu_core::fingerprint::sha256_hex(text.as_bytes());
             let path = self.config.snapshots.join(format!("{sha256}.txt"));
-            if !path.is_file() {
-                crate::output::write_atomic(&path, text.as_bytes())?;
-            }
+            write_frozen(&path, text, &sha256)?;
             out.push(SourceFile {
                 id: SourceId::new(),
                 path: path.display().to_string(),
@@ -308,4 +305,51 @@ impl Engine {
         let from = source.derived_from.as_ref()?;
         self.store.snapshot(&from.snapshot_id).ok()
     }
+
+    /// Writes again the frozen text a source reads when its file in the snapshots folder is
+    /// missing or no longer holds it (cut short by a power cut, say), from the store: only when
+    /// the result it was frozen from, as corrected now, still gives the very same text, so
+    /// nothing else is ever read under its fingerprint. True when it was written.
+    pub(crate) fn rewrite_frozen(&self, source: &SourceFile) -> Result<bool, EngineError> {
+        let Some(from) = &source.derived_from else {
+            return Ok(false);
+        };
+        let path = std::path::Path::new(&source.path);
+        // A unit's pages are a PDF cut from the original, not a text the store can give.
+        if from.unit.is_some() || path.parent() != Some(self.config.snapshots.as_path()) {
+            return Ok(false);
+        }
+        let whole = std::fs::read(path)
+            .is_ok_and(|bytes| kalamu_core::fingerprint::sha256_hex(&bytes) == source.sha256);
+        if whole {
+            return Ok(false);
+        }
+        let job = match self.store.job(from.job_id) {
+            Ok(job) => job,
+            Err(kalamu_core::StoreError::NotFound) => return Ok(false),
+            Err(e) => return Err(e.into()),
+        };
+        let text = match self.frozen_text(&job, from.setup_id, from.source_id) {
+            Ok(Frozen { text, .. }) => text,
+            Err(EngineError::Store(kalamu_core::StoreError::NotFound)) => return Ok(false),
+            Err(e) => return Err(e),
+        };
+        if kalamu_core::fingerprint::sha256_hex(text.as_bytes()) != source.sha256 {
+            return Ok(false);
+        }
+        crate::output::write_atomic(path, text.as_bytes())?;
+        Ok(true)
+    }
+}
+
+/// Keeps a frozen text under its fingerprint at `path`: written unless the file there already
+/// holds exactly it, so one cut short or emptied by a power cut is made whole the next time the
+/// same text is frozen.
+fn write_frozen(path: &std::path::Path, text: &str, sha256: &str) -> Result<(), EngineError> {
+    let whole = std::fs::read(path)
+        .is_ok_and(|bytes| kalamu_core::fingerprint::sha256_hex(&bytes) == sha256);
+    if !whole {
+        crate::output::write_atomic(path, text.as_bytes())?;
+    }
+    Ok(())
 }
