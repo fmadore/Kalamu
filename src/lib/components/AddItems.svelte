@@ -125,6 +125,7 @@
 				bind:this={input}
 				bind:value={draft}
 				type="text"
+				dir="auto"
 				spellcheck="false"
 				aria-label={m.review.addName(label)}
 				aria-describedby={hintId}

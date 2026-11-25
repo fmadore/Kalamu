@@ -23,8 +23,13 @@ pub const VERSION: u32 = 1;
 pub struct ArchivePlaces {
     /// Kalamu's frozen texts, named by their content (`<sha256>.txt`): always carried.
     pub snapshots: PathBuf,
-    /// Where the originals a file carries are written when it is opened, a folder per project.
+    /// Where the originals a file carries are written when it is opened, a folder per project
+    /// named by its id: deleting the project removes its folder (#274).
     pub originals: PathBuf,
+    /// Where a file saved by an older Kalamu is copied to be brought up to date, the copy
+    /// deleted when done and whatever a crash left emptied at launch: a folder of the app's
+    /// own, never the system's temporary folder (#274).
+    pub working: PathBuf,
     /// This Kalamu's version, recorded in the manifest.
     pub app_version: String,
 }
@@ -264,12 +269,47 @@ pub trait ProjectArchive: Send + Sync {
 
     /// Checks the file at `path` without opening it: whether it can be read, whether each file
     /// it carries matches its fingerprint, and what opening it would not bring back as it was.
-    /// Writes nothing outside the temporary folder and changes nothing in the store.
+    /// Writes nothing outside `places.working` and changes nothing in the store.
     fn check_project_file(
         &self,
         path: &Path,
+        places: &ArchivePlaces,
         progress: &dyn Fn(ProjectFileProgress),
     ) -> Result<ProjectFileCheck, ProjectFileError>;
+
+    /// How many of the originals Kalamu copied in when `project` was opened from a file
+    /// deleting it would remove: those in its folder under `places.originals` that no
+    /// document of another project names.
+    fn copied_originals(
+        &self,
+        project: ProjectId,
+        places: &ArchivePlaces,
+    ) -> Result<u32, ProjectFileError>;
+
+    /// Removes the originals Kalamu copied in for `project`, once the project is deleted: only
+    /// files in its own folder under `places.originals`, never one a document of another
+    /// project names. Refused while the project exists.
+    fn remove_copied_originals(
+        &self,
+        project: ProjectId,
+        places: &ArchivePlaces,
+    ) -> Result<FilesRemoved, ProjectFileError>;
+
+    /// What a crash or an earlier version left, swept at launch before anything else runs:
+    /// the working copies in `places.working`, and the folders under `places.originals` whose
+    /// project no longer exists.
+    fn tidy_project_files(&self, places: &ArchivePlaces) -> Result<FilesRemoved, ProjectFileError>;
+}
+
+/// What removing copied-in originals, or tidying at launch, did.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct FilesRemoved {
+    /// Files removed.
+    pub removed: u32,
+    /// Files kept because a document of another project names them.
+    pub kept: u32,
+    /// Files that could not be removed: tried again at the next launch.
+    pub failed: u32,
 }
 
 /// A path's folders and name, written with either system's separator: a path saved on

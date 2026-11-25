@@ -69,7 +69,7 @@
 		<form onsubmit={submit}>
 			<label class="field">
 				<span>{m.review.renameItem}</span>
-				<input bind:this={field} bind:value={draft} type="text" spellcheck="false" />
+				<input bind:this={field} bind:value={draft} type="text" dir="auto" spellcheck="false" />
 			</label>
 			<p class="hint">{m.review.itemEverywhere}</p>
 			<div class="actions">

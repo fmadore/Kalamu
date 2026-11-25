@@ -1,22 +1,24 @@
 //! Running a job: each source is opened once and planned ([`crate::plan`]), and every piece ×
 //! set-up is either taken from the cache or sent to its provider ([`crate::piece`]), a few at a
-//! time. In economy mode, the pieces of set-ups whose provider has a batch service are gathered
+//! time across the whole job ([`opened`]). In economy mode, the pieces of set-ups whose provider has a batch service are gathered
 //! into batches instead ([`crate::batch`]) and collected once every source has been read.
 
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 use std::sync::{Arc, Mutex};
 
 use futures::StreamExt;
 use futures::stream::FuturesUnordered;
-use kalamu_core::{JobId, JobStatus, Pace, ProgressEvent, Setup, SetupId, SourceId, Task};
-use kalamu_media::OpenSource;
+use kalamu_core::{JobId, JobStatus, Pace, ProgressEvent, Setup, SetupId, Task};
 
 use crate::control::lock;
-use crate::group::Unit;
 use crate::output::OutputNames;
-use crate::piece::{Input, Outcome};
+use crate::piece::Outcome;
 use crate::plan::Existing;
 use crate::{Control, Engine, EngineError};
+
+mod opened;
+
+use opened::{Opened, Prepared, Shared, Tally};
 
 impl Engine {
     pub(crate) async fn run(
@@ -59,8 +61,6 @@ impl Engine {
         } else {
             HashSet::new()
         };
-        let mut gathered = HashMap::new();
-        let mut batch_outcome = crate::batch::BatchOutcome::default();
         let existing: Existing = self
             .store
             .pieces(job_id)?
@@ -74,9 +74,6 @@ impl Engine {
             pieces_finished: finished_before as u32,
         });
 
-        let mut failed = false;
-        // A piece stopped part-way is pending again; the job must not read as finished.
-        let mut interrupted = false;
         // The cost shown is the job's, over all its runs, not only this one's.
         let earlier = self.store.spent(job_id)?;
         if earlier > 0.0 {
@@ -86,243 +83,103 @@ impl Engine {
             });
         }
         let spent = Arc::new(Mutex::new(earlier));
-        // Sources that could not be opened or planned in this run: nothing of theirs to combine.
-        let mut unread: HashSet<SourceId> = HashSet::new();
         // The names of the job's files, worked out once for every source the run writes.
         let names = OutputNames::of(&job);
-        for source in &job.sources {
-            if stop_requested(&control).is_some() {
-                break;
-            }
-            // A file changed since it was added is refused: its pieces would be cached under the
-            // fingerprint of what it held then.
-            // Opened with the job's stop signal, so a pause ends FFmpeg's work on a recording.
-            let opened = {
-                let (source, stop) = (source.clone(), stop.clone());
-                let ffmpeg = self.config.ffmpeg.clone();
-                tokio::task::spawn_blocking(move || {
-                    kalamu_media::check_unchanged(&source)?;
-                    OpenSource::open_with_stop(&source, ffmpeg.as_ref(), &stop)
-                })
-                .await
-                .map_err(|e| EngineError::Output(e.to_string()))?
-            };
-            let opened = match opened {
-                Ok(o) => Arc::new(o),
-                Err(e) => {
-                    failed = true;
-                    unread.insert(source.id);
-                    self.source_failed(&job, source, &existing, &e.to_string())?;
-                    continue;
-                }
-            };
-            // A translation of a transcript that kept its times reads its lines.
-            let lines = match self.timed_lines(&job, source) {
-                Ok(lines) => lines,
-                Err(error) => {
-                    failed = true;
-                    unread.insert(source.id);
-                    self.source_failed(&job, source, &existing, &error)?;
-                    continue;
-                }
-            };
-            // An analysis whose fields cite the text reads its turns.
-            let quotable = match self.quotable(&job, source) {
-                Ok(quotable) => quotable,
-                Err(error) => {
-                    failed = true;
-                    unread.insert(source.id);
-                    self.source_failed(&job, source, &existing, &error)?;
-                    continue;
-                }
-            };
-            let pieces = match self
-                .plan(&job, source, &opened, &existing, lines.as_deref())
-                .await?
-            {
-                Ok(pieces) => pieces,
-                // Paused or cancelled while a recording's pauses were found: nothing is
-                // planned, and the job ends as asked.
-                Err(_) if stop_requested(&control).is_some() => break,
-                Err(error) => {
-                    failed = true;
-                    unread.insert(source.id);
-                    self.source_failed(&job, source, &existing, &error)?;
-                    continue;
-                }
-            };
-            self.emit(ProgressEvent::SourcePrepared {
-                job_id,
-                source_id: source.id,
-                pieces: pieces.len() as u32,
-            });
+        let run = Shared {
+            job: &job,
+            control: &control,
+            stop: &stop,
+            existing: &existing,
+            batched: &batched,
+            spent: &spent,
+            names: &names,
+        };
+        let mut tally = Tally::default();
 
-            let work = self.record_pieces_quoting(
-                &job,
-                source,
-                &pieces,
-                &existing,
-                lines.as_deref(),
-                quotable.as_deref(),
-            )?;
-
-            // Timed lines are read back against the lines each passage sent, and quotations
-            // looked for in the text, which a batch's collection does not do: they are sent at
-            // once, in economy mode too: the rule the estimate prices by ([`crate::batched`]).
-            let (to_batch, work): (Vec<_>, Vec<_>) = work.into_iter().partition(|(setup, _, _)| {
-                crate::batched::in_batch(
-                    batched.contains(&setup.id),
-                    job.task,
-                    source,
-                    crate::cited::cites(setup),
-                )
-            });
-            for (setup, state, key) in to_batch {
+        // One pool of calls for the whole job, fed source after source: the limit on calls at
+        // the same time holds across the job's files, so a folder of one-page photographs is
+        // read as many at once as a long PDF. A source is opened only when those open have
+        // nothing left to send, and never more of them than calls, so a few are open at once.
+        let limit = self.config.concurrency.max(1);
+        let mut sources = job.sources.iter().enumerate();
+        let mut all_opened = false;
+        let mut open: Vec<Opened> = Vec::new();
+        let mut in_flight = FuturesUnordered::new();
+        let mut stopped = false;
+        let mut engine_error: Option<EngineError> = None;
+        loop {
+            while !stopped && in_flight.len() < limit {
                 if stop_requested(&control).is_some() {
+                    stopped = true;
                     break;
                 }
-                let outcome = self
-                    .gather(
-                        &job,
-                        &source.file_name,
-                        &setup,
-                        state,
-                        &key,
-                        &opened,
-                        &mut gathered,
-                        &stop,
-                    )
-                    .await?;
-                if let Some(message) = &outcome.fatal {
-                    stop_for(&control, job_id, message);
-                }
-                batch_outcome.merge(outcome);
-            }
-
-            let mut in_flight = FuturesUnordered::new();
-            let mut queue = self.units(&job, source, work).into_iter();
-            let mut stopped = false;
-            let mut engine_error: Option<EngineError> = None;
-            loop {
-                while !stopped && in_flight.len() < self.config.concurrency.max(1) {
-                    if stop_requested(&control).is_some() {
-                        stopped = true;
-                        break;
+                if let Some(from) = open.iter_mut().find(|o| o.has_next()) {
+                    let index = from.index;
+                    if let Some(call) = self.send_unit(&run, from) {
+                        let handle = tokio::spawn(call);
+                        in_flight.push(async move { (index, handle.await) });
                     }
-                    let Some(unit) = queue.next() else {
-                        break;
-                    };
-                    let engine = self.clone();
-                    let (job, source, opened, spent, stop, lines, quotable) = (
-                        job.clone(),
-                        source.clone(),
-                        opened.clone(),
-                        spent.clone(),
-                        stop.clone(),
-                        lines.clone(),
-                        quotable.clone(),
-                    );
-                    in_flight.push(tokio::spawn(async move {
-                        match unit {
-                            Unit::One((setup, state, key)) => {
-                                let stem = crate::source_stem(&source.file_name, "page");
-                                let passage =
-                                    lines.as_ref().and_then(|l| l.passage(&state.piece, &stem));
-                                let cite = quotable
-                                    .as_ref()
-                                    .and_then(|q| q.call(&setup, &state.piece, &stem));
-                                let input = match (passage, cite) {
-                                    (Some(passage), _) => Input::Lines(passage),
-                                    (None, Some(cite)) => Input::Cited(cite),
-                                    (None, None) => Input::Open(opened),
-                                };
-                                engine
-                                    .process_piece(
-                                        &job,
-                                        &source,
-                                        setup.step(),
-                                        state,
-                                        key,
-                                        input,
-                                        spent,
-                                        &stop,
-                                    )
-                                    .await
-                            }
-                            Unit::Group(setup, items) => {
-                                engine
-                                    .process_group(
-                                        &job, &source, &setup, items, opened, spent, &stop,
-                                    )
-                                    .await
-                            }
-                        }
-                    }));
+                    continue;
                 }
-                let Some(done) = in_flight.next().await else {
+                if open.len() >= limit {
+                    break;
+                }
+                let Some((index, source)) = sources.next() else {
+                    all_opened = true;
                     break;
                 };
-                match done {
-                    Ok(Ok(Outcome::Finished)) => {}
-                    Ok(Ok(Outcome::Interrupted)) => interrupted = true,
-                    Ok(Ok(Outcome::Failed)) | Err(_) => failed = true,
-                    Ok(Ok(Outcome::Fatal(message))) => {
-                        stop_for(&control, job_id, &message);
-                        stopped = true;
-                        failed = true;
-                    }
-                    // The calls already started finish and are stored before the error is
-                    // reported: returning at once would leave them running unwatched, and an
-                    // immediate resume would send them again.
-                    Ok(Err(e)) => {
-                        stop.stop();
-                        stopped = true;
-                        engine_error.get_or_insert(e);
-                    }
-                }
-            }
-            if let Some(e) = engine_error {
-                return Err(e);
-            }
-
-            // A table of contents: combine the pages of each set-up that read them all.
-            if job.task == Task::Contents && !stopped {
-                for setup in job.setups.iter().filter(|s| !batched.contains(&s.id)) {
-                    match self.merge_pages(&job, source, setup, &spent, &stop).await? {
-                        Outcome::Finished => {}
-                        Outcome::Interrupted => interrupted = true,
-                        Outcome::Failed => failed = true,
-                        Outcome::Fatal(message) => {
-                            stop_for(&control, job_id, &message);
-                            failed = true;
-                        }
-                    }
+                match self.prepare(&run, &mut tally, index, source).await {
+                    Ok(Prepared::Ready(opened)) => open.push(opened),
+                    Ok(Prepared::Unread) => {}
+                    Ok(Prepared::Stopped) => stopped = true,
+                    Err(e) => halt(&stop, &mut stopped, &mut engine_error, e),
                 }
             }
 
-            // A long text read in parts: bring the parts of each set-up together.
-            if let Some(text) = quotable.as_ref().filter(|_| !stopped) {
-                for setup in job.setups.iter().filter(|s| text.parts(s).is_some()) {
-                    let how = crate::windows::BringTogether { source, setup };
-                    match self
-                        .second_step(&job, source, setup, &spent, &stop, &how)
-                        .await?
-                    {
-                        Outcome::Finished => {}
-                        Outcome::Interrupted => interrupted = true,
-                        Outcome::Failed => failed = true,
-                        Outcome::Fatal(message) => {
-                            stop_for(&control, job_id, &message);
-                            failed = true;
-                        }
-                    }
+            // Each source none of whose units is running, with nothing left to send or nothing
+            // more to be sent, is finished: its files are written once its pieces are stored.
+            while engine_error.is_none() {
+                stopped |= stop_requested(&control).is_some();
+                let Some(i) = open.iter().position(|o| o.settled(stopped)) else {
+                    break;
+                };
+                let done = open.remove(i);
+                if let Err(e) = self.finish_source(&run, &mut tally, &done, stopped).await {
+                    halt(&stop, &mut stopped, &mut engine_error, e);
                 }
             }
 
-            // Write outputs for every set-up whose pieces of this source are all done.
-            let setups: Vec<&Setup> = job.setups.iter().collect();
-            failed |= self.export_finished(&job, &names, source.id, &setups)?;
+            let Some((index, done)) = in_flight.next().await else {
+                if stopped || engine_error.is_some() || (all_opened && open.is_empty()) {
+                    break;
+                }
+                continue;
+            };
+            if let Some(from) = open.iter_mut().find(|o| o.index == index) {
+                from.running -= 1;
+            }
+            match done {
+                Ok(Ok(Outcome::Finished)) => {}
+                Ok(Ok(Outcome::Interrupted)) => tally.interrupted = true,
+                Ok(Ok(Outcome::Failed)) | Err(_) => tally.failed = true,
+                Ok(Ok(Outcome::Fatal(message))) => {
+                    stop_for(&control, job_id, &message);
+                    stopped = true;
+                    tally.failed = true;
+                }
+                Ok(Err(e)) => halt(&stop, &mut stopped, &mut engine_error, e),
+            }
         }
+        if let Some(e) = engine_error {
+            return Err(e);
+        }
+        let Tally {
+            mut failed,
+            mut interrupted,
+            unread,
+            mut gathered,
+            batch: mut batch_outcome,
+        } = tally;
 
         // Economy mode: send what is gathered, then wait for every batch of the job, including
         // those sent before the app was last closed.
@@ -368,6 +225,20 @@ impl Engine {
             None => JobStatus::Completed,
         })
     }
+}
+
+/// Stops the job's calls on an engine error, kept to be reported once they are stored: the
+/// calls already started finish and are stored first, as returning at once would leave them
+/// running unwatched, and an immediate resume would send them again.
+fn halt(
+    stop: &kalamu_core::StopSignal,
+    stopped: &mut bool,
+    error: &mut Option<EngineError>,
+    e: EngineError,
+) {
+    stop.stop();
+    *stopped = true;
+    error.get_or_insert(e);
 }
 
 pub(crate) enum StopKind {

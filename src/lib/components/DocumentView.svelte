@@ -131,6 +131,7 @@
 			<input
 				type="text"
 				class="title-input"
+				dir="auto"
 				bind:value={draftTitle}
 				aria-label={m.projects.document.title}
 				autofocus
@@ -138,7 +139,7 @@
 				onblur={rename}
 			/>
 		{:else}
-			<h1>{detail?.document.title ?? ''}</h1>
+			<h1 dir="auto">{detail?.document.title ?? ''}</h1>
 			{#if detail}
 				<button
 					class="btn ghost sm icon"

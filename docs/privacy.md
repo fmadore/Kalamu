@@ -6,7 +6,7 @@ lede: What the app sends, to whom, and what it keeps on your computer.
 description: Kalamu's privacy policy. What the app sends, to whom, and what it keeps on the computer.
 ---
 
-**Effective date:** 23 November 2026. For earlier versions and what changed in each, see
+**Effective date:** 25 November 2026. For earlier versions and what changed in each, see
 [Changes to this policy](#changes-to-this-policy) below.
 
 ## What this app is
@@ -182,8 +182,10 @@ Kalamu's, on the same computer only:
   listed (labels, the forms they gather, review status), the pairs kept apart, each request for
 proposed merges (the job that asked and the forms each of its texts held), and the proposals
 turned down. The texts sent for proposals are kept with the frozen text below. A project only
-  refers to files where they lie on the PC: it never copies, moves or sends them. Deleting a project, a collection or a document removes how it was organised; the
-  files, the jobs and their results stay. It also keeps each **workflow run**: the workflow's
+  refers to files where they lie on the PC: it never copies, moves or sends them, except the
+  original files a project file carried, copied in when it is opened (below). Deleting a project, a collection or a document removes how it was organised; the
+  files, the jobs and their results stay, but deleting a project also removes the original
+  files copied in for it. It also keeps each **workflow run**: the workflow's
   steps and prompts as they were when it started, the paths, sizes and fingerprints of the
   files it was started on, the job that ran each step, and when the user chose to continue
   after a step. Forgetting a run removes this record; its jobs and their results stay.
@@ -234,6 +236,19 @@ turned down. The texts sent for proposals are kept with the frozen text below. A
   model runs, the page image it reads, or the text, its instructions and the fields asked for,
   are written there, and removed once it has answered. What a crash or a forced quit left is
   removed when the app next starts.
+- **Original files from a project file** (`originals`): when a `.kalamu` file that holds its
+  original files is opened, its scans and recordings are copied here, in a folder of the new
+  project's own, and its documents and jobs read them there. They are never sent anywhere by
+  this step. Deleting the project removes that folder, keeping only a file another project's
+  document refers to; the jobs it brought stay, with their results, and show those files as
+  missing. Files the user keeps elsewhere are never touched. A folder whose project no longer
+  exists (left by a crash, or by a version before 25 November 2026) is removed when the app
+  next starts.
+- **Working copies of older project files** (`project-file-scratch`): opening or checking a
+  `.kalamu` file saved by an earlier version of Kalamu brings a copy of it up to date here,
+  original files included, never changing the user's file; the copy is removed when done, and
+  what a crash or a forced quit left is removed when the app next starts. Versions before
+  25 November 2026 made this copy in the system's temporary folder.
 - **Recording pieces converted for listening** (`listening`): the review's player plays most
   recordings straight from the original file; for a format it cannot play, the piece is
   converted on the computer and the copy kept, so it plays at once next time. The folder is
@@ -268,7 +283,8 @@ also holds their scans and recordings. It never holds API keys, settings or anyt
 user's other projects. Kalamu sends the file nowhere: it leaves the computer only when the
 user moves, copies or sends it. Whoever receives it can read everything in it, so it deserves
 the care the documents themselves do. Opening a project file sends nothing either; the
-original files it holds are copied into the app's data folder on that computer.
+original files it holds are copied into the app's data folder on that computer (`originals`),
+and removed from it when the project is deleted.
 
 Uninstalling the Microsoft Store app removes its local data folder. On macOS, moving the app
 to the Bin leaves its data folder, and the Mac App Store app's container, until the user
@@ -373,6 +389,7 @@ given release is the one dated for it in the repository.
 <details>
 <summary>Previous versions of this policy</summary>
 
+- **25 November 2026**: deleting a project opened from a `.kalamu` file now removes the original files copied in for it (`originals`), and the copy of an older project file brought up to date is made in the app's data folder (`project-file-scratch`) instead of the system's temporary folder; what a crash left in either is removed at the next start.
 - **23 November 2026**: records paths and SHA-256 fingerprints of exported table files (`exports.json`) so re-exporting never overwrites user-modified files.
 - **20 November 2026**: adds screening project documents against a research question, multi-part interview analysis, custom interview themes/guides, and saving projects to portable `.kalamu` files.
 - **19 November 2026**: adds interview analysis from transcripts (sending transcript text, speaker names, timestamps, and research context to the chosen provider).

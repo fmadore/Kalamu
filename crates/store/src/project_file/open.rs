@@ -27,7 +27,8 @@ pub(super) fn open(
     places: &ArchivePlaces,
     progress: &dyn Fn(ProjectFileProgress),
 ) -> Result<ProjectFileOpened, ProjectFileError> {
-    let (file, manifest, _upgraded) = readable(path)?;
+    // The copy first: what is bound first is dropped last, after the connection that holds it.
+    let (_upgraded, file, manifest) = readable(path, &places.working)?;
     let mut remap = Remap::default();
     for table in IDENTIFIED {
         let mut stmt = file

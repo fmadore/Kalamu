@@ -50,7 +50,7 @@
 </script>
 
 {#if readings.length > 0}
-	<p class="items" oncontextmenu={(e) => names.openMenu(e, f)}>
+	<p class="items" dir="auto" oncontextmenu={(e) => names.openMenu(e, f)}>
 		{#each readings as r, k (r.value)}{@const yours = byHand(
 				f.key,
 				r.value,
@@ -109,6 +109,8 @@
 		font: inherit;
 		line-height: inherit;
 		text-align: inherit;
+		/* A name in its own direction, whatever the list's. */
+		unicode-bidi: plaintext;
 		cursor: pointer;
 		transition: background-color 120ms ease-out;
 	}

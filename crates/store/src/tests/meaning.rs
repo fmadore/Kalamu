@@ -149,6 +149,68 @@ fn an_index_file_of_another_version_is_emptied() {
     assert!(index.indexed_jobs().unwrap().is_empty());
 }
 
+#[test]
+fn an_index_file_that_is_no_database_is_set_aside_and_made_anew() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("vectors.sqlite");
+    let aside = dir.path().join("vectors.sqlite.unreadable");
+    std::fs::write(&aside, b"set aside before").unwrap();
+    let bytes = b"not a database at all, only bytes that look like nothing";
+    std::fs::write(&path, bytes).unwrap();
+    let index = SqliteVectors::open(&path).unwrap();
+    assert!(index.indexed_jobs().unwrap().is_empty());
+    index
+        .put(
+            &space("m", 1),
+            &[chunk(key(JobId::new(), 0), 0, 1, "a", vec![1.0])],
+        )
+        .unwrap();
+    drop(index);
+    // The unreadable file is kept beside the new one, in place of the one set aside before.
+    assert_eq!(std::fs::read(&aside).unwrap(), bytes);
+    assert_eq!(
+        SqliteVectors::open(&path)
+            .unwrap()
+            .indexed_jobs()
+            .unwrap()
+            .len(),
+        1
+    );
+}
+
+#[test]
+fn an_index_file_that_fails_to_open_for_another_reason_is_kept() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("vectors.sqlite");
+    {
+        let index = SqliteVectors::open(&path).unwrap();
+        index
+            .put(
+                &space("m", 1),
+                &[chunk(key(JobId::new(), 0), 0, 1, "a", vec![1.0])],
+            )
+            .unwrap();
+    }
+    let before = std::fs::read(&path).unwrap();
+    // Its log cannot be opened: a passing fault, not a damaged index.
+    let log = dir.path().join("vectors.sqlite-wal");
+    let _ = std::fs::remove_file(&log);
+    std::fs::create_dir(&log).unwrap();
+    assert!(SqliteVectors::open(&path).is_err());
+    assert_eq!(std::fs::read(&path).unwrap(), before);
+    assert!(!dir.path().join("vectors.sqlite.unreadable").exists());
+    // Once the fault is gone, the vectors are there.
+    std::fs::remove_dir(&log).unwrap();
+    assert_eq!(
+        SqliteVectors::open(&path)
+            .unwrap()
+            .indexed_jobs()
+            .unwrap()
+            .len(),
+        1
+    );
+}
+
 fn project(store: &SqliteStore) -> ProjectId {
     let project = Project {
         id: ProjectId::new(),

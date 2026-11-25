@@ -100,7 +100,7 @@ pub use project::{
     ProjectError, ProjectStore, SourceDescription, cleaned, same_tag, tag_name,
 };
 pub use project_file::{
-    ArchivePlaces, MissingText, ProjectArchive, ProjectFileCheck, ProjectFileError,
+    ArchivePlaces, FilesRemoved, MissingText, ProjectArchive, ProjectFileCheck, ProjectFileError,
     ProjectFileOpened, ProjectFilePlan, ProjectFileProgress, ProjectFileSaved, ProjectFileVerdict,
     RenamedOriginal,
 };

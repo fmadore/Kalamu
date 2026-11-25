@@ -3,6 +3,8 @@
 //! telling the interface how far it has got. The work is the job database's
 //! (`ProjectArchive`); this gives it the data folder's places.
 
+use std::path::Path;
+
 use kalamu_core::{
     ArchivePlaces, ProjectFileCheck, ProjectFileOpened, ProjectFilePlan, ProjectFileProgress,
     ProjectFileSaved, ProjectId,
@@ -13,12 +15,14 @@ use super::AppState;
 use crate::PROJECT_FILE_PROGRESS_EVENT;
 use crate::errors::CmdResult;
 
-/// The frozen texts' folder (the engine's, set up beside the job database) and the folder the
-/// originals a file carries are written to.
-fn places(state: &AppState) -> ArchivePlaces {
+/// The frozen texts' folder (the engine's, set up beside the job database), the folder the
+/// originals a file carries are written to, and the one an older file is brought up to date
+/// in, emptied at launch (#274).
+pub(crate) fn places(data: &Path) -> ArchivePlaces {
     ArchivePlaces {
-        snapshots: state.paths.data.join("snapshots"),
-        originals: state.paths.data.join("originals"),
+        snapshots: data.join("snapshots"),
+        originals: data.join("originals"),
+        working: data.join("project-file-scratch"),
         app_version: env!("CARGO_PKG_VERSION").into(),
     }
 }
@@ -38,7 +42,7 @@ pub async fn plan_project_file(
     project: ProjectId,
 ) -> CmdResult<ProjectFilePlan> {
     let archive = state.archive.clone();
-    let places = places(&state);
+    let places = places(&state.paths.data);
     super::off_thread(move || Ok(archive.plan_project_file(project, &places)?)).await
 }
 
@@ -52,7 +56,7 @@ pub async fn save_project_file(
     with_originals: bool,
 ) -> CmdResult<ProjectFileSaved> {
     let archive = state.archive.clone();
-    let places = places(&state);
+    let places = places(&state.paths.data);
     let tell = tell(&app);
     super::off_thread(move || {
         Ok(archive.save_project_file(
@@ -74,7 +78,7 @@ pub async fn open_project_file(
     path: String,
 ) -> CmdResult<ProjectFileOpened> {
     let archive = state.archive.clone();
-    let places = places(&state);
+    let places = places(&state.paths.data);
     let tell = tell(&app);
     super::off_thread(move || {
         Ok(archive.open_project_file(std::path::Path::new(&path), &places, &tell)?)
@@ -90,7 +94,10 @@ pub async fn check_project_file(
     path: String,
 ) -> CmdResult<ProjectFileCheck> {
     let archive = state.archive.clone();
+    let places = places(&state.paths.data);
     let tell = tell(&app);
-    super::off_thread(move || Ok(archive.check_project_file(std::path::Path::new(&path), &tell)?))
-        .await
+    super::off_thread(move || {
+        Ok(archive.check_project_file(std::path::Path::new(&path), &places, &tell)?)
+    })
+    .await
 }

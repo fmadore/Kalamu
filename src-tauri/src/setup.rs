@@ -188,6 +188,21 @@ fn assemble(
     }
     let store =
         Arc::new(SqliteStore::open(&data.join("jobs.sqlite")).map_err(StartError::database)?);
+    // What a crash or an earlier version left of project files (#274): working copies of older
+    // files, and the originals copied in for projects since deleted. Swept before anything can
+    // open or check a file, so nothing removed is in use.
+    match kalamu_core::ProjectArchive::tidy_project_files(
+        store.as_ref(),
+        &commands::project_file::places(&data),
+    ) {
+        Ok(done) if done.removed == 0 && done.failed == 0 => {}
+        Ok(done) => tracing::info!(
+            removed = done.removed,
+            failed = done.failed,
+            "project files left by an earlier session swept"
+        ),
+        Err(e) => tracing::warn!(error = %e, "project files left by an earlier session not swept"),
+    }
     // Projects share the job database, so deleting a job unlinks it from its documents.
     let projects = kalamu_projects::Projects::new(store.clone(), store.clone());
     let dictionary =
@@ -399,6 +414,7 @@ fn assemble(
         workflows: Mutex::new(workflows),
         profiles: Mutex::new(profiles),
         quitting: std::sync::atomic::AtomicBool::new(false),
+        draft_open: std::sync::atomic::AtomicBool::new(false),
     };
     Ok((state, store, waiting))
 }

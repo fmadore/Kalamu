@@ -2,9 +2,10 @@
 //! its own beside the job database and the word search's index.
 //!
 //! Nothing in it is authoritative, but unlike the word search's index it is not free to make
-//! again: a cloud model bills each chunk embedded. A file that cannot be opened, or whose layout
-//! is from another version, is still emptied rather than trusted, and the researcher is shown
-//! what preparing the text again would cost.
+//! again: a cloud model bills each chunk embedded. A file whose layout is from another version
+//! is emptied rather than trusted, and one SQLite cannot read at all is set aside and made
+//! anew; the researcher is shown what preparing the text again would cost. A file that fails
+//! to open for any other reason is left as it is.
 
 use std::path::Path;
 use std::sync::atomic::{AtomicU64, Ordering};
@@ -16,6 +17,7 @@ use kalamu_core::{
 };
 use rusqlite::{Connection, params};
 
+use super::index_file::{Unreadable, open_index};
 use super::{corrupt, db};
 
 /// Raised whenever the layout below changes: an index of another version is emptied.
@@ -61,46 +63,34 @@ pub fn from_blob(blob: &[u8]) -> Result<Vec<f32>, StoreError> {
 }
 
 impl SqliteVectors {
-    /// Opens the index file, or makes it anew when it cannot be read.
+    /// Opens the index file. One SQLite says is not a database, or is damaged, is set aside as
+    /// `<name>.unreadable` and made anew; any other failure is returned and the file kept,
+    /// since its vectors were billed.
     pub fn open(path: &Path) -> Result<Self, StoreError> {
-        match Self::open_file(path) {
-            Ok(index) => Ok(index),
-            Err(_) => {
-                for suffix in ["", "-wal", "-shm"] {
-                    let mut file = path.as_os_str().to_owned();
-                    file.push(suffix);
-                    let _ = std::fs::remove_file(&file);
-                }
-                Self::open_file(path)
-            }
-        }
+        open_index(path, Unreadable::SetAside, Self::open_file)
     }
 
-    fn open_file(path: &Path) -> Result<Self, StoreError> {
-        let conn = Connection::open(path).map_err(db)?;
-        conn.pragma_update(None, "journal_mode", "WAL")
-            .map_err(db)?;
-        conn.pragma_update(None, "synchronous", "NORMAL")
-            .map_err(db)?;
+    fn open_file(path: &Path) -> rusqlite::Result<Self> {
+        let conn = Connection::open(path)?;
+        conn.pragma_update(None, "journal_mode", "WAL")?;
+        conn.pragma_update(None, "synchronous", "NORMAL")?;
         Self::init(conn)
     }
 
     /// A private index in memory, for tests.
     pub fn in_memory() -> Result<Self, StoreError> {
-        Self::init(Connection::open_in_memory().map_err(db)?)
+        Connection::open_in_memory()
+            .and_then(Self::init)
+            .map_err(db)
     }
 
-    fn init(conn: Connection) -> Result<Self, StoreError> {
-        let version: i64 = conn
-            .pragma_query_value(None, "user_version", |row| row.get(0))
-            .map_err(db)?;
+    fn init(conn: Connection) -> rusqlite::Result<Self> {
+        let version: i64 = conn.pragma_query_value(None, "user_version", |row| row.get(0))?;
         if version != VERSION {
-            conn.execute_batch("DROP TABLE IF EXISTS chunks;")
-                .map_err(db)?;
+            conn.execute_batch("DROP TABLE IF EXISTS chunks;")?;
         }
-        conn.execute_batch(SCHEMA).map_err(db)?;
-        conn.pragma_update(None, "user_version", VERSION)
-            .map_err(db)?;
+        conn.execute_batch(SCHEMA)?;
+        conn.pragma_update(None, "user_version", VERSION)?;
         Ok(Self {
             conn: Mutex::new(conn),
             generation: AtomicU64::new(1),

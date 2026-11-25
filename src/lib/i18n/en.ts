@@ -958,8 +958,10 @@ export const en = {
 		archivedNotice:
 			'This project is archived. Nothing in it has changed; restore it to list it again.',
 		delete: 'Delete project',
-		deleteConfirm: (name: string) =>
-			`Delete the project “${name}”? Its collections and documents are removed from Kalamu. The files on your computer are kept, and the jobs and their results stay under Jobs.`,
+		deleteConfirm: (name: string, copied: number) =>
+			copied === 0
+				? `Delete the project “${name}”? Its collections and documents are removed from Kalamu. The files on your computer are kept, and the jobs and their results stay under Jobs.`
+				: `Delete the project “${name}”? Its collections and documents are removed from Kalamu, with ${copied === 1 ? 'the original file' : `the ${copied} original files`} Kalamu copied into its data folder when it opened the project file. Your own files elsewhere are kept, and the jobs and their results stay under Jobs, showing ${copied === 1 ? 'that file' : 'those files'} as missing.`,
 		allDocuments: 'All documents',
 		collections: 'Collections',
 		newCollection: 'New collection',

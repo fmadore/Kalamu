@@ -380,7 +380,11 @@
 						/>
 					{:else if readings.length > 0 && f.kind.type !== 'cited'}
 						{#each readings as r (r.value)}
-							<p class:prose={f.kind.type === 'text'} class:choice={f.kind.type === 'choice'}>
+							<p
+								class="own-direction"
+								class:prose={f.kind.type === 'text'}
+								class:choice={f.kind.type === 'choice'}
+							>
 								{#if comparing}<i class="siglum">{r.sigla.join(' ')}</i>{/if}
 								{f.kind.type === 'choice' ? choiceLabel(f, r.value) : r.value}
 							</p>
@@ -390,7 +394,7 @@
 						{#each witnesses as w (w.siglum)}
 							{@const reason = w.answers.find((a) => a.key === f.key)?.reason}
 							{#if reason}
-								<p class="reason">
+								<p class="reason own-direction">
 									{#if comparing}<i class="siglum">{w.siglum}</i>{/if}
 									{reason}
 								</p>

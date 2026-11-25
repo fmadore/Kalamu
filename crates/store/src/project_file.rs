@@ -7,14 +7,15 @@
 //! writes the files it carries, then puts every row in one transaction, each identifier given a
 //! new one, so the same file opened twice comes in beside itself and an open that fails leaves
 //! the store as it was. Checking reads a file as opening would, writing nothing (#246); a save
-//! checks its part so before the part takes the file's name.
+//! checks its part so before the part takes the file's name. Deleting a project removes the
+//! originals opening copied in for it, and launch sweeps what a crash left (#274).
 
 use std::path::Path;
 
 use kalamu_core::project_file::{self as pf, ArchivePlaces, Manifest};
 use kalamu_core::{
-    ProjectArchive, ProjectFileCheck, ProjectFileError, ProjectFileOpened, ProjectFilePlan,
-    ProjectFileProgress, ProjectFileSaved, ProjectId,
+    FilesRemoved, ProjectArchive, ProjectFileCheck, ProjectFileError, ProjectFileOpened,
+    ProjectFilePlan, ProjectFileProgress, ProjectFileSaved, ProjectId,
 };
 use rusqlite::Connection;
 
@@ -22,6 +23,7 @@ use super::SqliteStore;
 
 mod carried;
 mod check;
+mod copied;
 mod open;
 mod remap;
 mod rows;
@@ -165,9 +167,30 @@ impl ProjectArchive for SqliteStore {
     fn check_project_file(
         &self,
         path: &Path,
+        places: &ArchivePlaces,
         progress: &dyn Fn(ProjectFileProgress),
     ) -> Result<ProjectFileCheck, ProjectFileError> {
-        check::check(path, progress)
+        check::check(path, &places.working, progress)
+    }
+
+    fn copied_originals(
+        &self,
+        project: ProjectId,
+        places: &ArchivePlaces,
+    ) -> Result<u32, ProjectFileError> {
+        copied::count(self, project, places)
+    }
+
+    fn remove_copied_originals(
+        &self,
+        project: ProjectId,
+        places: &ArchivePlaces,
+    ) -> Result<FilesRemoved, ProjectFileError> {
+        copied::remove(self, project, places)
+    }
+
+    fn tidy_project_files(&self, places: &ArchivePlaces) -> Result<FilesRemoved, ProjectFileError> {
+        copied::tidy(self, places)
     }
 }
 

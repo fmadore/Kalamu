@@ -21,7 +21,8 @@ use crate::commands::AppState;
 
 /// Name of the event carrying [`kalamu_core::ProgressEvent`]s.
 pub const PROGRESS_EVENT: &str = "progress";
-/// Sent when the window is closed while jobs run, so the interface can ask first.
+/// Sent when the window is closed or the app quit while jobs run or changes are not saved, so
+/// the interface can ask first; it carries whether jobs run, to ask about them next.
 pub const CLOSE_REQUESTED_EVENT: &str = "close-requested";
 /// Sent by the application menu's Settings… on macOS, so the interface opens Settings.
 pub const OPEN_SETTINGS_EVENT: &str = "open-settings";
@@ -69,11 +70,16 @@ pub fn run() {
         .setup(move |app| setup::setup(app, moved))
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {
-                // While jobs run the interface asks first; otherwise the window closes, or on
-                // macOS hides with the app left in the Dock.
-                if commands::window::jobs_running(&window.state::<AppState>()) {
+                // While jobs run, or while changes not saved would be lost with the window (not
+                // when it only hides, on macOS), the interface asks first: about the changes,
+                // then about the jobs, which the event says run. Otherwise the window closes,
+                // or on macOS hides with the app left in the Dock.
+                let state = window.state::<AppState>();
+                let jobs = commands::window::jobs_running(&state);
+                let draft = !platform::CLOSE_HIDES_WINDOW && commands::window::draft_open(&state);
+                if jobs || draft {
                     api.prevent_close();
-                    let _ = window.emit(CLOSE_REQUESTED_EVENT, ());
+                    let _ = window.emit(CLOSE_REQUESTED_EVENT, jobs);
                 } else if platform::CLOSE_HIDES_WINDOW {
                     api.prevent_close();
                     let _ = window.hide();
@@ -275,6 +281,7 @@ pub fn run() {
             commands::meaning::meaning_neighbours,
             commands::window::set_shell_labels,
             commands::window::hide_window,
+            commands::window::set_draft_open,
             commands::window::quit_app,
         ])
         .build(context)

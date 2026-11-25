@@ -138,7 +138,7 @@
 		<figcaption class="muted">
 			{p.passage} · <span class="num">{p.chars(length)}</span>
 		</figcaption>
-		<blockquote lang="">
+		<blockquote class="own-direction" lang="">
 			{#if around.before}<span class="context" title={p.context}>{around.before}</span>{/if}<mark
 				class="passage"
 			>
@@ -173,14 +173,19 @@
 		{#if request.editing}
 			<label class="field">
 				<span>{p.editLabel}</span>
-				<textarea bind:this={editor} bind:value={request.draft} rows="5" spellcheck="false" lang=""
-				></textarea>
+				<textarea
+					class="own-direction"
+					bind:this={editor}
+					bind:value={request.draft}
+					rows="5"
+					spellcheck="false"
+					lang=""></textarea>
 			</label>
 		{:else}
 			<figure class="proposal">
 				<figcaption class="muted">{p.proposal}</figcaption>
 				<!-- prettier-ignore -->
-				<p class="diff" lang=""><DiffSpans spans={request.spans} answer={proposal.answer ?? ''} removed={p.removed} added={p.added} /></p>
+				<p class="diff own-direction" lang=""><DiffSpans spans={request.spans} answer={proposal.answer ?? ''} removed={p.removed} added={p.added} /></p>
 			</figure>
 		{/if}
 		{#each proposal.notes as note (note)}

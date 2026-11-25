@@ -6,6 +6,8 @@ import {
 	lines,
 	numbered,
 	siglum,
+	speakerOf,
+	directionOf,
 	variants,
 	witnessParts
 } from './apparatus.js';
@@ -87,6 +89,26 @@ describe('apparatus', () => {
 			{ text: 'Daily', entry: 1 },
 			{ text: ' Nebraskan', entry: null }
 		]);
+	});
+
+	it('sets apart the speaker a transcript’s line opens with', () => {
+		const text = 'Speaker 1: Bonjour.\nSpeaker 10: نعم\nAmadou:\nSpeaker 3 parle.\nSpeaker 2: ';
+		const [one, ten, alone, other, empty] = lines(text, []);
+		const speakers = ['Speaker 1', 'Speaker 10', 'Amadou', 'Speaker 2', ''];
+		expect(speakerOf(one, speakers)).toEqual({
+			label: 'Speaker 1:',
+			parts: [{ text: ' Bonjour.', entry: null }]
+		});
+		expect(speakerOf(ten, speakers)?.label).toBe('Speaker 10:');
+		expect(speakerOf(alone, speakers)).toEqual({ label: 'Amadou:', parts: [] });
+		expect(speakerOf(other, speakers)).toBeNull();
+		expect(speakerOf(empty, speakers)?.parts).toEqual([{ text: ' ', entry: null }]);
+		expect(speakerOf(one, [])).toBeNull();
+		// A difference running into the label leaves the line as it is.
+		const marked = lines('Speaker 1: Bonjour', [
+			{ id: 1, line: 1, start: 0, end: 9, lemma: 'Speaker 1', readings: [] }
+		]);
+		expect(speakerOf(marked[0], speakers)).toBeNull();
 	});
 
 	it('counts no difference where both texts differ only in space', () => {
@@ -206,5 +228,19 @@ describe('apparatus', () => {
 		]);
 		// Read in order, the parts are the witness's text.
 		expect(parts.map((p) => p.text).join('')).toBe('plus de trois cent fidèles ');
+	});
+});
+
+describe('directionOf', () => {
+	const line = (...texts: string[]) => texts.map((text) => ({ text, entry: null }));
+	it('reads the direction from the first letter, past figures and marks', () => {
+		expect(directionOf(line('12. ', 'كتب القاضي إلى الوالي'))).toBe('rtl');
+		expect(directionOf(line('« Le commandant de cercle »'))).toBe('ltr');
+		expect(directionOf(line('ߒߞߏ'))).toBe('rtl');
+		expect(directionOf(line('Paris, كتب'))).toBe('ltr');
+	});
+	it('says nothing of a line with no letter', () => {
+		expect(directionOf(line('1915 — 1916'))).toBeUndefined();
+		expect(directionOf([])).toBeUndefined();
 	});
 });

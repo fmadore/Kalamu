@@ -5,13 +5,21 @@
 	// stands for them. A place pointed at is shown linked in both texts. Words searched for are
 	// marked in the reading text, the match gone to more strongly. The places are one tab stop
 	// between them, however many there are: ← and → (Home and End) go from one to the next.
-	import { headingOf, numbered as numberedLine, type Entry, type Line } from '#lib/apparatus.js';
+	import {
+		headingOf,
+		directionOf,
+		numbered as numberedLine,
+		speakerOf,
+		type Entry,
+		type Line
+	} from '#lib/apparatus.js';
 	import { clearFound, markFound } from '#lib/found.js';
 	import { rovingStop, rovingTarget } from '#lib/keys.js';
 
 	let {
 		lines = null,
 		parts = [],
+		speakers = [],
 		entries,
 		marked,
 		selected,
@@ -32,6 +40,8 @@
 		lines?: Line[] | null;
 		/** A compared text, when there are no lines. */
 		parts?: Line['parts'];
+		/** A transcript's speakers, whose label opening a line is set apart from the words said. */
+		speakers?: string[];
 		entries: Entry[];
 		/** Whether the differences are highlighted, or only underlined when corrected. */
 		marked: boolean;
@@ -98,18 +108,20 @@
 		{#each lines as line, li (li)}
 			<!-- A Markdown heading's marks stay in the text, hidden; the line is set as a heading. -->
 			{@const heading = headingOf(line)}
+			<!-- A speaker's label is set apart, so the line takes the direction of the words said. -->
+			{@const who = heading ? null : speakerOf(line, speakers)}
 			<div class="line" class:blank={line.number === 0}>
 				{#if numberedLine(line.number, entries)}<span class="n num" aria-hidden="true">
 						{line.number}
 					</span>{/if}
 				<!-- prettier-ignore -->
-				<span class="t" class:heading>{#if heading}<span class="heading-mark">{heading.mark}</span>{/if}{#each heading?.parts ?? line.parts as part, k (k)}{@render text(part)}{/each}</span>
+				<span class="t" class:heading dir={directionOf(heading?.parts ?? who?.parts ?? line.parts)}>{#if heading}<span class="heading-mark">{heading.mark}</span>{/if}{#if who}<span class="who" dir="auto">{who.label}</span>{/if}{#each heading?.parts ?? who?.parts ?? line.parts as part, k (k)}{@render text(part)}{/each}</span>
 			</div>
 		{/each}
 	</div>
 {:else}
 	<!-- prettier-ignore -->
-	<div class="text run" lang="" bind:this={root}>{#each parts as part, k (k)}{@render text(part)}{/each}</div>
+	<div class="text run own-direction" lang="" bind:this={root}>{#each parts as part, k (k)}{@render text(part)}{/each}</div>
 {/if}
 
 <style>
@@ -138,8 +150,12 @@
 	.line.blank {
 		min-height: 0.7em;
 	}
+	/* Each line carries its own direction (`dir`, from its first letter) and starts on its own
+	   side. Not `unicode-bidi: plaintext`: WebKit reads a speaker's label into the paragraph's
+	   direction there, and starts the line by `direction` alone. */
 	.t {
 		grid-column: 2;
+		text-align: start;
 		white-space: pre-wrap;
 		overflow-wrap: anywhere;
 	}
@@ -150,6 +166,9 @@
 	}
 	.heading-mark {
 		display: none;
+	}
+	.who {
+		unicode-bidi: isolate;
 	}
 	.n {
 		grid-column: 1;
@@ -169,6 +188,8 @@
 		line-height: inherit;
 		text-align: inherit;
 		white-space: pre-wrap;
+		/* Its words in their own direction, whatever the line's. */
+		unicode-bidi: plaintext;
 		cursor: pointer;
 		transition:
 			background-color 120ms ease-out,

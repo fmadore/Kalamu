@@ -40,6 +40,12 @@ vous le faites défiler, quelle que soit la longueur de la page. Trois choses en
 - tout ce qui a été tiré de ce texte (une analyse, une traduction) sait si vous l’avez corrigé
   après coup, et le signale.
 
+Une correction non enregistrée n’est jamais perdue sans que vous l’ayez voulu. Changer de page,
+quitter la relecture, fermer la fenêtre ou quitter Kalamu demande d’abord s’il faut l’abandonner :
+**Abandonner les modifications** continue, **Continuer à modifier** garde votre correction. Sur
+un Mac, le bouton rouge ne fait que masquer la fenêtre : il ne demande rien ; <kbd>⌘</kbd>
+<kbd>Q</kbd>, si.
+
 **Marquer comme relu** indique à Kalamu, et plus tard à vous-même, qu’une page a été vérifiée
 par une personne. Un projet compte les pages relues, et sa liste de
 [ce qu’il faut vérifier](projects.md#ce-quil-faut-verifier) s’appuie sur elles.

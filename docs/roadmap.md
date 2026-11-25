@@ -535,12 +535,15 @@ In this order. Work that keeps what has shipped sound comes before new features.
 
 ### Priorities since 25 November
 
-From the [review of 25 November](decisions/2026-11-25-review-safety-nets.md). Nothing below
-is written yet. No new feature is started before the first two are done, and what the rest of
+From the [review of 25 November](decisions/2026-11-25-review-safety-nets.md). Only the
+first is written. No new feature is started before the first two are done, and what the rest of
 *Next* lists (the test passes, the live runs, what is left of the reviews and of the research
 workflows) keeps its own order after them.
 
-1. **1.10.2, the bugs the review found**, each with a test:
+1. **1.10.2, the bugs the review found**, each with a test. All six are written
+   ([decision](decisions/2026-11-25-fixes-of-the-review.md)), tested on Linux and in
+   Chromium, and none yet tried in the packaged app or on a Mac; #270 stays open until a
+   captured answer from each provider replaces the wordings it was written from:
    - *Pages sent at the same time* holds within one file only, so a folder of photographs is
      read one call at a time ([#269](https://github.com/fmadore/Kalamu/issues/269));
    - a per-minute limit worded as a quota may stop the whole job, to confirm in a live run

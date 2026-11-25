@@ -1,7 +1,7 @@
 //! macOS: WebKit plays the review's recordings, TextEdit opens JSON files, and the app behaves
 //! as Mac apps do: closing the window leaves it in the Dock, the Dock icon brings the window
-//! back, and Quit asks first while jobs run. In the Mac App Store's build, the App Sandbox's
-//! grants are kept as security-scoped bookmarks.
+//! back, and Quit asks first while jobs run or changes are not saved. In the Mac App Store's
+//! build, the App Sandbox's grants are kept as security-scoped bookmarks.
 
 use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
@@ -20,7 +20,7 @@ use tauri_plugin_opener::OpenerExt;
 
 use super::Moved;
 use crate::commands::AppState;
-use crate::commands::window::{jobs_running, show_main_window};
+use crate::commands::window::{draft_open, jobs_running, show_main_window};
 use crate::grants::Access;
 use crate::start_failure::Webview;
 
@@ -220,12 +220,16 @@ fn end_children() {
     }
 }
 
-/// Quit from the application menu: at once when idle; otherwise the window comes back and the
-/// interface asks whether to pause the jobs or keep them running from the menu bar.
+/// Quit from the application menu (Cmd+Q): at once when idle; otherwise the window comes back
+/// and the interface asks first, whether to leave changes not saved, then whether to pause the
+/// jobs or keep them running from the menu bar. The red button only hides the window, which
+/// loses no changes, so it asks only about the jobs (`lib.rs`).
 fn request_quit(app: &AppHandle) {
-    if jobs_running(&app.state::<AppState>()) {
+    let state = app.state::<AppState>();
+    let jobs = jobs_running(&state);
+    if jobs || draft_open(&state) {
         show_main_window(app);
-        let _ = app.emit(crate::CLOSE_REQUESTED_EVENT, ());
+        let _ = app.emit(crate::CLOSE_REQUESTED_EVENT, jobs);
     } else {
         app.exit(0);
     }

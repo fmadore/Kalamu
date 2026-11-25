@@ -5,6 +5,8 @@
 // Checking a file (#246) finds it whole; `?altered-file`: a part no longer matches what was
 // saved; `?newer-file`: refused as newer; `?renamed`: an original would take another name.
 // The file opened brings a job with it, listed with the others from then on.
+// `?with-originals`: the file opened carries its originals, copied into the data folder, which
+// deleting the project then says it removes (#274).
 
 import type { JobSummary } from '../bindings/JobSummary.js';
 import type { Project } from '../bindings/Project.js';
@@ -12,7 +14,7 @@ import type { ProjectFileCheck } from '../bindings/ProjectFileCheck.js';
 import type { ProjectFileOpened } from '../bindings/ProjectFileOpened.js';
 import type { ProjectFilePlan } from '../bindings/ProjectFilePlan.js';
 import type { ProjectFileSaved } from '../bindings/ProjectFileSaved.js';
-import { projectCommand } from './mockProjects.js';
+import { copiedOriginals, projectCommand } from './mockProjects.js';
 
 declare global {
 	interface Window {
@@ -105,6 +107,8 @@ export function projectFileCommand(cmd: string, a: Record<string, unknown>): unk
 				name: 'Mission letters',
 				description: 'Letters of the mission, 1912–1960'
 			}) as Project;
+			const withOriginals = query().has('with-originals');
+			if (withOriginals) copiedOriginals.set(project.id, 3);
 			const now = Date.now();
 			openedJobs.push({
 				id: `00000000-0000-0000-0000-00000000f${String(openedJobs.length).padStart(3, '0')}`,
@@ -128,8 +132,8 @@ export function projectFileCommand(cmd: string, a: Record<string, unknown>): unk
 				name: project.name,
 				documents: 0,
 				jobs: 1,
-				originals: 0,
-				with_originals: false,
+				originals: withOriginals ? 3 : 0,
+				with_originals: withOriginals,
 				saved_at: Date.now(),
 				missing_texts: new URLSearchParams(location.search).has('missing-text')
 					? [

@@ -30,6 +30,15 @@ export const source = {
 const handwritten =
 	typeof location !== 'undefined' && new URLSearchParams(location.search).has('handwritten');
 
+/** `?arabic`: the bulletin's first page ends with a paragraph in Arabic, and the interview with a
+ * turn in it, to see each paragraph read in its own direction beside the French. */
+const arabic =
+	typeof location !== 'undefined' && new URLSearchParams(location.search).has('arabic');
+/** The paragraph and the turn in Arabic, under `?arabic`. */
+export const ARABIC_PARAGRAPH =
+	'اجتمع المصلون في مسجد باماكو بعد صلاة الجمعة، واختاروا لجنة لجمع التبرعات من أجل ترميم المئذنة.';
+export const ARABIC_TURN = 'نعم، نصلي الجمعة في المسجد الكبير منذ سنوات طويلة.';
+
 export const setupA = {
 	id: '00000000-0000-0000-0000-00000000000a',
 	label: 'gemini-3.8-flash',
@@ -186,7 +195,8 @@ export const archiveJobs: (JobSummary & { files: string[] })[] = ARCHIVE.map(
 );
 
 export const texts = [
-	"Réception au Gouvernement général\nDakar, le 3 mai 1957\n\nLe Gouverneur général a reçu ce matin les délégués de la Mission catholique et de l'Union culturelle musulmane. L'entretien, qui s'est prolongé plus d'une heure, a porté sur l'enseignement dans les écoles de brousse et sur l'organisation du prochain pèlerinage.\nLes délégués ont remis au Gouverneur un mémoire signé par les notables de plusieurs cercles, demandant l'ouverture de classes du soir pour les adultes.\n\nUne réunion à Bamako\n\nLa réunion tenue à la mosquée de Bamako a rassemblé plus de deux cents fidèles autour de l'imam. Après la prière, l'assemblée a désigné une commission chargée de recueillir les cotisations pour la réfection du minaret.\nLe commandant de cercle assistait à la séance. Il a rappelé que les associations doivent déposer leurs statuts auprès de l'administration avant la fin du mois.",
+	"Réception au Gouvernement général\nDakar, le 3 mai 1957\n\nLe Gouverneur général a reçu ce matin les délégués de la Mission catholique et de l'Union culturelle musulmane. L'entretien, qui s'est prolongé plus d'une heure, a porté sur l'enseignement dans les écoles de brousse et sur l'organisation du prochain pèlerinage.\nLes délégués ont remis au Gouverneur un mémoire signé par les notables de plusieurs cercles, demandant l'ouverture de classes du soir pour les adultes.\n\nUne réunion à Bamako\n\nLa réunion tenue à la mosquée de Bamako a rassemblé plus de deux cents fidèles autour de l'imam. Après la prière, l'assemblée a désigné une commission chargée de recueillir les cotisations pour la réfection du minaret.\nLe commandant de cercle assistait à la séance. Il a rappelé que les associations doivent déposer leurs statuts auprès de l'administration avant la fin du mois." +
+		(arabic ? `\n\n${ARABIC_PARAGRAPH}` : ''),
 	"La réunion tenue à la mosquée de Bamako a rassemblé plus de deux cents fidèles autour de l'imam.",
 	'[BLANK PAGE]'
 ];
@@ -196,7 +206,8 @@ const variant = (t: string) =>
 		.replace('3 mai', '5 mai')
 		.replace(' ce matin', '')
 		.replace('deux cents', 'trois cents')
-		.replace('minaret', 'marché');
+		.replace('minaret', 'marché')
+		.replace('المئذنة', 'السوق');
 
 export const pieces: PieceView[] = [setupA, setupB].flatMap((setup, s) =>
 	texts.map((text, index) => ({
@@ -264,7 +275,8 @@ export const lines = [
 	['Speaker 2', "Je suis l'imam de la mosquée du quartier depuis 1998."],
 	['Speaker 1', 'Comment la communauté a-t-elle changé depuis ?'],
 	['Speaker 2', 'Beaucoup de jeunes sont venus de Bobo-Dioulasso et de Koudougou.'],
-	['Speaker 2', "Nous avons ouvert une médersa en 2004, avec l'aide des familles."]
+	['Speaker 2', "Nous avons ouvert une médersa en 2004, avec l'aide des familles."],
+	...(arabic ? [['Speaker 2', ARABIC_TURN]] : [])
 ];
 /** The names given in the preview's review, applied as the engine applies them. */
 let speakerNames: Record<string, string> = {};

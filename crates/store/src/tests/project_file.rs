@@ -7,14 +7,15 @@ use std::path::{Path, PathBuf};
 
 use kalamu_core::{
     ArchivePlaces, Collection, CollectionId, DerivedFrom, DescriptionField, DictionaryStore,
-    Document, DocumentId, DocumentLink, Entry, EntryId, KeptApart, KeptAside, Project,
-    ProjectArchive, ProjectFileError, ProjectFileOpened, ProjectId, ProjectStore, SampleSpec,
-    Snapshot, SpeakerNames, StoredResult,
+    Document, DocumentId, DocumentLink, Entry, EntryId, FilesRemoved, KeptApart, KeptAside,
+    Project, ProjectArchive, ProjectFileError, ProjectFileOpened, ProjectId, ProjectStore,
+    SampleSpec, Snapshot, SpeakerNames, StoredResult,
 };
 
 use super::*;
 
 mod check;
+mod copied;
 mod failures;
 mod frozen;
 mod paths;
@@ -55,6 +56,7 @@ pub(super) fn places(root: &Path, name: &str) -> ArchivePlaces {
     ArchivePlaces {
         snapshots: root.join(name).join("snapshots"),
         originals: root.join(name).join("originals"),
+        working: root.join(name).join("working"),
         app_version: "1.9.0".into(),
     }
 }

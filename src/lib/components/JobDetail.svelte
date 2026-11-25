@@ -327,7 +327,7 @@
 		{#if live?.preview}
 			<section aria-labelledby="preview-head" class="files">
 				<h2 id="preview-head">{m.jobs.livePreview}</h2>
-				<pre class="preview">{live.preview}</pre>
+				<pre class="preview own-direction">{live.preview}</pre>
 			</section>
 		{/if}
 

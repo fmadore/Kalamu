@@ -512,12 +512,16 @@ export const api = {
 	checkProjectFile: (path: string) => invoke<ProjectFileCheck>('check_project_file', { path }),
 	setShellLabels: (labels: ShellLabels) => invoke<void>('set_shell_labels', { labels }),
 	hideWindow: () => invoke<void>('hide_window'),
+	/** Whether changes are not saved, so closing the window or quitting asks first. */
+	setDraftOpen: (open: boolean) => invoke<void>('set_draft_open', { open }),
 	quitApp: () => invoke<void>('quit_app')
 };
 
 export const on = {
 	progress: (handler: (event: ProgressEvent) => void) => listen('progress', handler),
-	closeRequested: (handler: () => void) => listen<null>('close-requested', handler),
+	/** The window closed or the app quit while jobs run or changes are not saved: whether jobs
+	 * run, to ask about them once the changes are settled. */
+	closeRequested: (handler: (jobs: boolean) => void) => listen<boolean>('close-requested', handler),
 	/** Settings… in the application menu (macOS). */
 	openSettings: (handler: () => void) => listen<null>('open-settings', handler),
 	searchProgress: (handler: (event: SearchProgress) => void) => listen('search-progress', handler),

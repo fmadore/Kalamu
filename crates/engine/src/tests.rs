@@ -32,6 +32,7 @@ mod economy_priced;
 mod images;
 mod large;
 mod later;
+mod limit;
 mod names;
 mod ordered;
 mod pages;

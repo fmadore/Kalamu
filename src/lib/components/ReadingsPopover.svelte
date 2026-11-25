@@ -188,7 +188,11 @@
 	</div>
 	<ul class="options">
 		<li class="option">
-			<span class="option-text in-text" class:none={!entry.lemma}>
+			<span
+				class="option-text in-text"
+				class:own-direction={!!entry.lemma}
+				class:none={!entry.lemma}
+			>
 				{entry.lemma || m.review.noText}
 			</span>
 			<span class="option-who mono">{inUse}</span>
@@ -197,7 +201,9 @@
 		{#each entry.readings as r (r.siglum)}
 			<li>
 				<button class="option pick" onclick={() => onuse(r.text)}>
-					<span class="option-text" class:none={!r.text}>{r.text || m.review.noText}</span>
+					<span class="option-text" class:own-direction={!!r.text} class:none={!r.text}>
+						{r.text || m.review.noText}
+					</span>
 					<span class="option-who mono">{witnessName(r.siglum)}</span>
 					<span class="option-end use">{m.review.useReading}</span>
 				</button>
@@ -206,6 +212,7 @@
 		<li class="own">
 			<input
 				type="text"
+				dir="auto"
 				bind:value={own}
 				aria-label={m.review.ownReading}
 				placeholder={m.review.ownReadingPlaceholder}

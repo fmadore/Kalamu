@@ -15,10 +15,12 @@
 		<label class="field" class:long={LONG.includes(field)}>
 			<span>{m.projects.describe.fields[field]}</span>
 			{#if LONG.includes(field)}
-				<textarea rows="2" bind:value={value[field]} placeholder={hint ?? ''}></textarea>
+				<textarea class="own-direction" rows="2" bind:value={value[field]} placeholder={hint ?? ''}
+				></textarea>
 			{:else}
 				<input
 					type="text"
+					dir="auto"
 					inputmode={field === 'url' ? 'url' : undefined}
 					bind:value={value[field]}
 					placeholder={hint ?? ''}

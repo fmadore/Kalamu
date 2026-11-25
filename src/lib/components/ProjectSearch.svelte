@@ -348,7 +348,7 @@
 											onclick={() => open(r, h)}
 										>
 											<span class="place num">{place}</span>
-											<span class="snippet">
+											<span class="snippet own-direction">
 												{#if origin}<span class="origin">{origin}</span>{/if}
 												{h.before}{#each hitWords(h) as w, i (i)}{#if w.found}<mark>
 															{w.text}
@@ -517,7 +517,6 @@
 	.snippet {
 		min-width: 0;
 		overflow-wrap: anywhere;
-		unicode-bidi: plaintext;
 	}
 	.origin {
 		margin-right: var(--space-2);

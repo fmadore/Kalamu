@@ -58,6 +58,7 @@ fn a_project_opened_from_its_file_reads_as_it_did() {
     let places = ArchivePlaces {
         snapshots: f.dir.path().join("snapshots"),
         originals: f.dir.path().join("originals"),
+        working: f.dir.path().join("working"),
         app_version: "1.9.0".into(),
     };
     let path = f.dir.path().join("Mission archives.kalamu");

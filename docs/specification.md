@@ -448,7 +448,9 @@ paying twice.
 - **Jobs survive closing the app.** On the next launch, the app lists unfinished jobs and offers
   to resume them. Closing the window during a job asks first, and can keep the job running in
   the background from the notification area (the menu bar on a Mac, where closing the window
-  never quits and ⌘Q asks first too). Quitting pauses the jobs and waits for the pieces
+  never quits and ⌘Q asks first too). Changes not saved (a correction, a prompt, a workflow)
+  are asked about first, as leaving their screen asks, whenever closing the window or quitting
+  would lose them (not when the red button only hides the window on a Mac). Quitting pauses the jobs and waits for the pieces
   already sent, which are paid for, to come back and be stored, saying how many; "Quit now"
   stops waiting. A pause or cancel also ends a wait between retries, so no further attempt is
   sent.
@@ -934,7 +936,10 @@ analysed, compared. A **project** keeps it together
 - **Organising never changes work.** Collections, titles, links and preferences call no model.
   A job keeps the files it was started with, so a later change to a collection does not rewrite
   a past run or start new work. Deleting a project, a collection or a document removes only how
-  it was organised; deleting a job unties it from its documents, which stay. A file moved since
+  it was organised, but for the originals Kalamu copied into its data folder when a project was
+  opened from a file: deleting that project removes them, as its confirmation says, unless a
+  document of another project names one ([#274](https://github.com/fmadore/Kalamu/issues/274));
+  deleting a job unties it from its documents, which stay. A file moved since
   it was added is marked missing, its results kept. A project can be archived and restored.
 - **Saved as one file, opened on another computer**
   ([decision](decisions/2026-11-20-project-file.md), [#213](https://github.com/fmadore/Kalamu/issues/213)),

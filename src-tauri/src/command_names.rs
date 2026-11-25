@@ -205,5 +205,6 @@ pub const COMMANDS: &[&str] = &[
     "meaning_neighbours",
     "set_shell_labels",
     "hide_window",
+    "set_draft_open",
     "quit_app",
 ];

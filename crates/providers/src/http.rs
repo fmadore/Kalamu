@@ -126,8 +126,9 @@ fn network(err: reqwest::Error) -> ProviderError {
     }
 }
 
-fn header_retry_after(response: &Response) -> Option<Duration> {
-    retry_after_value(
+/// A `Retry-After` header's seconds, as asked: [`status_error`] bounds them.
+fn header_retry_after(response: &Response) -> Option<f64> {
+    retry_after_secs(
         response
             .headers()
             .get(reqwest::header::RETRY_AFTER)?
@@ -142,14 +143,19 @@ const MAX_RETRY_WAIT_SECS: f64 = 300.0;
 
 /// A `Retry-After` header in seconds. An HTTP date, a negative or a non-finite number is
 /// ignored, and the engine falls back to its own delay.
-fn retry_after_value(value: &str) -> Option<Duration> {
-    wait(value.trim().parse::<f64>().ok()?)
+fn retry_after_secs(value: &str) -> Option<f64> {
+    asked(value.trim().parse::<f64>().ok()?)
 }
 
-/// A wait in seconds as asked, capped; `None` for one that is negative or not a number.
+/// A wait in seconds as asked, not yet bounded; `None` for one that is negative or not a number.
+fn asked(secs: f64) -> Option<f64> {
+    (secs.is_finite() && secs >= 0.0).then_some(secs)
+}
+
+/// A wait in seconds as asked, capped at [`MAX_RETRY_WAIT_SECS`]; `None` for one that is
+/// negative or not a number.
 fn wait(secs: f64) -> Option<Duration> {
-    (secs.is_finite() && secs >= 0.0)
-        .then(|| Duration::from_secs_f64(secs.min(MAX_RETRY_WAIT_SECS)))
+    asked(secs).map(|secs| Duration::from_secs_f64(secs.min(MAX_RETRY_WAIT_SECS)))
 }
 
 /// The longest error message passed on as the provider wrote it, in characters.
@@ -186,18 +192,7 @@ fn answered_by(url: &reqwest::Url) -> &'static str {
 /// (400 Bad Request)." rather than the page.
 pub(crate) fn error_message(body: &str, status: StatusCode, who: &str) -> String {
     let parsed: Option<Value> = serde_json::from_str(body).ok();
-    let message = parsed.as_ref().and_then(|v| {
-        [
-            "/error/message",
-            "/message",
-            "/detail",
-            "/detail/0/msg",
-            "/error",
-        ]
-        .iter()
-        .filter_map(|at| v.pointer(at)?.as_str().map(str::trim))
-        .find(|m| !m.is_empty())
-    });
+    let message = parsed.as_ref().and_then(json_message);
     let body = body.trim();
     let plain = !body.is_empty()
         && parsed.is_none()
@@ -213,6 +208,21 @@ pub(crate) fn error_message(body: &str, status: StatusCode, who: &str) -> String
         }
         None => format!("{who} refused the request ({}).", status_words(status)),
     }
+}
+
+/// The provider's own message in a JSON error body, whole, from the shapes the four providers
+/// use.
+fn json_message(body: &Value) -> Option<&str> {
+    [
+        "/error/message",
+        "/message",
+        "/detail",
+        "/detail/0/msg",
+        "/error",
+    ]
+    .iter()
+    .filter_map(|at| body.pointer(at)?.as_str().map(str::trim))
+    .find(|m| !m.is_empty())
 }
 
 /// Whether a body is a page or a document of markup rather than a message: it opens with a tag.
@@ -237,46 +247,105 @@ fn shortened(message: &str) -> String {
     format!("{}…", cut.trim_end())
 }
 
-/// "Please retry in 12.5s", as Gemini words its per-minute limits.
-fn stated_retry(message: &str) -> Option<Duration> {
+/// The wait a message states, in seconds as asked: "Please retry in 12.5s", as Gemini words
+/// its per-minute limits, or "Please try again in 1.2s", "in 20ms", "in 6m0s", as OpenAI does.
+fn stated_secs(message: &str) -> Option<f64> {
     let lower = message.to_lowercase();
-    let at = lower.find("retry in ")? + "retry in ".len();
-    let digits: String = lower[at..]
-        .chars()
-        .take_while(|c| c.is_ascii_digit() || *c == '.')
-        .collect();
-    let secs: f64 = digits.parse().ok()?;
-    let unit = lower[at + digits.len()..].trim_start();
-    let secs = if unit.starts_with("ms") {
-        secs / 1000.0
-    } else {
-        secs
-    };
-    wait(secs)
+    let at = ["retry in ", "try again in "]
+        .iter()
+        .filter_map(|words| lower.find(words).map(|i| i + words.len()))
+        .min()?;
+    duration_secs(&lower[at..])
 }
 
+/// The duration a text opens with, in seconds: "33s", "1.2 s", "20ms", "6m0s", "1h"; a number
+/// with no unit is seconds.
+fn duration_secs(text: &str) -> Option<f64> {
+    let mut rest = text;
+    let mut total = None;
+    while rest.starts_with(|c: char| c.is_ascii_digit()) {
+        let len = rest
+            .find(|c: char| !(c.is_ascii_digit() || c == '.'))
+            .unwrap_or(rest.len());
+        let number: f64 = rest[..len].parse().ok()?;
+        rest = rest[len..].trim_start();
+        let (scale, unit) = if rest.starts_with("ms") {
+            (0.001, 2)
+        } else if rest.starts_with('h') {
+            (3600.0, 1)
+        } else if rest.starts_with('m') {
+            (60.0, 1)
+        } else if rest.starts_with('s') {
+            (1.0, 1)
+        } else {
+            (1.0, 0)
+        };
+        total = Some(total.unwrap_or(0.0) + number * scale);
+        rest = &rest[unit..];
+        if unit == 0 {
+            break;
+        }
+    }
+    asked(total?)
+}
+
+/// The wait Gemini states in a `google.rpc.RetryInfo` detail of its error: `"retryDelay":
+/// "33s"`.
+fn retry_info_secs(body: &Value) -> Option<f64> {
+    body.pointer("/error/details")?
+        .as_array()?
+        .iter()
+        .filter_map(|detail| detail.get("retryDelay")?.as_str())
+        .find_map(duration_secs)
+}
+
+/// An HTTP failure as the engine handles it. A 429 that states a wait (a `Retry-After` header,
+/// Gemini's `RetryInfo`, or words in the message) is a limit to wait out, whatever else the
+/// message says: Google words its per-minute limits as an exceeded quota (#270). An exhausted
+/// account still stops the job: a 402, OpenAI's `insufficient_quota`, a low credit balance, a
+/// quota per day, a wait longer than [`MAX_RETRY_WAIT_SECS`], or quota words with no wait.
 pub(crate) fn status_error(
     status: StatusCode,
-    retry_after: Option<Duration>,
+    retry_after: Option<f64>,
     body: &str,
     who: &str,
 ) -> ProviderError {
     let message = error_message(body, status, who);
-    let lower = message.to_lowercase();
+    let parsed: Option<Value> = serde_json::from_str(body).ok();
+    // The whole message: the wait comes last, after the cut a researcher reads.
+    let whole = parsed.as_ref().and_then(json_message).unwrap_or(body);
+    let lower = whole.to_lowercase();
+    let raw = body.to_lowercase();
     let quota = lower.contains("credit balance")
-        || lower.contains("insufficient_quota")
+        || raw.contains("insufficient_quota")
         || lower.contains("exceeded your current quota")
         || lower.contains("billing")
         || (lower.contains("quota") && lower.contains("per day"));
+    // What no wait cures, wherever the body says it: Gemini names a daily quota in its
+    // `QuotaFailure` detail ("GenerateRequestsPerDayPerProjectPerModel").
+    let exhausted = raw.contains("insufficient_quota")
+        || lower.contains("credit balance")
+        || raw.contains("per day")
+        || raw.contains("perday")
+        || raw.contains("daily");
+    let stated = retry_after
+        .or_else(|| parsed.as_ref().and_then(retry_info_secs))
+        .or_else(|| stated_secs(whole));
+    let waits = stated.is_some_and(|secs| secs <= MAX_RETRY_WAIT_SECS) && !exhausted;
+    let retry_after = stated.and_then(wait);
     match status.as_u16() {
         401 | 403 => ProviderError::Auth(message),
         402 => ProviderError::QuotaExhausted(message),
         400 if lower.contains("api key not valid") || lower.contains("api_key_invalid") => {
             ProviderError::Auth(message)
         }
+        429 if waits => ProviderError::RateLimited {
+            retry_after,
+            message,
+        },
         _ if quota => ProviderError::QuotaExhausted(message),
         429 => ProviderError::RateLimited {
-            retry_after: retry_after.or_else(|| stated_retry(&message)),
+            retry_after,
             message,
         },
         408 | 409 | 425 | 500 | 502 | 503 | 504 | 529 => ProviderError::Transient(message),
@@ -567,5 +636,133 @@ mod tests {
             stated_retry(&format!("Please retry in {}s", "9".repeat(400))),
             None
         );
+    }
+
+    /// A `Retry-After` header's wait, bounded as [`status_error`] bounds it.
+    fn retry_after_value(value: &str) -> Option<Duration> {
+        retry_after_secs(value).and_then(wait)
+    }
+
+    /// A message's stated wait, bounded as [`status_error`] bounds it.
+    fn stated_retry(message: &str) -> Option<Duration> {
+        stated_secs(message).and_then(wait)
+    }
+
+    #[test]
+    fn a_wait_is_read_in_the_words_each_provider_uses() {
+        assert_eq!(
+            stated_retry("Please retry in 33s."),
+            Some(Duration::from_secs(33))
+        );
+        assert_eq!(
+            stated_retry("Please try again in 1.2s. Visit the rate limits page."),
+            Some(Duration::from_secs_f64(1.2))
+        );
+        assert_eq!(
+            stated_retry("Please try again in 20ms."),
+            Some(Duration::from_millis(20))
+        );
+        assert_eq!(
+            stated_retry("Please try again in 6m0s."),
+            Some(Duration::from_secs(360).min(Duration::from_secs(300)))
+        );
+        assert_eq!(stated_secs("Please try again in 1m30s."), Some(90.0));
+        assert_eq!(stated_secs("Retry in 2 seconds"), Some(2.0));
+        assert_eq!(stated_secs("Please try again later."), None);
+        assert_eq!(
+            retry_info_secs(&serde_json::json!({"error": {"details": [
+                {"@type": "type.googleapis.com/google.rpc.Help"},
+                {"@type": "type.googleapis.com/google.rpc.RetryInfo", "retryDelay": "33s"}
+            ]}})),
+            Some(33.0)
+        );
+    }
+
+    // The bodies below are as documented/remembered, to be replaced by a captured answer (#270).
+
+    /// Google's per-minute limit on Gemini, worded as an exceeded quota, its wait at the end
+    /// of a message longer than a researcher is shown.
+    const GEMINI_PER_MINUTE: &str = r#"{"error":{"code":429,"message":"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/usage?tab=rate-limit. \n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_paid_tier_input_token_count, limit: 1000000, model: gemini-3.8-flash\nPlease retry in 33.5s.","status":"RESOURCE_EXHAUSTED","details":[{"@type":"type.googleapis.com/google.rpc.QuotaFailure","violations":[{"quotaMetric":"generativelanguage.googleapis.com/generate_content_paid_tier_input_token_count","quotaId":"GenerateContentPaidTierInputTokensPerModelPerMinute"}]},{"@type":"type.googleapis.com/google.rpc.RetryInfo","retryDelay":"33s"}]}}"#;
+
+    /// The same answer for a quota per day, which no wait of minutes cures.
+    const GEMINI_PER_DAY: &str = r#"{"error":{"code":429,"message":"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits.\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 250, model: gemini-3.8-flash\nPlease retry in 33.5s.","status":"RESOURCE_EXHAUSTED","details":[{"@type":"type.googleapis.com/google.rpc.QuotaFailure","violations":[{"quotaMetric":"generativelanguage.googleapis.com/generate_content_free_tier_requests","quotaId":"GenerateRequestsPerDayPerProjectPerModel-FreeTier"}]},{"@type":"type.googleapis.com/google.rpc.RetryInfo","retryDelay":"33s"}]}}"#;
+
+    /// OpenAI's per-minute limit.
+    const OPENAI_PER_MINUTE: &str = r#"{"error":{"message":"Rate limit reached for gpt-5.4 in organization org-abc on tokens per min (TPM): Limit 30000, Used 29500, Requested 1200. Please try again in 1.4s. Visit https://platform.openai.com/account/rate-limits to learn more.","type":"tokens","param":null,"code":"rate_limit_exceeded"}}"#;
+
+    /// OpenAI's account out of credit.
+    const OPENAI_NO_CREDIT: &str = r#"{"error":{"message":"You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.","type":"insufficient_quota","param":null,"code":"insufficient_quota"}}"#;
+
+    #[test]
+    fn a_limit_that_states_a_wait_is_waited_out_whatever_it_is_called() {
+        let too_many = StatusCode::TOO_MANY_REQUESTS;
+        let gemini = status_error(too_many, None, GEMINI_PER_MINUTE, "Google");
+        assert!(
+            matches!(
+                gemini,
+                ProviderError::RateLimited { retry_after: Some(d), .. } if d == Duration::from_secs(33)
+            ),
+            "{gemini:?}"
+        );
+        // Without the structured detail, the words at the end of the whole message.
+        let words_only = serde_json::json!({"error": {
+            "code": 429,
+            "message": serde_json::from_str::<Value>(GEMINI_PER_MINUTE)
+                .ok()
+                .and_then(|v| v.pointer("/error/message")?.as_str().map(str::to_string)),
+        }})
+        .to_string();
+        assert!(matches!(
+            status_error(too_many, None, &words_only, "Google"),
+            ProviderError::RateLimited { retry_after: Some(d), .. } if d == Duration::from_secs_f64(33.5)
+        ));
+        assert!(matches!(
+            status_error(too_many, None, OPENAI_PER_MINUTE, "OpenAI"),
+            ProviderError::RateLimited { retry_after: Some(d), .. } if d == Duration::from_secs_f64(1.4)
+        ));
+        // A Retry-After header is a stated wait too.
+        assert!(matches!(
+            status_error(
+                too_many,
+                Some(20.0),
+                r#"{"error":{"message":"You exceeded your current quota."}}"#,
+                "Google"
+            ),
+            ProviderError::RateLimited { retry_after: Some(d), .. } if d == Duration::from_secs(20)
+        ));
+    }
+
+    #[test]
+    fn an_exhausted_account_still_stops_the_job() {
+        let too_many = StatusCode::TOO_MANY_REQUESTS;
+        for (body, who) in [
+            (GEMINI_PER_DAY, "Google"),
+            (OPENAI_NO_CREDIT, "OpenAI"),
+            // Quota words and no wait.
+            (
+                r#"{"error":{"message":"You exceeded your current quota, please check your plan and billing details."}}"#,
+                "Google",
+            ),
+            // A wait longer than any retry waits for.
+            (
+                r#"{"error":{"message":"You exceeded your current quota. Please retry in 7200s."}}"#,
+                "Google",
+            ),
+        ] {
+            let said = status_error(too_many, None, body, who);
+            assert!(
+                matches!(said, ProviderError::QuotaExhausted(_)),
+                "{who}: {said:?}"
+            );
+        }
+        // Even with a Retry-After header.
+        assert!(matches!(
+            status_error(too_many, Some(5.0), OPENAI_NO_CREDIT, "OpenAI"),
+            ProviderError::QuotaExhausted(_)
+        ));
+        assert!(matches!(
+            status_error(StatusCode::PAYMENT_REQUIRED, Some(5.0), "pay", "Mistral"),
+            ProviderError::QuotaExhausted(_)
+        ));
     }
 }

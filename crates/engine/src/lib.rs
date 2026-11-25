@@ -89,7 +89,8 @@ pub trait KeySource: Send + Sync {
 
 #[derive(Debug, Clone)]
 pub struct EngineConfig {
-    /// Pieces sent at the same time, across set-ups. zmo-ai-pipelines defaults to 2.
+    /// Pieces sent at the same time, across set-ups and across the job's files. zmo-ai-pipelines
+    /// defaults to 2.
     pub concurrency: usize,
     /// Calls per piece before it is marked as failed.
     pub max_attempts: u32,

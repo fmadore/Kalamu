@@ -218,7 +218,7 @@
 								disabled={unit.pages.length === 0}
 								onclick={() => unit.pages[0] && onshow(unit.pages[0])}
 							>
-								<span class="item-title">{titleOf(unit)}</span>
+								<span class="item-title own-direction">{titleOf(unit)}</span>
 								<span class="item-pages mono">{typedPages(pages, m) || u.noPages}</span>
 							</button>
 						</div>
@@ -305,7 +305,7 @@
 		>
 			<label class="field">
 				<span class="field-label">{u.title}</span>
-				<input type="text" bind:value={editing.title} />
+				<input type="text" dir="auto" bind:value={editing.title} />
 			</label>
 			<label class="field">
 				<span class="field-label">{u.pages}</span>
