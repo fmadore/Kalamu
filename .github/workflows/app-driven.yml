@@ -1,0 +1,157 @@
+name: App driven
+
+# The app itself, built and driven against the stand-in provider, so the pass by hand keeps only
+# what needs a person (docs/decisions/2026-11-25-app-driven-in-ci.md, #277).
+#
+# - Windows, x64 and ARM64: the test build (a debug build with `--features test-overrides`: its
+#   own data folder, every cloud provider at the stand-in's address, keys in memory, dialogs
+#   answered from a queue) is started and its WebView2 window driven over the DevTools protocol
+#   with Playwright: a job from New job to its files, a correction found after a restart, a
+#   project saved and opened, a paused job resumed after a restart, a batch collected after a
+#   restart (e2e-app/flows.spec.ts).
+# - macOS: WKWebView has no driver, so the same test build is bundled as an app and a disk
+#   image and each is started, checked to open its database, and quit (scripts/app-driven/
+#   launch-check.sh).
+#
+# What it drives is the built executable, not the installed MSIX, installer or notarised disk
+# image: those are release builds, which never carry the overrides. No job here has a secret,
+# and no provider's real service is called. Runs on pull requests that touch the shell, the
+# engine or what they stand on, on every release candidate's tag, and by hand; a run on main
+# saves the Rust cache pull requests restore. Keep the two path lists the same.
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - .github/workflows/app-driven.yml
+      - src-tauri/**
+      - crates/core/**
+      - crates/engine/**
+      - crates/providers/**
+      - crates/store/**
+      - e2e-app/**
+      - playwright.app.config.ts
+      - scripts/app-driven/**
+      - Cargo.lock
+      - package-lock.json
+      - rust-toolchain.toml
+  push:
+    branches: [main]
+    tags: ["v*-rc*"]
+    paths:
+      - .github/workflows/app-driven.yml
+      - src-tauri/**
+      - crates/core/**
+      - crates/engine/**
+      - crates/providers/**
+      - crates/store/**
+      - e2e-app/**
+      - playwright.app.config.ts
+      - scripts/app-driven/**
+      - Cargo.lock
+      - package-lock.json
+      - rust-toolchain.toml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: app-driven-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  windows:
+    name: Driven on Windows (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, windows-11-arm]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # As in ci.yml: MSVC 14.52 on the x64 image refuses a Clang older than 22.
+      - name: A Clang the image's standard library accepts
+        if: runner.arch == 'X64'
+        uses: ./.github/actions/clang-for-msvc
+      - name: Configure native Whisper and Tesseract compiler
+        shell: pwsh
+        run: |
+          "CC=clang-cl" >> $env:GITHUB_ENV
+          "CXX=clang-cl" >> $env:GITHUB_ENV
+          "CXXFLAGS=/EHsc" >> $env:GITHUB_ENV
+          "CMAKE_GENERATOR=Ninja" >> $env:GITHUB_ENV
+          "LIBCLANG_PATH=C:\Program Files\LLVM\bin" >> $env:GITHUB_ENV
+      - name: Keep Tesseract's build outside the cached target folder
+        shell: bash
+        run: echo "TESSERACT_RS_CACHE_DIR=$RUNNER_TEMP/tesseract" >> "$GITHUB_ENV"
+      - run: rustup toolchain install
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          prefix-key: whisper-cpu-${{ runner.arch }}-v2
+          key: app-driven
+          cache-on-failure: true
+          save-if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      # The interface, embedded in the executable (`custom-protocol`).
+      - run: npm run build
+      - name: Build the test build
+        run: cargo build -p kalamu --locked --features custom-protocol,test-overrides
+      # Playwright connects to the app's own WebView2; it downloads no browser.
+      - name: Drive the app against the stand-in provider
+        run: npm run test:app
+      - name: Keep the traces of a failed flow
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: app-driven-${{ matrix.os }}
+          path: test-results/app
+          if-no-files-found: ignore
+
+  macos:
+    name: Starts and ends on macOS (Apple Silicon)
+    runs-on: macos-latest
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Keep Tesseract's build outside the cached target folder
+        run: echo "TESSERACT_RS_CACHE_DIR=$RUNNER_TEMP/tesseract" >> "$GITHUB_ENV"
+      - run: rustup toolchain install
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          prefix-key: whisper-cpu-${{ runner.arch }}-v2
+          key: app-driven
+          cache-on-failure: true
+          save-if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      # A debug build of the app with the overrides, bundled as the app and the disk image
+      # (unsigned: neither is the notarised release, which never carries the overrides).
+      - name: Bundle the test build
+        run: npx tauri build --debug --ci --bundles app,dmg --features test-overrides
+      - name: The app starts, opens its database and ends
+        run: scripts/app-driven/launch-check.sh target/debug/bundle/macos/Kalamu.app
+      - name: The app from the disk image starts, opens its database and ends
+        run: |
+          dmg=$(ls target/debug/bundle/dmg/*.dmg | head -n 1)
+          mount="$RUNNER_TEMP/kalamu-dmg"
+          mkdir -p "$mount"
+          hdiutil attach -nobrowse -readonly -mountpoint "$mount" "$dmg"
+          status=0
+          scripts/app-driven/launch-check.sh "$mount/Kalamu.app" || status=$?
+          hdiutil detach "$mount" || true
+          exit "$status"

@@ -50,7 +50,19 @@ pub struct CredentialKeys {
     cache: Mutex<HashMap<ProviderId, Option<String>>>,
 }
 
+/// Whether this is the test build, whose keys live in memory only and which never asks or
+/// writes the keychain (`test_overrides`).
+const KEYCHAIN: bool = !cfg!(feature = "test-overrides");
+
 impl CredentialKeys {
+    /// The test build's keys, held in memory from the start; the keychain is never asked.
+    #[cfg(feature = "test-overrides")]
+    pub fn held(keys: HashMap<ProviderId, Option<String>>) -> Self {
+        Self {
+            cache: Mutex::new(keys),
+        }
+    }
+
     fn entry(provider: &ProviderId) -> Result<keyring::Entry, AppError> {
         Self::entry_in(SERVICE, provider)
     }
@@ -70,6 +82,9 @@ impl CredentialKeys {
     }
 
     fn read(provider: &ProviderId) -> Result<Option<String>, keyring::Error> {
+        if !KEYCHAIN {
+            return Ok(None);
+        }
         if let Some(key) = Self::stored(SERVICE, provider)? {
             return Ok(Some(key));
         }
@@ -97,16 +112,18 @@ impl CredentialKeys {
             return Err(AppError::new(id::KEY_FORMAT, "the key is empty"));
         }
         check_format(key).map_err(|detail| AppError::new(id::KEY_FORMAT, detail))?;
-        Self::entry(provider)?
-            .set_password(key)
-            .map_err(|e| AppError::new(id::KEYCHAIN, e))?;
+        if KEYCHAIN {
+            Self::entry(provider)?
+                .set_password(key)
+                .map_err(|e| AppError::new(id::KEYCHAIN, e))?;
+        }
         self.lock().insert(provider.clone(), Some(key.to_string()));
         Ok(())
     }
 
     pub fn clear(&self, provider: &ProviderId) -> Result<(), AppError> {
         // The legacy entry too, so a key not yet moved does not come back.
-        for service in [SERVICE, LEGACY_SERVICE] {
+        for service in [SERVICE, LEGACY_SERVICE].iter().filter(|_| KEYCHAIN) {
             match Self::entry_in(service, provider)?.delete_credential() {
                 Ok(()) | Err(keyring::Error::NoEntry) => {}
                 Err(e) => return Err(AppError::new(id::KEYCHAIN, e)),

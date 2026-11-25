@@ -34,8 +34,11 @@ export default defineConfig(
 					allowDefaultProject: [
 						'eslint.config.js',
 						'scripts/*.mjs',
+						'scripts/app-driven/*.mjs',
 						'playwright.config.ts',
-						'e2e/*.ts'
+						'playwright.app.config.ts',
+						'e2e/*.ts',
+						'e2e-app/*.ts'
 					],
 					defaultProject: 'tsconfig.json',
 					// The files above, outside tsconfig.json, are linted with a default project:
