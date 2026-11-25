@@ -186,6 +186,19 @@ async fn gemini_rate_limits_and_recitation_are_reported() {
         })))
         .mount(&server)
         .await;
+    // A per-minute limit worded as an exceeded quota, as documented/remembered, to be replaced
+    // by a captured answer (#270): waited out, not a stopped job.
+    Mock::given(method("POST"))
+        .and(path("/models/perminute:generateContent"))
+        .respond_with(ResponseTemplate::new(429).set_body_json(serde_json::json!({
+            "error": {
+                "code": 429,
+                "message": "You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/usage?tab=rate-limit. \n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_paid_tier_input_token_count, limit: 1000000, model: gemini-3.8-flash\nPlease retry in 33.5s.",
+                "status": "RESOURCE_EXHAUSTED"
+            }
+        })))
+        .mount(&server)
+        .await;
     Mock::given(method("POST"))
         .and(path("/models/withholds:generateContent"))
         .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
@@ -215,6 +228,20 @@ async fn gemini_rate_limits_and_recitation_are_reported() {
         limited,
         Err(ProviderError::RateLimited { retry_after: Some(d), .. }) if d.as_secs() == 7
     ));
+    let per_minute = gemini
+        .process(
+            &key,
+            request(Task::TextExtraction, "perminute", &input, &langs, &opts),
+        )
+        .await;
+    assert!(
+        matches!(
+            per_minute,
+            Err(ProviderError::RateLimited { retry_after: Some(d), .. })
+                if d == std::time::Duration::from_secs_f64(33.5)
+        ),
+        "{per_minute:?}"
+    );
     let recites = gemini
         .process(
             &key,
