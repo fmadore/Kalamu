@@ -1,6 +1,6 @@
 <script lang="ts">
 	// The model field: a button showing the chosen model with its tier's bars, opening a list of
-	// the models under their tiers, each with its one-line description, so a model is read about
+	// the models under their tiers, each with its one-line summary, so a model is read about
 	// before it is chosen. A select-only combobox: the arrow keys, Home and End move through the
 	// list, a letter jumps to the next model starting with it, Enter or Space chooses, Escape or
 	// a click elsewhere closes, and the focus goes back to the button. In the top layer, under the
@@ -8,7 +8,7 @@
 	import Icon from './Icon.svelte';
 	import TierMark from './TierMark.svelte';
 	import type { ModelInfo } from '#lib/bindings/ModelInfo.js';
-	import { modelDescription } from '#lib/catalogText.js';
+	import { modelSummary } from '#lib/catalogText.js';
 	import { giveFocusBack } from '#lib/keys.js';
 	import { tierOf, type ModelGroup } from '#lib/tiers.js';
 
@@ -215,8 +215,8 @@
 							</span>{/if}
 						{#if why}
 							<span class="desc">{why}</span>
-						{:else if model.description}
-							<span class="desc">{modelDescription(model)}</span>
+						{:else if model.summary || model.description}
+							<span class="desc">{modelSummary(model)}</span>
 						{/if}
 					</div>
 				{/each}
@@ -357,20 +357,10 @@
 		grid-row: span 2;
 		color: var(--text-bright);
 	}
-	/* Two lines at most, so the list stays short; the model under the pointer or in focus shows
-	   its whole description, which grows downwards and leaves the pointer on the same model. */
-	.option:hover .desc,
-	.option:focus .desc {
-		-webkit-line-clamp: unset;
-		line-clamp: unset;
-	}
+	/* Shown whole and never resized under the pointer: the catalogue keeps each description short
+	   enough for the list to stay readable. */
 	.desc {
 		grid-column: 1;
-		display: -webkit-box;
-		-webkit-box-orient: vertical;
-		-webkit-line-clamp: 2;
-		line-clamp: 2;
-		overflow: hidden;
 		font-size: var(--type-xs);
 		line-height: 1.4;
 		color: var(--text-muted);

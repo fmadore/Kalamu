@@ -12,6 +12,13 @@ export function modelDescription(model: ModelInfo): string {
 	return model.translations?.[locale()]?.description ?? model.description;
 }
 
+/** What a model is for in a few words, for the model list; its description when the list
+ *  gives no summary (an older or downloaded list). */
+export function modelSummary(model: ModelInfo): string {
+	const own = model.translations?.[locale()];
+	return own?.summary ?? (own?.description ? undefined : model.summary) ?? modelDescription(model);
+}
+
 /** A provider's name in the interface language. */
 export function providerName(provider: ProviderInfo): string {
 	return provider.translations?.[locale()]?.name ?? provider.name;

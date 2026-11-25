@@ -102,6 +102,9 @@ pub struct Translation {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub description: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub summary: Option<String>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
@@ -285,6 +288,11 @@ pub struct ModelInfo {
     pub name: String,
     #[serde(default)]
     pub description: String,
+    /// What it is for in a few words, shown whole in the model list; the description, shown
+    /// under the chosen model, says the rest. Older builds ignore the field.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub summary: Option<String>,
     pub tasks: Vec<Task>,
     /// MIME types the model reads.
     pub inputs: Vec<String>,

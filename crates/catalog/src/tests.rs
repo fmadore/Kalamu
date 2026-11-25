@@ -43,8 +43,43 @@ fn translations_are_for_interface_languages() -> Result<(), CatalogError> {
             t.name
                 .iter()
                 .chain(&t.description)
+                .chain(&t.summary)
                 .all(|s| !s.trim().is_empty())
         );
+    }
+    Ok(())
+}
+
+/// The model list shows each summary whole, so every model has one, in each language its
+/// description is translated into, short enough for a line or two.
+#[test]
+fn every_model_has_a_short_summary() -> Result<(), CatalogError> {
+    const LONGEST: usize = 100;
+    let catalog = Catalog::from_json(BUNDLED)?;
+    for model in &catalog.models {
+        let summary = model.summary.as_deref().unwrap_or_default();
+        assert!(!summary.trim().is_empty(), "{} has no summary", model.id);
+        assert!(
+            summary.chars().count() <= LONGEST,
+            "{}: {summary}",
+            model.id
+        );
+        for (language, t) in &model.translations {
+            if t.description.is_none() {
+                continue;
+            }
+            let summary = t.summary.as_deref().unwrap_or_default();
+            assert!(
+                !summary.trim().is_empty(),
+                "{} has no {language} summary",
+                model.id
+            );
+            assert!(
+                summary.chars().count() <= LONGEST,
+                "{}: {summary}",
+                model.id
+            );
+        }
     }
     Ok(())
 }

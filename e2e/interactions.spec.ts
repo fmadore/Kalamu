@@ -252,13 +252,13 @@ test('New job lists models by tier across providers, and remembers it', async ({
 	const setups = main.getByRole('region', { name: /^Model and prompt/ });
 	const model = setups.getByRole('combobox', { name: 'Model' }).first();
 	// By provider: a provider field, and the provider's models under their tiers, each with its
-	// description before it is chosen.
+	// summary, shown whole, before it is chosen.
 	await expect(setups.getByRole('combobox', { name: 'Provider' }).first()).toBeVisible();
 	await model.click();
 	const list = page.getByRole('listbox', { name: 'Model' });
 	await expect(list.getByRole('group').first()).toHaveAccessibleName('Most capable');
 	await expect(list.getByRole('option', { name: /^Gemini 4 Hydrogen/ })).toContainText(
-		'which replaces 3.8 Flash'
+		'reads print and handwriting well'
 	);
 	// A model replaced by a newer one is not offered.
 	await expect(list.getByRole('option', { name: /^Gemini 3\.8 Flash/ })).toHaveCount(0);
