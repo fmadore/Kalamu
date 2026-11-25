@@ -543,5 +543,8 @@ derived index is in the file. Opened, every identifier is given a new one and th
 comes in beside the others; the carried originals are written into the data folder's
 `originals/<project id>/`, a folder for each folder they shared, each under its own name made
 safe for this system (one an earlier file of its folder took, regardless of case, numbered:
-`draft_ (2).pdf`), and the paths that named them pointed there. Nothing outside Kalamu should rely on more than the manifest and the files'
+`draft_ (2).pdf`), and the paths that named them pointed there; deleting the project removes
+that folder, and a folder whose project no longer exists is removed at launch. A file saved by
+an older Kalamu is brought up to date on a copy in the data folder's `project-file-scratch/`,
+deleted when done and emptied at launch. Nothing outside Kalamu should rely on more than the manifest and the files'
 tables.

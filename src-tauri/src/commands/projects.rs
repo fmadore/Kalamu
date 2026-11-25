@@ -79,17 +79,48 @@ pub fn archive_project(
     Ok(state.projects.set_archived(id, archived)?)
 }
 
+/// Deletes the project's rows, then, away from the command, the original files Kalamu copied
+/// into its data folder when it was opened from a file (#274): only its own folder there, never
+/// a file kept elsewhere. A file that cannot be removed is logged and tried again at the next
+/// launch; the project stays deleted.
 #[tauri::command]
 pub fn delete_project(state: State<'_, AppState>, id: ProjectId) -> CmdResult<()> {
     let sources = state.projects.sources_of(id, None)?;
     state.projects.delete(id)?;
+    let archive = state.archive.clone();
+    let places = super::project_file::places(&state.paths.data);
+    tauri::async_runtime::spawn_blocking(move || {
+        match archive.remove_copied_originals(id, &places) {
+            Ok(done) if done.failed > 0 => tracing::warn!(
+                project = %id,
+                failed = done.failed,
+                "copied-in originals not all removed: tried again at the next launch"
+            ),
+            Ok(_) => {}
+            Err(e) => tracing::warn!(
+                project = %id,
+                error = %e,
+                "copied-in originals not removed: tried again at the next launch"
+            ),
+        }
+    });
     refresh_provenance(&state, sources);
     Ok(())
 }
 
+/// The project as its screen shows it, with how many original files deleting it would remove.
 #[tauri::command]
 pub fn project_view(state: State<'_, AppState>, id: ProjectId) -> CmdResult<ProjectView> {
-    Ok(state.projects.view(id)?)
+    let mut view = state.projects.view(id)?;
+    let places = super::project_file::places(&state.paths.data);
+    view.copied_originals = state
+        .archive
+        .copied_originals(id, &places)
+        .unwrap_or_else(|e| {
+            tracing::warn!(project = %id, error = %e, "copied-in originals not counted");
+            0
+        });
+    Ok(view)
 }
 
 #[tauri::command]

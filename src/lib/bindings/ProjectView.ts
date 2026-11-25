@@ -19,4 +19,11 @@ jobs: Array<JobId>,
  * The choices its analyses answered, each with the documents it answered: what the table
  * of documents can be filtered by. Empty when no analysis has a choice.
  */
-choices: Array<ChoiceAnswers>, };
+choices: Array<ChoiceAnswers>, 
+/**
+ * The original files Kalamu copied into its data folder when the project was opened from
+ * a file, which deleting it removes (#274): the confirmation says so. Organising never
+ * touches a file, so this is 0 here; the shell, which knows the data folder, fills it in
+ * from the job database's `ProjectArchive::copied_originals`.
+ */
+copied_originals: number, };

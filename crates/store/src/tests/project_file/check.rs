@@ -27,7 +27,7 @@ fn listing(root: &Path) -> Vec<(PathBuf, u64)> {
 }
 
 fn checked(f: &Fixture, path: &Path) -> Result<ProjectFileCheck, ProjectFileError> {
-    f.store.check_project_file(path, &|_| {})
+    f.store.check_project_file(path, &f.places("here"), &|_| {})
 }
 
 /// Changes a file behind Kalamu's back.

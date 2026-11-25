@@ -180,6 +180,10 @@ function results(documentId: string): DocumentResult[] {
 		});
 }
 
+/** The original files a project opened from a file had copied into the data folder, by
+ *  project: deleting the project says it removes them. */
+export const copiedOriginals = new Map<string, number>();
+
 function view(id: string): ProjectView {
 	const project = projects.find((p) => p.id === id) ?? projects[0];
 	const mine = documents.filter((d) => d.project_id === project.id);
@@ -215,7 +219,8 @@ function view(id: string): ProjectView {
 		}),
 		tags: tagsOf(mine),
 		jobs: [...new Set(links.filter(([d]) => mine.some((m) => m.id === d)).map(([, j]) => j))],
-		choices: screeningChoices(mine)
+		choices: screeningChoices(mine),
+		copied_originals: copiedOriginals.get(project.id) ?? 0
 	};
 }
 

@@ -29,6 +29,11 @@ pub struct ProjectView {
     /// The choices its analyses answered, each with the documents it answered: what the table
     /// of documents can be filtered by. Empty when no analysis has a choice.
     pub choices: Vec<ChoiceAnswers>,
+    /// The original files Kalamu copied into its data folder when the project was opened from
+    /// a file, which deleting it removes (#274): the confirmation says so. Organising never
+    /// touches a file, so this is 0 here; the shell, which knows the data folder, fills it in
+    /// from the job database's `ProjectArchive::copied_originals`.
+    pub copied_originals: u32,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
@@ -312,6 +317,7 @@ impl Projects {
             jobs: jobs.into_iter().map(|(_, id)| id).collect(),
             choices,
             project,
+            copied_originals: 0,
         })
     }
 

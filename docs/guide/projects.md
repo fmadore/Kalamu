@@ -99,6 +99,10 @@ A file saved by a newer version of Kalamu is refused as when opening it.
 
 On the other computer, Windows or Mac, choose **Open a project file…** in the list of
 projects. It opens as a new project beside the others: nothing you already have is changed.
+When the file holds the original files, Kalamu copies them into its data folder, in a folder
+of the new project's own. **Delete project** removes them with it, and says so before you
+confirm; the jobs the file brought keep their results and show those files as missing. Files
+you keep elsewhere are never touched.
 Anyone who has the file can read everything in it, so look after it as you do the documents.
 A file saved by Kalamu 1.10.0 may lack one of these corrected texts: it still opens, and the
 message shown after opening names each text missing and the jobs that read it. Their results

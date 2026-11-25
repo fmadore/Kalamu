@@ -2,8 +2,8 @@
 //! file, whole, of a format and schema it knows), whether each file it carries matches its
 //! fingerprint, and what opening it would not bring back as it was: frozen texts not carried,
 //! originals left out, names this system would change. The file is only read; one saved by an
-//! older Kalamu is brought up to date on a copy in the temporary folder, deleted when done, as
-//! opening does. Nothing is written to the store, no project is created, no provider called.
+//! older Kalamu is brought up to date on a copy in the app's working folder (#274), deleted when
+//! done, as opening does. Nothing is written to the store, no project is created, no provider called.
 
 use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
@@ -19,7 +19,11 @@ use super::carried;
 use super::open::Placement;
 use super::{ROLE_ORIGINAL, ROLE_SNAPSHOT, read_err, schema};
 
-/// A copy of the file in the temporary folder, brought up to this schema, deleted when done.
+/// The start of a working copy's name: what the sweep at launch removes from the working folder.
+pub(super) const WORKING_PREFIX: &str = "kalamu-open-";
+
+/// A copy of the file in the app's working folder, brought up to this schema, deleted when done;
+/// one a crash left is removed at the next launch (`copied::tidy`).
 pub(super) struct Upgraded(PathBuf);
 
 impl Drop for Upgraded {
@@ -43,6 +47,7 @@ pub(super) fn refused(e: rusqlite::Error) -> ProjectFileError {
 /// Kalamu.
 pub(super) fn readable(
     path: &Path,
+    working: &Path,
 ) -> Result<(Connection, Manifest, Option<Upgraded>), ProjectFileError> {
     if !path.is_file() {
         return Err(read_err(format!("{} is not a file", path.display())));
@@ -87,7 +92,8 @@ pub(super) fn readable(
     }
     // Saved by an older Kalamu: its rows are brought up to date on a copy, never in the file.
     drop(file);
-    let copy = std::env::temp_dir().join(format!("kalamu-open-{}.kalamu", JobId::new()));
+    std::fs::create_dir_all(working).map_err(read_err)?;
+    let copy = working.join(format!("{WORKING_PREFIX}{}.kalamu", JobId::new()));
     std::fs::copy(path, &copy).map_err(read_err)?;
     let upgraded = Upgraded(copy);
     let file = Connection::open(&upgraded.0).map_err(read_err)?;
@@ -97,9 +103,10 @@ pub(super) fn readable(
 
 pub(super) fn check(
     path: &Path,
+    working: &Path,
     progress: &dyn Fn(ProjectFileProgress),
 ) -> Result<ProjectFileCheck, ProjectFileError> {
-    let (file, manifest, _upgraded) = readable(path)?;
+    let (file, manifest, _upgraded) = readable(path, working)?;
     let documents = documents(&file)?;
     let titles = |path: &str| -> Vec<String> {
         documents

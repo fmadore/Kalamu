@@ -1402,8 +1402,10 @@ export const fr: Messages = {
 		archivedNotice:
 			'Ce projet est archivé. Rien n’y a changé ; restaurez-le pour qu’il figure de nouveau dans la liste.',
 		delete: 'Supprimer le projet',
-		deleteConfirm: (name: string) =>
-			`Supprimer le projet « ${name} » ? Ses collections et ses documents sont retirés de Kalamu. Les fichiers sur votre ordinateur sont conservés, et les traitements et leurs résultats restent dans Traitements.`,
+		deleteConfirm: (name: string, copied: number) =>
+			copied === 0
+				? `Supprimer le projet « ${name} » ? Ses collections et ses documents sont retirés de Kalamu. Les fichiers sur votre ordinateur sont conservés, et les traitements et leurs résultats restent dans Traitements.`
+				: `Supprimer le projet « ${name} » ? Ses collections et ses documents sont retirés de Kalamu, avec ${copied === 1 ? 'le fichier original que Kalamu a copié' : `les ${copied} fichiers originaux que Kalamu a copiés`} dans son dossier de données à l’ouverture du fichier de projet. Vos propres fichiers ailleurs sont conservés, et les traitements et leurs résultats restent dans Traitements, où ${copied === 1 ? 'ce fichier apparaîtra comme manquant' : 'ces fichiers apparaîtront comme manquants'}.`,
 		allDocuments: 'Tous les documents',
 		collections: 'Collections',
 		newCollection: 'Nouvelle collection',

@@ -934,7 +934,10 @@ analysed, compared. A **project** keeps it together
 - **Organising never changes work.** Collections, titles, links and preferences call no model.
   A job keeps the files it was started with, so a later change to a collection does not rewrite
   a past run or start new work. Deleting a project, a collection or a document removes only how
-  it was organised; deleting a job unties it from its documents, which stay. A file moved since
+  it was organised, but for the originals Kalamu copied into its data folder when a project was
+  opened from a file: deleting that project removes them, as its confirmation says, unless a
+  document of another project names one ([#274](https://github.com/fmadore/Kalamu/issues/274));
+  deleting a job unties it from its documents, which stay. A file moved since
   it was added is marked missing, its results kept. A project can be archived and restored.
 - **Saved as one file, opened on another computer**
   ([decision](decisions/2026-11-20-project-file.md), [#213](https://github.com/fmadore/Kalamu/issues/213)),

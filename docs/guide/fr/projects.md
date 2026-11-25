@@ -111,7 +111,11 @@ version plus récente de Kalamu est refusé, comme à l’ouverture.
 
 Sur l’autre ordinateur, Windows ou Mac, choisissez **Ouvrir un fichier de projet…** dans la
 liste des projets. Il s’ouvre comme un nouveau projet, à côté des autres : rien de ce que
-vous avez déjà n’est modifié. Toute personne qui a le fichier peut lire tout ce qu’il
+vous avez déjà n’est modifié. Quand le fichier contient les fichiers originaux, Kalamu les
+copie dans son dossier de données, dans un dossier propre au nouveau projet. **Supprimer le
+projet** les supprime avec lui, et le dit avant que vous confirmiez ; les traitements apportés
+par le fichier gardent leurs résultats et indiquent ces fichiers comme manquants. Les fichiers
+que vous gardez ailleurs ne sont jamais touchés. Toute personne qui a le fichier peut lire tout ce qu’il
 contient : prenez-en soin comme des documents eux-mêmes. Un fichier enregistré par Kalamu
 1.10.0 peut ne pas contenir l’un de ces textes corrigés : il s’ouvre quand même, et le message
 affiché après l’ouverture indique chaque texte manquant et les traitements qui l’ont lu. Leurs

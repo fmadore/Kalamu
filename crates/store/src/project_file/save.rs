@@ -210,7 +210,7 @@ fn write_checked(
             total: p.total * 2,
         })
     };
-    let check = checked(check::check(part, &checking))?;
+    let check = checked(check::check(part, &places.working, &checking))?;
     Ok((originals, originals_left, check))
 }
 

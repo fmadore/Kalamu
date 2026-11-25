@@ -128,7 +128,8 @@
 	}
 
 	async function remove() {
-		if (!project || !(await ask(m.projects.deleteConfirm(project.name)))) return;
+		if (!project) return;
+		if (!(await ask(m.projects.deleteConfirm(project.name, view?.copied_originals ?? 0)))) return;
 		try {
 			await api.deleteProject(projectId);
 			go({ name: 'projects' });
