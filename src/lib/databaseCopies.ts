@@ -9,7 +9,7 @@ import type { UnreadableJob } from './bindings/UnreadableJob.js';
 import { ask } from './dialogs.js';
 import { describeError } from './errors.js';
 import { formatDate, listNames, messages } from './i18n/index.js';
-import { toast } from './state.svelte.js';
+import { leaveThen, toast } from './state.svelte.js';
 import { api, on, type Unlisten } from './tauri.js';
 
 /** The newest copy that can stand in for the database: a daily copy or one made before an
@@ -19,8 +19,14 @@ export function newestCopy(view: DatabaseCopies): DatabaseCopy | null {
 }
 
 /** Asks before opening `copy` in place of the job database, then opens it: Kalamu restarts.
- *  `question` words the ask; the plain one by default. */
-export async function openCopy(copy: DatabaseCopy, question?: (date: string) => string) {
+ *  `question` words the ask; the plain one by default. The restart does not pass through the
+ *  window's closing guard (#271), so a draft not saved is asked about first, in the words
+ *  leaving a screen or closing the window uses. */
+export function openCopy(copy: DatabaseCopy, question?: (date: string) => string): void {
+	leaveThen(() => void confirmAndOpen(copy, question));
+}
+
+async function confirmAndOpen(copy: DatabaseCopy, question?: (date: string) => string) {
 	const m = messages();
 	const date = formatDate(copy.made);
 	const agreed = await ask((question ?? m.database.openAsk)(date), {
@@ -47,14 +53,14 @@ function tellLaunch(view: DatabaseCopies) {
 }
 
 /** Damage the check found: the newest copy offered, once. */
-async function offerCopy(view: DatabaseCopies) {
+function offerCopy(view: DatabaseCopies) {
 	const m = messages();
 	const copy = newestCopy(view);
 	if (!copy) {
 		toast(m.database.damagedNoCopy, { kind: 'error' });
 		return;
 	}
-	await openCopy(copy, m.database.damagedAsk);
+	openCopy(copy, m.database.damagedAsk);
 }
 
 /** Jobs left out of the list because this version cannot read them, named once. */
@@ -75,7 +81,7 @@ export async function watchDatabase(): Promise<Unlisten> {
 		if (first) tellLaunch(view);
 		if (view.damaged && !offered) {
 			offered = true;
-			await offerCopy(view);
+			offerCopy(view);
 		}
 	};
 	const unlisten = await on.databaseChecked(() => void look(false).catch(() => undefined));

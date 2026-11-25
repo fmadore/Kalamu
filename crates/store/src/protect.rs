@@ -195,6 +195,7 @@ impl Protection {
         if let Some(name) = self.waiting() {
             notes.push(self.restore_waiting(now, &name));
         }
+        let mut ask = Some(ask);
         match probe(&self.database) {
             Probe::Missing | Probe::Unreachable => {}
             Probe::Readable(applied) => {
@@ -205,27 +206,48 @@ impl Protection {
                 }
             }
             Probe::Damaged(reason) => {
-                let latest = self.copies().into_iter().find(|c| c.kind.restorable());
-                let damage = Damage { reason, latest };
-                match (ask(&damage), damage.latest) {
-                    (Choice::UseCopy, Some(copy)) => {
-                        let set_aside = self.set_aside(now)?;
-                        self.put_in_place(&copy)?;
-                        notes.push(Note::Restored {
-                            copy: copy.name,
-                            set_aside,
-                        });
-                    }
-                    (Choice::StartEmpty, _) => {
-                        let set_aside = self.set_aside(now)?.unwrap_or_default();
-                        notes.push(Note::StartedEmpty { set_aside });
-                    }
-                    _ => return Err(StoreError::Corrupt(damage.reason)),
+                if let Some(ask) = ask.take() {
+                    notes.push(self.recover(now, reason, ask)?);
                 }
             }
         }
+        match SqliteStore::open_telling(&self.database) {
+            Ok(store) => return Ok(Opened { store, notes }),
+            // Damage the probe did not reach, met by the pragmas or a migration: the same
+            // question as for damage the probe found, asked once.
+            Err(failure) => match (failure.damage(), ask.take()) {
+                (Some(reason), Some(ask)) => notes.push(self.recover(now, reason, ask)?),
+                _ => return Err(failure.into_store()),
+            },
+        }
         let store = SqliteStore::open(&self.database)?;
         Ok(Opened { store, notes })
+    }
+
+    /// A database that cannot be read: `ask` is offered the newest copy, and what it chooses
+    /// is done; quitting changes nothing and is returned as the damage.
+    fn recover(
+        &self,
+        now: Timestamp,
+        reason: String,
+        ask: impl FnOnce(&Damage) -> Choice,
+    ) -> Result<Note, StoreError> {
+        let latest = self.copies().into_iter().find(|c| c.kind.restorable());
+        let damage = Damage { reason, latest };
+        match (ask(&damage), damage.latest) {
+            (Choice::UseCopy, Some(copy)) => {
+                let set_aside = self.replace_with(&copy, now)?;
+                Ok(Note::Restored {
+                    copy: copy.name,
+                    set_aside,
+                })
+            }
+            (Choice::StartEmpty, _) => {
+                let set_aside = self.set_aside(now)?.unwrap_or_default();
+                Ok(Note::StartedEmpty { set_aside })
+            }
+            _ => Err(StoreError::Corrupt(damage.reason)),
+        }
     }
 
     /// SQLite's own check of every page (`quick_check`) on a connection of its own, run off the
@@ -317,12 +339,8 @@ impl Protection {
         let Some(copy) = self.copies().into_iter().find(|c| c.name == name) else {
             return failed("the copy is no longer there".into());
         };
-        let set_aside = match self.set_aside(now) {
-            Ok(set_aside) => set_aside,
-            Err(e) => return failed(e.to_string()),
-        };
-        match self.put_in_place(&copy) {
-            Ok(()) => Note::Restored {
+        match self.replace_with(&copy, now) {
+            Ok(set_aside) => Note::Restored {
                 copy: copy.name,
                 set_aside,
             },
@@ -330,8 +348,62 @@ impl Protection {
         }
     }
 
+    /// Puts `copy` in the database's place, never leaving it without one: the copy is staged
+    /// beside the database and flushed first (with its write-ahead log when it has one, as a
+    /// file set aside does), only then is the database set aside, and the staged copy renamed
+    /// in. When any step fails, what was staged is removed and what was set aside put back,
+    /// so the database is as it was. The name the database was set aside under.
+    fn replace_with(&self, copy: &Copy, now: Timestamp) -> Result<Option<String>, StoreError> {
+        let from = self.folder.join(&copy.name);
+        let staged = sidecar(&self.database, ".restoring");
+        let staged_log = sidecar(&staged, "-wal");
+        let log = sidecar(&from, "-wal");
+        let unstage = || {
+            let _ = std::fs::remove_file(&staged);
+            let _ = std::fs::remove_file(&staged_log);
+        };
+        let staging = stage(&from, &staged).and_then(|()| {
+            if log.exists() {
+                stage(&log, &staged_log)
+            } else {
+                Ok(())
+            }
+        });
+        if let Err(e) = staging {
+            unstage();
+            return Err(e);
+        }
+        let set_aside = match self.set_aside(now) {
+            Ok(set_aside) => set_aside,
+            Err(e) => {
+                unstage();
+                return Err(e);
+            }
+        };
+        let placed = std::fs::rename(&staged, &self.database).and_then(|()| {
+            if staged_log.exists() {
+                std::fs::rename(&staged_log, sidecar(&self.database, "-wal"))
+            } else {
+                Ok(())
+            }
+        });
+        if let Err(e) = placed {
+            // The copy, half in place, goes; the database comes back.
+            for suffix in ["", "-wal", "-shm"] {
+                let _ = std::fs::remove_file(sidecar(&self.database, suffix));
+            }
+            unstage();
+            if let Some(name) = &set_aside {
+                self.put_back(name)?;
+            }
+            return Err(io(e));
+        }
+        Ok(set_aside)
+    }
+
     /// Moves the database, with its log and shared memory, into the folder under a name of
     /// its own; never deletes it. The name it was given, or none when there was no database.
+    /// When a part cannot be moved, what was moved is put back.
     fn set_aside(&self, now: Timestamp) -> Result<Option<String>, StoreError> {
         if !self.database.exists() {
             return Ok(None);
@@ -339,33 +411,37 @@ impl Protection {
         std::fs::create_dir_all(&self.folder).map_err(io)?;
         let name = copies::free_name(&self.folder, CopyKind::SetAside, now);
         let target = self.folder.join(&name);
-        move_patiently(&self.database, &target)?;
-        for suffix in ["-wal", "-shm"] {
+        for suffix in ["", "-wal", "-shm"] {
             let from = sidecar(&self.database, suffix);
-            if from.exists() {
-                move_patiently(&from, &sidecar(&target, suffix))?;
+            if !from.exists() {
+                continue;
+            }
+            if let Err(e) = move_patiently(&from, &sidecar(&target, suffix)) {
+                self.put_back(&name)?;
+                return Err(e);
             }
         }
         Ok(Some(name))
     }
 
-    /// Copies `copy` to the database's place, whole and flushed before it takes the name; with
-    /// its write-ahead log when it has one (a file set aside does), which holds its last
-    /// changes.
-    fn put_in_place(&self, copy: &Copy) -> Result<(), StoreError> {
-        let from = self.folder.join(&copy.name);
-        let partial = sidecar(&self.database, ".restoring");
-        std::fs::copy(&from, &partial).map_err(io)?;
-        sync(&partial)?;
-        std::fs::rename(&partial, &self.database).map_err(io)?;
-        let log = sidecar(&from, "-wal");
-        if log.exists() {
-            let to = sidecar(&self.database, "-wal");
-            std::fs::copy(&log, &to).map_err(io)?;
-            sync(&to)?;
+    /// Moves the database set aside as `name` back into its place, with its log and shared
+    /// memory.
+    fn put_back(&self, name: &str) -> Result<(), StoreError> {
+        let target = self.folder.join(name);
+        for suffix in ["", "-wal", "-shm"] {
+            let from = sidecar(&target, suffix);
+            if from.exists() {
+                move_patiently(&from, &sidecar(&self.database, suffix))?;
+            }
         }
         Ok(())
     }
+}
+
+/// Copies `from` to `to` and waits until the disk holds it.
+fn stage(from: &Path, to: &Path) -> Result<(), StoreError> {
+    std::fs::copy(from, to).map_err(io)?;
+    sync(to)
 }
 
 /// A copy made, or why not.
@@ -386,12 +462,22 @@ fn probe(path: &Path) -> Probe {
     });
     match read {
         Ok(applied) => Probe::Readable(applied),
-        Err(rusqlite::Error::SqliteFailure(e, message))
-            if matches!(e.code, ErrorCode::DatabaseCorrupt | ErrorCode::NotADatabase) =>
+        Err(e) => damage_of(&e).map_or(Probe::Unreachable, Probe::Damaged),
+    }
+}
+
+/// SQLite's words when `e` says the file is damaged or not a database.
+pub(crate) fn damage_of(e: &rusqlite::Error) -> Option<String> {
+    match e {
+        rusqlite::Error::SqliteFailure(failure, message)
+            if matches!(
+                failure.code,
+                ErrorCode::DatabaseCorrupt | ErrorCode::NotADatabase
+            ) =>
         {
-            Probe::Damaged(message.unwrap_or_else(|| e.to_string()))
+            Some(message.clone().unwrap_or_else(|| failure.to_string()))
         }
-        Err(_) => Probe::Unreachable,
+        _ => None,
     }
 }
 

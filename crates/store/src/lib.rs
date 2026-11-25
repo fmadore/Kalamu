@@ -21,12 +21,20 @@ pub struct SqliteStore {
 impl SqliteStore {
     /// Opens (or creates) the database file and brings its schema up to date.
     pub fn open(path: &Path) -> Result<Self, StoreError> {
-        let conn = Connection::open(path).map_err(db)?;
-        conn.pragma_update(None, "journal_mode", "WAL")
-            .map_err(db)?;
-        conn.pragma_update(None, "synchronous", "NORMAL")
-            .map_err(db)?;
-        Self::init(conn)
+        Self::open_telling(path).map_err(OpenFailure::into_store)
+    }
+
+    /// [`Self::open`], with SQLite's own error kept, so the job database's protection can tell
+    /// a damaged file from a failure that is not the file's (`protect`).
+    pub(crate) fn open_telling(path: &Path) -> Result<Self, OpenFailure> {
+        let conn = Connection::open(path)?;
+        conn.pragma_update(None, "journal_mode", "WAL")?;
+        conn.pragma_update(None, "synchronous", "NORMAL")?;
+        conn.pragma_update(None, "foreign_keys", "ON")?;
+        migrate_telling(&conn)?;
+        Ok(Self {
+            conn: Mutex::new(conn),
+        })
     }
 
     /// What clearing the unused results ([`JobStore::prune_results`]) would remove: how many,
@@ -60,18 +68,57 @@ impl SqliteStore {
 /// Brings a database's schema up to date, one migration at a time; a project file's too, on
 /// a copy, when an older Kalamu saved it.
 fn migrate(conn: &Connection) -> Result<(), StoreError> {
-    let applied: i64 = conn
-        .pragma_query_value(None, "user_version", |row| row.get(0))
-        .map_err(db)?;
+    migrate_telling(conn).map_err(OpenFailure::into_store)
+}
+
+/// [`migrate`], with SQLite's own error kept.
+fn migrate_telling(conn: &Connection) -> Result<(), OpenFailure> {
+    let applied: i64 = conn.pragma_query_value(None, "user_version", |row| row.get(0))?;
     let applied = schema_known(applied, migrations::MIGRATIONS.len())?;
     for (i, migration) in migrations::MIGRATIONS.iter().enumerate().skip(applied) {
         conn.execute_batch(&format!(
             "BEGIN; {migration} PRAGMA user_version = {}; COMMIT;",
             i + 1
-        ))
-        .map_err(db)?;
+        ))?;
     }
     Ok(())
+}
+
+/// Why the database could not be opened, SQLite's own error kept until the edge.
+pub(crate) enum OpenFailure {
+    Sqlite(rusqlite::Error),
+    Store(StoreError),
+}
+
+impl OpenFailure {
+    /// What every caller but the protection sees: the error as [`db`] words it.
+    fn into_store(self) -> StoreError {
+        match self {
+            Self::Sqlite(e) => db(e),
+            Self::Store(e) => e,
+        }
+    }
+
+    /// SQLite's words when it says the file is damaged or not a database; none for a failure
+    /// that is not the file's (no permission, a full disk, a newer version's schema).
+    pub(crate) fn damage(&self) -> Option<String> {
+        match self {
+            Self::Sqlite(e) => protect::damage_of(e),
+            Self::Store(_) => None,
+        }
+    }
+}
+
+impl From<rusqlite::Error> for OpenFailure {
+    fn from(e: rusqlite::Error) -> Self {
+        Self::Sqlite(e)
+    }
+}
+
+impl From<StoreError> for OpenFailure {
+    fn from(e: StoreError) -> Self {
+        Self::Store(e)
+    }
 }
 
 /// The migrations a database has had (`PRAGMA user_version`), if this version knows them all.

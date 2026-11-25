@@ -61,10 +61,27 @@ when there is none, *Start with an empty list*; or *Quit*, which changes nothing
 forward the file is set aside first. Errors that are not the file's (a newer version's
 database, no permission, a disk gone) are reported as before and nothing is moved.
 
+**Damage the probe does not reach.** A file whose header and table list are whole but a later
+page is not passes the probe; opening it (the pragmas, a migration) can then fail with SQLite's
+corrupt or not-a-database code. That failure takes the same path as damage the probe found:
+asked once, the file set aside, the newest copy offered (often the one just made before the
+update). The store keeps SQLite's own error for this (`open_telling`); every other caller still
+sees the error as before.
+
+**Never without a database.** Opening a copy stages it first: copied beside the database
+(`jobs.sqlite.restoring`, with its log when it has one) and flushed; only then is the database
+set aside and the staged copy renamed in. When the copy cannot be read, nothing is moved; when
+setting aside or the last rename fails, what was staged is removed and what was set aside put
+back, so a failed restore leaves the database and its jobs as they were.
+
 **Opening a copy later.** Settings › General › *Safety copies* lists the copies and opens one
 after asking. The database is in use, so the choice is written into the folder
 (`open-at-next-launch.txt`) and the app restarts; the next launch sets the database aside and
-puts the copy in its place before opening it. Refused while a job runs. Setting aside is tried
+puts the copy in its place before opening it. Refused while a job runs. The restart
+(`request_restart`) ends the app without the window's close request, so it does not pass
+through the guard that keeps a window from closing over an unsaved correction, prompt or
+workflow (#271): the interface asks about a draft not saved first, in the same words, before
+asking about the copy. Setting aside is tried
 again for a few seconds while the ending process still holds the file. The request is
 forgotten whatever happens, so a copy that cannot be opened is not tried at every launch.
 

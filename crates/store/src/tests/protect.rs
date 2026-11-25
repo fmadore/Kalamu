@@ -375,3 +375,168 @@ fn a_copy_gone_before_the_next_launch_leaves_the_database_as_it_was() -> Result<
     assert_eq!(names(&opened.store.list_jobs()?), ["Stays"]);
     Ok(())
 }
+
+fn fail(e: std::io::Error) -> StoreError {
+    StoreError::Database(e.to_string())
+}
+
+/// Replaces a copy, once listed, by a folder of the same name: listed still, never readable.
+fn unreadable(place: &Place, name: &str) -> Result<(), StoreError> {
+    std::fs::remove_file(place.folder.join(name)).map_err(fail)?;
+    std::fs::create_dir(place.folder.join(name)).map_err(fail)
+}
+
+/// Nothing set aside and nothing staged left beside the database.
+fn nothing_moved(place: &Place, protection: &Protection) {
+    assert!(
+        protection
+            .copies()
+            .iter()
+            .all(|c| c.kind != CopyKind::SetAside),
+        "{:?}",
+        protection.copies()
+    );
+    let staged = place.database.with_extension("sqlite.restoring");
+    assert!(!staged.exists());
+}
+
+/// A copy asked for that cannot be read at the next launch leaves the database, and every job
+/// in it, as it was: the copy is staged before the database is moved.
+#[test]
+fn a_copy_that_cannot_be_read_leaves_the_database_as_it_was() -> Result<(), StoreError> {
+    let place = Place::new();
+    place.with_job("Stays")?;
+    let protection = place.roomy();
+    let Checked::Sound(Daily::Made(copy)) = protection.check_at(day(0)) else {
+        panic!("no daily copy");
+    };
+    place.with_job("Added after the copy")?;
+    protection.open_at_next_launch(&copy.name)?;
+    unreadable(&place, &copy.name)?;
+
+    let opened = protection.open_at(day(1), never_asked)?;
+    assert!(
+        matches!(opened.notes.as_slice(), [Note::RestoreFailed { .. }]),
+        "{:?}",
+        opened.notes
+    );
+    let mut listed = names(&opened.store.list_jobs()?)
+        .into_iter()
+        .map(str::to_owned)
+        .collect::<Vec<_>>();
+    listed.sort();
+    assert_eq!(listed, ["Added after the copy", "Stays"]);
+    nothing_moved(&place, &protection);
+    Ok(())
+}
+
+/// The same at launch for a damaged database: the copy offered cannot be read, so the damaged
+/// file stays exactly where and as it was, and the launch ends as before.
+#[test]
+fn a_damaged_database_stays_where_it_is_when_its_copy_cannot_be_read() -> Result<(), StoreError> {
+    let place = Place::new();
+    place.with_job("In the copy")?;
+    let protection = place.roomy();
+    let Checked::Sound(Daily::Made(copy)) = protection.check_at(day(0)) else {
+        panic!("no daily copy");
+    };
+    unreadable(&place, &copy.name)?;
+    let garbage = b"not a database at all, not even close to one".to_vec();
+    std::fs::write(&place.database, &garbage).map_err(fail)?;
+
+    let opened = protection.open_at(day(1), |_| Choice::UseCopy);
+    assert!(opened.is_err());
+    assert_eq!(std::fs::read(&place.database).map_err(fail)?, garbage);
+    nothing_moved(&place, &protection);
+    Ok(())
+}
+
+/// Damage the probe does not reach (the header and the table list whole, a page further on
+/// not) met by a migration as the database is opened: the same question as damage the probe
+/// finds, and the copy made before the update opened in its place.
+#[test]
+fn damage_a_migration_meets_offers_the_copy_too() -> Result<(), StoreError> {
+    let place = Place::new();
+    {
+        let store = SqliteStore::open(&place.database)?;
+        let mut kept = job();
+        kept.name = "Survivor".into();
+        store.create_job(&kept)?;
+        let mut gone = Vec::new();
+        for n in 0..60 {
+            let mut job = job();
+            job.name = format!("Gone {n}");
+            store.create_job(&job)?;
+            gone.push(job.id);
+        }
+        store.delete_jobs(&gone)?;
+        // One step behind: the last migration's table is made again at the next open, from a
+        // page taken off the list of free pages.
+        let conn = store.conn();
+        conn.execute_batch(&format!(
+            "DROP TABLE region_readings; PRAGMA user_version = {};",
+            migrations::MIGRATIONS.len() - 1
+        ))
+        .map_err(db)?;
+    }
+    // The first page of free pages, from the header, overwritten.
+    let mut bytes = std::fs::read(&place.database).map_err(fail)?;
+    let read_u32 =
+        |at: usize| u32::from_be_bytes([bytes[at], bytes[at + 1], bytes[at + 2], bytes[at + 3]]);
+    let page_size = usize::from(u16::from_be_bytes([bytes[16], bytes[17]]));
+    let trunk = read_u32(32) as usize;
+    assert!(trunk > 1 && read_u32(36) > 0, "no free pages");
+    let at = (trunk - 1) * page_size;
+    bytes[at..at + page_size].fill(0xFF);
+    std::fs::write(&place.database, &bytes).map_err(fail)?;
+
+    let protection = place.roomy();
+    let mut offered = None;
+    let opened = protection.open_at(day(0), |damage| {
+        offered = Some(damage.clone());
+        Choice::UseCopy
+    })?;
+    let damage = offered.unwrap_or_else(|| panic!("nothing offered"));
+    assert_eq!(
+        damage.latest.as_ref().map(|c| c.kind),
+        Some(CopyKind::BeforeUpdate)
+    );
+    assert!(
+        matches!(
+            opened.notes.as_slice(),
+            [
+                Note::CopiedBeforeUpdate(_),
+                Note::Restored {
+                    set_aside: Some(_),
+                    ..
+                }
+            ]
+        ),
+        "{:?}",
+        opened.notes
+    );
+    assert_eq!(names(&opened.store.list_jobs()?), ["Survivor"]);
+    assert_eq!(
+        user_version(&place.database) as usize,
+        migrations::MIGRATIONS.len()
+    );
+    Ok(())
+}
+
+/// A failure that is not the file's when it is opened (a newer version's schema) is reported
+/// as before: nothing asked, nothing moved.
+#[test]
+fn a_failure_that_is_not_the_file_s_asks_nothing() -> Result<(), StoreError> {
+    let place = Place::new();
+    place.with_job("Newer")?;
+    rusqlite::Connection::open(&place.database)
+        .and_then(|c| c.pragma_update(None, "user_version", 9_999))
+        .map_err(db)?;
+    let protection = place.roomy();
+    assert!(matches!(
+        protection.open_at(day(0), never_asked),
+        Err(StoreError::Newer { .. })
+    ));
+    nothing_moved(&place, &protection);
+    Ok(())
+}
