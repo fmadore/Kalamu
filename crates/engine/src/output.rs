@@ -569,20 +569,32 @@ pub(crate) fn preprocessing(source: &SourceFile) -> Vec<String> {
 /// Write to a temporary file, then rename, so a crash never leaves half a file. The folder is
 /// made when it is missing, not asked after for every file: on Windows that question cost a
 /// quarter of a millisecond a file.
+///
+/// The temporary file is flushed to the disk (`sync_all`) before the rename: otherwise a power
+/// cut soon after can leave the new name on a file whose contents never reached the disk, empty
+/// or cut short, in place of the old one that was whole.
 pub(crate) fn write_atomic(path: &Path, bytes: &[u8]) -> Result<(), EngineError> {
     let tmp = path.with_extension(format!(
         "{}.pending",
         path.extension().and_then(|e| e.to_str()).unwrap_or("out")
     ));
     let failed = |e: std::io::Error| EngineError::Output(format!("{}: {e}", path.display()));
-    match std::fs::write(&tmp, bytes) {
+    match write_synced(&tmp, bytes) {
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
             if let Some(dir) = path.parent() {
                 std::fs::create_dir_all(dir).map_err(failed)?;
             }
-            std::fs::write(&tmp, bytes).map_err(failed)?;
+            write_synced(&tmp, bytes).map_err(failed)?;
         }
         written => written.map_err(failed)?,
     }
     std::fs::rename(&tmp, path).map_err(|e| EngineError::Output(format!("{}: {e}", path.display())))
+}
+
+/// Writes `bytes` to a new file at `path` and waits until the disk holds them.
+fn write_synced(path: &Path, bytes: &[u8]) -> std::io::Result<()> {
+    use std::io::Write;
+    let mut file = std::fs::File::create(path)?;
+    file.write_all(bytes)?;
+    file.sync_all()
 }
