@@ -5,4 +5,4 @@
  * English. The catalogue is data refreshed from the repository, so its words cannot live in
  * the interface's translation files.
  */
-export type Translation = { name?: string, description?: string, };
+export type Translation = { name?: string, description?: string, summary?: string, };

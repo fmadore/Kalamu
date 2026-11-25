@@ -10,7 +10,12 @@ import type { Task } from "./Task";
 import type { Tier } from "./Tier";
 import type { Translation } from "./Translation";
 
-export type ModelInfo = { provider: ProviderId, id: string, name: string, description: string, tasks: Array<Task>, 
+export type ModelInfo = { provider: ProviderId, id: string, name: string, description: string, 
+/**
+ * What it is for in a few words, shown whole in the model list; the description, shown
+ * under the chosen model, says the rest. Older builds ignore the field.
+ */
+summary?: string, tasks: Array<Task>, 
 /**
  * MIME types the model reads.
  */
