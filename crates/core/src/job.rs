@@ -230,6 +230,19 @@ pub struct JobSummary {
     pub workflow: Option<String>,
 }
 
+/// A job whose stored record this version cannot read (written by a newer version, or
+/// damaged): left out of the list, which still shows every other, and named apart. Its record
+/// is kept as it is.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct UnreadableJob {
+    /// Its id as stored, which may itself be what cannot be read.
+    pub id: String,
+    pub name: String,
+    /// What could not be read, for the logs.
+    pub reason: String,
+}
+
 /// The names of a job's sources, for finding it on the Jobs page by a file it read: each
 /// file's name, and a YouTube video's title when it was read.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]

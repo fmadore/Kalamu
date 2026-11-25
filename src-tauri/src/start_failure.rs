@@ -211,11 +211,220 @@ pub(crate) fn tell(failure: &StartError, logs: Option<&Path>) {
         .show();
 }
 
+/// Asks the researcher what to do with a job database that cannot be read, in a native
+/// message as [`tell`] does: open the newest copy in its place, or, without one, start with
+/// an empty job list; either way the file is set aside in `folder`, never deleted. Or quit,
+/// which changes nothing.
+pub(crate) fn ask_damaged(
+    damage: &kalamu_store::protect::Damage,
+    folder: &Path,
+    logs: Option<&Path>,
+) -> kalamu_store::protect::Choice {
+    use kalamu_store::protect::Choice;
+    let system: Vec<String> = sys_locale::get_locales().collect();
+    let asked = damaged_message(damage, folder, logs, &system);
+    let answer = rfd::MessageDialog::new()
+        .set_level(rfd::MessageLevel::Error)
+        .set_title(&asked.title)
+        .set_description(&asked.text)
+        .set_buttons(rfd::MessageButtons::OkCancelCustom(
+            asked.go.clone(),
+            asked.quit.clone(),
+        ))
+        .show();
+    let went = match answer {
+        rfd::MessageDialogResult::Ok | rfd::MessageDialogResult::Yes => true,
+        rfd::MessageDialogResult::Custom(label) => label == asked.go,
+        _ => false,
+    };
+    match (went, damage.latest.is_some()) {
+        (false, _) => Choice::Quit,
+        (true, true) => Choice::UseCopy,
+        (true, false) => Choice::StartEmpty,
+    }
+}
+
+/// The question about a damaged database: its title and text, and its two buttons.
+struct Asked {
+    title: String,
+    text: String,
+    /// The button that sets the file aside and goes on.
+    go: String,
+    quit: String,
+}
+
+fn damaged_message(
+    damage: &kalamu_store::protect::Damage,
+    folder: &Path,
+    logs: Option<&Path>,
+    system: &[String],
+) -> Asked {
+    let english = language(system) == Language::English;
+    let folder = folder.display();
+    let (title, what, go) = match (&damage.latest, english) {
+        (Some(copy), true) => (
+            "Kalamu’s job database cannot be read",
+            format!(
+                "Kalamu’s job database (jobs.sqlite) is damaged and cannot be read. Kalamu can \
+                 put it aside, without deleting it, and open in its place the copy it made on \
+                 {}. Work done since that copy is not in it.\n\nThe damaged file will be kept \
+                 in {folder}",
+                day(copy.made, true)
+            ),
+            "Open the copy",
+        ),
+        (Some(copy), false) => (
+            "La base de données de Kalamu ne peut pas être lue",
+            format!(
+                "La base de données des traitements de Kalamu (jobs.sqlite) est endommagée et \
+                 ne peut pas être lue. Kalamu peut la mettre de côté, sans l’effacer, et ouvrir \
+                 à sa place la copie faite le {}. Le travail fait depuis cette copie n’y est \
+                 pas.\n\nLe fichier endommagé sera gardé dans {folder}",
+                day(copy.made, false)
+            ),
+            "Ouvrir la copie",
+        ),
+        (None, true) => (
+            "Kalamu’s job database cannot be read",
+            format!(
+                "Kalamu’s job database (jobs.sqlite) is damaged and cannot be read, and there \
+                 is no copy of it yet. Kalamu can put it aside, without deleting it, and start \
+                 with an empty list of jobs.\n\nThe damaged file will be kept in {folder}"
+            ),
+            "Start with an empty list",
+        ),
+        (None, false) => (
+            "La base de données de Kalamu ne peut pas être lue",
+            format!(
+                "La base de données des traitements de Kalamu (jobs.sqlite) est endommagée et \
+                 ne peut pas être lue, et il n’en existe encore aucune copie. Kalamu peut la \
+                 mettre de côté, sans l’effacer, et démarrer avec une liste de traitements \
+                 vide.\n\nLe fichier endommagé sera gardé dans {folder}"
+            ),
+            "Démarrer avec une liste vide",
+        ),
+    };
+    let (details, quit) = if english {
+        ("Details:", "Quit")
+    } else {
+        ("Détails\u{a0}:", "Quitter")
+    };
+    let mut text = format!("{what}\n\n{details} {}", damage.reason);
+    if let Some(logs) = logs {
+        let logs = crate::platform::shown_path(logs);
+        text.push_str("\n\n");
+        text.push_str(&if english {
+            format!("Kalamu’s logs are in {}", logs.display())
+        } else {
+            format!("Les journaux de Kalamu sont dans {}", logs.display())
+        });
+    }
+    Asked {
+        title: title.to_owned(),
+        text,
+        go: go.to_owned(),
+        quit: quit.to_owned(),
+    }
+}
+
+/// A copy's day, in UTC, in words: `24 November 2026`, `24 novembre 2026`.
+fn day(made: kalamu_core::Timestamp, english: bool) -> String {
+    const EN: [&str; 12] = [
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December",
+    ];
+    const FR: [&str; 12] = [
+        "janvier",
+        "février",
+        "mars",
+        "avril",
+        "mai",
+        "juin",
+        "juillet",
+        "août",
+        "septembre",
+        "octobre",
+        "novembre",
+        "décembre",
+    ];
+    let date = made.utc_date();
+    let mut parts = date.split('-');
+    let (Some(year), Some(month), Some(d)) = (parts.next(), parts.next(), parts.next()) else {
+        return date;
+    };
+    let month = month.parse::<usize>().ok().and_then(|m| {
+        (if english { EN } else { FR })
+            .get(m.wrapping_sub(1))
+            .copied()
+    });
+    match (month, d.parse::<u32>()) {
+        (Some(month), Ok(d)) => format!("{d} {month} {year}"),
+        _ => date,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use std::path::PathBuf;
 
     use super::*;
+
+    #[test]
+    fn a_damaged_database_s_question_offers_the_copy_or_an_empty_start() {
+        use kalamu_store::protect::{Copy, CopyKind, Damage};
+        let copy = Copy {
+            name: "jobs-daily-2026-11-24-120000.sqlite".into(),
+            kind: CopyKind::Daily,
+            made: kalamu_core::Timestamp(1_795_521_600_000),
+            bytes: 10,
+        };
+        let damage = Damage {
+            reason: "file is not a database".into(),
+            latest: Some(copy),
+        };
+        let folder = Path::new("backups-folder");
+        let asked = damaged_message(
+            &damage,
+            folder,
+            Some(Path::new("logs-folder")),
+            &tags(&["en-GB"]),
+        );
+        assert_eq!(asked.go, "Open the copy");
+        assert_eq!(asked.quit, "Quit");
+        assert!(asked.text.contains("24 November 2026"), "{}", asked.text);
+        assert!(asked.text.contains("backups-folder"), "{}", asked.text);
+        assert!(asked.text.contains("without deleting it"), "{}", asked.text);
+        assert!(
+            asked.text.contains("Details: file is not a database"),
+            "{}",
+            asked.text
+        );
+        assert!(asked.text.contains("logs-folder"), "{}", asked.text);
+
+        let none = Damage {
+            latest: None,
+            ..damage
+        };
+        let asked = damaged_message(&none, folder, None, &tags(&["fr-FR"]));
+        assert_eq!(asked.go, "Démarrer avec une liste vide");
+        assert_eq!(asked.quit, "Quitter");
+        assert!(asked.text.contains("sans l’effacer"), "{}", asked.text);
+        assert!(!asked.text.contains("journaux"), "{}", asked.text);
+        assert_eq!(
+            day(kalamu_core::Timestamp(1_795_521_600_000), false),
+            "24 novembre 2026"
+        );
+    }
 
     fn tags(tags: &[&str]) -> Vec<String> {
         tags.iter().map(|t| (*t).to_owned()).collect()

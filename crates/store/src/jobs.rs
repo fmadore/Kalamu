@@ -128,7 +128,12 @@ pub(crate) fn list_jobs(store: &SqliteStore) -> Result<Vec<JobSummary>, StoreErr
             (None, None) => None,
             (kept, refused) => Some(kept.unwrap_or(0.0) + refused.unwrap_or(0.0)),
         };
-        let job: Job = serde_json::from_str(&data).map_err(corrupt)?;
+        // A record this version cannot read costs its own row, not the list
+        // (`unreadable_jobs` names it).
+        let (Ok(job), Ok(status)) = (serde_json::from_str::<Job>(&data), parse_status(&status))
+        else {
+            continue;
+        };
         // Counted from the start: a source not opened yet counts the pieces it is sure to give,
         // not none.
         let opened: Vec<SourceId> = opened
@@ -144,7 +149,7 @@ pub(crate) fn list_jobs(store: &SqliteStore) -> Result<Vec<JobSummary>, StoreErr
             id: job.id,
             name: job.name,
             task: job.task,
-            status: parse_status(&status)?,
+            status,
             created_at: job.created_at,
             updated_at: Timestamp(updated_at),
             source_count: job.sources.len() as u32,
@@ -157,6 +162,38 @@ pub(crate) fn list_jobs(store: &SqliteStore) -> Result<Vec<JobSummary>, StoreErr
         });
     }
     Ok(jobs)
+}
+
+/// The jobs [`list_jobs`] leaves out: their record, or their status, cannot be read by this
+/// version. Newest first, each with its name and what could not be read.
+pub(crate) fn unreadable_jobs(
+    store: &SqliteStore,
+) -> Result<Vec<kalamu_core::UnreadableJob>, StoreError> {
+    let conn = store.conn();
+    let mut stmt = conn
+        .prepare("SELECT id, name, status, data FROM jobs ORDER BY created_at DESC, id")
+        .map_err(db)?;
+    let rows = stmt
+        .query_map([], |row| {
+            Ok((
+                row.get::<_, String>(0)?,
+                row.get::<_, String>(1)?,
+                row.get::<_, String>(2)?,
+                row.get::<_, String>(3)?,
+            ))
+        })
+        .map_err(db)?;
+    let mut out = Vec::new();
+    for row in rows {
+        let (id, name, status, data) = row.map_err(db)?;
+        let reason = match (serde_json::from_str::<Job>(&data), parse_status(&status)) {
+            (Ok(_), Ok(_)) => continue,
+            (Err(e), _) => e.to_string(),
+            (_, Err(e)) => e.to_string(),
+        };
+        out.push(kalamu_core::UnreadableJob { id, name, reason });
+    }
+    Ok(out)
 }
 
 pub(crate) fn job_sources(store: &SqliteStore) -> Result<Vec<JobSources>, StoreError> {

@@ -100,6 +100,7 @@ import type { ProgressEvent } from './bindings/ProgressEvent.js';
 import type { PrunedResults } from './bindings/PrunedResults.js';
 import type { UnusedResults } from './bindings/UnusedResults.js';
 import type { Release } from './bindings/Release.js';
+import type { DatabaseCopies } from './bindings/DatabaseCopies.js';
 import type { Settings } from './bindings/Settings.js';
 import type { TagRenamed } from './bindings/TagRenamed.js';
 import type { Task } from './bindings/Task.js';
@@ -156,6 +157,10 @@ export const api = {
 	/** Deletes the answers no job refers to any more; refused while a job runs. */
 	clearUnusedResults: () => invoke<PrunedResults>('clear_unused_results'),
 	unusedResults: () => invoke<UnusedResults>('unused_results'),
+	/** The copies of the job database, where they are kept, and what this launch did to it. */
+	databaseCopies: () => invoke<DatabaseCopies>('database_copies'),
+	/** Opens a copy in place of the job database: Kalamu restarts, the database set aside. */
+	openDatabaseCopy: (name: string) => invoke<void>('open_database_copy', { name }),
 	keyStatus: () => invoke<KeyStatus[]>('key_status'),
 	setApiKey: (provider: string, key: string) => invoke<void>('set_api_key', { provider, key }),
 	clearApiKey: (provider: string) => invoke<void>('clear_api_key', { provider }),
@@ -535,7 +540,9 @@ export const on = {
 	catalogChanged: (handler: () => void) => listen<null>('catalog-changed', handler),
 	/** How far a project file is written or opened, in bytes of the files it carries. */
 	projectFileProgress: (handler: (event: ProjectFileProgress) => void) =>
-		listen('project-file-progress', handler)
+		listen('project-file-progress', handler),
+	/** The job database's check after launch has run: read its copies again. */
+	databaseChecked: (handler: () => void) => listen<null>('database-checked', handler)
 };
 
 export async function revealInFolder(path: string): Promise<void> {

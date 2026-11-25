@@ -30,6 +30,13 @@ pub fn app_info(state: State<'_, AppState>) -> AppInfo {
             .map(|p| p.clone())
             .unwrap_or_default()
             .map(|p| platform::shown_path(&p).display().to_string()),
+        unreadable_jobs: match state.engine.unreadable_jobs() {
+            Ok(jobs) => jobs,
+            Err(e) => {
+                tracing::warn!(error = %e, "jobs that cannot be read not looked for");
+                Vec::new()
+            }
+        },
     }
 }
 

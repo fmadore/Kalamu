@@ -7,16 +7,19 @@ use kalamu_core::{
 use super::*;
 use kalamu_core::{PieceRef, PieceStatus, ProviderId, SetupId, SourceId, Timestamp};
 
+mod fixtures;
 mod meaning;
 mod passages;
 mod progress;
 mod project_file;
 mod projects;
+mod protect;
 mod region_readings;
 mod regions;
 mod runs;
 mod scoped;
 mod search;
+mod unreadable;
 
 fn job() -> Job {
     Job {

@@ -82,7 +82,7 @@ pub use ids::{
 };
 pub use job::{
     Job, JobSettings, JobSources, JobStatus, JobSummary, LineBreaks, OutputDestination,
-    OutputSettings, Pace,
+    OutputSettings, Pace, UnreadableJob,
 };
 pub use language::{LanguageChoice, LanguageCode};
 pub use meaning::{

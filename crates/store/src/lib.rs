@@ -133,6 +133,10 @@ impl JobStore for SqliteStore {
         jobs::list_jobs(self)
     }
 
+    fn unreadable_jobs(&self) -> Result<Vec<kalamu_core::UnreadableJob>, StoreError> {
+        jobs::unreadable_jobs(self)
+    }
+
     fn job_sources(&self) -> Result<Vec<JobSources>, StoreError> {
         jobs::job_sources(self)
     }
@@ -432,6 +436,7 @@ mod progress;
 mod project_file;
 mod projects;
 mod proposals;
+pub mod protect;
 mod region_readings;
 mod regions;
 mod results;

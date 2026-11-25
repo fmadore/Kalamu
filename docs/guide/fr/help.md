@@ -67,6 +67,38 @@ Sur votre ordinateur, dans le dossier de données de Kalamu, jusqu’à ce que v
 traitement. Supprimer un traitement supprime ses résultats ; vos fichiers d’origine ne sont
 jamais touchés. Pour garder ou partager des résultats, exportez-les.
 
+## Les copies de sécurité de votre travail
+
+Kalamu garde tout (vos traitements, vos corrections, vos projets et les réponses que vous avez
+payées) dans un seul fichier, sa base de données. Il copie ce fichier de lui-même : une fois
+chaque jour où vous ouvrez Kalamu, les trois dernières copies étant gardées, et une fois avant
+qu’une mise à jour ne le modifie. Les copies restent sur votre ordinateur. **Paramètres ›
+Général › Copies de sécurité** les liste avec leur date et leur taille, montre leur dossier
+avec **Afficher dans l’Explorateur de fichiers** (**Afficher dans le Finder** sur un Mac), et
+**Ouvrir cette copie…** en ouvre une à la place de la base, après vous l’avoir demandé : Kalamu
+redémarre, et la base telle qu’elle était est gardée dans le même dossier, *Mise de côté* ;
+rien n’est donc effacé. Le travail fait après la date de la copie n’apparaît pas. Ouvrir une
+copie attend qu’aucun traitement ne soit en cours.
+
+Une copie n’est pas faite s’il devait rester moins de 1 Go libre sur le disque ; les Paramètres
+le disent alors. Libérez de la place, et la copie du lendemain sera faite.
+
+## Kalamu dit que sa base de données ne peut pas être lue
+
+Si le fichier a été abîmé (une coupure de courant, un disque qui lâche), Kalamu le dit au
+démarrage, avant d’ouvrir sa fenêtre, et propose **Ouvrir la copie**, avec la date de la copie,
+ou, s’il n’y a pas encore de copie, **Démarrer avec une liste vide**. Dans les deux cas, le
+fichier endommagé est gardé, jamais effacé, dans le dossier des copies que le message indique ;
+**Quitter** ne change rien. Le message indique aussi le dossier des journaux de Kalamu, à
+joindre à un [signalement](https://github.com/fmadore/Kalamu/issues).
+
+Certains dégâts n’apparaissent que lorsque Kalamu vérifie tout le fichier, peu après son
+ouverture : il vous demande alors s’il faut ouvrir à sa place la copie la plus récente, et
+Paramètres › Général › Copies de sécurité le rappelle tant que ce n’est pas fait.
+
+Si un traitement créé par une version plus récente de Kalamu ne peut pas être lu, il n’apparaît
+pas dans la liste et il est signalé une fois au démarrage ; il est gardé tel quel.
+
 ## Questions
 
 **Kalamu est-il vraiment gratuit ?** Oui : gratuit et libre, avec toutes ses fonctions. Vous

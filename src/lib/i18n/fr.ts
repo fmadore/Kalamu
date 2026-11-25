@@ -2931,6 +2931,45 @@ export const fr: Messages = {
 						}`
 			}) ? Redemander les mêmes pages serait de nouveau payant.`
 	},
+	database: {
+		title: 'Copies de sécurité',
+		hint: 'Kalamu garde des copies de sa base de données, qui contient vos traitements, vos corrections, vos projets et les réponses que vous avez payées : une chaque jour où vous ouvrez Kalamu, les trois dernières étant gardées, et une avant qu’une mise à jour ne la modifie. Elles restent sur cet ordinateur, dans ce dossier :',
+		show: { windows: 'Afficher dans l’Explorateur de fichiers', macos: 'Afficher dans le Finder' },
+		none: 'Aucune copie pour l’instant : la première est faite peu après l’ouverture de Kalamu.',
+		listLabel: 'Copies gardées',
+		kinds: {
+			daily: 'Copie du jour',
+			before_update: 'Avant une mise à jour',
+			set_aside: 'Mise de côté'
+		},
+		line: (date: string, kind: string, size: string) => `${date} · ${kind} · ${size}`,
+		setAsideHint:
+			'Un fichier mis de côté est votre base de données telle qu’elle était quand une copie a pris sa place, ou quand elle ne pouvait pas être lue. Kalamu ne l’efface jamais : vous pouvez l’effacer vous-même quand vous n’en avez plus besoin.',
+		open: 'Ouvrir cette copie…',
+		openBusy: 'Disponible quand aucun traitement n’est en cours.',
+		openAsk: (date: string) =>
+			`Ouvrir la copie du ${date} à la place de votre base de données ? Kalamu va redémarrer. Votre base telle qu’elle est maintenant est gardée dans le dossier des copies, rien n’est donc effacé, mais ce que vous avez fait après le ${date} n’apparaîtra pas.`,
+		openOk: 'Ouvrir et redémarrer',
+		skipped: (free: string) =>
+			`Aucune copie n’a été faite cette fois : il serait resté trop peu de place libre sur le disque (${free} libres). Libérez de la place pour que Kalamu puisse de nouveau faire des copies.`,
+		damaged:
+			'Kalamu a trouvé un problème dans sa base de données peu après son ouverture. Ouvrez la copie la plus récente ci-dessous pour revenir à elle.',
+		damagedAsk: (date: string) =>
+			`Kalamu a trouvé un problème dans sa base de données. Ouvrir à sa place la copie du ${date} ? Kalamu va redémarrer. Le fichier abîmé est gardé dans le dossier des copies, rien n’est donc effacé, mais ce que vous avez fait après le ${date} n’apparaîtra pas.`,
+		damagedNoCopy:
+			'Kalamu a trouvé un problème dans sa base de données, et il n’en existe encore aucune copie. Exportez dès maintenant ce qui compte pour vous ; les journaux de Kalamu en disent plus.',
+		later: 'Pas maintenant',
+		restored: (date: string) =>
+			`La copie du ${date} est ouverte à la place de votre base de données. La base qu’elle remplace est gardée dans le dossier des copies.`,
+		restoreFailed:
+			'La copie choisie n’a pas pu être ouverte : Kalamu a donc ouvert votre base de données telle qu’elle était. Les journaux de Kalamu disent pourquoi.',
+		startedEmpty:
+			'Votre base de données n’a pas pu être lue : Kalamu a donc démarré avec une liste vide. Le fichier abîmé est gardé dans le dossier des copies.',
+		unreadable: (names: string, count: number) =>
+			count === 1
+				? `Un traitement n’a pas pu être lu par cette version de Kalamu ; il n’apparaît donc pas dans la liste : ${names}. Il est gardé tel quel ; une version plus récente de Kalamu pourra peut-être le lire.`
+				: `${count} traitements n’ont pas pu être lus par cette version de Kalamu ; ils n’apparaissent donc pas dans la liste : ${names}. Ils sont gardés tels quels ; une version plus récente de Kalamu pourra peut-être les lire.`
+	},
 	report: {
 		link: 'Signaler un problème',
 		review: 'Signaler un problème',

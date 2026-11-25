@@ -189,6 +189,14 @@ turned down. The texts sent for proposals are kept with the frozen text below. A
   steps and prompts as they were when it started, the paths, sizes and fingerprints of the
   files it was started on, the job that ran each step, and when the user chose to continue
   after a step. Forgetting a run removes this record; its jobs and their results stay.
+- **Copies of the job database** (`backups`): a copy of `jobs.sqlite` made each day the app is
+  opened, once its check has found the file whole (the three newest kept), and one made before
+  an update changes its tables (kept until three later daily copies exist, two at most). They
+  hold everything the job database holds and never leave the computer. A copy is skipped,
+  and Settings says so, when it would leave less than 1 GB free on the disk. A job database
+  that cannot be read, or that a copy replaced when the user chose one in Settings › General ›
+  *Safety copies*, is moved into the same folder (`jobs-set-aside-…`) and never deleted by the
+  app; the user may delete it. The folder goes when the data folder does.
 - **The search index** (`search.sqlite`): a copy of the text of the results a project search
   has looked through (the corrected text, the speakers' names, and analyses' answers when they
   were searched), folded for matching, with where each passage stands. It is made from the job
@@ -389,6 +397,7 @@ given release is the one dated for it in the repository.
 <details>
 <summary>Previous versions of this policy</summary>
 
+- **25 November 2026 (copies of the job database)**: adds the `backups` folder: a daily copy of the job database and one before each update, kept few and skipped when the disk would be left with less than 1 GB free, and a damaged database moved there instead of being left in place.
 - **25 November 2026**: deleting a project opened from a `.kalamu` file now removes the original files copied in for it (`originals`), and the copy of an older project file brought up to date is made in the app's data folder (`project-file-scratch`) instead of the system's temporary folder; what a crash left in either is removed at the next start.
 - **23 November 2026**: records paths and SHA-256 fingerprints of exported table files (`exports.json`) so re-exporting never overwrites user-modified files.
 - **20 November 2026**: adds screening project documents against a research question, multi-part interview analysis, custom interview themes/guides, and saving projects to portable `.kalamu` files.

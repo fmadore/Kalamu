@@ -23,6 +23,8 @@ pub const COMMANDS: &[&str] = &[
     "newer_release",
     "clear_unused_results",
     "unused_results",
+    "database_copies",
+    "open_database_copy",
     "key_status",
     "set_api_key",
     "clear_api_key",

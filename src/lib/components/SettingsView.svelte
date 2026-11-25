@@ -24,6 +24,7 @@
 		toast,
 		type SettingsTab
 	} from '#lib/state.svelte.js';
+	import DatabaseCopies from './DatabaseCopies.svelte';
 	import ExternalLink from './ExternalLink.svelte';
 	import OfflineModels from './OfflineModels.svelte';
 	import ReportLink from './ReportLink.svelte';
@@ -317,6 +318,8 @@
 					{#if jobsRunning}<span class="muted small">{m.settings.clearUnusedBusy}</span>{/if}
 				</div>
 			</section>
+
+			<DatabaseCopies />
 
 			<section class="card block" aria-labelledby="look-settings">
 				<h2 id="look-settings">{m.settings.appearanceTitle}</h2>

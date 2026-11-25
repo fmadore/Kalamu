@@ -5,6 +5,7 @@
 mod activity;
 mod command_names;
 mod commands;
+mod database;
 mod errors;
 mod exports;
 mod grants;
@@ -99,6 +100,8 @@ pub fn run() {
             commands::settings::newer_release,
             commands::settings::clear_unused_results,
             commands::settings::unused_results,
+            commands::database::database_copies,
+            commands::database::open_database_copy,
             commands::keys::key_status,
             commands::keys::set_api_key,
             commands::keys::clear_api_key,

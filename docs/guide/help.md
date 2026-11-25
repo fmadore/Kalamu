@@ -60,6 +60,35 @@ a smaller model, or the [cheaper mode](costs.md#three-ways-to-pay-less).
 On your computer, in Kalamu's data folder, until you delete the job. Deleting a job deletes
 its results; your original files are never touched. To keep or share results, export them.
 
+## Safety copies of your work
+
+Kalamu keeps everything (your jobs, corrections, projects and the answers you paid for) in one
+file, its job database. It copies that file by itself: once each day you open Kalamu, the last
+three kept, and once before an update changes it. The copies stay on your computer. **Settings
+› General › Safety copies** lists them with their date and size, shows the folder with **Show
+in File Explorer** (**Show in Finder** on a Mac), and **Open this copy…** opens one in place of
+the database, after asking: Kalamu restarts, and the database as it was is kept in the same
+folder, *Set aside*, so nothing is deleted. Work done after the copy's date does not show.
+Opening a copy waits until no job is running.
+
+A copy is not made when it would leave the disk with less than 1 GB free; Settings then says
+so. Free some space and the next day's copy is made.
+
+## Kalamu says its job database cannot be read
+
+If the file was damaged (a power cut, a failing disk), Kalamu says so as it starts, before its
+window opens, and offers **Open the copy**, naming the copy's date, or, when there is no copy
+yet, **Start with an empty list**. Either way the damaged file is kept, never deleted, in the
+copies folder the message names; **Quit** changes nothing. The message also names the folder
+of Kalamu's logs, to send with a [report](https://github.com/fmadore/Kalamu/issues).
+
+Some damage shows only when Kalamu checks the whole file, a moment after it opens: it then
+asks whether to open the newest copy in its place, and Settings › General › Safety copies says
+so until you do.
+
+If a job made by a newer version of Kalamu cannot be read, it is left out of the list and
+named once when Kalamu starts; it is kept as it is.
+
 ## Questions
 
 **Is Kalamu really free?** Yes: free and open source, with every feature. You pay only the AI

@@ -34,6 +34,7 @@ import { mockImageDocument, PHOTO_FOLDER, PHOTOS } from './mockPages.js';
 import { photoCommand, READING_ROOM, READING_ROOM_PHOTOS } from './mockPhotos.js';
 import { sampleCommand } from './mockSample.js';
 import { installClose, windowCommand } from './mockWindow.js';
+import { databaseCommand, unreadableJobs } from './mockDatabase.js';
 
 const catalog = catalogJson as unknown as Catalog;
 /** The engine's rules for the bundled catalogue, written by `cargo test`. */
@@ -116,6 +117,8 @@ export function installMock(): void {
 		const a = (args ?? {}) as Record<string, unknown>;
 		const windowed = windowCommand(cmd, a);
 		if (windowed !== undefined) return windowed;
+		const database = databaseCommand(cmd, a);
+		if (database !== undefined) return database;
 		const filed = projectFileCommand(cmd, a);
 		if (filed !== undefined) return filed;
 		// `?long` and `?sample` only: a sample first, its rest and its comparison.
@@ -171,7 +174,8 @@ export function installMock(): void {
 					// `?set-aside`: the settings file could not be read at this launch.
 					settings_set_aside: new URLSearchParams(location.search).has('set-aside')
 						? 'C:\\Users\\you\\AppData\\Local\\Kalamu Data\\settings.json.bad'
-						: null
+						: null,
+					unreadable_jobs: unreadableJobs()
 				};
 			case 'get_catalog':
 				return catalog;

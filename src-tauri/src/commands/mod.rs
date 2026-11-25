@@ -1,6 +1,7 @@
 //! The commands the interface calls, one module per area. Each is a thin wrapper: the work
 //! happens in the engine and the library crates, so the interface holds no business logic.
 
+pub mod database;
 pub mod dictionary;
 pub mod jobs;
 pub mod keys;
@@ -119,6 +120,9 @@ pub struct AppInfo {
     /// Where the settings file that could not be read at this launch was moved, as File
     /// Explorer or Finder shows it; the defaults are in use. The interface says so once.
     pub settings_set_aside: Option<String>,
+    /// Jobs whose record this version cannot read, left out of the list: the interface names
+    /// them once.
+    pub unreadable_jobs: Vec<kalamu_core::UnreadableJob>,
 }
 
 #[derive(Debug, Clone, Serialize, TS)]

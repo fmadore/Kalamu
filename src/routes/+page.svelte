@@ -15,6 +15,7 @@
 	import WorkflowsView from '#lib/components/WorkflowsView.svelte';
 	import Icon from '#lib/components/Icon.svelte';
 	import Sidebar from '#lib/components/Sidebar.svelte';
+	import { tellUnreadable, watchDatabase } from '#lib/databaseCopies.js';
 	import { describeError } from '#lib/errors.js';
 	import { messages } from '#lib/i18n/index.js';
 	import { isBack, primary } from '#lib/platform.js';
@@ -208,6 +209,10 @@
 				if (info.settings_set_aside) {
 					toast(m.settings.setAside(info.settings_set_aside), { kind: 'error' });
 				}
+				// The job database: jobs it holds that this version cannot read, what opening it did,
+				// and damage its check after launch finds, each said once (#275).
+				tellUnreadable(info.unreadable_jobs);
+				unlisten.push(await watchDatabase());
 				// Jobs cut short by the last close: show them first.
 				if (startView) go(startView);
 				else if (info.interrupted.length > 0) go({ name: 'jobs', jobId: info.interrupted[0] });

@@ -2485,6 +2485,48 @@ export const en = {
 					: `about ${bytes >= 1e9 ? `${(bytes / 1e9).toFixed(1)} GB` : `${Math.round(bytes / 1e6)} MB`}`
 			})? Asking for the same pages again would be paid for again.`
 	},
+	/** The copies of the job database (Settings, General) and what a launch did to it. */
+	database: {
+		title: 'Safety copies',
+		hint: 'Kalamu keeps copies of its job database, which holds your jobs, your corrections, your projects and the answers you paid for: one each day you open Kalamu, the last three kept, and one before an update changes it. They stay on this computer, in this folder:',
+		show: { windows: 'Show in File Explorer', macos: 'Show in Finder' },
+		none: 'No copy yet: the first is made a moment after Kalamu opens.',
+		listLabel: 'Copies kept',
+		kinds: {
+			daily: 'Daily copy',
+			before_update: 'Before an update',
+			set_aside: 'Set aside'
+		},
+		/** A copy's line: its date, what it is, its size. */
+		line: (date: string, kind: string, size: string) => `${date} · ${kind} · ${size}`,
+		setAsideHint:
+			'A file set aside is your job database as it was when a copy took its place, or when it could not be read. Kalamu never deletes it: you can delete it yourself once you no longer need it.',
+		open: 'Open this copy…',
+		openBusy: 'Available once no job is running.',
+		openAsk: (date: string) =>
+			`Open the copy of ${date} in place of your job database? Kalamu will restart. Your database as it is now is kept in the copies folder, so nothing is deleted, but what you did after ${date} will not show.`,
+		openOk: 'Open and restart',
+		skipped: (free: string) =>
+			`No copy was made this time: the disk would have been left with too little free space (${free} free). Free some space so that Kalamu can make copies again.`,
+		damaged:
+			'Kalamu found damage in its job database a moment after it opened. Open the newest copy below to go back to it.',
+		damagedAsk: (date: string) =>
+			`Kalamu found damage in its job database. Open the copy of ${date} in its place? Kalamu will restart. The damaged file is kept in the copies folder, so nothing is deleted, but what you did after ${date} will not show.`,
+		damagedNoCopy:
+			'Kalamu found damage in its job database, and there is no copy of it yet. Export what matters to you now; Kalamu’s logs say more.',
+		later: 'Not now',
+		restored: (date: string) =>
+			`The copy of ${date} is open in place of your job database. The database it replaced is kept in the copies folder.`,
+		restoreFailed:
+			'The copy you chose could not be opened, so Kalamu opened your job database as it was. Kalamu’s logs say why.',
+		startedEmpty:
+			'Your job database could not be read, so Kalamu started with an empty list. The damaged file is kept in the copies folder.',
+		/** At start-up: jobs whose record this version cannot read, left out of the list. */
+		unreadable: (names: string, count: number) =>
+			count === 1
+				? `One job could not be read by this version of Kalamu, so it is not listed: ${names}. Its record is kept as it is; a newer version of Kalamu may read it.`
+				: `${count} jobs could not be read by this version of Kalamu, so they are not listed: ${names}. Their records are kept as they are; a newer version of Kalamu may read them.`
+	},
 	report: {
 		/** Bugs and feedback; also the way Store policy 11.16 asks for to flag harmful output,
 		 * which the note names so a reviewer finds it. */
