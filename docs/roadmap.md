@@ -582,10 +582,15 @@ workflows) keeps its own order after them.
    - citing and contributing: `CITATION.cff`, a DOI for each release ([#291](https://github.com/fmadore/Kalamu/issues/291)); the
      installers signed, winget and Homebrew ([#290](https://github.com/fmadore/Kalamu/issues/290)). Neither waits on anything.
 5. **New directions, each designed in a decision first**, taken up among the research
-   workflows below in this order: a digitised volume read from a library's IIIF manifest
-   ([#286](https://github.com/fmadore/Kalamu/issues/286)); an export for qualitative analysis software, REFI-QDA ([#285](https://github.com/fmadore/Kalamu/issues/285)), which
-   follows interview analysis ([#38](https://github.com/fmadore/Kalamu/issues/38)); a provider at an address of the researcher's own,
-   a university's service or a model server on the network ([#283](https://github.com/fmadore/Kalamu/issues/283)).
+   workflows below in this order:
+   - **A provider at an address of the researcher's own** ([#283](https://github.com/fmadore/Kalamu/issues/283)), first, and started
+     beside the safety nets rather than after them: the override of a provider's address is
+     the same plumbing the packaged app's tests need ([#277](https://github.com/fmadore/Kalamu/issues/277)), and a colleague can try it
+     with Ollama on a powerful Mac. No expert mode: the section sits in Settings and nothing
+     of it shows in New job until a service has been added.
+   - a digitised volume read from a library's IIIF manifest ([#286](https://github.com/fmadore/Kalamu/issues/286));
+   - an export for qualitative analysis software, REFI-QDA ([#285](https://github.com/fmadore/Kalamu/issues/285)), which follows
+     interview analysis ([#38](https://github.com/fmadore/Kalamu/issues/38)).
 
 **First, 1.10.0 tried and tagged** (tagged on 22 November 2026 and live in the Store; what
 this paragraph leaves is the day on a Mac and the live runs not yet made, and 1.10.1, which
