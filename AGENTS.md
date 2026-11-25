@@ -73,7 +73,7 @@ depends on one it may not; a new crate goes into both.
 | `media` | Conversion and splitting: PDF pages cut with lopdf and drawn with hayro, images, FFmpeg, reading text inputs; input checks (spreads, resolution, skew, audio levels) returning warnings with suggested fixes. Never modifies originals. | `core` |
 | `providers` | One module per cloud provider, each implementing the provider trait. | `core` |
 | `offline` | Whisper, Tesseract and the OCR vision models (llama.cpp, run as a separate program), behind the same trait as cloud providers. | `core`, `media` |
-| `store` | SQLite job database and result cache, and the project, dictionary and search-by-meaning tables beside them; the word search's index and the vector index, each a file of its own; a project saved as one file and opened again (`project_file/`). | `core` |
+| `store` | SQLite job database and result cache, and the project, dictionary and search-by-meaning tables beside them; the word search's index and the vector index, each a file of its own; a project saved as one file and opened again (`project_file/`); the job database kept safe (`protect/`: its copies, its check, the way back from a damaged file). | `core` |
 | `projects` | Project workspaces: documents, collections, tags, their links to jobs, preferred results. Organises only: never calls a model or changes a result. | `core` |
 | `dictionary` | A project's dictionary: the names its analyses listed, gathered through the corrected answers, and the researcher's entries, merges and pairs kept apart. Never calls a model or changes a result. | `core` |
 | `search` | Project search: the corrected text of every result, kept in a derived local index and searched with the project's filters, each match placed in the text shown; and by meaning: that text cut into chunks, what a preparation must embed, chunks ranked against a question's vector, documents' vectors, their neighbours and their map. Never calls a model or changes a result. | `core` |
@@ -118,8 +118,9 @@ Rules that keep this modular:
 
 - **Adding a provider, model, export format or prompt preset is local.** A new provider is a
   new module plus one registration line; a new model is a catalogue entry (and, when its provider
-  names it the replacement of an older one, a `successor` on that one, never its removal); a new
-  format is a new exporter. If it needs edits in several crates, the design is wrong: fix the design first.
+  names it the replacement of an older one, a `successor` on that one, never its removal), with
+  `revision` raised in `catalog.json` at every change and no value older releases refuse, which
+  the *Model list* workflow checks; a new format is a new exporter. If it needs edits in several crates, the design is wrong: fix the design first.
 - **What differs between operating systems lives in one place per layer.** In the shell,
   `src-tauri/src/platform/`, one file per system with the same items; in the interface,
   `src/lib/platform.ts`; in Tauri's configuration, `tauri.<system>.conf.json`. The crates below
@@ -131,7 +132,9 @@ Rules that keep this modular:
   string, including error messages and tips, goes through translation files from the first
   screen, so French and German are added without touching code.
 - **The front end only talks to `app` through typed commands and events**, with types generated
-  from Rust so both sides cannot drift. No business logic in the front end.
+  from Rust so both sides cannot drift. No business logic in the front end. A command has four
+  places, held together by tests: its handler, `COMMANDS`, its capability, and the bridge's
+  call in `src/lib/tauri.ts` with its argument names (`src/lib/commands.test.ts`).
 - **A job runs one or more set-ups** (provider, model, prompt, settings) over the same sources,
   from the first version of `core` and `store`. A normal job is simply a job with one set-up, so
   comparison mode is not bolted on later. Results are keyed by source piece and set-up.
@@ -155,6 +158,8 @@ Rules that keep this modular:
   work.
 - `cargo fmt`, `cargo clippy -- -D warnings` and `cargo test --workspace` pass before every
   commit, plus the front end's lint and type checks.
+- A release that changes the job database's schema or a stored record adds that release's
+  database to the fixtures CI migrates (`crates/store/fixtures/make.sh <tag>`).
 
 ## Pull requests
 
@@ -169,6 +174,15 @@ Rules that keep this modular:
   line (squash merges included) and its worktree has nothing uncommitted. Anything else is
   asked about, not deleted. Never delete the remote `stats` branch: it is never merged, and
   `.github/workflows/stats.yml` writes the repository's daily statistics to it.
+
+## Releases
+
+- A final version tag publishes only after a `vX.Y.Z-rcN` candidate of its commit, or of an
+  ancestor with only documentation changed since, and the `release` environment's approval,
+  which the maintainer gives after the test pass and an agent never does
+  ([development.md](docs/development.md#releases)). Candidate tags are kept: the gate reads them.
+- `rust-version` in `Cargo.toml` equals the channel in `rust-toolchain.toml`; CI checks it, so
+  a toolchain update moves both.
 
 ## Architecture checkpoints
 
