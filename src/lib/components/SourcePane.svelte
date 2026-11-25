@@ -396,7 +396,7 @@
 		<ZoomPill {zoom} {hint} onzoom={zoomStep} onfit={() => glideTo(1)} onturn={turnBy} />
 	{:else if kind === 'text'}
 		<div
-			class="desk document"
+			class="desk document own-direction"
 			lang=""
 			bind:this={sheet}
 			{@attach scrollableByKeys(m.review.source)}

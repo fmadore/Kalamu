@@ -234,7 +234,7 @@
 	{#if readHere.length > 0}
 		<ul class="read">
 			{#each readHere as entry, i (i)}
-				<li>
+				<li class="own-direction">
 					<span>{valueText(entry, TITLE)}</span>
 					{#if valueText(entry, 'continues')}<span class="muted">
 							· {valueText(entry, 'continues')}
@@ -370,7 +370,7 @@
 			{#each shown as { entry, n } (n)}
 				<li value={n} class:here={onPage(entry)} class:opened={opening?.entry === n}>
 					<button class="entry" onclick={() => showEntry(entry)}>
-						<span class="entry-title">{valueText(entry, TITLE)}</span>
+						<span class="entry-title own-direction">{valueText(entry, TITLE)}</span>
 						<span class="entry-pages mono" title={m.review.goToPage(valueText(entry, PAGES))}>
 							{valueText(entry, PAGES)}
 						</span>
@@ -381,7 +381,9 @@
 							{#if v}
 								<div class="detail">
 									<dt>{f.label}</dt>
-									<dd>{f.kind.type === 'choice' ? choiceLabel(f, v) : v}</dd>
+									<dd class:own-direction={f.kind.type !== 'choice'}>
+										{f.kind.type === 'choice' ? choiceLabel(f, v) : v}
+									</dd>
 								</div>
 							{/if}
 						{/each}

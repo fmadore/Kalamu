@@ -39,9 +39,13 @@
 		{/each}
 	</div>
 {:else if line}
-	<input type="text" bind:value aria-label={field.label} />
+	<input type="text" dir="auto" bind:value aria-label={field.label} />
 {:else}
-	<textarea class:short={field.kind.type === 'list'} bind:value aria-label={field.label}></textarea>
+	<textarea
+		class="own-direction"
+		class:short={field.kind.type === 'list'}
+		bind:value
+		aria-label={field.label}></textarea>
 	{#if field.kind.type === 'list'}<p class="hint">{m.review.onePerLine}</p>{/if}
 {/if}
 

@@ -85,6 +85,7 @@
 	<span class="glass" aria-hidden="true"><Icon name="search" size={14} /></span>
 	<input
 		type="search"
+		dir="auto"
 		bind:this={input}
 		bind:value={query}
 		{placeholder}
@@ -148,7 +149,7 @@
 							onclick={() => pick(i)}
 						>
 							{#if hit.time}<span class="time num">{hit.time}</span>{/if}
-							<span class="words">
+							<span class="words own-direction">
 								{hit.before}<mark>{hit.words}</mark>{hit.after}<span class="sr-only">
 									· {hit.group}
 								</span>

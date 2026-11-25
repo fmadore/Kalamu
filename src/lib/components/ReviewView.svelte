@@ -163,6 +163,12 @@
 		)
 	);
 	const reading = $derived(lines(base, entries));
+	/** The speakers a transcript's lines open with. */
+	const speakers = $derived(
+		recording
+			? current.flatMap((v) => v.segments.flatMap((s) => (s.speaker ? [s.speaker] : [])))
+			: []
+	);
 	/** The readings open over the text, and the difference last reached. */
 	const readings = new Readings({
 		entries: () => entries,
@@ -562,7 +568,7 @@
 				: undefined}
 		>
 			<textarea
-				class="editor"
+				class="editor own-direction"
 				bind:value={editing.text}
 				aria-label="{m.review.edit} {target.label}"
 				{@attach growWithText}></textarea>
@@ -582,6 +588,7 @@
 		{/each}
 		<MarkedText
 			lines={reading}
+			{speakers}
 			{entries}
 			marked={showDiff}
 			selected={readings.selected}

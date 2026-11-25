@@ -273,6 +273,7 @@
 					<div class="top">
 						<input
 							type="text"
+							dir="auto"
 							value={labels[x.key] ?? x.label}
 							oninput={(e) => (labels[x.key] = e.currentTarget.value)}
 							aria-label={m.dictionary.mergeLabel}
@@ -281,7 +282,7 @@
 							{p.certainty[x.certainty as keyof typeof p.certainty] ?? x.certainty}
 						</span>
 					</div>
-					{#if x.reason}<p class="reason">{x.reason}</p>{/if}
+					{#if x.reason}<p class="reason own-direction">{x.reason}</p>{/if}
 					<ul class="members">
 						{#each x.members as mb (mb.key)}
 							<li>

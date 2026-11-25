@@ -62,8 +62,8 @@
 				onclick={() => onpick(s)}
 			>
 				<span class="num stamp">{time}</span>
-				{#if s.speaker}<span class="speaker v{voice(s.speaker)}">{s.speaker}</span>{/if}
-				<span class="said">{s.text}</span>
+				{#if s.speaker}<span class="speaker v{voice(s.speaker)}" dir="auto">{s.speaker}</span>{/if}
+				<span class="said" dir="auto">{s.text}</span>
 			</button>
 		</li>
 	{/each}

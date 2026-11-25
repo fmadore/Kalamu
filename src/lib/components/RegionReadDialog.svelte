@@ -220,18 +220,18 @@
 					bind:value={request.draft}
 					rows="5"
 					spellcheck="false"
-					dir="auto"></textarea>
+					class="own-direction"></textarea>
 			</label>
 		{:else if target.kind === 'text'}
 			<figure>
 				<figcaption class="muted">{r.replaced}</figcaption>
 				<!-- prettier-ignore -->
-				<p class="text" dir="auto"><DiffSpans spans={request.spans} answer={reading.answer ?? ''} removed={r.removed} added={r.added} /></p>
+				<p class="text own-direction"><DiffSpans spans={request.spans} answer={reading.answer ?? ''} removed={r.removed} added={r.added} /></p>
 			</figure>
 		{:else}
 			<figure>
 				<figcaption class="muted">{r.answer}</figcaption>
-				<p class="text" dir="auto">{reading.answer}</p>
+				<p class="text own-direction">{reading.answer}</p>
 			</figure>
 		{/if}
 		{#if target.kind === 'nowhere'}

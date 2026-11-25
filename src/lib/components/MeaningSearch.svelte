@@ -261,7 +261,7 @@
 							<li>
 								<button class="hit" aria-label={m.meaning.open(place)} onclick={() => open(p)}>
 									<span class="place num">{place}</span>
-									<span class="snippet">
+									<span class="snippet own-direction">
 										<span class="origin">{resultName(p)}</span>
 										{p.hit.words}
 									</span>
@@ -435,7 +435,6 @@
 	.snippet {
 		min-width: 0;
 		overflow-wrap: anywhere;
-		unicode-bidi: plaintext;
 		font-family: var(--font-text, inherit);
 	}
 	.origin {

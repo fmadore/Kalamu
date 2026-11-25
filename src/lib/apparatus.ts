@@ -191,6 +191,25 @@ export function headingOf(line: Line): { mark: string; parts: Line['parts'] } | 
 	return { mark, parts: [...(rest ? [{ text: rest, entry: null }] : []), ...line.parts.slice(1)] };
 }
 
+/** The speaker's label a transcript's line opens with ("Speaker 1: ", or the name given), set
+ * apart so the words said take their own direction; null where the line opens otherwise, or
+ * where a difference runs into the label. */
+export function speakerOf(
+	line: Line,
+	speakers: string[]
+): { label: string; parts: Line['parts'] } | null {
+	const first = line.parts[0];
+	if (!first || first.entry !== null) return null;
+	const name = speakers.find((s) => s.trim() && first.text.startsWith(`${s}:`));
+	if (name === undefined) return null;
+	const cut = name.length + 1;
+	const rest = first.text.slice(cut);
+	return {
+		label: first.text.slice(0, cut),
+		parts: [...(rest ? [{ text: rest, entry: null }] : []), ...line.parts.slice(1)]
+	};
+}
+
 /** Whether a line number is printed in the margin: every fifth line and every line with a variant. */
 export function numbered(line: number, entries: Entry[]): boolean {
 	return line > 0 && (line % 5 === 0 || entries.some((e) => e.line === line));

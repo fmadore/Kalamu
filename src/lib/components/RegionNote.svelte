@@ -220,8 +220,7 @@
 					<label class="label" for="region-text">{e.text}</label>
 					<textarea
 						id="region-text"
-						class="text"
-						dir="auto"
+						class="text own-direction"
 						rows="2"
 						value={r.text}
 						aria-describedby="region-text-hint"
@@ -231,7 +230,7 @@
 				{/key}
 			{:else}
 				<div class="said" role="status">
-					<p class="words" dir="auto">{r.text}</p>
+					<p class="words own-direction">{r.text}</p>
 					<p class="status">{status}</p>
 					{#if r.origin === 'estimated'}<p class="status">{m.review.regionEstimated}</p>{/if}
 					{#if adjusted}<p class="status">{e.adjusted}</p>{/if}

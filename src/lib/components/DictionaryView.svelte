@@ -241,6 +241,7 @@
 						<form class="merge" onsubmit={merge}>
 							<input
 								type="text"
+								dir="auto"
 								list="merge-labels"
 								bind:value={merging}
 								aria-label={m.dictionary.mergeLabel}

@@ -36,7 +36,7 @@
 {#if row.entry}
 	{#if renaming !== null}
 		<form class="rename" onsubmit={rename}>
-			<input type="text" bind:value={renaming} aria-label={m.dictionary.label} />
+			<input type="text" dir="auto" bind:value={renaming} aria-label={m.dictionary.label} />
 			<button class="btn sm" type="submit" disabled={!renaming.trim()}>{m.dictionary.save}</button>
 			<button class="btn ghost sm" type="button" onclick={() => (renaming = null)}>
 				{m.dictionary.cancel}

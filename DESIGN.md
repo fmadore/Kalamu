@@ -485,6 +485,7 @@ A newer release is not a warning: it is a quiet line in caption type and muted t
 - **Do** separate with greys and hairlines first; reach for a shadow only for the selected item, an overlay or the scan.
 - **Do** show status as coloured text on a wash, with a 6px dot.
 - **Do** keep icons to Lucide at the absolute 1.5px stroke, beside a word.
+- **Do** let text a model or the researcher wrote take its own direction, paragraph by paragraph: `.own-direction` on a block or text box, `dir="auto"` on a one-line field. Arabic then reads from the right beside French; the interface around it stays left to right.
 
 ### Don't:
 - **Don't** fill a button in any colour but ink: no blue, green or red primary buttons.

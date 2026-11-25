@@ -108,7 +108,7 @@
 		<!-- A choice (where a theme comes from) said plainly, in the interface language. -->
 		<p class="chip origin">{f.label} <strong>{choiceLabel(f, note.value)}</strong></p>
 	{:else}
-		<p class="note">{note.value}</p>
+		<p class="note own-direction">{note.value}</p>
 	{/if}
 {/snippet}
 
@@ -149,9 +149,10 @@
 											</select>
 										{:else if k === 0 && own.length > 1}
 											<!-- svelte-ignore a11y_autofocus -->
-											<input type="text" bind:value={edit.draft[f.key]} autofocus />
+											<input type="text" dir="auto" bind:value={edit.draft[f.key]} autofocus />
 										{:else}
-											<textarea rows="2" bind:value={edit.draft[f.key]}></textarea>
+											<textarea class="own-direction" rows="2" bind:value={edit.draft[f.key]}
+											></textarea>
 										{/if}
 									</label>
 								{/each}
@@ -175,7 +176,7 @@
 								</div>
 							</div>
 						{:else}
-							{#if card.title}<h3>{card.title}</h3>{/if}
+							{#if card.title}<h3 class="own-direction">{card.title}</h3>{/if}
 							{#if card.notesFirst}
 								{#each card.notes as note (note.key)}{@render noteOf(note)}{/each}
 							{/if}
@@ -187,7 +188,7 @@
 										{@const said = saidBy(q)}
 										{@const plays = cited.recording(q) !== null}
 										<li data-quote={n} class:hand={q.added}>
-											<blockquote lang="">{q.quote}</blockquote>
+											<blockquote lang="" dir="auto">{q.quote}</blockquote>
 											<div class="said">
 												<button
 													class="btn sm"
@@ -203,7 +204,7 @@
 														? c.listen
 														: c.showInText}
 												</button>
-												{#if said}<span class="by" aria-hidden="true">{said}</span>{/if}
+												{#if said}<span class="by" dir="auto" aria-hidden="true">{said}</span>{/if}
 												{#if q.added}<span class="chip hand">{c.addedByYou}</span>{/if}
 												<button
 													class="btn ghost sm icon remove"
@@ -311,8 +312,8 @@
 	}
 	blockquote {
 		margin: 0;
-		padding-left: var(--space-3);
-		border-left: 3px solid var(--line-strong);
+		padding-inline-start: var(--space-3);
+		border-inline-start: 3px solid var(--line-strong);
 		font-size: var(--type-md);
 		font-style: italic;
 		color: var(--text-bright);
@@ -329,7 +330,7 @@
 	}
 	/* A quotation the researcher added: their blue rule, as every correction of theirs. */
 	.hand blockquote {
-		border-left-color: var(--hand);
+		border-inline-start-color: var(--hand);
 	}
 	.said {
 		display: flex;

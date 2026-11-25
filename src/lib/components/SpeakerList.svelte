@@ -81,6 +81,7 @@
 						<span class="label-name mono">{label}</span>
 						<input
 							type="text"
+							dir="auto"
 							placeholder={m.review.speakerPlaceholder}
 							aria-label={m.review.speakerName(label)}
 							value={drafts[setup.id]?.[label] ?? ''}

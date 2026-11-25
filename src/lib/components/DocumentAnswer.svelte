@@ -29,7 +29,7 @@
 </script>
 
 <div class="answer">
-	<p class="said">
+	<p class="said own-direction">
 		<span class="chip">{answer.label}</span>
 		{#if answer.reason}<span class="reason">{answer.reason}</span>{/if}
 	</p>
@@ -37,7 +37,7 @@
 		<ul class="passages" aria-label={t.passagesOf(title)}>
 			{#each answer.passages as passage, i (i)}
 				{@const where = saidBy(passage, m)}
-				<li>
+				<li class="own-direction">
 					<q>{passage.quote}</q>
 					{#if where}<span class="where">{where}</span>{/if}
 				</li>
