@@ -321,6 +321,22 @@ counts as the listing's text.
 - [ ] **Delete the server** in the provider's console: billing runs until it is deleted, not
   until you disconnect.
 
+## The sign-off
+
+The day ends in the same approval as the Windows pass
+([windows-test-pass.md](windows-test-pass.md#the-sign-off)): the `release` environment's, on the
+run of the final tag `v<version>`, which waits at *Publish the release* until the maintainer
+chooses **Review deployments** → `release` → **Approve and deploy**
+([development.md](development.md#releases)). It is given once for both systems, by the
+maintainer; Claude, running the day, never gives it.
+
+For the Mac, approving asserts that the disk image tried on the rented Mac is the one the release
+candidate named in the run's *Release gate* step built (`v<version>-rcN`), that Part A passed
+on it (signed, notarised, opened by Gatekeeper without a warning), that no failure in
+[Results](#results) should hold the release, and that what was not tried on a Mac is in the
+release notes' *Known limitations*. When no Mac day was held for this version, the release notes
+say so, and the approval asserts that nothing in it changed what only a Mac can show.
+
 ## Results
 
 One line per failure, and an issue for each real problem.

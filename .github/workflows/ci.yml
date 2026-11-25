@@ -193,6 +193,21 @@ jobs:
           src/lib/i18n/defaultFields.json
           src/lib/dev/taskRules.json
 
+  # The repository's own checks that need neither Node nor Rust: the release gate's rule, tried
+  # against throwaway repositories, and rust-version kept to the pinned toolchain (which fails a
+  # Dependabot toolchain bump until Cargo.toml follows it).
+  scripts:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Release gate
+        run: bash scripts/release-gate.test.sh
+      - name: rust-version matches the pinned toolchain
+        run: bash scripts/check-rust-version.sh
+
   rust-security:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
