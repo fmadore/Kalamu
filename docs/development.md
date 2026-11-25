@@ -89,25 +89,153 @@ definitions; commit them with the Rust change. Exporters are checked against gol
 `crates/export/golden/`; after an intended change, rerun their tests with `UPDATE_GOLDEN=1`
 and review the diff.
 
-## Live checks
+## The app driven
 
-Before a release, run every task against the live APIs with the keys saved in Settings. This
-spends a few cents and never runs in CI:
+The built app itself, driven against a stand-in provider: what `e2e/` does against the dev
+server's mock, but through Rust, the job database and the files written
+([decision](decisions/2026-11-25-app-driven-in-ci.md)). CI runs it in the *App driven* workflow
+on pull requests that touch the shell, the engine, the providers, the store or the core, and on
+every release candidate's tag.
+
+It drives a **test build**: a debug build with the `test-overrides` feature, which a release
+build refuses to compile. Given `KALAMU_TEST_DATA`, it keeps its data there; given
+`KALAMU_TEST_PROVIDERS`, it reaches every cloud provider under that address with a key of its
+own; it never asks or writes the keychain, answers its native dialogs from
+`dialog-answers.json` in its data folder, and runs beside an installed Kalamu. The stand-in,
+`scripts/app-driven/stand-in.mjs`, answers with the providers' tests' recorded answers and
+calls no real service.
+
+On Windows (x64 or ARM64), with WebView2:
 
 ```bash
-cargo run -p kalamu --example live -- <samples> <out> [job name filter]
+npm run build
+cargo build -p kalamu --features custom-protocol,test-overrides
+npm run test:app
 ```
 
-`<samples>` holds `newspaper.jpg`, `letter.pdf`, `interview.wav` and `article.txt`, and for
-the `analysis-batch` job `article2.txt` and `article3.txt`; the files in `samples/` serve, with
-an interview of two voices for the speakers. The runner extracts text with every provider,
-transcribes the interview with speakers, runs the analyses, writes each job's outputs to its
-own folder in `<out>` and prints each set-up's estimate, then a line per piece with its status,
-the tokens billed (read, cached, written) and the cost. `LIVE_SKIP=gemini` leaves out a
-provider without credit; `LIVE_TESSDATA=<folder>` adds an offline Tesseract job read with the
-`fra` and `eng` data in that folder, which needs no key and can run with networking off; `LIVE_PACE=economy` sends the jobs as batches, which can take from a
-minute to hours. A batch leaves files in OpenAI's and Mistral's storage: delete them once the
-run ends.
+`npm run test:app` starts the stand-in and the app for each flow (`e2e-app/flows.spec.ts`), each
+in a temporary data folder with copies of the sample files, and drives the window over the
+DevTools protocol the test build has WebView2 open (`KALAMU_TEST_DEVTOOLS_PORT`): a job from New job
+to its files, a correction found after a restart, a project saved and opened, a paused job
+resumed after a restart, a batch collected after a restart. The window shows while it runs;
+leave it alone. `KALAMU_APP` names another executable. A failed flow keeps its trace in
+`test-results/app` (`npx playwright show-trace <trace.zip>`). On a Mac there is no driver for
+WKWebView: `scripts/app-driven/launch-check.sh <Kalamu.app>` starts a test build bundled with
+`npx tauri build --debug --bundles app --features test-overrides`, checks that it opens its
+database, and quits it.
+
+To try the test build by hand, start the stand-in (`node scripts/app-driven/stand-in.mjs`, on
+port 4310) and the app with both variables set. Its pickers open nothing: write what they
+should answer into `dialog-answers.json` first (`[["C:\\path\\to\\page.jpg"]]` for one file
+chosen), or drop files on the window. In PowerShell:
+
+```powershell
+$env:KALAMU_TEST_DATA = "$env:TEMP\kalamu-test"; $env:KALAMU_TEST_PROVIDERS = 'http://127.0.0.1:4310'
+.\target\debug\kalamu.exe
+```
+
+## Live checks
+
+The live check (`src-tauri/examples/live/`) runs real jobs against the providers' services, through
+the engine as the app runs them. It spends money and needs keys: CI's tests never run it, only
+its own tests against local stand-ins. It runs once a week on GitHub, and by hand, there or on a
+computer:
+
+```bash
+LIVE_SET=weekly LIVE_CEILING=0.05 cargo run -p kalamu --example live -- samples <out> [step name filter]
+```
+
+**Sets** (`LIVE_SET`):
+
+- `weekly`: per provider, one page read (`bulletin-page.jpg`), one short recording
+  (`interview.wav`, 20 seconds), one analysis (`bulletin.txt`, people, places and organisations),
+  the same analysis sent as a batch and collected, and one embedding (the first 1,000 characters
+  of `bulletin.txt`), where the provider offers each. Each step takes the cheapest model the
+  catalogue offers for it (neither replaced, retired nor deprecated, reading the sample's type),
+  by its estimate; a batch, the cheapest whose work the provider sends as one.
+- `roadmap`: the roadmap's *Live runs still to do* that a run can make, on `samples/`
+  ([decision](decisions/2026-11-25-scheduled-live-check.md) for which). Judging the answers is
+  yours: each job's outputs are in its own folder in `<out>`.
+- `release` (the default): every task end to end before a release, on a folder holding
+  `newspaper.jpg`, `letter.pdf`, `interview.wav` and `article.txt` (`article2.txt` and
+  `article3.txt` for `analysis-batch`, `image.jpg`, `page-1.jpg`, `page-2.jpg`, `page-10.jpg`); a
+  job whose files are missing is left out.
+
+**What it spends.** At the catalogue's prices of 24 November 2026, the weekly set is estimated at
+**$0.023 a run, $1.17 a year**; `LIVE_PLAN=1` prints each step's model and estimate and the
+total, reading no key and sending nothing, so run it again when the catalogue changes. The
+weekly run's ceiling is **$0.05**, about twice the estimate, since a short analysis is
+overestimated and a reasoning model can write more than its estimate. The roadmap set is
+estimated at $0.55; give it $1.50.
+
+**The ceiling** (`LIVE_CEILING`, in US dollars at the catalogue's prices). A step starts only if
+its estimate (the economy price for a batch) fits in what is left, the steps still running
+counted at their estimates; a step without a price does not start. Once what was billed passes
+the ceiling, the jobs running are cancelled and nothing more starts; the calls already in flight
+finish and are billed, so a run can end above its ceiling by those calls, never by a call started
+after it. A step not started or stopped by the ceiling fails the run. Without a ceiling, a run at
+a terminal asks before it starts; one with nobody at the terminal (no terminal, or `CI` set)
+refuses to start.
+
+**Keys.** `KALAMU_GEMINI_API_KEY`, `KALAMU_OPENAI_API_KEY`, `KALAMU_ANTHROPIC_API_KEY` and
+`KALAMU_MISTRAL_API_KEY` when set and not blank; otherwise the key saved in the app's Settings
+(Credential Manager, the Keychain), unless `LIVE_KEYCHAIN=off`. A provider without a key is left
+out and said so. Keys are read once, at the start; no key is printed, and every message the tool
+prints or writes has the keys it holds, and words shaped like keys or identifiers, taken out.
+
+**What it leaves.** A table per step and provider (model, estimate, what the catalogue's prices
+put on the usage reported, their ratio, the result) is printed, written to `<out>/summary.md`
+and appended to `LIVE_SUMMARY` when set; it is the 3 November decision's way of noting cost
+against estimate, ready to paste into a decision entry. A batch not answered within
+`LIVE_BATCH_WAIT` minutes (60 in the weekly set, a day otherwise) is cancelled at the provider
+and reads *late*, which does not fail the run. Each job's outputs and the job database are in
+`<out>`: they hold the samples' text and never leave the computer or the runner.
+
+Also: `LIVE_SKIP=gemini,openai` leaves out providers; `LIVE_PACE=economy` sends every job of the
+`release` and `roadmap` sets as batches; `LIVE_TESSDATA=<folder>` adds the offline Tesseract jobs
+(the `fra` and `eng` data), `LIVE_WHISPER=<folder>` offline Whisper (the folder of the app's
+Whisper models, with FFmpeg found): both need no key and cost nothing. Use a fresh `<out>`: a
+piece already answered in it is taken from its cache and reads *skipped*.
+
+### The weekly run on GitHub
+
+`.github/workflows/live.yml` runs the weekly set on Mondays at 06:17 UTC, and by hand from
+**Actions → Live check → Run workflow** on `main`, with the set, the ceiling and the batch wait
+to type in. `build` compiles the tool with a read-only token and no secret; `check`, the only
+job with the keys, runs the compiled program on `samples/` and nothing else; `report` opens the
+issue *Weekly live check failed* when a weekly run fails, comments on it while it stays open, and
+closes it once a weekly run passes. The job summary holds the table.
+
+Once, in the repository's settings on GitHub:
+
+1. **Settings → Environments → New environment**, name it `live`, **Configure environment**.
+2. Under *Deployment branches and tags*, choose **Selected branches and tags**, **Add deployment
+   branch or tag rule**: *Ref type* **Branch**, *Name pattern* `main`. Only runs from `main` then
+   get the secrets. No required reviewer (the weekly run would wait for one) and no wait timer.
+3. Under *Environment secrets*, **Add environment secret** for each provider to check:
+   `KALAMU_GEMINI_API_KEY`, `KALAMU_OPENAI_API_KEY`, `KALAMU_ANTHROPIC_API_KEY`,
+   `KALAMU_MISTRAL_API_KEY`. Not repository secrets: those reach every workflow. A provider whose
+   secret is missing is left out of the run.
+4. Use keys made for this check alone, in a project of their own at each provider where it
+   offers one, with a monthly spending limit (a dollar or two) set in the provider's console.
+
+**Rotating a key**: make the new key in the provider's console, replace the environment secret
+of the same name (**Settings → Environments → live → the secret → Update**), start the workflow
+by hand to see it pass, then delete the old key in the console. A key that may have leaked is
+deleted first and replaced after.
+
+### Error answers kept as fixtures
+
+With `LIVE_FIXTURES=<folder>` (as the workflow runs it), every request goes through a relay on a
+local port that sends it on unchanged and keeps each answer with a status of 400 or more: its
+body as `<provider>_<status>.json` (`_2`, `_3`… for more of the same), the shape of
+`crates/providers/tests/fixtures/`, and its status, path and waiting headers (`retry-after`,
+the rate-limit counts) in `index.json`, keys and identifiers taken out. The workflow uploads the
+folder as the run's `live-fixtures` artifact, kept 90 days. To commit one: download the
+artifact from the run's page (or `gh run download <run id> -n live-fixtures`), read the file
+through, copy it into `crates/providers/tests/fixtures/` under a name that says what it is
+(`gemini_429_per_minute.json`), and write the test that serves it with the status and headers
+`index.json` gives, as the 429 tests in `crates/providers/tests/providers.rs` do.
 
 ## Preview in a browser
 

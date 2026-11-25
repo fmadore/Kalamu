@@ -556,9 +556,9 @@ workflows) keeps its own order after them.
    - the originals a project file brought in outlive the project, and an older file is
      copied whole into the system's temporary folder ([#274](https://github.com/fmadore/Kalamu/issues/274)).
 2. **Safety nets**, so that the next release cannot go out as 1.9.0 and 1.10.1 did, and a
-   researcher's corrections cannot be lost to one bad file. The first four are written, tested
-   on Windows and in Chromium and WebKit, and none yet tried in the packaged app or on a Mac;
-   the last two are to do:
+   researcher's corrections cannot be lost to one bad file. The first four are in `main`
+   since 25 November, tested on Windows and in Chromium and WebKit, and none yet tried in the
+   packaged app or on a Mac; the last two are written, the first in part:
    - **The job database protected** ([#275](https://github.com/fmadore/Kalamu/issues/275),
      [decision](decisions/2026-11-25-job-database-protected.md)), written: a copy before each
      update and one each day, the last three kept, in `backups` in the data folder; the whole
@@ -590,10 +590,29 @@ workflows) keeps its own order after them.
      the start-up failure can be tried again; and a test holds the bridge's command and
      argument names, and the development mock, to the shell's. Generated wrappers stay an
      option if the bridge is rewritten.
-   - **The packaged app driven in CI** against recorded answers ([#277](https://github.com/fmadore/Kalamu/issues/277)), which takes
-     about half of the test pass by hand off the maintainer.
-   - **A scheduled live check** of each provider under a cost ceiling ([#278](https://github.com/fmadore/Kalamu/issues/278)), which also
-     works through *Live runs still to do*.
+   - **The app driven in CI** against recorded answers
+     ([#277](https://github.com/fmadore/Kalamu/issues/277),
+     [decision](decisions/2026-11-25-app-driven-in-ci.md)), written in part: a test build (a
+     debug build with `test-overrides`, which a release build refuses to compile with: its own
+     data folder, the providers at a stand-in's address, keys in memory and never the
+     keychain) is driven on Windows x64 and ARM64 through five flows (a job to its exported
+     files, a correction found after a restart, a project saved and opened, a paused job
+     resumed, a batch collected after a restart) and started and ended on macOS, on pull
+     requests that touch the shell or the engine and on every release candidate. The flows
+     ran on Windows ARM64 only; the macOS check has run nowhere. Still to do: the packaged
+     forms driven (the installer or the MSIX installed on a runner), which waits on a
+     provider's address being a setting ([#283](https://github.com/fmadore/Kalamu/issues/283),
+     which reuses `Addresses` and `registry_at`); and more flows, for most of Part C and the
+     keyboard half of Part D, since the pass by hand has lost one step of 72 so far.
+   - **A scheduled live check** of each provider under a cost ceiling
+     ([#278](https://github.com/fmadore/Kalamu/issues/278),
+     [decision](decisions/2026-11-25-scheduled-live-check.md)), written: once a week on
+     `main`, per provider a page, a short recording, an analysis, a batch and an embedding on
+     the cheapest model the catalogue offers, estimated at $0.023 a run under a ceiling of
+     $0.05; one issue on failure; the providers' error answers kept as fixtures, which
+     [#270](https://github.com/fmadore/Kalamu/issues/270) waits for. No call to a real
+     service has been made with it. Still to do, by the maintainer: the `live` environment and
+     its four secrets ([development.md](development.md#live-checks)), then the first run.
 3. **The test passes owed**, as *First* below describes, on the release that carries 1 and
    2: the pass on Windows, the day on a Mac, the live runs.
 4. **What a researcher's institution asks about**, small and each met early:
@@ -1033,7 +1052,10 @@ contents and a correction mixing providers (Gemini reading, Mistral combining), 
 contents in economy mode, after the first run found articles on two pages only of a 12-page
 issue with Claude Sonnet 5.5 at `low` (read the other pages' answers, and try a higher effort;
 [decision](decisions/2026-10-29-contents-review-and-answer-language.md)); Claude's one-hour
-cache only if a batch of a few hundred pages shows a need.
+cache only if a batch of a few hundred pages shows a need. The live check's `roadmap` set
+(`LIVE_SET=roadmap`, estimated at $0.55, [development.md](development.md#live-checks)) runs
+all of these but the cache and prints their costs against the estimates; judging what came
+back stays with a person.
 
 ### Also open
 

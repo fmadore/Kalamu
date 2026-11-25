@@ -58,11 +58,13 @@ pub(crate) fn setup(app: &mut tauri::App, moved: platform::Moved) -> SetupResult
     app.manage(activity::Activity::default());
     activity::watch(app.handle(), state.engine.subscribe());
     resume(&state.engine, waiting);
+    // The test build reaches no service but the stand-in, whatever its settings say.
     let refresh = state
         .settings
         .lock()
         .unwrap_or_else(|p| p.into_inner())
-        .refresh_catalog;
+        .refresh_catalog
+        && !cfg!(feature = "test-overrides");
     app.manage(state);
     find_graphics_processor(app.handle());
     app.manage(tray::TrayMenu::default());
@@ -267,7 +269,20 @@ fn assemble(
         kalamu_prompts::ProfileLibrary::open(&data.join("export-profiles")).map_err(library)?;
     let catalog: Catalog = commands::settings::cached_catalog(&paths.catalog_cache);
     let http = kalamu_providers::client();
-    let keys = Arc::new(CredentialKeys::default());
+    // Each provider at its own service's address; in the test build, under the stand-in.
+    #[cfg(not(feature = "test-overrides"))]
+    let (addresses, keys) = (
+        kalamu_providers::Addresses::default(),
+        Arc::new(CredentialKeys::default()),
+    );
+    #[cfg(feature = "test-overrides")]
+    let (addresses, keys) = (
+        crate::test_overrides::addresses(),
+        Arc::new(CredentialKeys::held(crate::test_overrides::keys())),
+    );
+    if !addresses.is_empty() {
+        tracing::warn!("test build: the cloud providers are reached at the stand-in's address");
+    }
     let models =
         kalamu_offline::ModelManager::new(data.join("whisper-models"), &kalamu_offline::WHISPER);
     let tessdata =
@@ -344,7 +359,7 @@ fn assemble(
     ));
     // Read before the engine takes the catalogue.
     let embedding_models = catalog.embedding_models().to_vec();
-    let mut providers = kalamu_providers::registry(http.clone());
+    let mut providers = kalamu_providers::registry_at(http.clone(), &addresses);
     providers.push(whisper.clone());
     providers.push(Arc::new(kalamu_offline::Tesseract::new(tessdata.clone())));
     providers.push(vision.clone());
@@ -370,7 +385,7 @@ fn assemble(
         store.clone(),
         store.clone(),
     )));
-    let embedders = embedding(&http, &embedder);
+    let embedders = embedding(&http, &addresses, &embedder);
     let meaning = kalamu_engine::Meaning::new(
         engine.clone(),
         search.clone(),
@@ -436,9 +451,10 @@ fn assemble(
 /// providers', then the one run on this computer. The models offered are the catalogue's.
 fn embedding(
     http: &reqwest::Client,
+    addresses: &kalamu_providers::Addresses,
     local: &Arc<kalamu_offline::LocalEmbedder>,
 ) -> Vec<Arc<dyn kalamu_core::Embedder>> {
-    let mut embedders = kalamu_providers::embedders(http.clone());
+    let mut embedders = kalamu_providers::embedders_at(http.clone(), addresses);
     embedders.push(local.clone());
     embedders
 }

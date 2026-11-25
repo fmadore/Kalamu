@@ -15,6 +15,14 @@ Each step has a letter and a number, which the results name. Tick each box, and 
 wrong in [Results](#results) as you go: the screen, what was done, what was expected, what
 happened. A screenshot of anything odd costs nothing and saves guessing later.
 
+**What CI now does of it.** WKWebView has no driver, so the *App driven* workflow's Mac job
+only starts a test build (a debug build with its own data folder and the providers at a
+stand-in), from its app bundle and from a disk image, checks that it opens its database, and
+quits it ([decision](decisions/2026-11-25-app-driven-in-ci.md)); the flows themselves run on
+Windows, which covers the Windows list's steps marked **CI** for the shared code but not for
+WebKit. Here one step is done by CI in part (A2), marked **CI, in part**: every step is still
+left by hand, one of them shorter.
+
 ## Before booking
 
 Everything here costs nothing and makes the rented hours count.
@@ -128,7 +136,9 @@ most of this was never written down for the disk image.
 - [ ] **A2. The window** opens, now that Kalamu's setup makes it rather than Tauri. The
   sidebar, New job and Settings show without error; Settings → About gives the validation
   build's version; shortcuts read ⌘, not Ctrl, in the glossary's help marks, the review's keys
-  and the shortcut overview.
+  and the shortcut overview. **CI, in part**: a test build bundled as the app and as a disk
+  image starts, makes and checks its job database, and ends cleanly when asked to quit. What
+  the window shows, and the notarised image, are still yours.
 - [ ] **A3. The Keychain**: once the keys are pasted, no password prompt; quit and reopen: the
   keys are still there. If macOS asks for the login password to use a key, note the dialog's
   words and choose *Always Allow*.

@@ -14,7 +14,14 @@ mod secrets;
 mod settings;
 mod setup;
 mod start_failure;
+#[cfg(feature = "test-overrides")]
+mod test_overrides;
 mod tray;
+
+// The test build leaves out the single-instance plugin and Tauri's dialogs (`run`), their
+// dependencies still declared.
+#[cfg(feature = "test-overrides")]
+use {tauri_plugin_dialog as _, tauri_plugin_single_instance as _};
 
 use tauri::{Emitter, Manager};
 
@@ -43,12 +50,28 @@ pub const CATALOG_CHANGED_EVENT: &str = "catalog-changed";
 /// written or opened, in bytes of the files it carries.
 pub const PROJECT_FILE_PROGRESS_EVENT: &str = "project-file-progress";
 
+/// The data folder each system keeps (`platform`); in the test build, the one its run names,
+/// with nothing of a researcher's read or moved.
+fn data_folder() -> (
+    tauri::utils::config::AppDirectoriesOverride,
+    platform::Moved,
+) {
+    #[cfg(feature = "test-overrides")]
+    if let Some(folder) = test_overrides::data_folder() {
+        return (
+            tauri::utils::config::AppDirectoriesOverride::Root(folder),
+            platform::Moved::Nothing,
+        );
+    }
+    platform::data_folder()
+}
+
 pub fn run() {
     // Before any program is started: none may outlive the app.
     platform::keep_children();
     // The data folder is settled, and an earlier one moved into it, before Tauri builds the
     // window, whose webview data goes there too.
-    let (folders, moved) = platform::data_folder();
+    let (folders, moved) = data_folder();
     // Known now, for a launch that fails before setup has started logging there.
     let logs = platform::log_folder(&folders);
     // WebView2 missing, said in Kalamu's message before Tauri says it in its own (Windows).
@@ -60,12 +83,26 @@ pub fn run() {
     }
     let mut context = tauri::generate_context!();
     context.config_mut().app.app_directories_override = Some(folders);
-    let result = tauri::Builder::default()
-        .plugin(tauri_plugin_single_instance::init(|app, _argv, _cwd| {
-            // Also when the window was hidden in the tray.
-            commands::window::show_main_window(app);
-        }))
-        .plugin(tauri_plugin_dialog::init())
+    // The test build's window opens the DevTools protocol for its driver, when asked.
+    #[cfg(feature = "test-overrides")]
+    if let Some(arguments) = test_overrides::browser_arguments() {
+        for window in &mut context.config_mut().app.windows {
+            window.additional_browser_args = Some(arguments.clone());
+        }
+    }
+    let builder = tauri::Builder::default();
+    // The test build, its data apart, runs beside an installed Kalamu rather than focusing it.
+    #[cfg(not(feature = "test-overrides"))]
+    let builder = builder.plugin(tauri_plugin_single_instance::init(|app, _argv, _cwd| {
+        // Also when the window was hidden in the tray.
+        commands::window::show_main_window(app);
+    }));
+    // In the test build, dialogs answered from a queue the driver writes (`test_overrides`).
+    #[cfg(not(feature = "test-overrides"))]
+    let builder = builder.plugin(tauri_plugin_dialog::init());
+    #[cfg(feature = "test-overrides")]
+    let builder = builder.plugin(test_overrides::dialogs());
+    let result = builder
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_notification::init())
         .setup(move |app| setup::setup(app, moved))
@@ -298,6 +335,7 @@ pub fn run() {
                 if matches!(event, tauri::RunEvent::Exit) {
                     commands::window::write_before_exit(app);
                     commands::window::release_before_exit(app);
+                    tracing::info!("the app ends");
                 }
                 platform::on_run_event(app, event);
             });

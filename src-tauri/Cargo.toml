@@ -92,10 +92,26 @@ objc2-foundation = { version = "0.3.2", default-features = false, features = [
     "NSURL",
 ] }
 
+[dev-dependencies]
+# The live check (`examples/live/`): its relay listens on a local port, and its tests stand
+# wiremock in for the providers' services. Both already built for the providers' tests.
+tokio = { workspace = true, features = ["net", "io-util"] }
+wiremock.workspace = true
+
+# The live check's own tests run with `cargo test`; the check itself never does.
+[[example]]
+name = "live"
+test = true
+
 [features]
 # Standard Tauri production feature: serve the bundled front end over the custom protocol
 # instead of the dev server. Enabled automatically by `tauri build`.
 custom-protocol = ["tauri/custom-protocol"]
+# The test build driven in CI (`src/test_overrides.rs`): its own data folder, the cloud
+# providers reached at the stand-in's address, keys held in memory and never the keychain.
+# Debug builds only (a release build refuses to compile with it); `tests/test_build.rs` fails if
+# a default or a release workflow turns it on.
+test-overrides = []
 
 # The workspace's lints, except that unsafe code is denied rather than forbidden: the shell
 # calls the system's own API in `src/platform/` only, for the Mac App Store build's
