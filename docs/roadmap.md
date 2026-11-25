@@ -4,61 +4,53 @@ What is built, what is next, and what is still open. The [specification](specifi
 what the app must do; [decisions](decisions/) record why it is built as it is. Each stage ends
 with an architecture review (see [AGENTS.md](../AGENTS.md)).
 
-## Status (24 November 2026)
+## Status (25 November 2026)
 
-**Version 1.10.1** ([notes](release-1.10.1.md)) is the latest release on GitHub, and **1.10.0**
-([notes](release-1.10.0.md)) the one in the Microsoft Store. For 1.10.0, three things, each
-with its own date:
+**Version 1.10.1** ([notes](release-1.10.1.md)) is the latest release. Where each copy stands:
 
-- **Published on GitHub**: 22 November 2026, as the
-  [v1.10.0 release](https://github.com/fmadore/Kalamu/releases/tag/v1.10.0), after its test
-  pass on `v1.10.0-rc1` and `rc2`.
-- **Submitted to the Microsoft Store**: after that tag, from its `Kalamu_1.10.0.msixbundle`.
-- **Live in the Microsoft Store**: seen there on 24 November 2026.
+| Where | Version | Since |
+| --- | --- | --- |
+| GitHub releases (installers for Windows x64 and ARM64, unsigned; a signed, notarised disk image for macOS) | [1.10.1](https://github.com/fmadore/Kalamu/releases/tag/v1.10.1) | 24 November 2026 |
+| [Microsoft Store](https://apps.microsoft.com/detail/9MXT5555BZ1H) | 1.10.0 live (seen on 24 November); 1.10.1 submitted | 25 November 2026 |
+| Mac App Store | 1.10.1 (build 41) in App Review, the first version there | 24 November 2026 |
 
-It holds what 1.9.0 brought (published on GitHub on 20 November before its test pass, and never
-sent to the Store), and since then documents read against a research question, a project saved
-as one file, a sample first, long interviews in parts, photographs taken twice or blurred, and
-the plain-first round.
+- **1.10.1** holds the eight bugs a review of the repository found on 23 November
+  ([#237](https://github.com/fmadore/Kalamu/issues/237) to
+  [#244](https://github.com/fmadore/Kalamu/issues/244)), a project file checked without opening
+  it ([#246](https://github.com/fmadore/Kalamu/issues/246)), Gemini 4 Neon in place of Argon,
+  and the review's menus on a right click. It was published **without a validation build and
+  without a test pass by hand**.
+- **1.10.0** ([notes](release-1.10.0.md)) was published on 22 November after its test pass on
+  `v1.10.0-rc1` and `rc2`. It holds what 1.9.0 brought (published on GitHub on 20 November
+  before its test pass, and never sent to the Store), and since then documents read against a
+  research question, a project saved as one file, a sample first, long interviews in parts,
+  photographs taken twice or blurred, and the plain-first round.
+- Now that 1.10.1 is submitted, the guide and the privacy policy move to
+  `kalamu.frederickmadore.com` ([#228](https://github.com/fmadore/Kalamu/issues/228)).
+- Kalamu has been in the Microsoft Store since 1.0.0 (2 November 2026). At the Mac App Store,
+  1.6.0, the first version sent, was withdrawn after 13 days without an answer
+  ([steps](mac-app-store.md)). 1.8.1 was prepared and never published.
 
-**1.10.1** was tagged and **published on GitHub on 24 November 2026**, as the
-[v1.10.1 release](https://github.com/fmadore/Kalamu/releases/tag/v1.10.1), without a
-validation build; it is **not yet submitted to the Microsoft Store**, where it is the next
-update. It holds the eight bugs a review of the repository found on 23 November
-([#237](https://github.com/fmadore/Kalamu/issues/237) to
-[#244](https://github.com/fmadore/Kalamu/issues/244)), all fixed on `main` that day and the
-next, a project file checked without opening it
-([#246](https://github.com/fmadore/Kalamu/issues/246)), Gemini 4 Neon in place of Argon, and
-the review's menus on a right click. No test pass by hand has run on it. The catalogue names
-it as the latest release, so copies installed from the releases page say it is out. Once it is
-submitted, the guide and the privacy policy move to `kalamu.frederickmadore.com`
-([#228](https://github.com/fmadore/Kalamu/issues/228)), which waited for 1.10.0 to reach the
-Store. The paragraph below is how 1.8.0 and 1.9.0 stood on 20 November.
-
-**Version 1.8.0** was published on 17 November 2026: unsigned installers for
-Windows x64 and ARM64 and a signed, notarised disk image for macOS on Apple Silicon, each with
-FFmpeg bundled, are on the
-[v1.8.0 release](https://github.com/fmadore/Kalamu/releases/tag/v1.8.0)
-([notes](release-1.8.0.md)): records (one row per entry), text regions over the scan, a batch's
-files deleted at the provider, and Gemini 4 Hydrogen as the default. It was tried by hand on
-Windows as `v1.8.0-rc1` ([results](windows-test-pass.md#results)) and what that found fixed;
-the live runs of that pass's Part F are still to do. It is live in the
-[Microsoft Store](https://apps.microsoft.com/detail/9MXT5555BZ1H) since 17 November, Kalamu
-having been there since version 1.0.0 (2 November 2026). **1.9.0** ([notes](release-1.9.0.md))
-is prepared as the next update, its version files set and not yet tagged: an interview analysed
-from its transcript with quotations found in the text, the search by meaning and the map, the
-researcher's own regions and a region read again, a passage corrected by a model, PAGE XML, and
-the fix for the review's scan, which redrew itself without end when a scrollbar came and went
-outside full screen (#192). 1.8.1, prepared for that fix alone, was never published. What
-1.9.0 adds has run against recorded answers only; the live runs and the test pass in the
-packaged app come before its tag. **Version 1.10.1** is in App Review at the
-Mac App Store, the first version there: 1.6.0 ([notes](release-1.6.0.md)), the first sent, was
-withdrawn after 13 days without an answer ([steps](mac-app-store.md)).
-Everything below is tested against recorded provider
-responses. Text extraction, transcription, analyses and translation have also run against the
-live Gemini, OpenAI, Claude and Mistral APIs with real keys, at once and in economy mode
+**What has been tried.** Everything is tested against recorded provider responses. Text
+extraction, transcription, analyses and translation have also run against the live Gemini,
+OpenAI, Claude and Mistral APIs with real keys, at once and in economy mode
 (`cargo run --example live`, see [development.md](development.md) and the
-[live runs](decisions/2026-11-03-live-runs.md)).
+[live runs](decisions/2026-11-03-live-runs.md)). The last test passes by hand are in
+[windows-test-pass.md](windows-test-pass.md#results) (1.8.0-rc1, 1.10.0-rc1 and rc2, on
+Windows ARM64). Most of what 1.9.0 and later added has run against recorded answers only, the
+live runs of the pass's Part F are still to do, and nothing written since 1.6.0 has run on a
+real Mac.
+
+A [review on 25 November](decisions/2026-11-25-review-safety-nets.md) of the repository, the
+roadmap and the issues confirmed what the review of 20 November found, that Kalamu is ahead of
+what has been tried, and added what neither the roadmap nor the issues held: six bugs
+([#269](https://github.com/fmadore/Kalamu/issues/269) to
+[#274](https://github.com/fmadore/Kalamu/issues/274)), the safety nets that would have caught
+them and the two releases published untried
+([#275](https://github.com/fmadore/Kalamu/issues/275) to
+[#280](https://github.com/fmadore/Kalamu/issues/280)), and eleven directions
+([#281](https://github.com/fmadore/Kalamu/issues/281) to
+[#291](https://github.com/fmadore/Kalamu/issues/291)). They open *Next* below.
 
 **macOS** (Apple Silicon) is built and tested in CI and has a disk image from 1.1.2 on, signed
 with an Apple Developer ID and notarised from 1.4.0
@@ -541,6 +533,65 @@ as handwriting). Defaults that
 
 In this order. Work that keeps what has shipped sound comes before new features.
 
+### Priorities since 25 November
+
+From the [review of 25 November](decisions/2026-11-25-review-safety-nets.md). Nothing below
+is written yet. No new feature is started before the first two are done, and what the rest of
+*Next* lists (the test passes, the live runs, what is left of the reviews and of the research
+workflows) keeps its own order after them.
+
+1. **1.10.2, the bugs the review found**, each with a test:
+   - *Pages sent at the same time* holds within one file only, so a folder of photographs is
+     read one call at a time ([#269](https://github.com/fmadore/Kalamu/issues/269));
+   - a per-minute limit worded as a quota may stop the whole job, to confirm in a live run
+     before it is changed ([#270](https://github.com/fmadore/Kalamu/issues/270));
+   - closing the window loses an unsaved correction, prompt or workflow ([#271](https://github.com/fmadore/Kalamu/issues/271));
+   - Arabic and other right-to-left text takes no direction in the review, its editor and
+     the transcript ([#272](https://github.com/fmadore/Kalamu/issues/272));
+   - the vector index is deleted on any failure to open it, which discards paid embeddings
+     ([#273](https://github.com/fmadore/Kalamu/issues/273));
+   - the originals a project file brought in outlive the project, and an older file is
+     copied whole into the system's temporary folder ([#274](https://github.com/fmadore/Kalamu/issues/274)).
+2. **Safety nets**, so that the next release cannot go out as 1.9.0 and 1.10.1 did, and a
+   researcher's corrections cannot be lost to one bad file:
+   - **The job database protected** ([#275](https://github.com/fmadore/Kalamu/issues/275)): a copy before each migration, a rolling
+     backup, an integrity check at launch with a way back, databases of earlier versions
+     migrated in CI, one unreadable row costing one row.
+   - **A release gate** ([#276](https://github.com/fmadore/Kalamu/issues/276)): a tag publishes only after a release candidate and a
+     sign-off.
+   - **The refreshed model list checked** ([#279](https://github.com/fmadore/Kalamu/issues/279)): its sense and size before it is
+     trusted, and today's list read by the versions already installed, in CI.
+   - **The interface's net** ([#280](https://github.com/fmadore/Kalamu/issues/280)): an unexpected failure said and logged; command names
+     checked against the shell's.
+   - **The packaged app driven in CI** against recorded answers ([#277](https://github.com/fmadore/Kalamu/issues/277)), which takes
+     about half of the test pass by hand off the maintainer.
+   - **A scheduled live check** of each provider under a cost ceiling ([#278](https://github.com/fmadore/Kalamu/issues/278)), which also
+     works through *Live runs still to do*.
+3. **The test passes owed**, as *First* below describes, on the release that carries 1 and
+   2: the pass on Windows, the day on a Mac, the live runs.
+4. **What a researcher's institution asks about**, small and each met early:
+   - a project that never leaves the computer ([#282](https://github.com/fmadore/Kalamu/issues/282)), before pseudonymisation
+     ([#214](https://github.com/fmadore/Kalamu/issues/214)), which it complements;
+   - spending: a ceiling, a stop past the estimate, a record by month ([#281](https://github.com/fmadore/Kalamu/issues/281));
+   - a provider's limits and a lost connection handled for the whole job ([#284](https://github.com/fmadore/Kalamu/issues/284));
+   - text size and contrast themes ([#287](https://github.com/fmadore/Kalamu/issues/287));
+   - storage: what the data takes, what can be cleared, a folder that can be moved
+     ([#288](https://github.com/fmadore/Kalamu/issues/288));
+   - a diagnostics file to attach to a report, and crash traces that can be read
+     ([#289](https://github.com/fmadore/Kalamu/issues/289));
+   - citing and contributing: `CITATION.cff`, a DOI for each release ([#291](https://github.com/fmadore/Kalamu/issues/291)); the
+     installers signed, winget and Homebrew ([#290](https://github.com/fmadore/Kalamu/issues/290)). Neither waits on anything.
+5. **New directions, each designed in a decision first**, taken up among the research
+   workflows below in this order:
+   - **A provider at an address of the researcher's own** ([#283](https://github.com/fmadore/Kalamu/issues/283)), first, and started
+     beside the safety nets rather than after them: the override of a provider's address is
+     the same plumbing the packaged app's tests need ([#277](https://github.com/fmadore/Kalamu/issues/277)), and a colleague can try it
+     with Ollama on a powerful Mac. No expert mode: the section sits in Settings and nothing
+     of it shows in New job until a service has been added.
+   - a digitised volume read from a library's IIIF manifest ([#286](https://github.com/fmadore/Kalamu/issues/286));
+   - an export for qualitative analysis software, REFI-QDA ([#285](https://github.com/fmadore/Kalamu/issues/285)), which follows
+     interview analysis ([#38](https://github.com/fmadore/Kalamu/issues/38)).
+
 **First, 1.10.0 tried and tagged** (tagged on 22 November 2026 and live in the Store; what
 this paragraph leaves is the day on a Mac and the live runs not yet made, and 1.10.1, which
 carries the fixes of 23 November, see *Status*). 1.9.0 was published on GitHub without its test pass, and
@@ -995,8 +1046,8 @@ manuscript and a 1915 newspaper in the public domain), and the listing, What's n
 certification notes for 1.0.0, the privacy policy on GitHub Pages, the screenshots and the
 submission. Version 1.0.0 passed certification and is
 [in the Microsoft Store](https://apps.microsoft.com/detail/9MXT5555BZ1H) since 2 November 2026. Later versions follow the update steps
-in [microsoft-store.md](microsoft-store.md); 1.10.0 is live, and 1.10.1 is the next update
-(1.9.0 was not submitted). The addresses given in the listing move to
+in [microsoft-store.md](microsoft-store.md); 1.10.0 is live, and 1.10.1 was submitted on
+25 November (1.9.0 was not submitted). The addresses given in the listing move to
 `kalamu.frederickmadore.com` with a submission after it
 ([#228](https://github.com/fmadore/Kalamu/issues/228)).
 
@@ -1089,6 +1140,11 @@ first workflow increment.
 | Duplicate and blurred photographs | Flagged in the file list before anything is sent; with #53's checks | [#216](https://github.com/fmadore/Kalamu/issues/216) |
 | References from Zotero | A CSL-JSON file matched to a project's documents, filling their descriptions | [#217](https://github.com/fmadore/Kalamu/issues/217) |
 | Corrected OCR with ALTO | Tesseract, then a correction that sees the page, line for line, laid back onto the extraction's words so ALTO, PAGE XML and the searchable PDF are kept; for an OCR already readable ([decision](decisions/2026-11-24-correction-keeps-alto.md)) | [#262](https://github.com/fmadore/Kalamu/issues/262) |
+| An offline-only project | A project's documents offered only to the engines on the computer, enforced where consent is | [#282](https://github.com/fmadore/Kalamu/issues/282) |
+| Spending | A ledger that outlives the job, a ceiling per job, a stop past the estimate, a record by month | [#281](https://github.com/fmadore/Kalamu/issues/281) |
+| A library's IIIF manifest | Pages fetched in order as an ordered image document (#52), the manifest's description offered to the source description | [#286](https://github.com/fmadore/Kalamu/issues/286) |
+| Qualitative analysis software | A REFI-QDA project: texts, themes as codes, quotations as coded passages at their place; builds on #38 | [#285](https://github.com/fmadore/Kalamu/issues/285) |
+| A provider at the researcher's own address | An OpenAI-compatible module speaking Chat Completions, its models declared by the researcher; covers OpenRouter | [#283](https://github.com/fmadore/Kalamu/issues/283) |
 
 Scope is local research preparation, review and export. External collection-system integration
 and publishing are excluded from this work. Implementation follows the architecture checkpoints
@@ -1097,7 +1153,8 @@ in AGENTS.md and updates the specification and user-facing documentation when fe
 ## Later
 
 - German interface: `de.ts` beside `en.ts` and `fr.ts`.
-- OpenRouter for open-weights models.
+- OpenRouter for open-weights models: through a provider at an address of the researcher's own
+  ([#283](https://github.com/fmadore/Kalamu/issues/283)).
 - Linking names to imported local authority records (an id from candidate records, or none,
   with a reason), building on the project dictionary in #48.
 - Tables of contents of text files (a long Word report, a transcript, read in passages).
