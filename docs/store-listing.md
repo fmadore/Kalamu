@@ -1,7 +1,7 @@
 # Store listing text
 
 Paste-ready text for Kalamu's two store listings: the Microsoft Store (Partner Center) first,
-where 1.10.0 is live and 1.10.1 is the next update, its *What's new* and certification notes
+where 1.10.0 is live and 1.10.1 was submitted on 25 November, its *What's new* and certification notes
 below (the first version, 1.0.0, was certified on 2 November 2026), in
 [English](#english-united-states) and [French](#french-france), then the
 [Mac App Store](#mac-app-store-app-store-connect) (App Store Connect), where 1.10.1, the first
