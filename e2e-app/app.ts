@@ -1,7 +1,7 @@
 // The built app, started and driven: the test build of Kalamu (`--features test-overrides`), in a
 // data folder of its own, every cloud provider reached at the stand-in provider, and its WebView2
-// window driven over the Chrome DevTools protocol that WebView2 opens when asked
-// (WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS), which is what Edge's WebDriver itself drives. Windows
+// window driven over the Chrome DevTools protocol that WebView2 opens when the test build asks
+// it to (KALAMU_TEST_DEVTOOLS_PORT), which is what Edge's WebDriver itself drives. Windows
 // only: WKWebView offers neither. See docs/decisions/2026-11-25-app-driven-in-ci.md.
 
 import { execFileSync, spawn, type ChildProcess } from 'node:child_process';
@@ -146,7 +146,7 @@ export class App {
 				...process.env,
 				KALAMU_TEST_DATA: dirs.data,
 				KALAMU_TEST_PROVIDERS: standIn.url,
-				WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS: `--remote-debugging-port=${port}`,
+				KALAMU_TEST_DEVTOOLS_PORT: String(port),
 				RUST_LOG: 'kalamu=info,kalamu_lib=info,kalamu_engine=info,warn'
 			},
 			stdio: ['ignore', 'inherit', 'inherit']

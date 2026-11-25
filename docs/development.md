@@ -115,7 +115,7 @@ npm run test:app
 
 `npm run test:app` starts the stand-in and the app for each flow (`e2e-app/flows.spec.ts`), each
 in a temporary data folder with copies of the sample files, and drives the window over the
-DevTools protocol WebView2 opens (`WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS`): a job from New job
+DevTools protocol the test build has WebView2 open (`KALAMU_TEST_DEVTOOLS_PORT`): a job from New job
 to its files, a correction found after a restart, a project saved and opened, a paused job
 resumed after a restart, a batch collected after a restart. The window shows while it runs;
 leave it alone. `KALAMU_APP` names another executable. A failed flow keeps its trace in

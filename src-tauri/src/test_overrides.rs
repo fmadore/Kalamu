@@ -3,7 +3,7 @@
 //! with the `test-overrides` feature, which no release build enables, and refused in any build
 //! that is not a debug build; `tests/test_build.rs` checks that no workflow or default turns it on.
 //!
-//! Four things:
+//! Five things:
 //!
 //! - [`DATA`]: the data folder, so a test run never reads or writes a researcher's own;
 //! - [`PROVIDERS`]: an address every cloud provider is reached under (`<address>/<provider>`),
@@ -13,7 +13,11 @@
 //!   kept in memory until the app ends;
 //! - the native dialogs ([`dialogs`]), answered from a queue in the data folder, since no
 //!   webview driver reaches a system window. The single-instance plugin is left out too, so a
-//!   test build runs beside an installed Kalamu instead of focusing it.
+//!   test build runs beside an installed Kalamu instead of focusing it;
+//! - [`DEVTOOLS_PORT`]: the port the window's WebView2 opens the DevTools protocol on, which the
+//!   driver connects to. The app asks for it itself: WebView2's own variable
+//!   (`WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS`) is not read on GitHub's runners, whose browser
+//!   process starts without what it names.
 
 #[cfg(not(debug_assertions))]
 compile_error!(
@@ -34,6 +38,18 @@ pub const PROVIDERS: &str = "KALAMU_TEST_PROVIDERS";
 /// The key every cloud provider holds when [`PROVIDERS`] is set: the stand-in accepts it, and
 /// no real service would.
 pub const KEY: &str = "stand-in-key";
+
+/// The port WebView2 opens the DevTools protocol on, for the driver (Windows).
+pub const DEVTOOLS_PORT: &str = "KALAMU_TEST_DEVTOOLS_PORT";
+
+/// The arguments the window's WebView2 is started with when [`DEVTOOLS_PORT`] names a port:
+/// the ones Tauri gives by default, which arguments of the app's own replace, then the port.
+pub fn browser_arguments() -> Option<String> {
+    let port: u16 = std::env::var(DEVTOOLS_PORT).ok()?.trim().parse().ok()?;
+    Some(format!(
+        "--disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection --remote-debugging-port={port}"
+    ))
+}
 
 /// The data folder [`DATA`] names, if it names an absolute one.
 pub fn data_folder() -> Option<PathBuf> {

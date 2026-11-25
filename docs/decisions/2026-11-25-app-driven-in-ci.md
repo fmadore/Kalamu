@@ -52,8 +52,11 @@ reaches.
 
 - **Windows is driven over the DevTools protocol with Playwright, not `tauri-driver`.**
   WebView2 opens the Chrome DevTools protocol when started with
-  `WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS=--remote-debugging-port=<port>`, which is what Edge's
-  WebDriver does under `tauri-driver`. Playwright is already the interface's test runner, finds
+  `--remote-debugging-port=<port>`, which is what Edge's WebDriver does under `tauri-driver`.
+  The test build passes the argument itself, for the port `KALAMU_TEST_DEVTOOLS_PORT` names:
+  WebView2's own variable (`WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS`) worked on the maintainer's
+  computer (WebView2 158) and was not read on GitHub's runners (157), whose browser process
+  started without the argument. Playwright is already the interface's test runner, finds
   elements by accessible name as `e2e/` does, and `connectOverCDP` downloads no browser; the
   WebDriver route would add a Rust tool built on each runner and an Edge driver to download per
   run that must match the runner's WebView2 version, which updates on its own. Live

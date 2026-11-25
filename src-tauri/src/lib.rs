@@ -83,6 +83,13 @@ pub fn run() {
     }
     let mut context = tauri::generate_context!();
     context.config_mut().app.app_directories_override = Some(folders);
+    // The test build's window opens the DevTools protocol for its driver, when asked.
+    #[cfg(feature = "test-overrides")]
+    if let Some(arguments) = test_overrides::browser_arguments() {
+        for window in &mut context.config_mut().app.windows {
+            window.additional_browser_args = Some(arguments.clone());
+        }
+    }
     let builder = tauri::Builder::default();
     // The test build, its data apart, runs beside an installed Kalamu rather than focusing it.
     #[cfg(not(feature = "test-overrides"))]
