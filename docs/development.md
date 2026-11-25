@@ -89,6 +89,51 @@ definitions; commit them with the Rust change. Exporters are checked against gol
 `crates/export/golden/`; after an intended change, rerun their tests with `UPDATE_GOLDEN=1`
 and review the diff.
 
+## The app driven
+
+The built app itself, driven against a stand-in provider: what `e2e/` does against the dev
+server's mock, but through Rust, the job database and the files written
+([decision](decisions/2026-11-25-app-driven-in-ci.md)). CI runs it in the *App driven* workflow
+on pull requests that touch the shell, the engine, the providers, the store or the core, and on
+every release candidate's tag.
+
+It drives a **test build**: a debug build with the `test-overrides` feature, which a release
+build refuses to compile. Given `KALAMU_TEST_DATA`, it keeps its data there; given
+`KALAMU_TEST_PROVIDERS`, it reaches every cloud provider under that address with a key of its
+own; it never asks or writes the keychain, answers its native dialogs from
+`dialog-answers.json` in its data folder, and runs beside an installed Kalamu. The stand-in,
+`scripts/app-driven/stand-in.mjs`, answers with the providers' tests' recorded answers and
+calls no real service.
+
+On Windows (x64 or ARM64), with WebView2:
+
+```bash
+npm run build
+cargo build -p kalamu --features custom-protocol,test-overrides
+npm run test:app
+```
+
+`npm run test:app` starts the stand-in and the app for each flow (`e2e-app/flows.spec.ts`), each
+in a temporary data folder with copies of the sample files, and drives the window over the
+DevTools protocol WebView2 opens (`WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS`): a job from New job
+to its files, a correction found after a restart, a project saved and opened, a paused job
+resumed after a restart, a batch collected after a restart. The window shows while it runs;
+leave it alone. `KALAMU_APP` names another executable. A failed flow keeps its trace in
+`test-results/app` (`npx playwright show-trace <trace.zip>`). On a Mac there is no driver for
+WKWebView: `scripts/app-driven/launch-check.sh <Kalamu.app>` starts a test build bundled with
+`npx tauri build --debug --bundles app --features test-overrides`, checks that it opens its
+database, and quits it.
+
+To try the test build by hand, start the stand-in (`node scripts/app-driven/stand-in.mjs`, on
+port 4310) and the app with both variables set. Its pickers open nothing: write what they
+should answer into `dialog-answers.json` first (`[["C:\\path\\to\\page.jpg"]]` for one file
+chosen), or drop files on the window. In PowerShell:
+
+```powershell
+$env:KALAMU_TEST_DATA = "$env:TEMP\kalamu-test"; $env:KALAMU_TEST_PROVIDERS = 'http://127.0.0.1:4310'
+.\target\debug\kalamu.exe
+```
+
 ## Live checks
 
 The live check (`src-tauri/examples/live/`) runs real jobs against the providers' services, through

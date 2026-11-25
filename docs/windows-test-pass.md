@@ -12,6 +12,17 @@ Each step has a letter and a number, which the results name. Tick each box, and 
 wrong in [Results](#results) as you go: the screen, what was done, what was expected, what
 happened. A screenshot of anything odd costs nothing.
 
+**What CI now does of it.** Since 25 November the *App driven* workflow builds a test build of
+the app on Windows x64 and ARM64 and drives it against a stand-in provider on every pull request
+that touches the shell or the engine and on every release candidate
+([decision](decisions/2026-11-25-app-driven-in-ci.md)): a job from New job to its files, a
+correction found after a restart, a project saved to a file and opened, a paused job resumed
+after a restart, a batch collected after a restart. It drives the built executable, not the
+installed copy. A step marked **CI** below is done there whole and need not be done by hand;
+one marked **CI, in part** says what CI does and what is still yours. Of the 72 steps, 1 is
+done whole by CI (A9) and 4 in part (A1, A3, F6, F22): **71 are left by hand**, 4 of them
+shorter.
+
 ## Before starting
 
 - [ ] **A validation build of `main`**: a hyphenated tag (`v<version>-rc1`, the version the
@@ -86,7 +97,9 @@ At the end, summarise what failed, what you could not try, and what passed, in t
 ## Part A: launch and shell (30 minutes)
 
 - [ ] **A1. The window** opens at launch. The sidebar, New job and Settings show without error,
-  and Settings → About gives the validation build's version.
+  and Settings → About gives the validation build's version. **CI, in part**: the window opens,
+  with the sidebar and New job, at every launch of the flows; Settings, and the installed
+  copy's version in About, are still yours.
 - [ ] **A2. The window hidden for a whole job**: start a Tesseract job on
   `daily-nebraskan-1911-issue.pdf`, close the window at once. The job runs on from the
   notification area, whose icon shows it; a notification says it finished, with Kalamu's icon;
@@ -98,7 +111,10 @@ At the end, summarise what failed, what you could not try, and what passed, in t
   last is shown and the other is under *1 more*. In a short window the sidebar scrolls by
   itself and the page does not. Then start it a third time and
   quit Kalamu while it runs (*Quit now*); at the next launch the interrupted job is there with
-  **Resume**, and finishes without reading again the pages already done.
+  **Resume**, and finishes without reading again the pages already done. **CI, in part**: a job
+  paused part way, Kalamu quit and opened again, resumed from *To resume* with the pointer,
+  finishes having asked for each page once. Still yours: the keyboard, the focus and the
+  message, two jobs waiting, the short window, and *Quit now* while the job runs.
 - [ ] **A4. Clear unused results** in Settings → General says what it will
   remove and removes it; the jobs listed still open their reviews.
 - [ ] **A5. The review's scan outside full screen** (#192, fixed in 1.9.0): open a text review
@@ -119,7 +135,8 @@ At the end, summarise what failed, what you could not try, and what passed, in t
   Settings › About opens the guide in the browser in the interface language; switch Kalamu to
   French and it opens `/guide/fr`.
 - [ ] **A9. An empty project** (#212): a new project with no documents says what to do first in
-  place of its table; its search and *What to check* say what will come there.
+  place of its table; its search and *What to check* say what will come there. **CI**: the
+  project flow checks all three before adding a job.
 - [ ] **A10. The fields in French** (#210), after C3: with the interface in French, C3's
   review, its prompt's fields in New job and the dictionary show *Résumé*, *Thèmes* and the
   choices in French; the exported `.csv` keeps the English keys.
@@ -319,7 +336,9 @@ Chrome where you are signed in.
 - [ ] **F5. A batch's files after a deleted job**: start one more economy job, delete the job
   while its batch waits, and check at the next launch that its files are gone too.
 - [ ] **F6. A records job in economy mode**: the directory's pages with a Gemini or Mistral
-  model, collected after Kalamu was closed and reopened.
+  model, collected after Kalamu was closed and reopened. **CI, in part**: an extraction sent as
+  a Gemini batch, answered while Kalamu was closed and collected at the next launch, against the
+  stand-in. Still yours: a records analysis, and a real provider's batch.
 - [ ] **F7. GPT-6.2 Sol and Astra on real pages**: an extraction of `dodington-1755.jpg`
   (handwriting) and `daily-nebraskan-1911.pdf` with each; the cost near the estimate; note how
   the handwriting reads against Gemini 4 Hydrogen's.
@@ -379,7 +398,10 @@ Chrome where you are signed in.
   each file on the Mac (and one saved on the Mac here): every correction, review mark and
   tag is there, the pages show when the originals were included, the exports work, and the
   other projects are untouched. Open the same file twice. Open the `.kalamu` in a text
-  editor and search it for your API key: it is not there.
+  editor and search it for your API key: it is not there. **CI, in part**: a project of one job
+  saved with **Save to a file…**, without the originals, and opened again on the same computer as
+  a second project, with its document and its job. Still yours: corrections, tags and the
+  dictionary carried, the originals, the Mac, the same file twice, and the key.
 
 ## The sign-off
 
