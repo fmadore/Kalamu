@@ -68,8 +68,9 @@ what changed in `src-tauri`.
   two new ones; it is 48.
 - **WebKit starts a line on the side of `direction` alone.** CI's WebKit lane showed that
   `unicode-bidi: plaintext` orders an Arabic line's words there but leaves the line starting
-  on the left. Each line of the text being checked therefore also carries `dir`, worked out
-  from its first letter (`directionOf`). A block of several paragraphs (a compared text, the
+  on the left. It also read a transcript's speaker label, though set apart, into the
+  direction it found. Each line of the text being checked therefore carries `dir`, worked
+  out from its first letter (`directionOf`), in place of the class. A block of several paragraphs (a compared text, the
   correction editor) cannot carry one `dir`: in WebKit its Arabic paragraphs are ordered
   rightly and still start on the left, to see on a Mac.
 - **On Windows the working copy of an older project file was never deleted**, in the

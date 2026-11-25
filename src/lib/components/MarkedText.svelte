@@ -115,7 +115,7 @@
 						{line.number}
 					</span>{/if}
 				<!-- prettier-ignore -->
-				<span class="t own-direction" class:heading dir={directionOf(heading?.parts ?? who?.parts ?? line.parts)}>{#if heading}<span class="heading-mark">{heading.mark}</span>{/if}{#if who}<span class="who">{who.label}</span>{/if}{#each heading?.parts ?? who?.parts ?? line.parts as part, k (k)}{@render text(part)}{/each}</span>
+				<span class="t" class:heading dir={directionOf(heading?.parts ?? who?.parts ?? line.parts)}>{#if heading}<span class="heading-mark">{heading.mark}</span>{/if}{#if who}<span class="who" dir="auto">{who.label}</span>{/if}{#each heading?.parts ?? who?.parts ?? line.parts as part, k (k)}{@render text(part)}{/each}</span>
 			</div>
 		{/each}
 	</div>
@@ -150,8 +150,12 @@
 	.line.blank {
 		min-height: 0.7em;
 	}
+	/* Each line carries its own direction (`dir`, from its first letter) and starts on its own
+	   side. Not `unicode-bidi: plaintext`: WebKit reads a speaker's label into the paragraph's
+	   direction there, and starts the line by `direction` alone. */
 	.t {
 		grid-column: 2;
+		text-align: start;
 		white-space: pre-wrap;
 		overflow-wrap: anywhere;
 	}

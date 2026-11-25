@@ -215,8 +215,9 @@ const RIGHT_TO_LEFT =
 	/[\p{Script=Arabic}\p{Script=Hebrew}\p{Script=Syriac}\p{Script=Thaana}\p{Script=Nko}\p{Script=Adlam}\p{Script=Mandaic}\p{Script=Samaritan}\p{Script=Hanifi_Rohingya}]/u;
 
 /** The direction a line reads in, from its first letter, as `dir="auto"` finds it; undefined
- * for a line with no letter. Given to the line itself: `unicode-bidi: plaintext` orders the
- * words in every engine, but WebKit starts the line on the side of `direction` alone. */
+ * for a line with no letter. Given to the line itself, since WebKit starts a line on the side
+ * of `direction` alone, whatever `unicode-bidi: plaintext` finds, and reads a speaker's label
+ * set apart into what it finds. */
 export function directionOf(parts: Line['parts']): 'rtl' | 'ltr' | undefined {
 	for (const part of parts) {
 		const letter = part.text.match(/\p{L}/u)?.[0];
