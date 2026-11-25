@@ -4,7 +4,7 @@
 // (WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS), which is what Edge's WebDriver itself drives. Windows
 // only: WKWebView offers neither. See docs/decisions/2026-11-25-app-driven-in-ci.md.
 
-import { spawn, type ChildProcess } from 'node:child_process';
+import { execFileSync, spawn, type ChildProcess } from 'node:child_process';
 import {
 	copyFileSync,
 	existsSync,
@@ -152,7 +152,7 @@ export class App {
 			stdio: ['ignore', 'inherit', 'inherit']
 		});
 		const exited = new Promise<number | null>((done) => child.once('exit', (code) => done(code)));
-		const browser = await connect(port, exited);
+		const browser = await connect(port, dirs.data, exited);
 		const page = await windowPage(browser);
 		await page.getByRole('navigation', { name: 'Jobs' }).waitFor();
 		return new App(child, browser, page, exited, dirs.data, port);
@@ -216,22 +216,77 @@ export class App {
 /** The DevTools port of the next launch. */
 let nextPort = 9333;
 
-/** Connects over CDP once WebView2 listens, or fails when the app ended first. */
-async function connect(port: number, exited: Promise<number | null>): Promise<Browser> {
+/** The port WebView2 says it listens on (the `DevToolsActivePort` file its browser process
+ *  writes in its profile, under the data folder), when it wrote one. */
+function activePort(data: string): number | undefined {
+	for (const dir of [join(data, 'EBWebView'), data]) {
+		const file = join(dir, 'DevToolsActivePort');
+		if (!existsSync(file)) continue;
+		const port = Number(readFileSync(file, 'utf8').split(/\r?\n/)[0]);
+		if (Number.isInteger(port) && port > 0) return port;
+	}
+	return undefined;
+}
+
+/** What the machine shows when the webview cannot be reached, for the log of a failed run:
+ *  WebView2's version, its processes with the arguments they were started with, the ports they
+ *  listen on, and what the data folder holds. */
+function diagnosis(data: string): string {
+	const script = [
+		"$ErrorActionPreference = 'SilentlyContinue'",
+		"'WebView2: ' + (Get-ItemProperty 'HKLM:\\SOFTWARE\\WOW6432Node\\Microsoft\\EdgeUpdate\\Clients\\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}').pv",
+		"'Policy: ' + ((Get-ItemProperty 'HKLM:\\SOFTWARE\\Policies\\Microsoft\\Edge' | Out-String).Trim())",
+		"'Policy (WebView2): ' + ((Get-ChildItem 'HKLM:\\SOFTWARE\\Policies\\Microsoft\\Edge\\WebView2' -Recurse | Out-String).Trim())",
+		"$p = Get-CimInstance Win32_Process | Where-Object { $_.Name -in 'msedgewebview2.exe','kalamu.exe' }",
+		"$p | ForEach-Object { '' + $_.ProcessId + ' ' + $_.Name + ' ' + $_.CommandLine }",
+		"Get-NetTCPConnection -State Listen | Where-Object { $p.ProcessId -contains $_.OwningProcess } | ForEach-Object { 'listening: ' + $_.LocalAddress + ':' + $_.LocalPort + ' pid ' + $_.OwningProcess }"
+	].join('; ');
+	let machine: string;
+	try {
+		machine = execFileSync('powershell', ['-NoProfile', '-Command', script], {
+			encoding: 'utf8',
+			timeout: 60_000
+		});
+	} catch (e) {
+		machine = `the machine could not be asked: ${String(e)}`;
+	}
+	const list = (dir: string) => (existsSync(dir) ? readdirSync(dir).join(', ') : 'absent');
+	return [
+		machine.trim(),
+		`data folder: ${list(data)}`,
+		`EBWebView: ${list(join(data, 'EBWebView'))}`,
+		`DevToolsActivePort: ${activePort(data) ?? 'not written'}`
+	].join('\n');
+}
+
+/** Connects over CDP once WebView2 listens, or fails when the app ended first. The port asked
+ *  for is tried at each of the loopback's addresses, then the one WebView2 wrote down. */
+async function connect(
+	port: number,
+	data: string,
+	exited: Promise<number | null>
+): Promise<Browser> {
 	let ended: number | null | undefined;
 	void exited.then((code) => (ended = code));
 	const deadline = Date.now() + 90_000;
 	let last: unknown;
 	while (Date.now() < deadline) {
 		if (ended !== undefined) throw new Error(`the app ended at launch (exit code ${ended})`);
-		try {
-			return await chromium.connectOverCDP(`http://127.0.0.1:${port}`, { timeout: 5_000 });
-		} catch (e) {
-			last = e;
-			await new Promise((r) => setTimeout(r, 500));
+		const written = activePort(data);
+		const addresses = [`127.0.0.1:${port}`, `[::1]:${port}`];
+		if (written !== undefined && written !== port) addresses.push(`127.0.0.1:${written}`);
+		for (const address of addresses) {
+			try {
+				return await chromium.connectOverCDP(`http://${address}`, { timeout: 5_000 });
+			} catch (e) {
+				last = e;
+			}
 		}
+		await new Promise((r) => setTimeout(r, 500));
 	}
-	throw new Error(`could not reach the app's webview on port ${port}: ${String(last)}`);
+	throw new Error(
+		`could not reach the app's webview on port ${port}: ${String(last)}\n${diagnosis(data)}`
+	);
 }
 
 /** The main window's page, once it shows the app (not WebView2's blank start). */
