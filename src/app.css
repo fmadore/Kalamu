@@ -227,6 +227,9 @@ body {
 	accent-color: var(--ink);
 	caret-color: var(--text-bright);
 	scrollbar-color: var(--line-strong) transparent;
+	/* A touchpad pushed past the end of a pane would otherwise pull the whole window and show
+	   an empty band above or below it (WebView2's elastic overscroll, WebKit's rubber band). */
+	overscroll-behavior: none;
 }
 
 /* While a pane boundary is dragged, the whole window keeps the resize cursor and selects nothing. */
