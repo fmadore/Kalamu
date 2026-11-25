@@ -7,6 +7,7 @@ import {
 	numbered,
 	siglum,
 	speakerOf,
+	directionOf,
 	variants,
 	witnessParts
 } from './apparatus.js';
@@ -227,5 +228,19 @@ describe('apparatus', () => {
 		]);
 		// Read in order, the parts are the witness's text.
 		expect(parts.map((p) => p.text).join('')).toBe('plus de trois cent fidèles ');
+	});
+});
+
+describe('directionOf', () => {
+	const line = (...texts: string[]) => texts.map((text) => ({ text, entry: null }));
+	it('reads the direction from the first letter, past figures and marks', () => {
+		expect(directionOf(line('12. ', 'كتب القاضي إلى الوالي'))).toBe('rtl');
+		expect(directionOf(line('« Le commandant de cercle »'))).toBe('ltr');
+		expect(directionOf(line('ߒߞߏ'))).toBe('rtl');
+		expect(directionOf(line('Paris, كتب'))).toBe('ltr');
+	});
+	it('says nothing of a line with no letter', () => {
+		expect(directionOf(line('1915 — 1916'))).toBeUndefined();
+		expect(directionOf([])).toBeUndefined();
 	});
 });

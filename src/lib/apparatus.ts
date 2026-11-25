@@ -210,6 +210,21 @@ export function speakerOf(
 	};
 }
 
+/** Letters of the scripts written from right to left. */
+const RIGHT_TO_LEFT =
+	/[\p{Script=Arabic}\p{Script=Hebrew}\p{Script=Syriac}\p{Script=Thaana}\p{Script=Nko}\p{Script=Adlam}\p{Script=Mandaic}\p{Script=Samaritan}\p{Script=Hanifi_Rohingya}]/u;
+
+/** The direction a line reads in, from its first letter, as `dir="auto"` finds it; undefined
+ * for a line with no letter. Given to the line itself: `unicode-bidi: plaintext` orders the
+ * words in every engine, but WebKit starts the line on the side of `direction` alone. */
+export function directionOf(parts: Line['parts']): 'rtl' | 'ltr' | undefined {
+	for (const part of parts) {
+		const letter = part.text.match(/\p{L}/u)?.[0];
+		if (letter) return RIGHT_TO_LEFT.test(letter) ? 'rtl' : 'ltr';
+	}
+	return undefined;
+}
+
 /** Whether a line number is printed in the margin: every fifth line and every line with a variant. */
 export function numbered(line: number, entries: Entry[]): boolean {
 	return line > 0 && (line % 5 === 0 || entries.some((e) => e.line === line));

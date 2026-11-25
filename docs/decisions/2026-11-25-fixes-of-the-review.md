@@ -66,6 +66,12 @@ what changed in `src-tauri`.
   stays open until a captured answer from each provider replaces them (#278).
 - The interaction tests' files outside `tsconfig.json` passed ESLint's limit of 32 with the
   two new ones; it is 48.
+- **WebKit starts a line on the side of `direction` alone.** CI's WebKit lane showed that
+  `unicode-bidi: plaintext` orders an Arabic line's words there but leaves the line starting
+  on the left. Each line of the text being checked therefore also carries `dir`, worked out
+  from its first letter (`directionOf`). A block of several paragraphs (a compared text, the
+  correction editor) cannot carry one `dir`: in WebKit its Arabic paragraphs are ordered
+  rightly and still start on the left, to see on a Mac.
 - To try by hand, none of it having run in the packaged app: an Arabic page and transcript in
   WebView2 and WebKit; closing with a correction open on Windows; ⌘Q and the red button on a
   Mac, with and without jobs; a project opened with its originals, then deleted.

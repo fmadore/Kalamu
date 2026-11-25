@@ -7,6 +7,7 @@
 	// between them, however many there are: ← and → (Home and End) go from one to the next.
 	import {
 		headingOf,
+		directionOf,
 		numbered as numberedLine,
 		speakerOf,
 		type Entry,
@@ -114,7 +115,7 @@
 						{line.number}
 					</span>{/if}
 				<!-- prettier-ignore -->
-				<span class="t own-direction" class:heading>{#if heading}<span class="heading-mark">{heading.mark}</span>{/if}{#if who}<span class="who">{who.label}</span>{/if}{#each heading?.parts ?? who?.parts ?? line.parts as part, k (k)}{@render text(part)}{/each}</span>
+				<span class="t own-direction" class:heading dir={directionOf(heading?.parts ?? who?.parts ?? line.parts)}>{#if heading}<span class="heading-mark">{heading.mark}</span>{/if}{#if who}<span class="who">{who.label}</span>{/if}{#each heading?.parts ?? who?.parts ?? line.parts as part, k (k)}{@render text(part)}{/each}</span>
 			</div>
 		{/each}
 	</div>
