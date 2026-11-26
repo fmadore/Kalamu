@@ -31,6 +31,10 @@ vérifiés. Chaque chapitre se lit seul. Si vous débutez, lisez celui-ci, puis
     sont plus lents et moins bons que les modèles en ligne. Voir
     [Travailler hors ligne](offline.md).
 
+Si votre université fait tourner des modèles pour ses membres, ou si un ordinateur de votre
+bureau fait tourner Ollama, Kalamu peut aussi s’en servir : voir
+[Autres serveurs](other-servers.md).
+
 L’application fonctionne sans Python, ligne de commande ni compte Kalamu.
 
 ## Installer Kalamu
@@ -97,7 +101,7 @@ Tout se trouve dans la barre latérale, à gauche :
 | **Chaînes de traitement** | Plusieurs étapes à la suite : lire le texte, le vérifier, puis l’analyser. |
 | **Traitements** | Tous les traitements que vous avez lancés, pour les retrouver, les trier, les renommer ou les supprimer. |
 | **Prompts** | Les consignes données aux modèles : celles que fournit Kalamu et les vôtres. |
-| **Paramètres** | Les clés d’API, les modèles hors ligne, la langue et l’apparence. |
+| **Paramètres** | Les clés d’API, les modèles hors ligne, les autres serveurs, la langue et l’apparence. |
 | **Glossaire** | Des explications simples des mots qu’emploient ces outils, de l’OCR à l’hallucination. |
 
 En dessous, la barre latérale liste vos traitements : en cours, inachevés, à vérifier et

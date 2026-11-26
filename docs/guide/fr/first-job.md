@@ -43,9 +43,13 @@ proposent **Annuler** font de même.
 ## 2. Choisir un modèle et un prompt
 
 - **Le modèle** fait la lecture. La liste montre les modèles auxquels vos clés donnent accès et
-  les modèles hors ligne que vous avez téléchargés, avec leurs prix. Il est raisonnable
-  d’essayer d’abord un petit modèle, et de passer à un plus puissant seulement si le résultat ne
-  suffit pas.
+  les modèles hors ligne que vous avez téléchargés, avec leurs prix, ainsi que ceux de vos
+  [autres serveurs](other-servers.md). Il est raisonnable d’essayer d’abord un petit modèle, et
+  de passer à un plus puissant seulement si le résultat ne suffit pas. La liste s’ouvre sur un
+  champ, *Chercher par nom ou fournisseur* : tapez une partie du nom d’un modèle ou de son
+  fournisseur (majuscules et accents n’y changent rien) pour la réduire, puis choisissez avec
+  les flèches et <kbd>Entrée</kbd>. <kbd>Échap</kbd> efface ce que vous avez tapé, et un second
+  <kbd>Échap</kbd> ferme la liste.
 - **Le prompt** est la consigne que suit le modèle. Kalamu fournit des prompts pour les
   documents courants (texte imprimé, écriture manuscrite, journaux en colonnes, etc.). Prenez le
   plus proche de vos documents. Vous pouvez le lire, puis plus tard le copier et l’adapter dans

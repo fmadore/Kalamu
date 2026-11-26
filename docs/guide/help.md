@@ -2,7 +2,7 @@
 layout: guide
 title: When something goes wrong
 nav: Troubleshooting
-order: 9
+order: 10
 lede: The common problems, and what to do about each.
 description: Troubleshooting Kalamu, with answers to common questions.
 ---
@@ -37,6 +37,12 @@ under *To resume*.
   model and [compare](review.md#compare-models), or use a stronger model for those pages.
 - For a spread photographed as one image, accept the fix New job proposes, so each page is
   read on its own.
+
+## A server of your own does not answer
+
+When adding Ollama or a university's server fails, or one of its models stops working, Kalamu
+says why in a sentence; [Other servers](other-servers.md#when-it-does-not-work) lists each
+one with what to check.
 
 ## An offline model is very slow
 

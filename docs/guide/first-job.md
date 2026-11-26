@@ -38,8 +38,12 @@ disk. If you exclude a photo by mistake, click **Undo** in the confirmation bann
 ## 2. Choose a model and a prompt
 
 - **The model** does the reading. The list shows the models your keys can use and the offline
-  ones you have downloaded, with their prices. A smaller model is the sensible first try; move
-  up only if the result is not good enough.
+  ones you have downloaded, with their prices, and the models of any
+  [server of your own](other-servers.md). A smaller model is the sensible first try; move up
+  only if the result is not good enough. The list opens with a field, *Find by name or
+  provider*: type part of a model's name or of its provider's (capitals and accents do not
+  matter) to narrow it, then choose with the arrow keys and <kbd>Enter</kbd>. <kbd>Esc</kbd>
+  clears what you typed, and a second <kbd>Esc</kbd> closes the list.
 - **The prompt** is the instruction the model follows. Kalamu ships prompts for common
   material (printed text, handwriting, newspapers in columns and so on). Pick the closest one;
   you can read it, and later copy and adapt it under **Prompts**.

@@ -28,6 +28,9 @@ stands on its own; if you are new, read this one, then [Your first job](first-jo
     sent and nothing is billed, but they are slower and weaker than the cloud models. See
     [Working offline](offline.md).
 
+If your university runs models for its members, or a computer in your office runs Ollama,
+Kalamu can use those too: see [Other servers](other-servers.md).
+
 You do not need Python, the command line, or a Kalamu account.
 
 ## Install
@@ -90,7 +93,7 @@ The sidebar on the left holds everything:
 | **Workflows** | Several steps run one after another: read the text, check it, then analyse it. |
 | **Jobs** | Every job you ran, to search, sort, rename or delete. |
 | **Prompts** | The instructions models are given: the ones Kalamu ships and your own. |
-| **Settings** | API keys, offline models, language and theme. |
+| **Settings** | API keys, offline models, other servers, language and theme. |
 | **Glossary** | Plain explanations of the words these tools use, from OCR to hallucination. |
 
 Under these, the sidebar lists your jobs: running, unfinished, waiting for you to check, and
