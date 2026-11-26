@@ -16,7 +16,8 @@ with an architecture review (see [AGENTS.md](../AGENTS.md)).
 
 - **1.11.0** is being prepared ([notes](release-1.11.0.md)), the first release under the
   release gate: the six bugs of the review of 25 November, the safety nets, the model list's
-  search field, and a server of the researcher's own. Its candidate, `v1.11.0-rc1`, waits for
+  search field, and a server of the researcher's own. Its candidate, `v1.11.0-rc2` (rc1 less
+  [#300](https://github.com/fmadore/Kalamu/pull/300), a recording's estimate), waits for
   the test pass on Windows and the day on a Mac, which have new steps for it (Part G of
   [windows-test-pass.md](windows-test-pass.md), B10 and B11 of
   [mac-test-day.md](mac-test-day.md)).

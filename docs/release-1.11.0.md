@@ -76,7 +76,10 @@ the start-up failure has **Try again**
 ([#280](https://github.com/fmadore/Kalamu/issues/280)). The window no longer stretches past its
 ends when a touchpad keeps scrolling ([#296](https://github.com/fmadore/Kalamu/pull/296)). A
 downloaded model list is checked before it is used, and one that fails is set aside and said
-once in Settings ([#279](https://github.com/fmadore/Kalamu/issues/279)).
+once in Settings ([#279](https://github.com/fmadore/Kalamu/issues/279)). A recording whose
+length cannot be read is no longer estimated at nothing: New job says *length unknown* and its
+cost shows in Jobs as it runs, and a WAV file's length is read even without FFmpeg
+([#300](https://github.com/fmadore/Kalamu/pull/300)).
 
 ## Behind the scenes
 
