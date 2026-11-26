@@ -9,23 +9,6 @@ description: "Ajouter Ollama ou le serveur de type OpenAI d’une université à
 
 [English](../other-servers.md)
 
-## Ajouter Ollama sur cet ordinateur
-
-Si [Ollama](https://ollama.com) est installé et dispose d’un modèle (voir
-[Avant de commencer](#avant-de-commencer)) :
-
-1. Ouvrez **Paramètres**, puis **Autres serveurs**, et choisissez **Ajouter un serveur**.
-   Donnez-lui un **Nom** de votre choix (il s’affiche partout où figure le nom d’un
-   fournisseur) et l’**Adresse** `http://localhost:11434`. Laissez **Ce serveur demande une
-   clé** décoché. Cliquez sur **Se connecter**.
-2. Kalamu indique ce qu’il a trouvé, par exemple *Ollama 0.40.18, sur cet ordinateur.*, et
-   liste les **Modèles de ce serveur**. Cochez ceux que vous voulez utiliser.
-3. Cliquez sur **Essayer et ajouter**. Kalamu essaie chaque modèle, montre ce qu’il sait faire
-   et enregistre le serveur. Ses modèles sont désormais dans **Nouveau traitement**.
-
-La suite de ce chapitre détaille chaque étape, ce que décide l’essai, et que faire quand
-quelque chose ne marche pas.
-
 ## Quand cela vaut la peine
 
 - **Votre établissement propose un service** qui lui est propre, en général à une adresse « de
@@ -46,35 +29,100 @@ ajouté un.
 
 ## Avant de commencer
 
-**Ollama** est gratuit et fonctionne sous Windows comme sur macOS.
-
-1. Téléchargez-le sur [ollama.com](https://ollama.com) et installez-le. Il tourne ensuite en
-   arrière-plan, avec son icône dans la zone de notification sous Windows et dans la barre des
-   menus sur un Mac.
-2. Ouvrez un terminal (**Terminal** sous Windows, depuis le menu Démarrer ; **Terminal** sur un
-   Mac, dans Applications › Utilitaires) et téléchargez un modèle qui lit les images :
-
-   ```
-   ollama pull gemma3:4b
-   ```
-
-   `ollama pull` télécharge une fois pour toutes le modèle nommé après lui. Un modèle plus
-   grand, comme `gemma3:12b`, lit mieux et demande plus de mémoire. Les noms changent :
-   cherchez les modèles marqués *vision* dans la
-   [bibliothèque de modèles d’Ollama](https://ollama.com/search). Un modèle qui ne lit que du
-   texte peut quand même faire des analyses, des corrections et des traductions, mais pas lire
-   des pages.
-3. `ollama list` affiche les modèles que vous avez téléchargés.
-
-**Ollama sur un autre ordinateur de votre réseau** ne répond qu’à son propre ordinateur tant
-que la personne à qui il appartient ne lui dit pas le contraire. Sur l’ordinateur où tourne
-Ollama, réglez `OLLAMA_HOST` sur `0.0.0.0:11434`, comme
-[la documentation d’Ollama](https://docs.ollama.com/faq#how-can-i-expose-ollama-on-my-network)
-(en anglais) l’explique pour chaque système, puis redémarrez Ollama. Dans Kalamu, l’adresse
-est alors `http://<nom ou adresse de cet ordinateur>:11434`.
-
 **Le service d’une université ou d’un centre de calcul** vous donne son adresse, et le plus
-souvent une clé. Demandez à la personne qui le gère quels modèles lisent les images.
+souvent une clé. Demandez à la personne qui le gère quels modèles lisent les images, puis
+passez à [Ajouter un serveur, étape par étape](#ajouter-un-serveur-etape-par-etape).
+
+**Ollama** est gratuit et fonctionne sous Windows 10 ou 11 et sous macOS 14 ou plus récent.
+C’est un programme qui fait tourner des modèles sur votre propre ordinateur ; Kalamu
+s’adresse ensuite à lui. Il s’installe en quatre étapes, et il n’y a que deux courtes
+commandes à taper.
+
+### 1. Installer Ollama
+
+Téléchargez-le sur [ollama.com](https://ollama.com) et installez-le comme n’importe quel
+programme. Il tourne ensuite en arrière-plan, avec son icône dans la zone de notification sous
+Windows et dans la barre des menus sur un Mac. Si vous le quittez, rouvrez-le depuis le menu
+Démarrer ou le dossier Applications avant de vous en servir dans Kalamu.
+
+### 2. Choisir un modèle adapté à votre ordinateur
+
+Un modèle doit tenir dans la mémoire de votre ordinateur (la mémoire vive, ou la mémoire
+unifiée d’un Mac) avec de la marge, sinon il est très lent ou ne fonctionne pas du tout. Pour
+lire des pages, il doit aussi lire les images : la bibliothèque d’Ollama marque ces modèles
+*vision*. Votre mémoire est indiquée dans **Paramètres › Système › Informations système** sous
+Windows, ou **menu Pomme › À propos de ce Mac** sur un Mac. Choisissez ensuite :
+
+| Mémoire de votre ordinateur | Un modèle pour commencer | Téléchargement |
+| --- | --- | --- |
+| 8 Go | `qwen3-vl:4b` ou `gemma3:4b` | environ 3,5 Go |
+| 16 Go | `gemma4:12b` | environ 8 Go |
+| 32 Go ou plus | `gemma4:26b` | environ 17 Go |
+
+Un modèle plus grand lit mieux, et plus lentement. Une carte graphique (NVIDIA ou AMD) sous
+Windows, ou n’importe quel Mac à puce Apple, le rend beaucoup plus rapide ; sans elle, une page
+peut prendre plusieurs minutes. Ces noms étaient valables en novembre 2026 et changent
+souvent : si l’un a disparu, cherchez un modèle marqué *vision* d’une taille de téléchargement
+voisine dans la [bibliothèque de modèles d’Ollama](https://ollama.com/search?c=vision). Un
+modèle qui ne lit que du texte peut quand même faire des analyses, des corrections et des
+traductions, mais pas lire des pages.
+
+### 3. Télécharger le modèle
+
+Ouvrez un terminal : sous Windows, **Terminal** depuis le menu Démarrer ; sur un Mac,
+**Terminal** dans Applications › Utilitaires. Tapez `ollama pull` suivi du nom du modèle, puis
+appuyez sur Entrée, par exemple :
+
+```
+ollama pull gemma4:12b
+```
+
+Le téléchargement n’a lieu qu’une fois, affiche sa progression et peut prendre un moment : le
+modèle pèse plusieurs Go. Une fois terminé, le modèle reste sur votre ordinateur.
+
+### 4. Vérifier que tout fonctionne
+
+Dans le même terminal, tapez :
+
+```
+ollama list
+```
+
+La commande affiche les modèles téléchargés. Si elle indique plutôt qu’elle n’a pas pu se
+connecter à Ollama, c’est qu’Ollama ne tourne pas : rouvrez-le (étape 1) et réessayez. Vous
+pouvez ensuite fermer le terminal.
+
+### Ollama sur un autre ordinateur de votre réseau
+
+Ollama ne répond qu’à son propre ordinateur tant que la personne à qui il appartient ne lui dit
+pas le contraire. Sur l’ordinateur où tourne Ollama, réglez `OLLAMA_HOST` sur `0.0.0.0:11434`,
+puis quittez Ollama et rouvrez-le :
+
+- **Windows** : dans le menu Démarrer, cherchez *Modifier les variables d’environnement pour
+  votre compte*. Sous les variables utilisateur, choisissez **Nouvelle…**, nommez-la
+  `OLLAMA_HOST` et donnez-lui la valeur `0.0.0.0:11434`.
+- **Mac** : dans Terminal, tapez `launchctl setenv OLLAMA_HOST "0.0.0.0:11434"`.
+
+[La documentation d’Ollama](https://docs.ollama.com/faq#how-can-i-expose-ollama-on-my-network)
+(en anglais) donne le détail. Si le pare-feu de cet ordinateur demande s’il faut laisser Ollama
+accepter des connexions, autorisez-le, sur les réseaux privés seulement. Dans Kalamu,
+l’adresse est alors `http://<nom ou adresse de cet ordinateur>:11434`.
+
+## Ajouter Ollama sur cet ordinateur
+
+Une fois qu’Ollama tourne et dispose d’un modèle :
+
+1. Ouvrez **Paramètres**, puis **Autres serveurs**, et choisissez **Ajouter un serveur**.
+   Donnez-lui un **Nom** de votre choix (il s’affiche partout où figure le nom d’un
+   fournisseur) et l’**Adresse** `http://localhost:11434`. Laissez **Ce serveur demande une
+   clé** décoché. Cliquez sur **Se connecter**.
+2. Kalamu indique ce qu’il a trouvé, par exemple *Ollama 0.40.18, sur cet ordinateur.*, et
+   liste les **Modèles de ce serveur**. Cochez ceux que vous voulez utiliser.
+3. Cliquez sur **Essayer et ajouter**. Kalamu essaie chaque modèle, montre ce qu’il sait faire
+   et enregistre le serveur. Ses modèles sont désormais dans **Nouveau traitement**.
+
+La suite de ce chapitre détaille chaque étape, ce que décide l’essai, et que faire quand
+quelque chose ne marche pas.
 
 ## Ajouter un serveur, étape par étape
 
@@ -210,7 +258,7 @@ fichiers peuvent y être envoyés.
 
 | Kalamu dit | Ce qu’il faut vérifier |
 | --- | --- |
-| *Rien ne répond à l’adresse* … | L’adresse, et qu’Ollama (ou le programme du serveur) tourne sur cet ordinateur. Pour un autre ordinateur, que la personne à qui il appartient a réglé `OLLAMA_HOST` (voir [Avant de commencer](#avant-de-commencer)). |
+| *Rien ne répond à l’adresse* … | L’adresse, et qu’Ollama (ou le programme du serveur) tourne sur cet ordinateur : `ollama list` dans un terminal le dit. Pour un autre ordinateur, que la personne à qui il appartient a réglé `OLLAMA_HOST` et laissé passer Ollama par le pare-feu. Les deux sont dans [Avant de commencer](#avant-de-commencer). |
 | *Quelque chose répond à l’adresse* …*, mais ce n’est pas un serveur que Kalamu connaît* | L’adresse, auprès de la personne qui gère le serveur. |
 | *Le serveur à l’adresse* … *demande une clé.* | Cochez **Ce serveur demande une clé** et collez-la. |
 | *Le serveur à l’adresse* … *a refusé la clé.* | La clé, auprès de la personne qui gère le serveur. |
