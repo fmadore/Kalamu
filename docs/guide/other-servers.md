@@ -181,9 +181,12 @@ is trusted on its word.
 ## Change or remove a server
 
 In **Your servers**, **Edit** opens the same three steps; a model already tried at the same
-address keeps its trial. **Remove** asks first: *Its jobs and results stay. Saved pipelines and
-workflows that use it will fail until it is added again.* A server cannot be changed or removed
-while a job is running on it: pause the job, or let it finish.
+address keeps its trial. **Remove** asks first, and says what goes with it: its jobs and
+results stay, but a job paused or interrupted on it cannot be finished, and saved pipelines and
+workflows that use it will fail. A server added again is a new server, whose models are chosen
+again. A server's address cannot be changed, nor the server removed, while a job is running on
+it: pause the job, or let it finish. After an address has changed, **Resume** on a job made
+before asks again whether your files may go there.
 
 ## When it does not work
 

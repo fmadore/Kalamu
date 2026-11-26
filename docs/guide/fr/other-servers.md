@@ -197,10 +197,14 @@ qui ne dit pas combien il a lu est cru sur parole.
 ## Modifier ou retirer un serveur
 
 Dans **Vos serveurs**, **Modifier** rouvre les trois mêmes étapes ; un modèle déjà essayé à la
-même adresse garde son essai. **Retirer** demande d’abord : *Ses traitements et leurs résultats
-restent. Les configurations et chaînes de traitement enregistrées qui l’utilisent échoueront
-jusqu’à ce qu’il soit ajouté de nouveau.* Un serveur ne peut être ni modifié ni retiré pendant
-qu’un traitement tourne dessus : mettez le traitement en pause, ou laissez-le finir.
+même adresse garde son essai. **Retirer** demande d’abord, et dit ce qui part avec lui : ses
+traitements et leurs résultats restent, mais un traitement en pause ou interrompu sur ce serveur
+ne pourra pas être terminé, et les configurations et chaînes de traitement enregistrées qui
+l’utilisent échoueront. Un serveur ajouté de nouveau est un nouveau serveur, dont on choisit de
+nouveau les modèles. L’adresse d’un serveur ne peut pas être changée, ni le serveur retiré,
+pendant qu’un traitement tourne dessus : mettez le traitement en pause, ou laissez-le finir.
+Après un changement d’adresse, **Reprendre** sur un traitement créé avant redemande si vos
+fichiers peuvent y être envoyés.
 
 ## Quand cela ne marche pas
 
