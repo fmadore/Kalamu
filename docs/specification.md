@@ -1367,7 +1367,9 @@ job, workflows and every dialog, under its name, usable at once without a restar
   asked. Any other address, a doubtful one included, is the network: consent is asked once,
   naming the server by the researcher's name for it and its host, and saying that the files go
   to a machine someone runs, under that person's rules, not to a company under the
-  researcher's account; it is asked again when the address changes. Only `http` and `https`
+  researcher's account; it is asked again when the address changes, and a job made before the
+  change asks again when it is resumed or its failed pieces retried, as does a workflow step
+  approved whose next steps use the server. Only `http` and `https`
   are taken, without a user name, password, query or fragment in the address. Plain `http://`
   is accepted, Ollama speaking nothing else, and Settings says that on the network the files
   travel unencrypted, and the key with them.
@@ -1379,9 +1381,15 @@ job, workflows and every dialog, under its name, usable at once without a restar
   kept through a rename or a changed address, as its results and cache are; removing the server
   removes its key. Two servers' models of the same name are kept apart.
 - **Provenance names it.** `provenance.json` records `engine` as `own` and a `server` with the
-  server's name and address as they stand when the files are written. A server removed while
-  its job runs stops the job at its next page, as interrupted, the pages read kept; a saved
-  pipeline or workflow that names a removed server fails as an unknown provider does.
+  server's name and address as they stand when the files are written.
+- **Not changed under a running job.** While a job or a workflow run that sends to a server
+  runs, the server cannot be removed, its address or way of speaking cannot change, and a model
+  that job uses cannot be unticked: Settings says to pause the job or let it finish first. A
+  rename, new limits or prices, or a model added are free. A job paused or interrupted does not
+  hold the server: resumed after the address changed, it asks consent again; after the server
+  was removed, it cannot be finished, and says that the server was removed in Settings ›
+  *Other servers* and that a server added again is a new one, to start a new job with. A saved
+  pipeline or workflow that names a removed server fails with the same sentence.
 - **Not in this version:** transcription (no model of such a server is offered for recordings;
   Whisper covers the need), economy mode's batches, embeddings for the search by meaning,
   reasoning levels, and the models Ollama runs at ollama.com. Services that need a sign-in of
@@ -1408,7 +1416,11 @@ provider's terms, and links the privacy policy. For a server of the researcher's
 network, it names the server and its host and says that the files go to a machine someone
 runs, under that person's rules; changing the server's address, or removing the server,
 withdraws the agreement. Nothing is sent until the researcher agrees, which the settings keep;
-the shell refuses work for a provider not agreed to, so no path skips the question. Offline
+the shell refuses work for a provider not agreed to, so no path skips the question: a job
+created, started, resumed or retried, a workflow run started or a step approved (for the steps
+it may start), a dictionary proposal, a passage or a region asked. A job resumed after its
+server's address changed, or made by an older version or brought in a project file, is asked
+about as a new one is. Offline
 engines, and servers at an address of this computer, are never asked about. Apple's Guideline 5.1.2(i) asks for this in
 the Mac App Store; it applies on Windows too
 ([decision](decisions/2026-11-04-ai-consent.md)).

@@ -42,7 +42,9 @@ your choice is saved in your settings. A server of your own at an address elsewh
 is asked about the same way: the prompt names the server by the name you gave it and its host,
 and says that the files go to a machine someone runs, under that person's rules rather than a
 company's terms under your account. Changing that server's address, or removing the server,
-withdraws your confirmation, so Kalamu asks again before sending to the new address. Offline
+withdraws your confirmation, so Kalamu asks again before sending to the new address, a job
+made before the change included when it is resumed or retried; while a job that uses the server
+is running, its address cannot be changed and the server cannot be removed. Offline
 engines, and a server of your own at an address of this computer (`localhost`, `127.0.0.1` to
 `127.255.255.255`, or `::1`), never ask because nothing leaves the computer.
 

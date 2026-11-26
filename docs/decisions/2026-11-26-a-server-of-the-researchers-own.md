@@ -66,8 +66,10 @@ added. Three steps, and nothing to describe by hand:
    no.
 
 **A model is offered only for what it did in its trial.** Reading pages (text extraction, and
-a region read again) needs the picture read; analyses, contents, corrections and translations
-need the form filled; a model that did neither is not listed. Its catalogue entry is written
+a region read again) needs the picture read; analyses, corrections and translations of text
+need the form filled; an analysis of images and the pages of a table of contents need both,
+and a table of contents' combining step the form alone; a model that did neither is not
+listed. Its catalogue entry is written
 from the trial (`tasks`, `inputs`), so New job, workflows and every dialog obey it through the
 rules the four providers' models already obey, and the engine converts a page to a picture or
 refuses a type of file as it does for them. The researcher cannot tick an ability; *Try again*
@@ -165,7 +167,7 @@ says where it was made.
   function for the catalogue (`use_catalog`) and one for the providers. Consent is withdrawn
   for a server whose address changed or that was removed, and `save_settings` no longer adds
   consent back from the copy it is sent. A saved pipeline or workflow that names a server since removed
-  fails as an unknown provider does today, in plain words.
+  fails in plain words (`server.removed`), as a job left on it does.
 - **Interface**: the tab; in New job a server is a provider like the others, under its name.
   No expert mode.
 
@@ -217,19 +219,38 @@ Built differently from the decision above, as found when the documents were writ
   under the same name, not in the files.
 - **A model's catalogue entry lists `TextExtraction` and `Analysis` only.** Contents,
   corrections and translations follow from `Analysis` through `Task::request_task`, as for
-  every model; a table of contents' pages need pictures too, so its reading step is offered
-  only to a model that did both.
+  every model, which is how a table of contents comes to need both abilities (*Decision* above
+  says so since 26 November).
 - **A job in flight takes the providers as they are at each piece**, not as they were when it
   started: the call already sent keeps its provider, and the next piece looks the list up
-  again. A server removed stops the job at its next page as interrupted, the pages read kept;
-  added again in Settings, it is a new server under a new id, which the job does not name. A
-  server whose address changed while its job runs sends the job's remaining pages to the new
-  address.
-- **Consent is asked when a job, a workflow run or a dictionary proposal is created**
-  (`require_consent`), not when a job is started, resumed or retried. With consent now
-  withdrawn when a server's address changes, a job made before the change, then resumed or
-  retried, sends to the new address without the question. To close before release: ask again,
-  or refuse, when a job that names a server not agreed to is started or retried.
+  again. As first built, a server changed while its job ran sent the remaining pages to the new
+  address unasked, and one removed stopped the job in a state no resume could finish. Fixed on
+  26 November by refusing the change instead: `save_server` and `remove_server` ask the engine
+  which models of the server the running jobs use, or may start a workflow step with
+  (`Engine::models_in_use`, over `kalamu_core::ahead`, tested against the job database in
+  memory), and refuse (`server.in_use`, naming the server) a removal, another address or way
+  of speaking, or a model in use unticked (`Saved::changes_under`, tested in `catalog`); a
+  rename, limits, prices or a model added stay free. A paused or interrupted job does not hold
+  the server: a changed address is caught by the consent below when it is resumed; a removed
+  server makes it fail with `server.removed`, which says that a server added again is a new
+  one, under a new id, to start a new job with. The confirmation before a removal says that
+  such a job cannot be finished.
+- **Consent was first asked only when a job, a workflow run or a dictionary proposal was
+  created**, not when a job was started, resumed or retried, so a job made before its server's
+  address changed sent to the new address unasked. Fixed on 26 November: `start_job`,
+  `retry_failed` and `approve_step` refuse as creation does (`require_agreed`), for the job's
+  providers and those of the workflow steps it, or the approval, may start (steps that have no
+  job yet: `kalamu_core::ahead`), and the interface asks first through the same question as
+  New job (`mayResume`, `mayGoOn`, from `providers_ahead` and `run_providers_ahead`), so the
+  researcher sees the question, and declining leaves the job as it was. A provider the engine
+  no longer knows is not asked about but refused (`server.removed` for a server's id). A
+  passage or a region asked again was already checked at each request; the search by meaning
+  checks its own per-project consent at each preparation run and question; at launch nothing
+  is sent without the researcher (workflow steps are made, not started; batches are collected,
+  which downloads answers and sends nothing). The checks run in the shell, which was compiled
+  outside the repository against the real crates and a stand-in for Tauri; the interface's
+  question is tested in Vitest and, against the sample data, in Playwright (a server moved
+  under a paused job, the job resumed, the question naming the new host, declined).
 - **`save_settings` keeps the consent the shell holds** and ignores the copy it is sent:
   consent is given by `consent_providers` alone and withdrawn only by a server's change of
   address or removal. This holds for the four providers too: saving settings can neither add

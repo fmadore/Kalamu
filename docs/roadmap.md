@@ -91,13 +91,23 @@ order given there.
   holding a number, a form of two fields) and offered for reading pages only if it read the
   picture, for analyses, corrections and translations only if it filled the form; one page a
   call; an address of this computer sends nothing out and asks no consent, any other asks once,
-  naming the server and its host, and again when the address changes; the key in the system's
+  naming the server and its host, and again when the address changes, also before a job made
+  earlier is resumed or retried, or a workflow step approved (the shell refuses, the interface
+  asks first as New job does); a server cannot be removed, moved or lose a model while a job
+  that uses it runs (`server.in_use`), and a job left on a removed server says so; the key in the system's
   keychain, the servers in `servers.json`; provenance's `engine: own` and `server`. Not in it:
   transcription, economy mode, the search by meaning, reasoning levels, Ollama's models at
   ollama.com. Tested against answers written from Ollama's and the other servers' documentation
   and source (26 November, Ollama 0.40.18), on Linux; no real server has been called. The shell
   was written where it cannot be compiled and waits for CI on Windows x64, Windows ARM64 and
   macOS; nothing has run in the packaged app or on a Mac, and the interface is being written.
+  The consent on resuming and the server held while a job runs were added the same day: what
+  starting a job would send, and which models running work uses, are tested against the job
+  database in memory, the refusal of a change in `catalog`, the question in Vitest and, against
+  the sample data, in Playwright (a server moved under a paused job, the job resumed, the
+  question naming the new host, declined; a running job's server neither removed nor moved);
+  the shell's checks were compiled outside the repository against the real crates and a
+  stand-in for Tauri, and run nowhere yet.
   Still to do:
   - **by hand, on a Mac with Ollama**, writing down what fails: a job of pages and an analysis,
     with Ollama on this computer and across a network; a model too small for its page; a model
@@ -105,9 +115,6 @@ order given there.
     written without: that a model without thinking accepts `think: false`, that `/api/chat`
     reads `truncate` and `shift` at the top level of the request, and the exact words of
     Ollama's error for a text too long ([development.md](development.md#a-server-of-ones-own-by-hand));
-  - **consent when a job is started or retried**: it is asked when a job is made, so a job made
-    before its server's address changed would send to the new address unasked; to close before
-    a release carries it ([decision](decisions/2026-11-26-a-server-of-the-researchers-own.md#consequences));
   - **an OpenAI-style server**, a university's or OpenRouter, which no run has reached;
   - **the stand-in speaking both ways**, so the app driven in CI
     ([#277](https://github.com/fmadore/Kalamu/issues/277)) reaches its packaged forms by adding
