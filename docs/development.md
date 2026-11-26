@@ -134,6 +134,44 @@ $env:KALAMU_TEST_DATA = "$env:TEMP\kalamu-test"; $env:KALAMU_TEST_PROVIDERS = 'h
 .\target\debug\kalamu.exe
 ```
 
+## A server of one's own, by hand
+
+A server of the researcher's own (Settings › *Other servers*,
+[decision](decisions/2026-11-26-a-server-of-the-researchers-own.md)) is tested against answers
+written from Ollama's documentation and source (Ollama 0.40.18, 26 November 2026); no real
+server has answered it yet. To try it, on a Mac or a Windows PC, with [Ollama](https://ollama.com)
+installed:
+
+```bash
+ollama serve                 # not needed when the Ollama app is running
+ollama pull gemma3:4b        # reads pictures
+ollama pull gemma3:270m      # text only, small
+```
+
+In Kalamu, add the server at `http://localhost:11434`, tick both models and try them: the first
+should read pages and fill the form, the second fill the form at most. Across a network, start
+Ollama on the other computer with `OLLAMA_HOST=0.0.0.0:11434` (for the Mac app,
+`launchctl setenv OLLAMA_HOST 0.0.0.0:11434`, then quit and reopen Ollama) and add it here at
+`http://<its address>:11434`: consent is asked, naming that host. Then run, writing down what
+fails: a job of pages and an analysis, on this computer and across the network; a model too
+small for its page (lower what the model reads, in Settings, until a page with its prompt no
+longer fits, a few hundred tokens for `gemma3`, which counts a picture as about 256: the page
+must fail with where to raise the limit, never come back short); a model updated between two
+runs (`ollama cp` another model under the first one's name, then run again and try it again).
+
+Write down from the first run, in the decision, the three points the answers were written
+without:
+
+- that a model without thinking (`gemma3`) accepts `think: false`: its trial's first request
+  passes;
+- that `/api/chat` reads `truncate` and `shift` at the top level of the request: the page too
+  long fails with an error 400 instead of being answered. Outside Kalamu, the same check:
+  `curl http://localhost:11434/api/chat -d '{"model":"gemma3:270m","stream":false,"truncate":false,"shift":false,"options":{"num_ctx":256},"messages":[{"role":"user","content":"<a text of a few thousand words>"}]}'`;
+- the exact words of Ollama's error for a text too long, shown in brackets in the page's failure
+  and in Ollama's log, so `overflows` in `crates/providers/src/own.rs` reads them and the
+  fixture `crates/providers/tests/fixtures/own/ollama_overflow.json` is replaced by the real
+  answer.
+
 ## Live checks
 
 The live check (`src-tauri/examples/live/`) runs real jobs against the providers' services, through

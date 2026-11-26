@@ -67,19 +67,19 @@ depends on one it may not; a new crate goes into both.
 
 | Crate | Responsibility | May depend on |
 | --- | --- | --- |
-| `core` | Domain types (job, source file, piece, result, provenance, task, language), the traits below, errors, and the shared readings of stored results (a document's results, corrected text, speakers' names). No I/O. | nothing internal |
-| `catalog` | Model catalogue: loading, refreshing, capability queries (tasks, inputs, languages, limits, prices), and each model's line: the successor its provider names, retired models, ids once used (aliases). | `core` |
+| `core` | Domain types (job, source file, piece, result, provenance, task, language), the traits below, errors, and the shared readings of stored results (a document's results, corrected text, speakers' names); where a provider sends its files (`Reach`), the one rule for a server's address (`address`) and how a server is spoken to (`Dialect`). No I/O. | nothing internal |
+| `catalog` | Model catalogue: loading, refreshing, capability queries (tasks, inputs, languages, limits, prices), and each model's line: the successor its provider names, retired models, ids once used (aliases); the researcher's own servers and their tried models (`own/`), merged into the catalogue and never refreshed, and what Settings sends and receives while one is added. | `core` |
 | `prompts` | Default and user presets, variables, import/export; saved pipelines, workflow definitions and export profiles. | `core` |
 | `media` | Conversion and splitting: PDF pages cut with lopdf and drawn with hayro, images, FFmpeg, reading text inputs; input checks (spreads, resolution, skew, audio levels) returning warnings with suggested fixes. Never modifies originals. | `core` |
-| `providers` | One module per cloud provider, each implementing the provider trait. | `core` |
+| `providers` | One module per cloud provider, each implementing the provider trait; and `own`, a server of the researcher's own (Ollama, or any OpenAI-style server), one provider per server added: found, each model tried, a reading in part refused. | `core` |
 | `offline` | Whisper, Tesseract and the OCR vision models (llama.cpp, run as a separate program), behind the same trait as cloud providers. | `core`, `media` |
 | `store` | SQLite job database and result cache, and the project, dictionary and search-by-meaning tables beside them; the word search's index and the vector index, each a file of its own; a project saved as one file and opened again (`project_file/`); the job database kept safe (`protect/`: its copies, its check, the way back from a damaged file). | `core` |
 | `projects` | Project workspaces: documents, collections, tags, their links to jobs, preferred results. Organises only: never calls a model or changes a result. | `core` |
 | `dictionary` | A project's dictionary: the names its analyses listed, gathered through the corrected answers, and the researcher's entries, merges and pairs kept apart. Never calls a model or changes a result. | `core` |
 | `search` | Project search: the corrected text of every result, kept in a derived local index and searched with the project's filters, each match placed in the text shown; and by meaning: that text cut into chunks, what a preparation must embed, chunks ranked against a question's vector, documents' vectors, their neighbours and their map. Never calls a model or changes a result. | `core` |
 | `export` | One module per output format, each implementing the exporter trait; and the one CSV writer for the tables other crates make (`table_csv`). | `core` |
-| `engine` | Job orchestration: queue, splitting, calls, retries, caching, resume, progress events, cost; workflow runs, each step a job; the search by meaning's calls (preparation runs and questions), consented to, retried, resumable and costed. | all of the above through their traits |
-| `app` | Tauri shell: commands, events, settings, the system keychain, what differs between Windows and macOS (`platform/`), packaging; the test build's overrides (`test_overrides.rs`, debug builds only, never released). | `engine`, `projects`, `dictionary`, `search`, and others only to wire them up |
+| `engine` | Job orchestration: queue, splitting, calls, retries, caching, resume, progress events, cost; workflow runs, each step a job; the search by meaning's calls (preparation runs and questions), consented to, retried, resumable and costed; its providers and catalogue replaced while the app runs. | all of the above through their traits |
+| `app` | Tauri shell: commands, events, settings, the system keychain, the researcher's servers (`servers.json`, `commands/servers.rs`), what differs between Windows and macOS (`platform/`), packaging; the test build's overrides (`test_overrides.rs`, debug builds only, never released). | `engine`, `projects`, `dictionary`, `search`, and others only to wire them up |
 
 Beside the crates, `helpers/whisper-vulkan` is a program, not a library: whisper.cpp built with
 Vulkan, shipped next to the app on Windows like llama.cpp's programs and started by `offline`
@@ -91,8 +91,10 @@ Vulkan, shipped next to the app on Windows like llama.cpp's programs and started
 Key traits, defined in `core`:
 
 - **`Provider`**: declares its capabilities (tasks, accepted inputs, languages, limits) and
-  processes one prepared piece. The engine never matches on a provider's name, nor a provider
-  on a model's: what shapes a model's request is a catalogue field, passed in `Tuning`.
+  processes one prepared piece; says where its files go (`reach()`: this computer, a company's
+  service, a server on the network) and, for a server of the researcher's own, its name and
+  address (`server()`). The engine never matches on a provider's name, nor a provider on a
+  model's: what shapes a model's request is a catalogue field, passed in `Tuning`.
 - **`Exporter`**: turns stored results into one format. Adding a format touches nothing else.
 - **`JobStore`**: persistence used by the engine (jobs, results, snapshots, workflow runs), so
   the engine can be tested with an in-memory store.
@@ -121,6 +123,15 @@ Rules that keep this modular:
   names it the replacement of an older one, a `successor` on that one, never its removal), with
   `revision` raised in `catalog.json` at every change and no value older releases refuse, which
   the *Model list* workflow checks; a new format is a new exporter. If it needs edits in several crates, the design is wrong: fix the design first.
+- **A server of the researcher's own earns each task in a trial.** Its models' catalogue entries
+  are written from what three small requests showed (an answer, a bundled picture read, a form
+  of two fields filled), never from what the interface or the researcher declares
+  ([decision](docs/decisions/2026-11-26-a-server-of-the-researchers-own.md)). Whether work
+  leaves the computer is asked through `Provider::reach()`, never `needs_key()`, which says only
+  that a key must be there. The catalogue with the servers merged in (`Catalog::with_servers`,
+  handed to the engine by the shell's one `use_catalog`) is never written to the cache nor
+  passed through the downloaded list's checks, and a downloaded list that names a server fails
+  them.
 - **What differs between operating systems lives in one place per layer.** In the shell,
   `src-tauri/src/platform/`, one file per system with the same items; in the interface,
   `src/lib/platform.ts`; in Tauri's configuration, `tauri.<system>.conf.json`. The crates below
