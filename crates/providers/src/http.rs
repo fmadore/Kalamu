@@ -116,6 +116,30 @@ pub(crate) async fn send_json_if_found(
         .map_err(|e| ProviderError::Other(format!("invalid JSON: {e}")))
 }
 
+/// What came back for a request, whatever its status: for a provider that names who answered
+/// itself and reads some failures in its own words (a server of the researcher's own), before
+/// handing the rest to [`status_error`].
+pub(crate) struct Exchange {
+    pub status: StatusCode,
+    /// A `Retry-After` header's seconds, as asked.
+    pub retry_after: Option<f64>,
+    pub body: String,
+}
+
+/// Sends a request and returns what came back, failed or not; a failure to reach the address
+/// is left to the caller to word.
+pub(crate) async fn exchange(request: RequestBuilder) -> Result<Exchange, reqwest::Error> {
+    let response = request.send().await?;
+    let status = response.status();
+    let retry_after = header_retry_after(&response);
+    let body = response.text().await?;
+    Ok(Exchange {
+        status,
+        retry_after,
+        body,
+    })
+}
+
 fn network(err: reqwest::Error) -> ProviderError {
     if err.is_timeout() {
         ProviderError::Transient("the request timed out".into())
@@ -239,7 +263,7 @@ fn status_words(status: StatusCode) -> String {
 }
 
 /// A message cut to [`MAX_MESSAGE_CHARS`], with an ellipsis where it was cut.
-fn shortened(message: &str) -> String {
+pub(crate) fn shortened(message: &str) -> String {
     if message.chars().count() <= MAX_MESSAGE_CHARS {
         return message.to_string();
     }

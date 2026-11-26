@@ -1,0 +1,13 @@
+{
+  "model": "gemma3:12b",
+  "created_at": "2026-11-26T10:15:11.000000Z",
+  "message": {
+    "role": "assistant",
+    "content": "{\"summary\":\"Réunion de 200 fidèles à Bamako.\",\"keywords\":[\"Bamako\",\"mosquée\"]}"
+  },
+  "done": true,
+  "done_reason": "stop",
+  "total_duration": 2191566416,
+  "prompt_eval_count": 140,
+  "eval_count": 30
+}

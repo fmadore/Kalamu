@@ -1,0 +1,35 @@
+{
+  "models": [
+    {
+      "name": "gemma3:12b",
+      "model": "gemma3:12b",
+      "modified_at": "2026-11-20T14:56:49.277302595-07:00",
+      "size": 8149190253,
+      "digest": "f4031aab637d1ffa37b42570452ae0e4fad0314754d17ded67322e4b95836f8a",
+      "details": {
+        "format": "gguf",
+        "family": "gemma3",
+        "families": [
+          "gemma3"
+        ],
+        "parameter_size": "12.2B",
+        "quantization_level": "Q4_K_M"
+      }
+    },
+    {
+      "name": "gpt-oss:120b-cloud",
+      "model": "gpt-oss:120b-cloud",
+      "remote_model": "gpt-oss:120b",
+      "remote_host": "https://ollama.com:443",
+      "modified_at": "2026-11-21T09:00:00Z",
+      "size": 384,
+      "digest": "569662207105a8bbd1fbe3e3fdf7dcdbc4d1d9ef7e2ab7d7a8b6d3d5d8b1a2c3",
+      "details": {
+        "format": "",
+        "family": "gptoss",
+        "parameter_size": "116.8B",
+        "quantization_level": "MXFP4"
+      }
+    }
+  ]
+}
