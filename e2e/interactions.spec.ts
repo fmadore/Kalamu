@@ -859,8 +859,11 @@ test('typing in the model list narrows it, and the keys choose among what is lef
 	// Typed, then chosen with the keys: the first found, then the next.
 	await model.click();
 	await expect(find).toHaveValue('');
+	// The keys go to the field only once it has the focus: on a slower runner the first ones
+	// were lost, and what was left ("e") still found Gemini's models.
+	await expect(find).toBeFocused();
 	await page.keyboard.type('claude');
-	// The list narrowed before its second option is read: on a slower runner it is read whole.
+	await expect(find).toHaveValue('claude');
 	await expect(list.getByRole('option', { name: /^Gemini/ })).toHaveCount(0);
 	const second = list.getByRole('option', { disabled: false }).nth(1);
 	const name = await second.evaluate(
