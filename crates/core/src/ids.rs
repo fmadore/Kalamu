@@ -100,6 +100,12 @@ impl fmt::Display for ProviderId {
     }
 }
 
+/// Eight hexadecimal digits drawn at random (32 bits of a version 4 UUID), for an id that is
+/// made once and must stay short: a server of the researcher's own is `own-` and these.
+pub fn random_hex8() -> String {
+    format!("{:08x}", Uuid::new_v4().as_u128() as u32)
+}
+
 /// Milliseconds since the Unix epoch, UTC.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, TS)]
 #[serde(transparent)]
