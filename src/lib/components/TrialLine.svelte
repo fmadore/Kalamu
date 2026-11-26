@@ -140,28 +140,25 @@
 			animation: none;
 		}
 	}
-	/* Each result on its line: the question, then yes or no and what follows from it, the
-	   questions in one column so the answers line up. */
+	/* Each result on its line: the question, yes or no, then what follows from it, each in a
+	   column of its own so both rows line up however long either explanation is, in any
+	   language; an explanation too long wraps in its column, never under the chip. */
 	.results {
 		display: grid;
-		grid-template-columns: max-content minmax(0, 1fr);
-		gap: var(--space-1) var(--space-3);
+		grid-template-columns: max-content max-content minmax(0, 1fr);
+		align-items: baseline;
+		gap: var(--space-1) var(--space-2);
 		margin: 0;
 		font-size: var(--type-sm);
 	}
-	.results > div {
+	.results > div,
+	.results dd {
 		display: contents;
 	}
 	.results dt {
 		color: var(--text-secondary);
 		font-weight: 500;
-	}
-	.results dd {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: baseline;
-		gap: var(--space-1) var(--space-2);
-		margin: 0;
+		margin-right: var(--space-1);
 	}
 	.chip {
 		min-width: 2.5rem;
@@ -195,10 +192,11 @@
 	/* Stacked where the window leaves the answers too little room beside the questions. */
 	@media (max-width: 960px) {
 		.results {
-			grid-template-columns: minmax(0, 1fr);
+			grid-template-columns: max-content minmax(0, 1fr);
 		}
-		.results dd {
-			margin-bottom: var(--space-1);
+		.results dt {
+			grid-column: 1 / -1;
+			margin-right: 0;
 		}
 	}
 </style>
