@@ -860,6 +860,8 @@ test('typing in the model list narrows it, and the keys choose among what is lef
 	await model.click();
 	await expect(find).toHaveValue('');
 	await page.keyboard.type('claude');
+	// The list narrowed before its second option is read: on a slower runner it is read whole.
+	await expect(list.getByRole('option', { name: /^Gemini/ })).toHaveCount(0);
 	const second = list.getByRole('option', { disabled: false }).nth(1);
 	const name = await second.evaluate(
 		(o) => o.querySelector('.name')?.firstChild?.textContent?.trim() ?? ''
