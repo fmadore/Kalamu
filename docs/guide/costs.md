@@ -15,7 +15,9 @@ send and what the model writes. Prices differ a great deal between models: a pro
 smallest model can cost a tenth or less of its largest.
 
 Before a job starts, **Estimated cost** shows what it should come to, from the page counts and
-the provider's published prices. After it, the job shows what was actually used. The
+the provider's published prices; a recording, from its length. When Kalamu cannot read how long
+a recording lasts, the estimate reads *length unknown*, and the cost shows in **Jobs** as the job
+runs. After it, the job shows what was actually used. The
 provider's invoice is the reference; prices change, and Kalamu's price list carries its date.
 Kalamu fetches a newer list from its repository at startup (**Check at startup** in **Settings**,
 under **Models**), and checks it before using it: a list that fails Kalamu's checks is not

@@ -56,7 +56,7 @@ fn runner(
     ));
     let keys = gemini_keys();
     let (engine, store) =
-        engine(out, vec![gemini.clone()], keys.clone()).unwrap_or_else(|e| panic!("{e}"));
+        engine(out, vec![gemini.clone()], keys.clone(), None).unwrap_or_else(|e| panic!("{e}"));
     let runner = Runner::new(
         engine.clone(),
         store,
@@ -112,7 +112,8 @@ async fn the_weekly_set_takes_each_providers_cheapest_offered_model() {
     let out = tempfile::tempdir().unwrap_or_else(|e| panic!("{e}"));
     let keys = Arc::new(Keys::default());
     let (providers, _) = cloud(None);
-    let (engine, _) = engine(out.path(), providers, keys).unwrap_or_else(|e| panic!("{e}"));
+    // No FFmpeg, as on GitHub's runner.
+    let (engine, _) = engine(out.path(), providers, keys, None).unwrap_or_else(|e| panic!("{e}"));
     let ids: Vec<ProviderId> = SERVICES
         .iter()
         .map(|(id, _, _)| ProviderId::new(*id))
@@ -201,6 +202,53 @@ async fn the_weekly_set_takes_each_providers_cheapest_offered_model() {
             matches!(step.map(|s| &s.work), Some(Work::Absent { .. })),
             "{name}"
         );
+    }
+}
+
+/// The first weekly run on GitHub (26 November 2026), with no FFmpeg on the runner, estimated
+/// every recording at $0 and billed up to $0.0057 for each: the sample's length was unknown and
+/// counted as none, so the cheapest model was whichever came first and the ceiling held nothing.
+/// The WAV file's header now gives its length, and each provider's recording step is priced.
+#[tokio::test]
+async fn a_recording_is_priced_without_ffmpeg() {
+    let out = tempfile::tempdir().unwrap_or_else(|e| panic!("{e}"));
+    let (providers, _) = cloud(None);
+    let (engine, _) = engine(out.path(), providers, Arc::new(Keys::default()), None)
+        .unwrap_or_else(|e| panic!("{e}"));
+    let source = engine
+        .inspect(&[samples().join(steps::RECORDING)])
+        .into_iter()
+        .next()
+        .and_then(Result::ok)
+        .map(|(s, _)| s)
+        .unwrap_or_else(|| panic!("{}", steps::RECORDING));
+    let ms = source.duration_ms.unwrap_or_default();
+    assert!((21_000..22_000).contains(&ms), "{ms}");
+    for id in ["gemini", "openai", "mistral"] {
+        let step = steps::cheapest(
+            &engine,
+            &samples(),
+            &ProviderId::new(id),
+            "recording",
+            Task::AudioTranscription,
+            steps::RECORDING,
+            None,
+            Pace::Fast,
+        );
+        let Work::Job(plan) = &step.work else {
+            panic!("{id}: no recording step");
+        };
+        let usd = engine
+            .estimate(&EstimateRequest {
+                task: plan.task,
+                sources: vec![source.clone()],
+                setups: plan.setups.clone(),
+                sample_pages: None,
+            })
+            .total_usd
+            .unwrap_or_default();
+        // Twenty seconds: a few hundredths of a cent, not nothing.
+        assert!((0.000_01..0.01).contains(&usd), "{id}: ${usd}");
     }
 }
 

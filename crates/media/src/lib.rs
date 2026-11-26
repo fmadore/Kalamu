@@ -20,6 +20,7 @@ mod readable;
 mod region;
 mod render;
 mod text_source;
+mod wav;
 
 use std::fs::File;
 use std::io::{BufReader, Read};
@@ -82,7 +83,8 @@ pub enum MediaError {
 }
 
 /// Hashes a file and works out what it is, without loading it all into memory twice. FFmpeg,
-/// when there is one, gives the length of recordings and videos.
+/// when there is one, gives the length of recordings and videos; without it, a WAV file's
+/// header gives its own.
 pub fn inspect(path: &Path, ffmpeg: Option<&Ffmpeg>) -> Result<SourceFile, MediaError> {
     let read_err = |e: std::io::Error| MediaError::Read {
         path: path.display().to_string(),
@@ -101,8 +103,17 @@ pub fn inspect(path: &Path, ffmpeg: Option<&Ffmpeg>) -> Result<SourceFile, Media
         InputKind::Image => (ImageSource::open(path).map(|i| i.page_count()).ok(), None),
         _ => (None, None),
     };
+    // A length FFmpeg does not give (none found, or a file whose container does not say it)
+    // is left unknown, never zero, so that a recording is never priced as lasting no time; a
+    // WAV file's header gives its own.
+    let probed = || {
+        audio::probe(path, ffmpeg)
+            .map(|p| p.duration_ms)
+            .filter(|&ms| ms > 0)
+    };
     let duration_ms = match kind {
-        InputKind::Audio | InputKind::Video => audio::probe(path, ffmpeg).map(|p| p.duration_ms),
+        InputKind::Audio => probed().or_else(|| wav::duration_ms(path)),
+        InputKind::Video => probed(),
         _ => None,
     };
     Ok(SourceFile {

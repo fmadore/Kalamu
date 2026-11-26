@@ -15,6 +15,7 @@
 		cost,
 		total,
 		video,
+		lengthUnknown = false,
 		error,
 		blocker,
 		ready,
@@ -32,6 +33,8 @@
 		total: number | null;
 		/** Videos are added, whose cost is known only once they are read. */
 		video: boolean;
+		/** A recording or video is added whose length could not be read, so it has no price. */
+		lengthUnknown?: boolean;
 		error: string | null;
 		/** Why Start is unavailable, when the form cannot say it where the user is looking. */
 		blocker: string | null;
@@ -64,14 +67,16 @@
 						<span class="mono">
 							{cost(row) !== null
 								? formatUsd(cost(row) ?? 0)
-								: ownOf(app.catalog, row.provider)
-									? m.newJob.estimateNotPriced
-									: m.newJob.estimateUnknown}
+								: lengthUnknown
+									? m.newJob.estimateLength
+									: ownOf(app.catalog, row.provider)
+										? m.newJob.estimateNotPriced
+										: m.newJob.estimateUnknown}
 						</span>
 					</li>
 				{/each}
 			</ul>
-			<p class="hint">{m.newJob.estimateNote}</p>
+			<p class="hint">{lengthUnknown ? m.newJob.estimateLengthNote : m.newJob.estimateNote}</p>
 		{/if}
 	</div>
 

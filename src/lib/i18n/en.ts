@@ -1520,6 +1520,10 @@ export const en = {
 		/** A server's model without a price set in Settings › Other servers. */
 		estimateNotPriced: 'not priced',
 		estimateNote: 'An estimate from page counts and published prices; actual costs vary.',
+		/** A recording or video whose length Kalamu could not read, so it cannot be priced. */
+		estimateLength: 'length unknown',
+		estimateLengthNote:
+			'Kalamu could not read how long a recording lasts, so its cost is known only as the job runs, in Jobs.',
 		paceTitle: 'Speed and price',
 		pace: {
 			fast: 'Faster',

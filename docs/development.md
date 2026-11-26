@@ -190,7 +190,10 @@ LIVE_SET=weekly LIVE_CEILING=0.05 cargo run -p kalamu --example live -- samples 
   the same analysis sent as a batch and collected, and one embedding (the first 1,000 characters
   of `bulletin.txt`), where the provider offers each. Each step takes the cheapest model the
   catalogue offers for it (neither replaced, retired nor deprecated, reading the sample's type),
-  by its estimate; a batch, the cheapest whose work the provider sends as one.
+  by its estimate; a batch, the cheapest whose work the provider sends as one. A model without
+  an estimate is never chosen, since the ceiling could not hold it; a step none of whose models
+  has one is left out and says why. Without FFmpeg (the runner on GitHub has none), a recording
+  is sent whole and priced by the length its WAV header gives.
 - `roadmap`: the roadmap's *Live runs still to do* that a run can make, on `samples/`
   ([decision](decisions/2026-11-25-scheduled-live-check.md) for which). Judging the answers is
   yours: each job's outputs are in its own folder in `<out>`.
@@ -199,12 +202,12 @@ LIVE_SET=weekly LIVE_CEILING=0.05 cargo run -p kalamu --example live -- samples 
   `article3.txt` for `analysis-batch`, `image.jpg`, `page-1.jpg`, `page-2.jpg`, `page-10.jpg`); a
   job whose files are missing is left out.
 
-**What it spends.** At the catalogue's prices of 24 November 2026, the weekly set is estimated at
-**$0.023 a run, $1.17 a year**; `LIVE_PLAN=1` prints each step's model and estimate and the
-total, reading no key and sending nothing, so run it again when the catalogue changes. The
-weekly run's ceiling is **$0.05**, about twice the estimate, since a short analysis is
-overestimated and a reasoning model can write more than its estimate. The roadmap set is
-estimated at $0.55; give it $1.50.
+**What it spends.** At the catalogue's prices of 26 November 2026, the weekly set is estimated at
+**$0.023 a run, $1.17 a year**, recordings included; `LIVE_PLAN=1` prints each step's model and
+estimate and the total, reading no key and sending nothing, so run it again when the catalogue
+changes. The weekly run's ceiling is **$0.05**, about twice the estimate, since a short analysis is
+overestimated and a reasoning model can write more than its estimate. The roadmap set is estimated
+at $0.55; give it $1.50.
 
 **The ceiling** (`LIVE_CEILING`, in US dollars at the catalogue's prices). A step starts only if
 its estimate (the economy price for a batch) fits in what is left, the steps still running

@@ -1961,6 +1961,9 @@ export const fr: Messages = {
 		estimateNotPriced: 'sans prix',
 		estimateNote:
 			'Une estimation fondée sur le nombre de pages et les prix publiés ; le coût réel peut varier.',
+		estimateLength: 'durée inconnue',
+		estimateLengthNote:
+			'Kalamu n’a pas pu lire la durée d’un enregistrement : son coût n’est connu qu’au fil du traitement, dans Traitements.',
 		paceTitle: 'Rapidité et prix',
 		pace: {
 			fast: 'Plus rapide',
