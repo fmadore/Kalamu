@@ -5,6 +5,7 @@
 	import Icon from './Icon.svelte';
 	import type { JobStep } from '#lib/bindings/JobStep.js';
 	import { Action } from '#lib/action.svelte.js';
+	import { mayGoOn } from '#lib/dialogs.js';
 	import { messages, shownName } from '#lib/i18n/index.js';
 	import { app, go, refreshJobs, refreshWaiting } from '#lib/state.svelte.js';
 	import { api } from '#lib/tauri.js';
@@ -45,7 +46,10 @@
 	async function proceed() {
 		if (!found) return;
 		const { view, step } = found;
-		await action.run(() => api.approveStep(view.run.id, step));
+		// Consent first for the steps it may start, as for a new run.
+		await action.run(async () => {
+			if (await mayGoOn(view.run.id, app.catalog)) await api.approveStep(view.run.id, step);
+		});
 	}
 </script>
 

@@ -262,9 +262,14 @@ test('New job lists models by tier across providers, and remembers it', async ({
 	);
 	// A model replaced by a newer one is not offered.
 	await expect(list.getByRole('option', { name: /^Gemini 3\.8 Flash/ })).toHaveCount(0);
-	// Opening puts the focus on the chosen model, once the browser has told the list it is open:
-	// a key pressed before then reaches the button, not the list.
-	await expect(list.getByRole('option', { name: /^Gemini 4 Hydrogen/ })).toBeFocused();
+	// Opening puts the focus in the list's search field, on the chosen model, once the browser has
+	// told the list it is open: a key pressed before then reaches the button, not the list.
+	const find = page.getByRole('searchbox', { name: 'Type to find a model' });
+	await expect(find).toBeFocused();
+	await expect(find).toHaveAttribute(
+		'aria-activedescendant',
+		(await list.getByRole('option', { name: /^Gemini 4 Hydrogen/ }).getAttribute('id')) ?? ''
+	);
 	// The keys move through the list, Enter chooses, and the focus goes back to the field.
 	await page.keyboard.press('ArrowDown');
 	await page.keyboard.press('Enter');
@@ -811,4 +816,60 @@ test('a right click in the text compared offers its reading, its readings and a 
 	await expect
 		.poll(() => main.getByRole('region', { name: 'Reading text' }).innerText())
 		.not.toBe(before);
+});
+
+test('typing in the model list narrows it, and the keys choose among what is left', async ({
+	page
+}) => {
+	await open(page, 'new');
+	const main = page.getByRole('main');
+	const setups = main.getByRole('region', { name: /^Model and prompt/ });
+	await setups.getByRole('button', { name: 'Tier', exact: true }).click();
+	const model = setups.getByRole('combobox', { name: 'Model' }).first();
+	await model.click();
+	const list = page.getByRole('listbox', { name: 'Model' });
+	const find = page.getByRole('searchbox', { name: 'Type to find a model' });
+	await expect(find).toBeFocused();
+	const all = await list.getByRole('option').count();
+
+	// Every word, without case or accents, in the name, the id or the provider's name; a heading
+	// left with no model goes.
+	await page.keyboard.type('CLAUDE són');
+	await expect(list.getByRole('option')).not.toHaveCount(all);
+	await expect(list.getByRole('option', { name: /^Claude Sonnet 5\.5/ })).toBeVisible();
+	await expect(list.getByRole('option', { name: /^Gemini/ })).toHaveCount(0);
+	await expect(list.getByRole('group', { name: 'On this computer' })).toHaveCount(0);
+	await find.fill('anthropic haiku');
+	await expect(list.getByRole('option', { name: /^Claude Haiku/ })).toBeVisible();
+	await expect(list.getByRole('option')).toHaveCount(1);
+
+	// Nothing found: said in a line.
+	await find.fill('nothing like this');
+	await expect(list.getByRole('option')).toHaveCount(0);
+	await expect(page.getByText('No model matches what you typed.')).toBeVisible();
+
+	// Escape empties the field first, the list staying open whole; then closes it.
+	await page.keyboard.press('Escape');
+	await expect(find).toHaveValue('');
+	await expect(list.getByRole('option')).toHaveCount(all);
+	await page.keyboard.press('Escape');
+	await expect(list).toBeHidden();
+	await expect(model).toBeFocused();
+
+	// Typed, then chosen with the keys: the first found, then the next.
+	await model.click();
+	await expect(find).toHaveValue('');
+	await page.keyboard.type('claude');
+	const second = list.getByRole('option', { disabled: false }).nth(1);
+	const name = await second.evaluate(
+		(o) => o.querySelector('.name')?.firstChild?.textContent?.trim() ?? ''
+	);
+	await page.keyboard.press('ArrowDown');
+	await page.keyboard.press('Enter');
+	await expect(list).toBeHidden();
+	await expect(model).toContainText(name);
+	// Opened again, the list is whole.
+	await model.click();
+	await expect(find).toHaveValue('');
+	await expect(list.getByRole('option')).toHaveCount(all);
 });

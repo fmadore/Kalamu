@@ -1,8 +1,7 @@
 //! Workflows: saved definitions, and the runs started from them. The engine runs each step as
 //! a job; these commands only pass requests through.
 
-use kalamu_core::JobId;
-use kalamu_core::RunId;
+use kalamu_core::{JobId, ProviderId, RunId};
 use kalamu_engine::{JobStep, RunView, StartRun};
 use kalamu_prompts::Workflow;
 use tauri::State;
@@ -111,9 +110,18 @@ pub fn job_step(state: State<'_, AppState>, id: JobId) -> CmdResult<Option<JobSt
     Ok(state.engine.job_step(id)?)
 }
 
-/// The researcher's go-ahead after a step's review, or despite pieces not read.
+/// The providers the steps a run has not started send to: what the interface asks consent for
+/// before it approves a step, which may start them.
+#[tauri::command]
+pub fn run_providers_ahead(state: State<'_, AppState>, id: RunId) -> CmdResult<Vec<ProviderId>> {
+    Ok(state.engine.run_providers_ahead(id)?)
+}
+
+/// The researcher's go-ahead after a step's review, or despite pieces not read. Refused, the
+/// go-ahead not recorded, without consent for every provider the steps it may start send to.
 #[tauri::command]
 pub async fn approve_step(state: State<'_, AppState>, id: RunId, step: u32) -> CmdResult<()> {
+    super::require_agreed(&state, state.engine.run_providers_ahead(id)?)?;
     Ok(state.engine.approve_step(id, step)?)
 }
 

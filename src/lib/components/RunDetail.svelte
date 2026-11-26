@@ -10,7 +10,7 @@
 	import { describeError } from '#lib/errors.js';
 	import { formatDateTime, formatUsd, messages, shownName } from '#lib/i18n/index.js';
 	import { app, go, refreshJobs, returnTo } from '#lib/state.svelte.js';
-	import { ask } from '#lib/dialogs.js';
+	import { ask, mayGoOn } from '#lib/dialogs.js';
 	import { api } from '#lib/tauri.js';
 	import { tone } from '#lib/workflows.js';
 
@@ -35,7 +35,11 @@
 		void load();
 	});
 
-	const approve = (step: number) => action.run(() => api.approveStep(runId, step));
+	// Consent first for the steps it may start, as for a new run; declined, nothing is approved.
+	const approve = (step: number) =>
+		action.run(async () => {
+			if (await mayGoOn(runId, app.catalog)) await api.approveStep(runId, step);
+		});
 
 	async function cancel() {
 		if (await ask(w.cancelConfirm)) await action.run(() => api.cancelRun(runId));

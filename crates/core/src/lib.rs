@@ -3,7 +3,9 @@
 //! This crate performs no I/O: it knows nothing about Tauri, SQLite, HTTP or FFmpeg. Types that
 //! cross into the front end derive [`ts_rs::TS`]; `cargo test` writes their TypeScript bindings.
 
+pub mod address;
 pub mod agreement;
+pub mod ahead;
 pub mod aligned;
 pub mod analysis;
 pub mod attention;
@@ -107,8 +109,8 @@ pub use project_file::{
 pub use proposal::{Lifecycle, Proposal, ProposalStatus};
 pub use provenance::{Provenance, SourceDocuments};
 pub use provider::{
-    ApiKey, PCM_16K_MONO, PreparedInput, ProcessRequest, Provider, ProviderError, RequestSetting,
-    StopSignal, Tuning,
+    ApiKey, Dialect, PCM_16K_MONO, PreparedInput, ProcessRequest, Provider, ProviderError, Reach,
+    RequestSetting, ServerRecord, StopSignal, Tuning,
 };
 pub use records::{RowEdit, RowError};
 pub use region_reading::{

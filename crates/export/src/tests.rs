@@ -83,6 +83,7 @@ fn document(task: Task, source: SourceFile, parts: Vec<ExportPart>) -> ExportDoc
         documents: vec![],
         engine: "cloud".into(),
         provider: setup.provider.clone(),
+        server: None,
         model: setup.model.clone(),
         model_versions: vec![],
         request: vec![

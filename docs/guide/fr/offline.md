@@ -61,5 +61,9 @@ la première lecture hors ligne quand elle suffit (imprimé net, enregistrements
 garder les modèles en ligne pour ce qui en a besoin. Si vos sources ne le permettent pas, restez
 hors ligne et relisez davantage.
 
+Les modèles hors ligne sont petits pour tourner sur la plupart des ordinateurs. Si le vôtre, ou
+un autre de votre bureau, a la mémoire pour de plus grands, Kalamu peut s’en servir par Ollama,
+ou par un service que fait tourner votre université : voir [Autres serveurs](other-servers.md).
+
 Quoi que vous utilisiez, Kalamu le note : le fichier `provenance.json` d’un export indique quel
 modèle a lu le texte, en ligne ou hors ligne.

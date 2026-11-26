@@ -373,3 +373,30 @@ fn a_refused_list_never_replaces_the_bundled_one() {
     assert!(Catalog::from_json(&bad).is_err());
     assert_eq!(Catalog::newest(Some(&bad)), Catalog::bundled());
 }
+
+/// A server of the researcher's own is theirs to add: a list that names one, by its `own`
+/// field or by an id of the form servers are given, is refused whole.
+#[test]
+fn a_list_naming_a_server_of_ones_own_is_refused() {
+    let why = "a server of the researcher's own";
+    refused(why, |l| {
+        l["providers"][0]["own"] = json!({
+            "address": "http://192.168.1.20:11434",
+            "host": "192.168.1.20",
+            "this_computer": false,
+            "key": false,
+            "dialect": "ollama",
+        });
+    });
+    refused(why, |l| {
+        if let Some(providers) = l["providers"].as_array_mut() {
+            providers.push(json!({
+                "id": "own-1a2b3c4d",
+                "name": "Office",
+                "key_url": "",
+                "key_prefix": null,
+                "local": true,
+            }));
+        }
+    });
+}

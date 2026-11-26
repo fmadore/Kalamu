@@ -3,7 +3,7 @@ layout: guide
 lang: fr
 title: En cas de problème
 nav: Dépannage
-order: 9
+order: 10
 lede: "Les problèmes les plus courants, et que faire pour chacun."
 description: "Résoudre les problèmes dans Kalamu, avec les réponses aux questions fréquentes."
 ---
@@ -42,6 +42,12 @@ de la barre latérale, sous *À reprendre*.
   puissant pour ces pages.
 - Pour une double page photographiée en une seule image, acceptez la correction que propose
   Nouveau traitement, afin que chaque page soit lue séparément.
+
+## Un serveur à vous ne répond pas
+
+Quand l’ajout d’Ollama ou du serveur d’une université échoue, ou qu’un de ses modèles ne marche
+plus, Kalamu dit pourquoi en une phrase ; [Autres serveurs](other-servers.md#quand-cela-ne-marche-pas)
+liste chacune avec ce qu’il faut vérifier.
 
 ## Un modèle hors ligne est très lent
 

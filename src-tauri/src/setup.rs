@@ -187,6 +187,7 @@ fn assemble(
     let paths = Paths {
         settings: data.join("settings.json"),
         catalog_cache: data.join("catalog.json"),
+        servers: data.join("servers.json"),
         logs,
         data: data.clone(),
     };
@@ -267,7 +268,13 @@ fn assemble(
         kalamu_prompts::WorkflowLibrary::open(&data.join("workflows")).map_err(library)?;
     let profiles =
         kalamu_prompts::ProfileLibrary::open(&data.join("export-profiles")).map_err(library)?;
-    let catalog: Catalog = commands::settings::cached_catalog(&paths.catalog_cache);
+    // The researcher's servers, merged into the model list the engine starts with, and each a
+    // provider beside the fixed ones.
+    let servers = commands::servers::load(&paths.servers);
+    let catalog: Catalog = commands::servers::catalogue(
+        &commands::settings::cached_catalog(&paths.catalog_cache),
+        &servers,
+    );
     let http = kalamu_providers::client();
     // Each provider at its own service's address; in the test build, under the stand-in.
     #[cfg(not(feature = "test-overrides"))]
@@ -359,11 +366,14 @@ fn assemble(
     ));
     // Read before the engine takes the catalogue.
     let embedding_models = catalog.embedding_models().to_vec();
-    let mut providers = kalamu_providers::registry_at(http.clone(), &addresses);
-    providers.push(whisper.clone());
-    providers.push(Arc::new(kalamu_offline::Tesseract::new(tessdata.clone())));
-    providers.push(vision.clone());
-    providers.push(llm.clone());
+    // The providers that never change while the app runs; the servers' are added to them here
+    // and again whenever the servers change (`commands::servers`).
+    let mut fixed_providers = kalamu_providers::registry_at(http.clone(), &addresses);
+    fixed_providers.push(whisper.clone());
+    fixed_providers.push(Arc::new(kalamu_offline::Tesseract::new(tessdata.clone())));
+    fixed_providers.push(vision.clone());
+    fixed_providers.push(llm.clone());
+    let providers = commands::servers::providers(&fixed_providers, &http, &servers);
     let engine = Engine::new(
         store.clone(),
         providers,
@@ -434,6 +444,11 @@ fn assemble(
             data.join("exports.json"),
         )),
         settings: Mutex::new(settings),
+        servers: Mutex::new(servers),
+        server_edits: tokio::sync::Mutex::new(()),
+        trials: Mutex::default(),
+        trials_running: Mutex::default(),
+        fixed_providers,
         paths,
         http,
         preview: Mutex::new(None),

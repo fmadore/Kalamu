@@ -6,7 +6,7 @@ lede: What the app sends, to whom, and what it keeps on your computer.
 description: Kalamu's privacy policy. What the app sends, to whom, and what it keeps on the computer.
 ---
 
-**Effective date:** 25 November 2026. For earlier versions and what changed in each, see
+**Effective date:** 26 November 2026. For earlier versions and what changed in each, see
 [Changes to this policy](#changes-to-this-policy) below.
 
 ## What this app is
@@ -17,12 +17,17 @@ long documents, transcribes audio and video, and analyses texts, using whichever
 for each job:
 
 - **Cloud AI providers** configured with your own API key: Google Gemini, OpenAI, Anthropic
-  Claude, or Mistral; or
+  Claude, or Mistral;
+- **A server of your own** that you add in Settings by its address: Ollama, or a server that
+  speaks like OpenAI's (a university's or computing centre's service, vLLM, LM Studio,
+  OpenRouter), on your computer or elsewhere on a network; or
 - **Offline on your computer**: Whisper for transcription, Tesseract and small OCR vision models
   (LightOnOCR-3, GLM-OCR) for reading page images, and small language models (Gemma 4 E4B and
   E2B) for analyses, tables of contents, corrections, and translations.
 
-The developer operates no server for Kalamu and receives no data from it.
+The developer operates no server for Kalamu and receives no data from it. A server of your own
+is not the developer's: it is run by you, your institution, or whoever runs the address you
+give.
 
 ## Files you choose
 
@@ -33,7 +38,15 @@ dictionary merge request to any cloud provider, Kalamu asks once for confirmatio
 names the provider, explains what will be sent (pages, recordings, or text, including any
 personal information they contain), notes that requests run under your own account and the
 provider's terms, and links to this policy. Nothing is sent to a provider until you confirm;
-your choice is saved in your settings. Offline engines never ask because they send nothing.
+your choice is saved in your settings. A server of your own at an address elsewhere on a network
+is asked about the same way: the prompt names the server by the name you gave it and its host,
+and says that the files go to a machine someone runs, under that person's rules rather than a
+company's terms under your account. Changing that server's address, or removing the server,
+withdraws your confirmation, so Kalamu asks again before sending to the new address, a job
+made before the change included when it is resumed or retried; while a job that uses the server
+is running, its address cannot be changed and the server cannot be removed. Offline
+engines, and a server of your own at an address of this computer (`localhost`, `127.0.0.1` to
+`127.255.255.255`, or `::1`), never ask because nothing leaves the computer.
 
 **With a cloud provider**, each page, audio segment, or text passage is sent directly from your
 computer to that provider together with the task instructions (the prompt and, for analyses,
@@ -49,6 +62,24 @@ in a project dictionary, Kalamu sends only the extracted names and terms for the
 the titles of up to three documents mentioning each name, and any pairs you marked to keep
 apart, never the documents themselves. This runs as its own job with a cost estimate upfront,
 only when you request it.
+
+**With a server of your own**, the same pages, text passages, and instructions are sent directly
+from your computer to the address you gave, pages one per request, with the key you gave if the
+server asks for one; recordings are not sent to such servers. Kalamu knows only that address. What
+the program or machine there does with your files, whether it keeps them, and who else can read
+them depend on whoever runs it, under their rules: neither the developer nor a provider's terms
+under your account govern it. At an address of this computer, nothing leaves the computer;
+whatever runs there is its owner's affair, and the models Ollama would pass on to ollama.com
+cannot be chosen. An address beginning `http://` rather than `https://`
+is accepted, as Ollama speaks nothing else; on a network, files and any key then travel
+unencrypted, readable by anyone who can watch that network, and Settings says so. When you add a
+server, Kalamu asks it what it is and which models it has (a few requests that send nothing of
+yours beyond your key, if you gave one; Ollama is also asked about each model it lists, by
+name), and then tries each model
+you choose with three small requests: a one-line question about the word "Kalamu", a small
+picture bundled with Kalamu that holds a number, and a two-field form about one sentence bundled
+with Kalamu. These carry none of your material. A server of your own is never sent batches
+(economy mode) or text for the search by meaning.
 
 **In cheaper mode (economy)**, pieces are submitted to your provider's batch service rather than
 sent one by one. The provider retains the batch, its inputs, and its answers in your account for
@@ -78,7 +109,8 @@ llama.cpp executables that open no network connections. On Windows, Whisper may 
 memory and likewise opens no network connection.
 
 Source files and results may contain personal information about the people named or recorded in
-them. Choose a provider whose terms suit your material, or work offline.
+them. Choose a provider whose terms suit your material, a server whose owner and rules you
+know, or work offline.
 
 ### Search by meaning and the project map
 
@@ -218,10 +250,17 @@ turned down. The texts sent for proposals are kept with the frozen text below. A
   model, the prompt and what the request cost, in a folder per project. Nothing else is written
   for them: the answers are kept in the job database.
 - **Settings** (`settings.json`): preferences such as formats, destination, theme, favourite
-  languages, the last folder chosen, and the cloud providers the user agreed to send files to.
+  languages, the last folder chosen, and the cloud providers and servers on a network the user
+  agreed to send files to.
   A settings file the app cannot read is moved aside as `settings.json.bad` (with a number
   when an earlier one is there), never overwritten, and the app says where; it stays until
   the user deletes it.
+- **Servers of the user's own** (`servers.json`): each server the user added, with the name they
+  gave it, its address, how Kalamu speaks to it, whether it asks for a key (never the key
+  itself), and its models as the user kept them: what each did in its trial and when, the digest
+  the server gave for it, its limits and any price the user typed. Removing a server in Settings
+  removes it from the file. A file the app cannot read is moved aside as `servers.json.bad` and
+  never overwritten; the app then starts without servers.
 - **Prompts, pipelines and workflows** the user saves (`presets`, `pipelines`, `workflows`),
   and a copy of the model catalogue. An exported workflow, like an exported pipeline, holds its
   steps, models, settings and prompts, never keys, files, folders or results.
@@ -274,12 +313,14 @@ turned down. The texts sent for proposals are kept with the frozen text below. A
   and the paths of the files and folders concerned, and, when an offline engine fails, the last
   lines of its diagnostics, only those that read as a program's own messages; and failures
   in the interface itself, as the error's name, its message with anything it quotes removed,
-  and where in Kalamu's code it happened. They contain no API keys and no document text. One file is written a day, and those older than thirty days
+  and where in Kalamu's code it happened; when a server the user added fails, its name and host.
+  They contain no API keys and no document text. One file is written a day, and those older than thirty days
   are deleted.
 
 Results are also written as files where the user chooses: next to the original files or in a
-chosen folder, each with a `provenance.json` that records the model, prompt and settings used
-and, for a source that is a document of a project, the project's name, the document's title
+chosen folder, each with a `provenance.json` that records the model, prompt and settings used,
+for a server of the user's own its name and address, and, for a source that is a document of a
+project, the project's name, the document's title
 and the description of its source the user typed.
 
 ### A project saved to a file
@@ -304,12 +345,18 @@ deletes them. Exported files stay where they were written.
 No key is needed for offline transcription, text extraction or analysis. Provider keys are stored in the system's keychain
 (Windows Credential Manager, or the login Keychain on macOS) and read only by the app's native
 core. A key is sent only to the provider that issued
-it, to authenticate requests. It is never written to the job database, the logs or
+it, to authenticate requests. A key for a server of your own, given only when the server asks
+for one, is kept the same way under that server's entry and sent only to the address you gave
+for it; removing the server removes its key. It is never written to the job database, the logs or
 `provenance.json`, and the developer does not receive, copy or store it.
 
 ## Other connections
 
 Besides the provider the user chooses, the app connects to:
+
+- **A server of the user's own**, at the address the user gave and nowhere else, when the user
+  adds or changes it in Settings (to learn what it is, list its models and try those chosen, as
+  described above) and when work is sent to it.
 
 - **GitHub** (`raw.githubusercontent.com`), at startup, to check for a newer catalogue of
   models and prices. It downloads a public file and sends nothing about the user. The same
@@ -378,7 +425,13 @@ Content sent to a provider is processed under the user's relationship with that 
 - [Mistral AI Privacy Policy](https://mistral.ai/terms/#privacy-policy)
 
 Providers' rules on keeping inputs, and on using them for training, differ between free and
-paid plans; check them before sending sensitive material. Model downloads are covered by the
+paid plans; check them before sending sensitive material.
+
+A server of your own is not a provider Kalamu chose or has terms with. Content sent to it is
+processed under the rules of whoever runs it: you, your institution or computing centre, a
+colleague, or the service behind the address (OpenRouter's address, for one, reaches
+OpenRouter under its own terms and your account there). Ask its owner how long it keeps
+requests and who can read them. Model downloads are covered by the
 [Hugging Face privacy policy](https://huggingface.co/privacy), the catalogue and Tesseract's
 language data by the
 [GitHub privacy statement](https://docs.github.com/site-policy/privacy-policies/github-general-privacy-statement),
@@ -398,6 +451,7 @@ given release is the one dated for it in the repository.
 <details>
 <summary>Previous versions of this policy</summary>
 
+- **26 November 2026**: adds servers of the user's own (Ollama, or a server that speaks like OpenAI's) added in Settings by their address: what is sent there and to whom, the confirmation asked for an address on a network and not for one on this computer, unencrypted `http://` addresses, the small requests that find a server and try its models (none of them carrying the user's material), keys for such servers in the system's keychain, `servers.json`, and the server's name and address in `provenance.json` and in the logs when it fails.
 - **25 November 2026 (copies of the job database)**: adds the `backups` folder: a daily copy of the job database and one before each update, kept few and skipped when the disk would be left with less than 1 GB free, and a damaged database moved there instead of being left in place.
 - **25 November 2026**: deleting a project opened from a `.kalamu` file now removes the original files copied in for it (`originals`), and the copy of an older project file brought up to date is made in the app's data folder (`project-file-scratch`) instead of the system's temporary folder; what a crash left in either is removed at the next start; and the logs record failures in the interface (the error's name, its message without what it quotes, and its place in Kalamu's code).
 - **23 November 2026**: records paths and SHA-256 fingerprints of exported table files (`exports.json`) so re-exporting never overwrites user-modified files.

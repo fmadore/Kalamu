@@ -262,6 +262,43 @@ impl ProviderError {
     }
 }
 
+/// Where what a provider is sent ends up. It decides consent, what provenance calls the engine
+/// and whether a project that never leaves the computer may use the provider.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[ts(export)]
+#[serde(rename_all = "snake_case")]
+pub enum Reach {
+    /// Nothing leaves this computer: an engine inside Kalamu, or a server of the researcher's
+    /// own at a local address.
+    ThisComputer,
+    /// A company's service, under the researcher's account and key.
+    Cloud,
+    /// A server of the researcher's own at another address: the files leave this computer for
+    /// a machine someone runs.
+    Network,
+}
+
+/// A server of the researcher's own, as provenance records it: the name the researcher gave it
+/// and its address, as they stood when the piece was read.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct ServerRecord {
+    pub name: String,
+    pub address: String,
+}
+
+/// How a server of the researcher's own is spoken to: Ollama at its own address (`/api/chat`),
+/// never its `/v1`, which cannot refuse a cut; or the OpenAI-style Chat Completions most other
+/// servers speak, at the address discovery settled. One type for the researcher's stored entry
+/// (`servers.json`, `"ollama"` or `"open_ai"`) and for the provider that speaks to it.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "snake_case")]
+#[ts(export)]
+pub enum Dialect {
+    Ollama,
+    OpenAi,
+}
+
 /// A cloud provider or offline engine. The engine only knows providers through this trait and
 /// never matches on a provider's name.
 #[async_trait]
@@ -271,6 +308,23 @@ pub trait Provider: Send + Sync {
     /// Cloud providers need an API key; offline engines do not.
     fn needs_key(&self) -> bool {
         true
+    }
+
+    /// Where what this provider is sent ends up. A provider that needs a key is a company's
+    /// service and one that needs none runs inside Kalamu, unless it says otherwise: a server of
+    /// the researcher's own answers by its address, with or without a key.
+    fn reach(&self) -> Reach {
+        if self.needs_key() {
+            Reach::Cloud
+        } else {
+            Reach::ThisComputer
+        }
+    }
+
+    /// The server of the researcher's own this provider is, for provenance. `None` for a
+    /// company's service and for an engine inside Kalamu.
+    fn server(&self) -> Option<ServerRecord> {
+        None
     }
 
     /// Whether `model` can run now on the job's `languages`: an offline engine checks that its

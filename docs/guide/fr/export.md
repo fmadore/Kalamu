@@ -2,7 +2,7 @@
 layout: guide
 lang: fr
 title: Exporter et citer
-order: 8
+order: 9
 lede: "Emportez vos résultats vérifiés là où vous en avez besoin, avec une trace de leur fabrication que vous pouvez citer."
 description: "Les formats d’export et la provenance dans Kalamu."
 ---

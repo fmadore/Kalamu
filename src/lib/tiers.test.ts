@@ -58,4 +58,44 @@ describe('model tiers', () => {
 		const groups = acrossProviders(of('openai'), catalog.providers);
 		expect(groups.every((g) => g.tier !== null)).toBe(true);
 	});
+
+	it('lists the researcher’s servers under one heading of their own, server by server', () => {
+		const server = (id: string, name: string) => ({
+			id,
+			name,
+			key_url: '',
+			key_prefix: null,
+			local: false,
+			own: {
+				address: 'http://localhost:11434',
+				host: 'localhost',
+				this_computer: true,
+				key: false,
+				dialect: 'ollama' as const
+			}
+		});
+		const model = (provider: string, id: string): ModelInfo => ({
+			...of('gemini')[0],
+			provider,
+			id,
+			name: id,
+			tier: 'top'
+		});
+		const providers = [
+			...catalog.providers,
+			server('own-00000001', 'Lab'),
+			server('own-00000002', 'Uni')
+		];
+		const models = [
+			model('own-00000002', 'qwen3'),
+			...of('anthropic'),
+			model('own-00000001', 'gemma3'),
+			model('own-00000002', 'llama')
+		];
+		const groups = acrossProviders(models, providers);
+		expect(groups.map((g) => g.key)).toEqual([...TIERS, 'own']);
+		// A server's model is never set in a tier against a company's, whatever tier it names.
+		expect(groups[0].models.some((m) => m.provider.startsWith('own-'))).toBe(false);
+		expect(ids(groups[3].models)).toEqual(['gemma3', 'qwen3', 'llama']);
+	});
 });

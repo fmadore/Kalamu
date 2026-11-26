@@ -4,6 +4,7 @@
 
 import type { Catalog } from './bindings/Catalog.js';
 import type { ModelInfo } from './bindings/ModelInfo.js';
+import type { OwnInfo } from './bindings/OwnInfo.js';
 import type { ProviderInfo } from './bindings/ProviderInfo.js';
 import { locale } from './i18n/index.js';
 
@@ -28,6 +29,22 @@ export function providerName(provider: ProviderInfo): string {
 export function providerNameOf(catalog: Catalog, id: string): string {
 	const provider = catalog.providers.find((p) => p.id === id);
 	return provider ? providerName(provider) : id;
+}
+
+/** Where a server of the researcher's own is and how it is reached; nothing for any other
+ *  provider, or one the catalogue does not list. */
+export function ownOf(catalog: Catalog | null | undefined, id: string): OwnInfo | undefined {
+	return catalog?.providers.find((p) => p.id === id)?.own;
+}
+
+/**
+ * Whether what a provider reads stays on this computer: an engine inside Kalamu, or a server of
+ * the researcher's own at a local address. A server on the network, like a company's service,
+ * receives the files.
+ */
+export function staysHere(catalog: Catalog | null | undefined, id: string): boolean {
+	const provider = catalog?.providers.find((p) => p.id === id);
+	return provider?.local === true || provider?.own?.this_computer === true;
 }
 
 /** A model's name by its provider and id, or the id when the catalogue does not list it. */

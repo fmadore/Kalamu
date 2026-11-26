@@ -163,7 +163,9 @@
 		<p class="muted">
 			{choice.local
 				? p.sentOffline(choice.modelName)
-				: p.sentCloud(choice.providerName, PASSAGE_LIMITS.context)}
+				: choice.server
+					? p.sentServer(choice.providerName, choice.server.host, PASSAGE_LIMITS.context)
+					: p.sentCloud(choice.providerName, PASSAGE_LIMITS.context)}
 		</p>
 		<AskStatus {choice} estimate={request.estimate} texts={p} />
 	{:else if request.stage === 'waiting'}

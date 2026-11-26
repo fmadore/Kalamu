@@ -2,11 +2,14 @@
 	// A set-up's provider and model. Listed by provider, a provider field chooses whose models the
 	// model menu lists, under their tiers; listed by tier, one model menu lists every provider's,
 	// the most capable first, each named with its provider, and choosing one chooses its provider
-	// too. A provider without a key is offered but cannot be chosen, either way.
+	// too. A provider without a key is offered but cannot be chosen, either way. A server of the
+	// researcher's own is a provider like the others, under its name; its models, which no tier
+	// describes, are listed under a heading of their own, each saying what serves it and where.
 	import type { Catalog } from '#lib/bindings/Catalog.js';
 	import type { ModelInfo } from '#lib/bindings/ModelInfo.js';
-	import { providerNameOf } from '#lib/catalogText.js';
+	import { modelSummary, ownOf, providerNameOf } from '#lib/catalogText.js';
 	import { messages } from '#lib/i18n/index.js';
+	import { serverSummary } from '#lib/servers.js';
 	import { hasKey } from '#lib/state.svelte.js';
 	import { acrossProviders, byTier, type ModelGroup, type ModelsBy } from '#lib/tiers.js';
 	import ModelMenu from './ModelMenu.svelte';
@@ -44,7 +47,19 @@
 	const all = $derived(listed.flatMap((id) => models(id)));
 	const chosen = $derived(all.find((mod) => mod.provider === provider && mod.id === model));
 	const headingOf = (group: ModelGroup) =>
-		group.tier ? m.newJob.tiers.group[group.tier] : m.newJob.tiers.local;
+		group.tier
+			? m.newJob.tiers.group[group.tier]
+			: group.key === 'own'
+				? m.newJob.tiers.servers
+				: m.newJob.tiers.local;
+	/** A model's summary; for a server's, which has none, what serves it and where. */
+	const summaryOf = (mod: ModelInfo) => {
+		const own = ownOf(catalog, mod.provider);
+		return own ? serverSummary(m, own) : mod.summary || mod.description ? modelSummary(mod) : '';
+	};
+	/** A provider's models: a server's under its heading, any other's under their tiers. */
+	const groupsOf = (id: string) =>
+		ownOf(catalog, id) ? acrossProviders(models(id), catalog.providers) : byTier(models(id));
 	const nameOf = (mod: ModelInfo) => `${mod.name}${suffix(mod)}`;
 	const isLocal = (mod: ModelInfo) =>
 		catalog.providers.some((p) => p.id === mod.provider && p.local);
@@ -61,10 +76,12 @@
 	</label>
 	<ModelMenu
 		label={m.newJob.model}
-		groups={byTier(models(provider))}
+		groups={groupsOf(provider)}
 		{chosen}
 		{headingOf}
 		{nameOf}
+		{summaryOf}
+		providerName={(mod) => providerNameOf(catalog, mod.provider)}
 		onchoose={(mod) => (model = mod.id)}
 	/>
 {:else}
@@ -74,6 +91,8 @@
 		{chosen}
 		{headingOf}
 		{nameOf}
+		{summaryOf}
+		providerName={(mod) => providerNameOf(catalog, mod.provider)}
 		providerOf={(mod) => (isLocal(mod) ? null : providerNameOf(catalog, mod.provider))}
 		unavailable={(mod) =>
 			hasKey(mod.provider) ? null : m.newJob.tiers.noKey(providerNameOf(catalog, mod.provider))}

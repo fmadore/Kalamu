@@ -2884,6 +2884,7 @@ dependencies = [
  "thiserror 2.0.21",
  "ts-rs",
  "unicode-normalization",
+ "url",
  "uuid",
 ]
 
@@ -3023,7 +3024,9 @@ dependencies = [
  "kalamu-catalog",
  "kalamu-core",
  "reqwest",
+ "serde",
  "serde_json",
+ "thiserror 2.0.21",
  "tokio",
  "wiremock",
 ]

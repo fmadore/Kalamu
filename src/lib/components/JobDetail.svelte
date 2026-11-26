@@ -14,6 +14,7 @@
 	import type { JobAgreement as Agreement } from '#lib/bindings/JobAgreement.js';
 	import type { JobProgress } from '#lib/bindings/JobProgress.js';
 	import { Action } from '#lib/action.svelte.js';
+	import { mayResume } from '#lib/dialogs.js';
 	import { formatDateTime, messages } from '#lib/i18n/index.js';
 	import { deleteJob, renameJob } from '#lib/jobActions.svelte.js';
 	import { rulesFor } from '#lib/newJob.js';
@@ -164,6 +165,12 @@
 		});
 	}
 
+	/** Starts the job again (`start`: resumed, or its failed pieces retried) once the researcher
+	 * agrees to every provider it sends to, as New job asks before a new one. */
+	async function resumed(start: (id: string) => Promise<void>) {
+		if (await mayResume(jobId, app.catalog)) await start(jobId);
+	}
+
 	async function remove() {
 		await action.run(() => deleteJob(jobId), null);
 	}
@@ -245,7 +252,7 @@
 			{:else}
 				<button class="btn ghost danger" onclick={remove}>{m.jobs.delete}</button>
 				{#if summary.pieces_failed > 0}
-					<button class="btn" onclick={() => act(() => api.retryFailed(jobId))}>
+					<button class="btn" onclick={() => act(() => resumed(api.retryFailed))}>
 						{m.jobs.retry}
 					</button>
 				{/if}
@@ -267,7 +274,7 @@
 					<button class="btn" onclick={summarise}>{m.jobs.summarise}</button>
 				{/if}
 				{#if summary.status !== 'completed'}
-					<button class="btn primary" onclick={() => act(() => api.startJob(jobId))}>
+					<button class="btn primary" onclick={() => act(() => resumed(api.startJob))}>
 						<Icon name="play" size={12} />{m.jobs.resume}
 					</button>
 				{/if}

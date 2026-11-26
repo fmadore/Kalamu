@@ -4,7 +4,8 @@
 //! logs or provenance.
 //!
 //! In debug builds a `GEMINI_API_KEY`-style environment variable is accepted as a fallback for
-//! development.
+//! development, never for a server of the researcher's own (`own-…`), whose key is saved with
+//! the server.
 
 use std::collections::HashMap;
 use std::sync::Mutex;
@@ -98,7 +99,9 @@ impl CredentialKeys {
             }
             return Ok(Some(key));
         }
-        if cfg!(debug_assertions) {
+        // Never for a server of the researcher's own, whose entry says whether it holds a key:
+        // a variable could not be told from a key in the keychain.
+        if cfg!(debug_assertions) && !kalamu_catalog::is_own_id(provider.as_str()) {
             return Ok(std::env::var(env_var(provider))
                 .ok()
                 .filter(|k| !k.trim().is_empty()));

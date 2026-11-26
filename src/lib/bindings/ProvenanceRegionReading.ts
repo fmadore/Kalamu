@@ -4,6 +4,7 @@ import type { ProvenancePrompt } from "./ProvenancePrompt";
 import type { ProviderId } from "./ProviderId";
 import type { ReadingPlace } from "./ReadingPlace";
 import type { RequestSetting } from "./RequestSetting";
+import type { ServerRecord } from "./ServerRecord";
 import type { Timestamp } from "./Timestamp";
 
 /**
@@ -23,7 +24,12 @@ region: string,
 /**
  * The part of the page sent, in fractions of the page or of its half.
  */
-x: number, y: number, width: number, height: number, provider: ProviderId, model: string, prompt: ProvenancePrompt, request?: Array<RequestSetting>, went_to: ReadingPlace, 
+x: number, y: number, width: number, height: number, provider: ProviderId, 
+/**
+ * For a server of the researcher's own, its name and address, as for the document's
+ * [`Provenance::server`].
+ */
+server?: ServerRecord, model: string, prompt: ProvenancePrompt, request?: Array<RequestSetting>, went_to: ReadingPlace, 
 /**
  * The researcher changed the model's reading before accepting it.
  */

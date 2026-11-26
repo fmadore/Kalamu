@@ -18,7 +18,7 @@ use std::time::Duration;
 use kalamu_catalog::Catalog;
 use kalamu_core::{
     ApiKey, CacheKey, Correction, Job, JobId, JobStore, LanguageChoice, PieceState, PreparedInput,
-    Proposal, ProposalStatus, ProviderId, Setup, SetupId, SourceId, StopSignal, StoreError,
+    Proposal, ProposalStatus, ProviderId, Reach, Setup, SetupId, SourceId, StopSignal, StoreError,
     Timestamp,
 };
 use serde::{Deserialize, Serialize};
@@ -33,10 +33,13 @@ use crate::{Engine, EngineError};
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
 #[ts(export)]
 pub struct PassageEstimate {
-    /// About what the call costs at the model's prices; none for a model without one, or
-    /// when the answer is already stored.
+    /// About what the call costs at the model's prices; none for a model without one, for an
+    /// engine inside Kalamu, or when the answer is already stored. A server of the
+    /// researcher's own has a price only where the researcher gave it one, on this computer
+    /// too.
     pub usd: Option<f64>,
-    /// Read on this computer: nothing is sent.
+    /// Read on this computer: nothing is sent. True for an engine inside Kalamu and for a
+    /// server of the researcher's own at a local address ([`kalamu_core::Reach::ThisComputer`]).
     pub offline: bool,
     /// The same passage, context, model and prompt (or the same picture of a region, model and
     /// prompt) were asked about before: the stored answer is offered again, for nothing.
@@ -137,15 +140,18 @@ impl Engine {
         Ok(api_key)
     }
 
-    /// What asking would cost: `usd` at the model's prices, nothing to pay on this computer,
-    /// nothing when the answer under `key` is stored already.
+    /// What asking would cost: `usd` at the model's prices, nothing to pay for an engine inside
+    /// Kalamu, nothing when the answer under `key` is stored already.
     pub(crate) fn estimated(
         &self,
         provider: &ProviderId,
         key: &CacheKey,
         usd: impl FnOnce(&Catalog) -> Option<f64>,
     ) -> Result<PassageEstimate, EngineError> {
-        let offline = !self.provider(provider)?.needs_key();
+        let found = self.provider(provider)?;
+        let offline = found.reach() == Reach::ThisComputer;
+        // Kalamu's own engines cost nothing; a server's price is the researcher's.
+        let free = offline && found.server().is_none();
         if self.store.cached_result(key)?.is_some() {
             return Ok(PassageEstimate {
                 usd: None,
@@ -154,7 +160,7 @@ impl Engine {
             });
         }
         Ok(PassageEstimate {
-            usd: usd(&self.current_catalog()).filter(|_| !offline),
+            usd: usd(&self.current_catalog()).filter(|_| !free),
             offline,
             cached: false,
         })

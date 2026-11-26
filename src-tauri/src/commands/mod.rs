@@ -18,6 +18,7 @@ pub mod region_reading;
 pub mod review;
 pub mod sample;
 pub mod search;
+pub mod servers;
 pub mod settings;
 pub mod units;
 pub mod window;
@@ -40,6 +41,8 @@ pub struct Paths {
     pub data: PathBuf,
     pub settings: PathBuf,
     pub catalog_cache: PathBuf,
+    /// The researcher's servers (`servers.json`), beside the cached model list, never refreshed.
+    pub servers: PathBuf,
     pub logs: PathBuf,
 }
 
@@ -86,6 +89,20 @@ pub struct AppState {
     /// The files table exports wrote, so exporting again replaces them and nothing else.
     pub exports: Arc<crate::exports::ExportLedger>,
     pub settings: Mutex<Settings>,
+    /// The researcher's servers, as `servers.json` holds them and the engine was last handed
+    /// them (`servers::hand_over`).
+    pub servers: Mutex<kalamu_catalog::OwnServers>,
+    /// Changes to the servers, one at a time from reading the list to handing the engine the
+    /// new one.
+    pub server_edits: tokio::sync::Mutex<()>,
+    /// The trials of models made in this session: only these, and those a saved server's
+    /// models hold, give a model saved what it does.
+    pub trials: Mutex<kalamu_catalog::Trials>,
+    /// Trials under way, by the id the interface gave each, so it can stop one.
+    pub trials_running: Mutex<std::collections::HashMap<String, tokio::task::AbortHandle>>,
+    /// The providers that never change while the app runs, the companies' and Kalamu's own
+    /// engines: the engine is handed these and one per server whenever the servers change.
+    pub fixed_providers: Vec<Arc<dyn kalamu_core::Provider>>,
     pub paths: Paths,
     pub http: reqwest::Client,
     /// The last source opened for page previews, so flipping pages does not parse a large PDF
@@ -184,8 +201,12 @@ pub fn remember_settings_reset(set_aside: Option<PathBuf>) {
     *SETTINGS_SET_ASIDE.lock().unwrap_or_else(|p| p.into_inner()) = set_aside;
 }
 
-/// The cloud providers among `providers` the researcher has not agreed to send their files to,
-/// each once, in order. A provider that needs no key is an offline engine: nothing is sent.
+/// The providers among `providers` that send files off this computer and that the researcher
+/// has not agreed to send their files to, each once, in order: a company's service, or a
+/// server of the researcher's own on the network. An engine inside Kalamu, or a server at an
+/// address on this computer, sends nothing out. A provider the engine does not know (a server
+/// since removed) is not asked about: it can be sent nothing, and [`require_agreed`] refuses
+/// the work that names it.
 fn unconsented(
     state: &AppState,
     providers: impl IntoIterator<Item = ProviderId>,
@@ -197,19 +218,38 @@ fn unconsented(
         .unwrap_or_default();
     let mut out: Vec<ProviderId> = Vec::new();
     for provider in providers {
-        let cloud = state
+        let leaves = state
             .engine
             .provider(&provider)
-            .map_or(true, |p| p.needs_key());
-        if cloud && !agreed.contains(&provider) && !out.contains(&provider) {
+            .is_ok_and(|p| p.reach() != kalamu_core::Reach::ThisComputer);
+        if leaves && !agreed.contains(&provider) && !out.contains(&provider) {
             out.push(provider);
         }
     }
     out
 }
 
-/// Refuses work that would send files to a provider the researcher has not agreed to: the
-/// interface asks first (`askConsent`), and this keeps any other path from skipping it.
+/// Refuses work that would send files to a provider the researcher has not agreed to, or that
+/// names one the engine does not know (a server removed: `server.removed`): the interface asks
+/// first (`askConsent`), and this keeps any other path from skipping it. Every path that makes
+/// the engine send for new or existing work passes here: a job created, started, resumed or
+/// retried, a workflow run started or a step approved, a dictionary proposal, a passage or a
+/// region asked.
+fn require_agreed(
+    state: &AppState,
+    providers: impl IntoIterator<Item = ProviderId>,
+) -> Result<(), AppError> {
+    let providers: Vec<ProviderId> = providers.into_iter().collect();
+    for provider in &providers {
+        state.engine.provider(provider)?;
+    }
+    match unconsented(state, providers).first() {
+        Some(provider) => Err(AppError::new(crate::errors::id::CONSENT, provider)),
+        None => Ok(()),
+    }
+}
+
+/// [`require_agreed`] for the providers of new work's set-ups, the step that combines included.
 fn require_consent<'a>(
     state: &AppState,
     setups: impl IntoIterator<Item = &'a kalamu_core::SetupRequest>,
@@ -217,19 +257,13 @@ fn require_consent<'a>(
     let providers = setups.into_iter().flat_map(|s| {
         std::iter::once(s.provider.clone()).chain(s.merge.as_ref().map(|m| m.provider.clone()))
     });
-    match unconsented(state, providers).first() {
-        Some(provider) => Err(AppError::new(crate::errors::id::CONSENT, provider)),
-        None => Ok(()),
-    }
+    require_agreed(state, providers)
 }
 
 /// Refuses a request from the review (a passage corrected, a region read again) that would send
 /// to `provider` without the researcher's consent.
 fn consented(state: &AppState, provider: &ProviderId) -> Result<(), AppError> {
-    match unconsented(state, [provider.clone()]).first() {
-        Some(provider) => Err(AppError::new(crate::errors::id::CONSENT, provider)),
-        None => Ok(()),
-    }
+    require_agreed(state, [provider.clone()])
 }
 
 /// Runs work that reads or writes files off the window's thread, where a synchronous command

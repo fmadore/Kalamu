@@ -1,7 +1,7 @@
 ---
 layout: guide
 title: Exporting and citing
-order: 8
+order: 9
 lede: Take your checked results where you need them, with a record of how they were made that you can cite.
 description: Export formats and provenance in Kalamu.
 ---

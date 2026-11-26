@@ -205,7 +205,13 @@
 				<!-- Opened from the keyboard: the focus goes to the first picker, not the page behind. -->
 				<ModelPickers {choice} defaultPrompt={r.defaultPrompt} focus />
 			{/if}
-			<p class="muted">{choice.local ? r.sentOffline : r.sentCloud(choice.providerName)}</p>
+			<p class="muted">
+				{choice.local
+					? r.sentOffline
+					: choice.server
+						? r.sentServer(choice.providerName, choice.server.host)
+						: r.sentCloud(choice.providerName)}
+			</p>
 			<AskStatus {choice} estimate={request.estimate} texts={r} testid="region-cost" />
 		{/if}
 	{:else if request.stage === 'waiting'}

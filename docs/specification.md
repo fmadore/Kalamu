@@ -281,8 +281,8 @@ no text layer needs *Extract text* instead.
 (a PDF's text layer, a text or Word file) and, above all, a result's text frozen through *Use
 this text in a new job*: an extraction, a transcription or a correction as the researcher left
 it. It sends that text page by page, or in passages, and the answer comes back as the one field
-of a correction's, so every model that answers in fields and reads text can translate, cloud
-or offline, with nothing new asked of providers. The job's language is the language translated
+of a correction's, so every model that answers in fields and reads text can translate, cloud,
+offline or on a server of the researcher's own, with nothing new asked of providers. The job's language is the language translated
 into, one only and always chosen: New job and a workflow's step ask for it, a workflow with a
 translation step and no language is not saved, and a job without one is refused before
 anything is sent. Its preset, *Translation for research*, translates
@@ -335,10 +335,11 @@ once, not in a batch, since a batch's answers are not checked line by line.
   each image as a document of its own. Typing a label for each page, reordering a job already
   made and pairing existing transcriptions with the scans come later.
 - **Choice of provider.** Google Gemini, OpenAI, Anthropic Claude, Mistral, offline Whisper,
-  Tesseract, OCR models and language models,
-  and later OpenRouter for open-weights models. The app shows only the providers and models
-  that can handle the chosen task: Claude, for instance, reads documents but does not accept
-  audio.
+  Tesseract, OCR models and language models, and any server of the researcher's own the
+  researcher adds: Ollama, or a server that speaks like OpenAI's, OpenRouter's open-weights
+  models included (see [A server of the researcher's own](#a-server-of-the-researchers-own)).
+  The app shows only the providers and models that can handle the chosen task: Claude, for
+  instance, reads documents but does not accept audio.
 - **Language choice with auto-detect.** Extraction and transcription list only the languages
   the chosen model supports, with **Auto-detect** as the default; several can be chosen for
   material that mixes languages (French and Mooré, say). Tesseract offers no Auto-detect: its
@@ -367,7 +368,9 @@ once, not in a batch, since a batch's answers are not checked line by line.
 - **Current models.** The latest models for each task, updated as better ones appear (see
   [Keeping models current](#keeping-models-current)). Very expensive models carry a note that
   they are most likely more than the task needs.
-- **Estimated cost before starting**, from file length and the provider's published prices.
+- **Estimated cost before starting**, from file length and the provider's published prices; a
+  server of the researcher's own has a price only where the researcher gave its model one, and
+  its jobs otherwise read as not priced.
 - **Faster or cheaper.** A job runs at once, page by page, or, for large collections, through
   the provider's batch service at about half the price, with answers within a day. Both costs
   are shown before starting; offline models and those without a batch service run at once
@@ -418,7 +421,8 @@ once, not in a batch, since a batch's answers are not checked line by line.
   them, a *Continue* button; such jobs are listed first in the sidebar, under *For you to
   check*, and the notification says the text is ready to check rather than done.
 - **Works without an API key.** An offline mode keeps the app useful without an account, a key
-  or an internet connection, and keeps sensitive material on the PC.
+  or an internet connection, and keeps sensitive material on the PC; so does a server of the
+  researcher's own at an address of this computer.
 - **Interface in English and French**, with German to follow. All interface text lives in
   translation files (`src/lib/i18n/`), so adding a language needs no code changes. The
   language is chosen in Settings › General; by default it is the first of the system's languages that
@@ -1217,6 +1221,10 @@ workbook by default. The same table gives the same workbook, byte for byte
   a job naming it is refused before anything is sent. No entry is ever removed, and an id the
   catalogue corrected is kept as an alias of the model's id now
   ([decision](decisions/2026-11-11-model-successors.md)).
+- **The researcher's own servers are not in the catalogue file.** Their models join the
+  catalogue the app holds as each model's trial showed, again after every refresh, and are
+  never refreshed themselves; a downloaded catalogue that names one is refused
+  ([A server of the researcher's own](#a-server-of-the-researchers-own)).
 - **The exact model version is recorded** in `provenance.json`, with the settings each request
   carried (reasoning effort, output limit, media resolution), kept with each result when it
   was sent so that an update of the app never rewrites them.
@@ -1304,11 +1312,96 @@ workbook by default. The same table gives the same workbook, byte for byte
 Offline results are a fallback, not the default for difficult material: the app says which
 engine produced a result and records it like any other.
 
+## A server of the researcher's own
+
+Universities and computing centres run models for their members, usually behind an
+OpenAI-style address, and some researchers may send their material only there; others run
+Ollama on a stronger computer in the office ([#283](https://github.com/fmadore/Kalamu/issues/283),
+[decision](decisions/2026-11-26-a-server-of-the-researchers-own.md)). Such a server is added
+in Settings › *Other servers*, the only place the feature shows until one is added, by a name
+of the researcher's choosing and an address, with a key only when the server asks for one.
+Nothing else is described by hand. Once added, the server is a provider like the others in New
+job, workflows and every dialog, under its name, usable at once without a restart.
+
+- **Kalamu finds what the server is.** An address that answers Ollama's `/api/version` is
+  Ollama; one that lists models at `/models`, or else at `/v1/models`, is an OpenAI-style
+  server (vLLM, llama.cpp, LM Studio, a university's gateway, OpenRouter). Otherwise the
+  failure is said in plain words: nothing answers there, something answers that is not such a
+  server, or the server asks for a key or refuses the one given. The server's models are
+  listed with what it says of each. Those Ollama runs at ollama.com rather than on the server
+  are shown as not on it and cannot be chosen: an address on this computer must not send a page
+  to a company unseen.
+- **Each model chosen is tried before it is offered**, with three small requests that carry
+  Kalamu's own material only: a one-line question, which any answer passes; a small picture
+  bundled with Kalamu that holds a number, which the answer must contain; and a form of two
+  fields about one sentence, which must come back filled with the right values. A model is
+  offered for reading pages (text extraction, a region read again) only if it read the picture,
+  and for analyses, corrections and translations of text only if it filled the form; an
+  analysis of images and the pages of a table of contents need both. A model that did neither
+  is not added. Where Ollama says a model reads no pictures, the picture is not sent and the
+  answer is no. The researcher cannot tick an ability: trying again, after a model was updated
+  on the server, repeats the trial. The model's catalogue entry is written from its trial, so
+  New job, workflows and every dialog obey it through the rules every model obeys, and a saved
+  pipeline or workflow that asks it for anything else is refused before anything is sent.
+- **Never a reading in part.** Ollama is spoken at its own address (`/api/chat`), never its
+  OpenAI-style one, which cannot refuse a cut: every request names the context the model is run
+  with (`num_ctx`) and its longest answer, with `truncate: false` and `shift: false`, so a page
+  or text longer than the model reads on that server is refused with where to raise the limit,
+  never cut short in silence. An OpenAI-style server is sent `max_tokens` and no field that only
+  some servers read; after each answer to a text, the tokens the server says it read are
+  compared with the characters sent, and fewer than one token for eight characters is refused
+  as a reading in part, since no language is written so compactly. A server that does not say
+  what it read is taken at its word. OpenRouter's compression of long texts is turned off.
+  Thinking is kept out of the answer, and a model reads one page a call. A failure names the
+  server by the researcher's name for it, and a server that does not answer is not blamed on
+  the internet connection.
+- **Each model's limits are filled by Kalamu and changed by the researcher**: how much it reads,
+  from the model's trained context capped at 32,768 tokens (8,192 where the server does not
+  say); its longest answer, 8,192 tokens or a quarter of what it reads if that is less; and a
+  price per million tokens in and out, none by default. Per server, how many requests go at
+  once, one by default and eight at most. What the model reads less its longest answer is the
+  most its catalogue entry takes, so the engine refuses or splits a longer text before anything
+  is sent.
+- **On this computer, or on the network**, decided by the address alone. `localhost`, any
+  address of `127.0.0.0/8` and `::1` are this computer: nothing leaves it and no consent is
+  asked. Any other address, a doubtful one included, is the network: consent is asked once,
+  naming the server by the researcher's name for it and its host, and saying that the files go
+  to a machine someone runs, under that person's rules, not to a company under the
+  researcher's account; it is asked again when the address changes, and a job made before the
+  change asks again when it is resumed or its failed pieces retried, as does a workflow step
+  approved whose next steps use the server. Only `http` and `https`
+  are taken, without a user name, password, query or fragment in the address. Plain `http://`
+  is accepted, Ollama speaking nothing else, and Settings says that on the network the files
+  travel unencrypted, and the key with them.
+- **Kept with the rest of the app's data.** The servers, their models' limits and what each
+  trial showed are kept in `servers.json` in the data folder, beside the cached catalogue and
+  never refreshed with it; a file that cannot be read is moved aside as `servers.json.bad`,
+  never overwritten, and the app starts without servers. A key is kept in the system's keychain
+  (Credential Manager on Windows, the Keychain on macOS) under the server's id, made once and
+  kept through a rename or a changed address, as its results and cache are; removing the server
+  removes its key. Two servers' models of the same name are kept apart.
+- **Provenance names it.** `provenance.json` records `engine` as `own` and a `server` with the
+  server's name and address as they stand when the files are written.
+- **Not changed under a running job.** While a job or a workflow run that sends to a server
+  runs, the server cannot be removed, its address or way of speaking cannot change, and a model
+  that job uses cannot be unticked: Settings says to pause the job or let it finish first. A
+  rename, new limits or prices, or a model added are free. A job paused or interrupted does not
+  hold the server: resumed after the address changed, it asks consent again; after the server
+  was removed, it cannot be finished, and says that the server was removed in Settings ›
+  *Other servers* and that a server added again is a new one, to start a new job with. A saved
+  pipeline or workflow that names a removed server fails with the same sentence.
+- **Not in this version:** transcription (no model of such a server is offered for recordings;
+  Whisper covers the need), economy mode's batches, embeddings for the search by meaning,
+  reasoning levels, and the models Ollama runs at ollama.com. Services that need a sign-in of
+  their own (Azure OpenAI, Vertex AI, Bedrock) are not reached this way.
+
 ## Privacy
 
-In offline mode, nothing leaves the computer. With a cloud provider, files go directly from the
-computer to
-that provider; there is no intermediate server. For a YouTube video only its link is sent, and
+In offline mode, nothing leaves the computer, nor with a server of the researcher's own at an
+address of this computer. With a cloud provider, files go directly from the computer to that
+provider; there is no intermediate server. With a server of the researcher's own on the
+network, they go directly to the address the researcher gave: Kalamu knows only that address,
+and what the machine there does with the files is under its owner's rules. For a YouTube video only its link is sent, and
 Google reads the video from YouTube; the app also asks YouTube for the video's title when the
 link is added, and loads YouTube's player in the review only when the video is played. API keys
 stay in the system's keychain: Credential Manager on Windows, the Keychain on macOS.
@@ -1319,13 +1412,21 @@ never a key: it leaves the computer only when the researcher moves or sends it.
 Before the first job, workflow run or dictionary proposal sent to a cloud provider, the app asks
 once for that provider: it names it, says what is sent (the pages, recordings or text, with any
 personal information they hold), that it goes under the researcher's own account and the
-provider's terms, and links the privacy policy. Nothing is sent until the researcher agrees,
-which the settings keep; the shell refuses work for a provider not agreed to, so no path skips
-the question. Offline engines are never asked about. Apple's Guideline 5.1.2(i) asks for this in
+provider's terms, and links the privacy policy. For a server of the researcher's own on the
+network, it names the server and its host and says that the files go to a machine someone
+runs, under that person's rules; changing the server's address, or removing the server,
+withdraws the agreement. Nothing is sent until the researcher agrees, which the settings keep;
+the shell refuses work for a provider not agreed to, so no path skips the question: a job
+created, started, resumed or retried, a workflow run started or a step approved (for the steps
+it may start), a dictionary proposal, a passage or a region asked. A job resumed after its
+server's address changed, or made by an older version or brought in a project file, is asked
+about as a new one is. Offline
+engines, and servers at an address of this computer, are never asked about. Apple's Guideline 5.1.2(i) asks for this in
 the Mac App Store; it applies on Windows too
 ([decision](decisions/2026-11-04-ai-consent.md)).
 
-Sending research material to an AI provider is still a transfer of data to a third party.
+Sending research material to an AI provider, or to a server someone else runs, is still a
+transfer of data to a third party.
 Researchers remain responsible for consent, confidentiality, copyright and any approval their
 institution requires, and should prefer paid API tiers whose terms exclude training on inputs.
 
@@ -1336,7 +1437,8 @@ engine's rules, given to the interface so New job offers only what will run, and
 when a job is created: a source the task does not read, or a model that does not do the task or
 cannot read a YouTube link, is refused with a plain message, and formats the task does not
 write (from a pipeline saved for another task) are left out, as are a searchable PDF and ALTO XML when no
-model of the job reports where text sits on the page. Where line breaks, samples and pages per
+model of the job reports where text sits on the page. A model of a server of the researcher's
+own does only what its trial showed, through the same rules. Where line breaks, samples and pages per
 call apply, which models are the app's and each provider's choice, and what a job will cost
 at each pace are the engine's to say too; the interface only shows them.
 

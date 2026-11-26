@@ -3,7 +3,10 @@
 
 use std::sync::{Arc, Mutex, MutexGuard, PoisonError};
 
-use kalamu_core::{JobId, JobStatus, PieceStatus, ProgressEvent, StopSignal, Timestamp};
+use kalamu_core::ahead;
+use kalamu_core::{
+    JobId, JobStatus, PieceStatus, ProgressEvent, ProviderId, RunId, StopSignal, Timestamp,
+};
 
 use crate::{Engine, EngineError};
 
@@ -104,6 +107,38 @@ impl Engine {
             engine.job_ended(id, then_start);
         });
         Ok(())
+    }
+
+    /// The providers starting `id` now would send to: its own set-ups', and those of the steps
+    /// of its workflow run that may start when it ends. Consent is asked for each before a job
+    /// is started, resumed or retried, as before one is created.
+    pub fn providers_ahead(&self, id: JobId) -> Result<Vec<ProviderId>, EngineError> {
+        Ok(ahead::providers(&ahead::job_sends(
+            self.store.as_ref(),
+            id,
+        )?))
+    }
+
+    /// The providers going on with the run `id` may send to: its steps that have no job yet,
+    /// started once a step is approved.
+    pub fn run_providers_ahead(&self, id: RunId) -> Result<Vec<ProviderId>, EngineError> {
+        Ok(ahead::providers(&ahead::run_sends(
+            self.store.as_ref(),
+            id,
+        )?))
+    }
+
+    /// The models of `provider` that the jobs running now use, or may start a workflow step
+    /// with: none when the provider (a server of the researcher's own) can be changed or
+    /// removed without changing work under way. A paused or interrupted job does not count:
+    /// its consent is asked again when it is resumed.
+    pub fn models_in_use(&self, provider: &ProviderId) -> Result<Vec<String>, EngineError> {
+        let running: Vec<JobId> = lock(&self.running).keys().copied().collect();
+        Ok(ahead::models_in_use(
+            self.store.as_ref(),
+            running,
+            provider,
+        )?)
     }
 
     /// Puts failed pieces back in the queue and starts the job.

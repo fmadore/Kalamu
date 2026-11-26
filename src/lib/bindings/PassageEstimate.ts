@@ -6,12 +6,15 @@
  */
 export type PassageEstimate = { 
 /**
- * About what the call costs at the model's prices; none for a model without one, or
- * when the answer is already stored.
+ * About what the call costs at the model's prices; none for a model without one, for an
+ * engine inside Kalamu, or when the answer is already stored. A server of the
+ * researcher's own has a price only where the researcher gave it one, on this computer
+ * too.
  */
 usd: number | null, 
 /**
- * Read on this computer: nothing is sent.
+ * Read on this computer: nothing is sent. True for an engine inside Kalamu and for a
+ * server of the researcher's own at a local address ([`kalamu_core::Reach::ThisComputer`]).
  */
 offline: boolean, 
 /**

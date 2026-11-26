@@ -4,9 +4,10 @@
 	// turns), a document's pages (or its passages), why, and Read it again, which puts the part
 	// back in the queue; the parts are then brought together again (`parts.ts`).
 	import type { PartsRead } from '#lib/parts.js';
+	import { mayResume } from '#lib/dialogs.js';
 	import { describeError } from '#lib/errors.js';
 	import { messages } from '#lib/i18n/index.js';
-	import { toast } from '#lib/state.svelte.js';
+	import { app, toast } from '#lib/state.svelte.js';
 	import { api } from '#lib/tauri.js';
 
 	let {
@@ -25,6 +26,7 @@
 	async function readAgain() {
 		retrying = true;
 		try {
+			if (!(await mayResume(jobId, app.catalog))) return;
 			await api.retryFailed(jobId);
 			toast(m.cited.readingAgain);
 		} catch (e) {

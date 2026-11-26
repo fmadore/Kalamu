@@ -816,7 +816,7 @@ export const fr: Messages = {
 		costLater: (n: number) => `connu une fois les fichiers lus par l’étape ${n}`,
 		costUnknown: 'coût inconnu',
 		cloudAfterOffline:
-			'Une étape lit sur cet ordinateur, et une étape suivante envoie son texte à un fournisseur en ligne. Retirez cette dernière si les documents doivent rester sur cet ordinateur.',
+			'Une étape lit sur cet ordinateur, et une étape suivante envoie son texte ailleurs, à un fournisseur en ligne ou à un serveur sur le réseau. Retirez cette dernière si les documents doivent rester sur cet ordinateur.',
 		start: 'Lancer',
 		fromProject: (name: string) => `Ses traitements rejoignent le projet « ${name} ».`,
 		onText: (files: string) =>
@@ -1765,6 +1765,9 @@ export const fr: Messages = {
 			'Préciser la langue aide pour les documents courts ou bruités. Choisissez-en plusieurs pour les documents ou enregistrements qui mêlent les langues.',
 		addLanguage: 'Ajouter une langue…',
 		findLanguage: 'Tapez pour chercher une langue',
+		findModel: 'Tapez pour chercher un modèle',
+		findModelPlaceholder: 'Chercher par nom ou fournisseur',
+		noModelFound: 'Aucun modèle ne correspond à ce que vous avez tapé.',
 		favouriteLanguages: 'Favorites',
 		allLanguages: 'Toutes les langues',
 		noLanguageFound: 'Aucune langue de ce nom.',
@@ -1798,10 +1801,11 @@ export const fr: Messages = {
 		noPrompt: 'Ce modèle ne prend pas de prompt',
 		tiers: {
 			listBy: 'Classer les modèles par',
-			by: { provider: 'Fournisseur', tier: 'Gamme' },
+			by: { provider: 'Fournisseur', tier: 'Puissance' },
 			group: { top: 'Les plus puissants', balanced: 'Équilibrés', light: 'Légers' },
 			one: { top: 'Le plus puissant', balanced: 'Équilibré', light: 'Léger' },
 			local: 'Sur cet ordinateur',
+			servers: 'Autres serveurs',
 			noKey: (provider: string) => `Pas encore de clé ${provider} : ajoutez-en une dans Paramètres.`
 		},
 		modelLanguages: (n: number) => `Les ${n} langues qu’il prend en charge`,
@@ -1954,6 +1958,7 @@ export const fr: Messages = {
 		chooseFolder: 'Choisir…',
 		estimate: 'Coût estimé',
 		estimateUnknown: 'pas de prix publié',
+		estimateNotPriced: 'sans prix',
 		estimateNote:
 			'Une estimation fondée sur le nombre de pages et les prix publiés ; le coût réel peut varier.',
 		paceTitle: 'Rapidité et prix',
@@ -2567,6 +2572,8 @@ export const fr: Messages = {
 		sentCloud: (provider: string, context: number) =>
 			`Envoyé à ${provider} : le passage sélectionné et jusqu’à ${context} caractères avant et après lui, pris sur la même page ou partie et signalés comme contexte que le modèle ne doit pas modifier. Rien d’autre du document n’est envoyé.`,
 		sentOffline: (model: string) => `Lu sur cet ordinateur par ${model} ; rien n’est envoyé.`,
+		sentServer: (server: string, host: string, context: number) =>
+			`Envoyé au serveur « ${server} » à l’adresse ${host} : le passage sélectionné et jusqu’à ${context} caractères avant et après, pris dans la même page ou partie et signalés comme un contexte que le modèle ne doit pas modifier. Rien d’autre du document n’est envoyé.`,
 		cut: 'La sélection débordait du texte de cette page ou partie : seul ce texte est pris.',
 		tooShort: (n: number) => `Sélectionnez au moins ${n} lettres ou chiffres.`,
 		tooLong: (n: number, max: number) =>
@@ -2616,6 +2623,8 @@ export const fr: Messages = {
 		sentCloud: (provider: string) =>
 			`Seule cette partie de la page est envoyée à ${provider}, sous forme d’image. Rien d’autre du document n’est envoyé.`,
 		sentOffline: 'Lu sur cet ordinateur ; rien n’est envoyé.',
+		sentServer: (server: string, host: string) =>
+			`Seule cette partie de la page est envoyée au serveur « ${server} » à l’adresse ${host}, sous forme d’image. Rien d’autre du document n’est envoyé.`,
 		costAbout: (usd: string) => `Environ ${usd}.`,
 		costOffline: 'Gratuit, sur cet ordinateur.',
 		costStored: 'Déjà lu : sans frais.',
@@ -2765,11 +2774,12 @@ export const fr: Messages = {
 	},
 	settings: {
 		title: 'Paramètres',
-		lede: 'Clés, modèles hors ligne, traitement, apparence et langue.',
+		lede: 'Clés, modèles hors ligne, autres serveurs, traitement, apparence et langue.',
 		tabsLabel: 'Sections des paramètres',
 		tabs: {
 			keys: 'Clés d’API',
 			offline: 'Modèles hors ligne',
+			servers: 'Autres serveurs',
 			general: 'Général',
 			about: 'À propos'
 		},
@@ -3092,8 +3102,8 @@ export const fr: Messages = {
 				text: 'Le travail que certains modèles consacrent à une question avant d’y répondre. Les étapes intermédiaires sont facturées comme des tokens écrits, mais ne sont pas montrées. Plus d’effort peut aider pour les jugements difficiles, comme une analyse ou une écriture ardue, mais coûte plus cher et prend plus de temps. Chaque modèle propose ses propres niveaux ; Nouveau traitement suggère le plus bas pour la lecture des pages et des enregistrements, et vous pouvez en choisir un autre pour chaque modèle sous Réflexion. Le niveau utilisé est consigné dans la provenance.'
 			},
 			tier: {
-				word: 'Gamme',
-				text: 'La place d’un modèle parmi ceux de son fournisseur : le plus puissant (plus lent et plus cher, pour les écritures et les documents les plus difficiles), le milieu de sa gamme, ou le plus léger (rapide et bon marché, pour l’imprimé net). La gamme compare les modèles d’un même fournisseur entre eux, non avec ceux d’un autre : un modèle équilibré de l’un peut lire mieux que le plus puissant d’un autre. Les modèles sur cet ordinateur sont classés parmi ceux de leur famille. Nouveau traitement range les modèles par gamme, par fournisseur ou tous ensemble ; le prix et un essai sur quelques pages disent le reste.'
+				word: 'Puissance',
+				text: 'La place d’un modèle parmi ceux de son fournisseur : le plus puissant (plus lent et plus cher, pour les écritures et les documents les plus difficiles), le milieu de sa gamme, ou le plus léger (rapide et bon marché, pour l’imprimé net). Ce classement compare les modèles d’un même fournisseur entre eux, non avec ceux d’un autre : un modèle équilibré de l’un peut lire mieux que le plus puissant d’un autre. Les modèles sur cet ordinateur sont classés parmi ceux de leur famille. Nouveau traitement range les modèles par puissance, par fournisseur ou tous ensemble ; le prix et un essai sur quelques pages disent le reste.'
 			},
 			economy: {
 				word: 'Mode économique (par lots)',
@@ -3148,10 +3158,114 @@ export const fr: Messages = {
 		note: 'Kalamu est un projet de {author} (Université de Bayreuth). S’il vous est utile, vous pouvez contribuer à financer son développement. Ce soutien est entièrement facultatif et ne débloque aucune fonction supplémentaire.',
 		link: 'Offrez-moi un café'
 	},
+	servers: {
+		title: 'Autres serveurs',
+		intro:
+			'Utilisez les modèles d’un serveur que vous ou votre établissement faites tourner : un service que votre université ou votre centre de calcul offre à ses membres, ou Ollama sur cet ordinateur ou sur un autre de votre bureau. Kalamu essaie chaque modèle avant de le proposer, et vos fichiers ne vont qu’au serveur que vous ajoutez.',
+		guide: 'Comment ajouter un serveur',
+		empty: 'Aucun serveur ajouté pour l’instant.',
+		add: 'Ajouter un serveur',
+		addTitle: 'Ajouter un serveur',
+		editTitle: (name: string) => `Modifier « ${name} »`,
+		name: 'Nom',
+		nameHint: 'Le nom que vous lui donnez, affiché partout où figure le nom d’un fournisseur.',
+		address: 'Adresse',
+		addressHint:
+			'Là où le serveur répond. Ollama sur cet ordinateur répond à http://localhost:11434.',
+		asksKey: 'Ce serveur demande une clé',
+		key: 'Clé',
+		keyHint: (keychain: string) => `Conservée dans ${keychain} et envoyée seulement à ce serveur.`,
+		keyKept: (keychain: string) =>
+			`Une clé est enregistrée dans ${keychain}. Laissez le champ vide pour la garder.`,
+		connect: 'Se connecter',
+		connecting: 'Connexion…',
+		foundOllama: (version: string, where: string) => `Ollama ${version}, ${where}.`,
+		foundOpenAi: (where: string) => `Un serveur de type OpenAI, ${where}.`,
+		thisComputer: 'sur cet ordinateur',
+		network: (host: string) => `sur le réseau, à l’adresse ${host}`,
+		unencrypted:
+			'Cette adresse commence par http:// : vos fichiers circulent sur le réseau sans chiffrement. Ne l’utilisez que sur un réseau de confiance, ou demandez une adresse en https:// à la personne qui gère le serveur.',
+		unencryptedKey:
+			'Cette adresse commence par http:// : vos fichiers et la clé circulent sur le réseau sans chiffrement. Ne l’utilisez que sur un réseau de confiance, ou demandez une adresse en https:// à la personne qui gère le serveur.',
+		modelsTitle: 'Modèles de ce serveur',
+		modelsHint: 'Cochez les modèles à utiliser. Kalamu essaie chacun avant de le proposer.',
+		noModels:
+			'Ce serveur n’a encore aucun modèle. Ajoutez-en un sur le serveur, puis connectez-vous de nouveau.',
+		readsImages: 'lit les images, selon le serveur',
+		noImages: 'ne lit pas les images, selon le serveur',
+		imagesUnknown: 'le serveur ne dit pas s’il lit les images',
+		elsewhere: (host: string) =>
+			`S’exécute chez ${host}, pas sur ce serveur : il ne peut donc pas être ajouté.`,
+		added: 'Ajouté',
+		more: 'Plus de choix',
+		context: 'Lit jusqu’à',
+		maxOutput: 'Réponse la plus longue',
+		tokens: 'jetons',
+		contextHint: 'En jetons, réponse comprise. Davantage prend plus de mémoire sur le serveur.',
+		maxOutputHint: 'En jetons.',
+		priceIn: 'Prix par million de jetons lus',
+		priceOut: 'Prix par million de jetons écrits',
+		priceHint: 'En dollars américains. Laissé vide, le coût d’un traitement se lit « sans prix ».',
+		atOnce: 'Requêtes simultanées',
+		atOnceHint: 'De 1 à 8. Davantage n’accélère que si le serveur répond à plusieurs à la fois.',
+		tryAndAdd: 'Essayer et ajouter',
+		trying: 'Essai en cours… un modèle peut mettre quelques minutes à se charger la première fois.',
+		waiting: 'Attend son tour.',
+		stop: 'Arrêter',
+		stopped: 'Arrêté : il n’est donc pas ajouté.',
+		readsPages: 'Lit les pages',
+		fillsForms: 'Remplit le formulaire d’une analyse',
+		yes: 'Oui',
+		no: 'Non',
+		readsPagesYes: 'proposé pour l’extraction de texte',
+		readsPagesNo: 'non proposé pour l’extraction de texte',
+		fillsFormsYes: 'proposé pour les analyses, les corrections et les traductions',
+		fillsFormsNo: 'non proposé pour les analyses, les corrections et les traductions',
+		both: 'Avec les deux, il est aussi proposé pour les tables des matières.',
+		neither: 'Non proposé : il n’a fait ni l’un ni l’autre.',
+		noAnswer: (reason: string) => `Le modèle n’a pas répondu. ${reason}`,
+		said: 'Le serveur a répondu :',
+		kept: (day: string) => `Essayé le ${day} à cette adresse : gardé tel quel.`,
+		notSaved:
+			'Le serveur n’est pas enregistré : aucun de ses modèles n’a lu l’image de l’essai ni rempli son formulaire. Cochez d’autres modèles, ou vérifiez-les sur le serveur, puis essayez de nouveau.',
+		saved: (name: string) =>
+			`« ${name} » est enregistré. Ses modèles sont proposés dans Nouveau traitement pour ce qu’ils ont fait lors de leur essai.`,
+		done: 'Terminé',
+		listTitle: 'Vos serveurs',
+		onThisComputer: 'Sur cet ordinateur',
+		onNetwork: 'Sur le réseau',
+		keySaved: 'Clé enregistrée',
+		offered: {
+			pages: 'l’extraction de texte',
+			forms: 'les analyses, les corrections et les traductions',
+			both: 'l’extraction de texte, les analyses, les tables des matières, les corrections et les traductions'
+		},
+		offeredFor: (what: string) => `Proposé pour ${what}`,
+		triedOn: (day: string) => `essayé le ${day}`,
+		tryAgain: 'Essayer de nouveau',
+		tryAgainLabel: (model: string) => `Essayer ${model} de nouveau`,
+		edit: 'Modifier',
+		remove: 'Retirer',
+		removeAsk: (name: string) =>
+			`Retirer le serveur « ${name} » ? Ses traitements et leurs résultats restent. Un traitement en pause ou interrompu sur ce serveur ne pourra pas être terminé, et les configurations et chaînes de traitement enregistrées qui l’utilisent échoueront : un serveur ajouté de nouveau est un nouveau serveur, dont on choisit de nouveau les modèles.`,
+		removed: (name: string) => `« ${name} » retiré.`,
+		gone: (model: string) => `${model} n’est plus sur ce serveur : il n’a donc pas été essayé.`,
+		triedAgain: (model: string) => `${model} essayé de nouveau.`,
+		summaryOllama: (where: string) => `Ollama ${where}`,
+		summaryOpenAi: (where: string) => `Un serveur de type OpenAI ${where}`,
+		noPrice: 'Sans prix : aucun prix n’est indiqué pour ce modèle.'
+	},
 	consent: {
-		title: 'Envoyer vos fichiers à un fournisseur d’IA ?',
+		title: 'Envoyer vos fichiers à un fournisseur d’IA ?',
 		ask: (providers: string, policy: string) =>
 			`Kalamu va envoyer le contenu de vos fichiers à ${providers} : les pages, les enregistrements ou le texte, avec les noms et toute autre donnée personnelle qu’ils contiennent. Chaque fournisseur les lit avec ses modèles d’IA, sous votre propre compte et votre clé d’API, et les conserve selon ses propres conditions. Le développeur de Kalamu ne reçoit rien.\n\nCette question n’est posée qu’une fois par fournisseur. Politique de confidentialité de Kalamu : ${policy}`,
+		serverNamed: (name: string, host: string) => `au serveur « ${name} » à l’adresse ${host}`,
+		titleServer: 'Envoyer vos fichiers à un autre serveur ?',
+		titleBoth: 'Envoyer vos fichiers à un fournisseur d’IA et à un serveur ?',
+		askServers: (servers: string, policy: string) =>
+			`Kalamu va envoyer le contenu de vos fichiers ${servers} : les pages, les enregistrements ou le texte, avec les noms et toute autre donnée personnelle qu’ils contiennent. Ils ne vont pas à une entreprise sous votre propre compte et votre clé : la personne qui fait tourner ce serveur les lit avec ses modèles selon ses propres règles, et décide de ce qui est conservé. Le développeur de Kalamu ne reçoit rien.\n\nCette question n’est posée qu’une fois par serveur, et de nouveau si son adresse change. Politique de confidentialité de Kalamu : ${policy}`,
+		askBoth: (providers: string, servers: string, policy: string) =>
+			`Kalamu va envoyer le contenu de vos fichiers à ${providers}, et ${servers} : les pages, les enregistrements ou le texte, avec les noms et toute autre donnée personnelle qu’ils contiennent. Chaque fournisseur les lit avec ses modèles d’IA, sous votre propre compte et votre clé d’API, et les conserve selon ses propres conditions. Un serveur n’est pas une entreprise sous votre compte : la personne qui le fait tourner les lit selon ses propres règles, et décide de ce qui est conservé. Le développeur de Kalamu ne reçoit rien.\n\nCette question n’est posée qu’une fois par fournisseur et par serveur. Politique de confidentialité de Kalamu : ${policy}`,
 		send: 'Envoyer'
 	},
 	access: {
@@ -3573,6 +3687,73 @@ export const fr: Messages = {
 		'project.frozen_text_missing':
 			'Le projet n’a pas été enregistré : le texte corrigé qu’un traitement a lu, que Kalamu avait gardé tel quel, ne se trouve plus dans son dossier de données. Un fichier enregistré auparavant sous ce nom n’a pas été modifié.',
 		'project.frozen_text_changed':
-			'Le projet n’a pas été enregistré : le texte corrigé qu’un traitement a lu, que Kalamu avait gardé tel quel, a été modifié depuis. Un fichier enregistré auparavant sous ce nom n’a pas été modifié.'
+			'Le projet n’a pas été enregistré : le texte corrigé qu’un traitement a lu, que Kalamu avait gardé tel quel, a été modifié depuis. Un fichier enregistré auparavant sous ce nom n’a pas été modifié.',
+		'server.address_empty': (p: Record<string, string>) =>
+			p.server
+				? `Le serveur « ${p.server} » n’a pas d’adresse. Modifiez-le dans Paramètres › Autres serveurs.`
+				: 'Indiquez l’adresse du serveur, par exemple http://localhost:11434.',
+		'server.address_unreadable': (p: Record<string, string>) =>
+			p.server
+				? `L’adresse du serveur « ${p.server} » est illisible. Modifiez-la dans Paramètres › Autres serveurs.`
+				: 'Kalamu ne sait pas lire cette adresse. Écrivez-la comme http://localhost:11434.',
+		'server.address_scheme': (p: Record<string, string>) =>
+			p.server
+				? `L’adresse du serveur « ${p.server} » doit commencer par http:// ou https://.`
+				: 'L’adresse doit commencer par http:// ou https://.',
+		'server.address_credentials': (p: Record<string, string>) =>
+			p.server
+				? `L’adresse du serveur « ${p.server} » contient un nom d’utilisateur ou un mot de passe. Retirez-les, et indiquez une clé sous « Ce serveur demande une clé ».`
+				: 'Retirez le nom d’utilisateur et le mot de passe de l’adresse. Si le serveur demande une clé, cochez « Ce serveur demande une clé » et indiquez-la là.',
+		'server.address_query': (p: Record<string, string>) =>
+			p.server
+				? `L’adresse du serveur « ${p.server} » contient un ? ou un #. Retirez ce qui les suit.`
+				: 'Retirez de l’adresse ce qui suit ? ou #.',
+		'server.nothing_answers': (p: Record<string, string>) =>
+			`Rien ne répond à l’adresse ${p.host}. Vérifiez l’adresse, et que le programme du serveur (Ollama, par exemple) tourne sur cet ordinateur. S’il s’agit d’un autre ordinateur, vérifiez qu’il a été réglé pour accepter les connexions venues du réseau : Ollama n’accepte que celles de son propre ordinateur tant qu’on ne lui dit pas le contraire.`,
+		'server.not_a_server': (p: Record<string, string>) =>
+			`Quelque chose répond à l’adresse ${p.host}, mais ce n’est pas un serveur que Kalamu connaît : Ollama, ou un serveur de type OpenAI. Vérifiez l’adresse auprès de la personne qui le gère.`,
+		'server.key_needed': (p: Record<string, string>) =>
+			`Le serveur à l’adresse ${p.host} demande une clé. Cochez « Ce serveur demande une clé » et indiquez-la.`,
+		'server.key_refused': (p: Record<string, string>) =>
+			`Le serveur à l’adresse ${p.host} a refusé la clé. Vérifiez-la auprès de la personne qui gère le serveur.`,
+		'server.unreadable': (p: Record<string, string>) =>
+			`Le serveur à l’adresse ${p.host} a répondu, mais Kalamu n’a pas pu lire sa réponse.`,
+		'server.not_found':
+			'Ce serveur n’est plus dans la liste. Fermez le formulaire et regardez de nouveau.',
+		'server.not_tried': (p: Record<string, string>) =>
+			`${p.model} n’a pas été essayé à cette adresse. Essayez-le d’abord.`,
+		'server.did_nothing': (p: Record<string, string>) =>
+			`${p.model} n’a ni lu l’image de l’essai ni rempli son formulaire : il est laissé de côté.`,
+		'server.key_missing': (p: Record<string, string>) =>
+			`« ${p.server} » demande une clé : saisissez-la, ou décochez « Ce serveur demande une clé ».`,
+		'server.bad_id': (p: Record<string, string>) =>
+			`Le serveur « ${p.server} » est enregistré sous un identifiant que Kalamu n’accepte pas. Retirez-le et ajoutez-le de nouveau.`,
+		'server.same_id': (p: Record<string, string>) =>
+			`Le serveur « ${p.server} » est enregistré deux fois sous le même identifiant. Retirez-le et ajoutez-le de nouveau.`,
+		'server.no_name': 'Donnez un nom au serveur.',
+		'server.same_name': (p: Record<string, string>) =>
+			`Un serveur s’appelle déjà « ${p.name} ». Choisissez un autre nom.`,
+		'server.at_once': (p: Record<string, string>) =>
+			`Les requêtes simultanées pour « ${p.server} » doivent aller de 1 à ${p.most}.`,
+		'server.model_no_name': (p: Record<string, string>) =>
+			`Un modèle du serveur « ${p.server} » n’a pas de nom.`,
+		'server.model_twice': (p: Record<string, string>) =>
+			`${p.model} figure deux fois pour le serveur « ${p.server} ».`,
+		'server.no_answer_room': (p: Record<string, string>) =>
+			`La réponse la plus longue de ${p.model} sur « ${p.server} » doit dépasser 0 jeton.`,
+		'server.context_too_small': (p: Record<string, string>) =>
+			`${p.model} sur « ${p.server} » doit lire plus de jetons que sa réponse la plus longue : augmentez « Lit jusqu’à » ou réduisez « Réponse la plus longue ».`,
+		'server.price': (p: Record<string, string>) =>
+			`Un prix de ${p.model} sur « ${p.server} » n’est pas un nombre égal ou supérieur à 0.`,
+		'server.trial_day': (p: Record<string, string>) =>
+			`Le jour où ${p.model} a été essayé sur « ${p.server} » est illisible. Essayez-le de nouveau.`,
+		'server.write': 'La liste de vos serveurs n’a pas pu être enregistrée.',
+		'server.key_elsewhere':
+			'La clé d’un serveur se règle avec le serveur, dans Paramètres › Autres serveurs.',
+		'server.trial_stopped': (p: Record<string, string>) => `L’essai de ${p.model} a été arrêté.`,
+		'server.in_use': (p: Record<string, string>) =>
+			`« ${p.server} » est utilisé par un traitement en cours. Mettez le traitement en pause, ou laissez-le se terminer, puis modifiez ou retirez le serveur.`,
+		'server.removed':
+			'Ceci utilise un serveur retiré dans Paramètres › Autres serveurs. Ajoutez le serveur de nouveau, puis lancez un nouveau traitement avec lui : un serveur ajouté de nouveau est un nouveau serveur, que les traitements précédents ne nomment pas.'
 	}
 };

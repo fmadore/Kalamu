@@ -1,0 +1,46 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "gemma-3-12b-it-Q4_K_M.gguf",
+      "object": "model",
+      "created": 1764151000,
+      "owned_by": "llamacpp",
+      "meta": {
+        "vocab_type": 2,
+        "n_vocab": 262144,
+        "n_ctx_train": 131072,
+        "n_embd": 3840,
+        "n_params": 11765788416,
+        "size": 7300574976
+      }
+    },
+    {
+      "id": "mistralai/mistral-small-3.2-24b-instruct",
+      "object": "model",
+      "context_length": 131072,
+      "architecture": {
+        "input_modalities": [
+          "text",
+          "image"
+        ],
+        "output_modalities": [
+          "text"
+        ]
+      }
+    },
+    {
+      "id": "deepseek/deepseek-r1",
+      "object": "model",
+      "context_length": 163840,
+      "architecture": {
+        "input_modalities": [
+          "text"
+        ],
+        "output_modalities": [
+          "text"
+        ]
+      }
+    }
+  ]
+}

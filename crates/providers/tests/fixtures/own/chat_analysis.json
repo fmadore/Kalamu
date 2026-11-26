@@ -1,0 +1,21 @@
+{
+  "id": "chatcmpl-2",
+  "object": "chat.completion",
+  "created": 1764151260,
+  "model": "Qwen/Qwen3-VL-8B-Instruct",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "{\"summary\":\"Réunion de 200 fidèles à Bamako.\",\"keywords\":[\"Bamako\",\"mosquée\"]}"
+      },
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 160,
+    "completion_tokens": 30,
+    "total_tokens": 190
+  }
+}

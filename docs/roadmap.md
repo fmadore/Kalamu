@@ -50,7 +50,10 @@ them and the two releases published untried
 ([#275](https://github.com/fmadore/Kalamu/issues/275) to
 [#280](https://github.com/fmadore/Kalamu/issues/280)), and eleven directions
 ([#281](https://github.com/fmadore/Kalamu/issues/281) to
-[#291](https://github.com/fmadore/Kalamu/issues/291)). They open *Next* below.
+[#291](https://github.com/fmadore/Kalamu/issues/291)). They open *Next* below. The first of
+the directions, a server of the researcher's own
+([#283](https://github.com/fmadore/Kalamu/issues/283)), was written on 26 November on a branch
+of its own, not yet in `main` nor in a release, and has not met a real server (see *Done*).
 
 **macOS** (Apple Silicon) is built and tested in CI and has a disk image from 1.1.2 on, signed
 with an Apple Developer ID and notarised from 1.4.0
@@ -77,6 +80,51 @@ order given there.
 
 ## Done
 
+- **A server of the researcher's own, first increment**
+  ([#283](https://github.com/fmadore/Kalamu/issues/283),
+  [decision](decisions/2026-11-26-a-server-of-the-researchers-own.md)), written on 26 November:
+  in Settings › *Other servers*, a server added by a name and an address (a key only if it asks
+  for one), found to be Ollama, spoken at its own `/api/chat` with the model's context,
+  `truncate: false` and `shift: false` so a text too long is refused rather than cut, or an
+  OpenAI-style server, whose answer is refused when it read fewer tokens than the text sent
+  could hold; each model chosen tried with three small requests (an answer, a bundled picture
+  holding a number, a form of two fields) and offered for reading pages only if it read the
+  picture, for analyses, corrections and translations only if it filled the form; one page a
+  call; an address of this computer sends nothing out and asks no consent, any other asks once,
+  naming the server and its host, and again when the address changes, also before a job made
+  earlier is resumed or retried, or a workflow step approved (the shell refuses, the interface
+  asks first as New job does); a server cannot be removed, moved or lose a model while a job
+  that uses it runs (`server.in_use`), and a job left on a removed server says so; the key in the system's
+  keychain, the servers in `servers.json`; provenance's `engine: own` and `server`. Not in it:
+  transcription, economy mode, the search by meaning, reasoning levels, Ollama's models at
+  ollama.com. Tested against answers written from Ollama's and the other servers' documentation
+  and source (26 November, Ollama 0.40.18), on Linux; no real server has been called. The shell
+  was written where it cannot be compiled and waits for CI on Windows x64, Windows ARM64 and
+  macOS; nothing has run in the packaged app or on a Mac, and the interface is being written.
+  The consent on resuming and the server held while a job runs were added the same day: what
+  starting a job would send, and which models running work uses, are tested against the job
+  database in memory, the refusal of a change in `catalog`, the question in Vitest and, against
+  the sample data, in Playwright (a server moved under a paused job, the job resumed, the
+  question naming the new host, declined; a running job's server neither removed nor moved);
+  the shell's checks were compiled outside the repository against the real crates and a
+  stand-in for Tauri, and run nowhere yet.
+  Still to do:
+  - **by hand, on a Mac with Ollama**, writing down what fails: a job of pages and an analysis,
+    with Ollama on this computer and across a network; a model too small for its page; a model
+    updated on the server between two runs. The first run settles three points the answers were
+    written without: that a model without thinking accepts `think: false`, that `/api/chat`
+    reads `truncate` and `shift` at the top level of the request, and the exact words of
+    Ollama's error for a text too long ([development.md](development.md#a-server-of-ones-own-by-hand));
+  - **an OpenAI-style server**, a university's or OpenRouter, which no run has reached;
+  - **the stand-in speaking both ways**, so the app driven in CI
+    ([#277](https://github.com/fmadore/Kalamu/issues/277)) reaches its packaged forms by adding
+    the stand-in as a server;
+  - **provenance per piece**: the server's name and address are recorded as they stand when the
+    files are written, not as each piece was read, which needs a stored field per result and a
+    migration;
+  - **later, each with its own entry**: transcription through such a server, embeddings for the
+    search by meaning, reasoning levels, Ollama's ollama.com models with consent, and the
+    services that need a sign-in of their own (Azure OpenAI, Vertex AI, Bedrock).
 - **Three items of 17 November**, after 1.8.1
   ([decision](decisions/2026-11-17-search-agreement-subtitles.md)), each tested, none yet
   tried in the packaged app or on a Mac:
@@ -600,9 +648,10 @@ workflows) keeps its own order after them.
      resumed, a batch collected after a restart) and started and ended on macOS, on pull
      requests that touch the shell or the engine and on every release candidate. The flows
      ran on Windows ARM64 only; the macOS check has run nowhere. Still to do: the packaged
-     forms driven (the installer or the MSIX installed on a runner), which waits on a
-     provider's address being a setting ([#283](https://github.com/fmadore/Kalamu/issues/283),
-     which reuses `Addresses` and `registry_at`); and more flows, for most of Part C and the
+     forms driven (the installer or the MSIX installed on a runner), which waits on the
+     stand-in speaking as Ollama and as an OpenAI-style server, so the packaged app reaches it
+     as a server of the researcher's own ([#283](https://github.com/fmadore/Kalamu/issues/283),
+     written; `Addresses` stays for the test build); and more flows, for most of Part C and the
      keyboard half of Part D, since the pass by hand has lost one step of 72 so far.
    - **A scheduled live check** of each provider under a cost ceiling
      ([#278](https://github.com/fmadore/Kalamu/issues/278),
@@ -628,12 +677,9 @@ workflows) keeps its own order after them.
    - citing and contributing: `CITATION.cff`, a DOI for each release ([#291](https://github.com/fmadore/Kalamu/issues/291)); the
      installers signed, winget and Homebrew ([#290](https://github.com/fmadore/Kalamu/issues/290)). Neither waits on anything.
 5. **New directions, each designed in a decision first**, taken up among the research
-   workflows below in this order:
-   - **A provider at an address of the researcher's own** ([#283](https://github.com/fmadore/Kalamu/issues/283)), first, and started
-     beside the safety nets rather than after them: the override of a provider's address is
-     the same plumbing the packaged app's tests need ([#277](https://github.com/fmadore/Kalamu/issues/277)), and a colleague can try it
-     with Ollama on a powerful Mac. No expert mode: the section sits in Settings and nothing
-     of it shows in New job until a service has been added.
+   workflows below in this order. The first, a server of the researcher's own
+   ([#283](https://github.com/fmadore/Kalamu/issues/283)), is written and waits for its test
+   by hand with Ollama on a Mac (see *Done*); then:
    - a digitised volume read from a library's IIIF manifest ([#286](https://github.com/fmadore/Kalamu/issues/286));
    - an export for qualitative analysis software, REFI-QDA ([#285](https://github.com/fmadore/Kalamu/issues/285)), which follows
      interview analysis ([#38](https://github.com/fmadore/Kalamu/issues/38)).
@@ -1193,7 +1239,7 @@ first workflow increment.
 | Spending | A ledger that outlives the job, a ceiling per job, a stop past the estimate, a record by month | [#281](https://github.com/fmadore/Kalamu/issues/281) |
 | A library's IIIF manifest | Pages fetched in order as an ordered image document (#52), the manifest's description offered to the source description | [#286](https://github.com/fmadore/Kalamu/issues/286) |
 | Qualitative analysis software | A REFI-QDA project: texts, themes as codes, quotations as coded passages at their place; builds on #38 | [#285](https://github.com/fmadore/Kalamu/issues/285) |
-| A provider at the researcher's own address | An OpenAI-compatible module speaking Chat Completions, its models declared by the researcher; covers OpenRouter | [#283](https://github.com/fmadore/Kalamu/issues/283) |
+| A server of the researcher's own | Ollama at its own address and any OpenAI-style server, each model tried before it is offered (first increment written, not yet tried on a real server); covers OpenRouter; then transcription, embeddings and reasoning levels | [#283](https://github.com/fmadore/Kalamu/issues/283) |
 
 Scope is local research preparation, review and export. External collection-system integration
 and publishing are excluded from this work. Implementation follows the architecture checkpoints
@@ -1202,8 +1248,10 @@ in AGENTS.md and updates the specification and user-facing documentation when fe
 ## Later
 
 - German interface: `de.ts` beside `en.ts` and `fr.ts`.
-- OpenRouter for open-weights models: through a provider at an address of the researcher's own
-  ([#283](https://github.com/fmadore/Kalamu/issues/283)).
+- OpenRouter for open-weights models: covered by a server of the researcher's own
+  ([#283](https://github.com/fmadore/Kalamu/issues/283)), its address added as an OpenAI-style
+  server, its compression of long texts turned off. Untried: no request has reached OpenRouter,
+  whose list of models, answers with `usage` and refusals are written from its documentation.
 - Linking names to imported local authority records (an id from candidate records, or none,
   with a reason), building on the project dictionary in #48.
 - Tables of contents of text files (a long Word report, a transcript, read in passages).

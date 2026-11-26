@@ -36,6 +36,7 @@ import { contentsJob, contentsPieces, correctionJob, correctionPieces } from './
 import { editRows, recordsJob, recordsPieces } from './mockRecords.js';
 import { interviewPieces, interviewSummaries } from './mockInterview.js';
 import { openedJobs } from './mockProjectFile.js';
+import { serverJobSummaries } from './mockServerJobs.js';
 
 /** Jobs deleted while looking at the mock, left out of the list from then on. */
 const deletedJobs = new Set<string>();
@@ -157,6 +158,7 @@ export function jobCommand(cmd: string, a: Record<string, unknown>): unknown {
 	switch (cmd) {
 		case 'list_jobs':
 			return [
+				...serverJobSummaries(),
 				...summaries,
 				{
 					...summaries[0],

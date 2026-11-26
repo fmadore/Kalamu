@@ -136,6 +136,13 @@ impl Catalog {
             if !providers.insert(id) {
                 problem(format!("provider {id} is listed twice"));
             }
+            // A server of the researcher's own is theirs to add, never a list's: a list naming
+            // one could pass off an address as a provider the researcher chose.
+            if provider.own.is_some() || id.starts_with(crate::ID_PREFIX) {
+                problem(format!(
+                    "provider {id} is a server of the researcher's own, which a list never names"
+                ));
+            }
             match (provider.key_url.is_empty(), provider.local) {
                 (true, true) => {}
                 (true, false) => problem(format!("provider {id} names no page for its keys")),
@@ -361,7 +368,7 @@ fn https_host(url: &str) -> Option<&str> {
 }
 
 /// `YYYY-MM-DD`, with a month and a day that can be.
-fn is_day(text: &str) -> bool {
+pub(crate) fn is_day(text: &str) -> bool {
     let b = text.as_bytes();
     let digits = |r: std::ops::Range<usize>| b[r].iter().all(u8::is_ascii_digit);
     if b.len() != 10 || b[4] != b'-' || b[7] != b'-' {

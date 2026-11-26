@@ -1,5 +1,6 @@
 <script lang="ts">
-	// Settings in four tabs: provider keys, offline engines, how jobs run and look, and about.
+	// Settings in five tabs: provider keys, offline engines, the researcher's own servers, how jobs
+	// run and look, and about.
 	// The tab is part of the view, so a link from elsewhere ("Download in Settings") opens the
 	// section it is about. Above the tabs, at the first launch only, a welcome offers the two ways
 	// to start: a model on this computer, or a provider's key.
@@ -28,12 +29,13 @@
 	import DatabaseCopies from './DatabaseCopies.svelte';
 	import ExternalLink from './ExternalLink.svelte';
 	import OfflineModels from './OfflineModels.svelte';
+	import OtherServers from './OtherServers.svelte';
 	import ReportLink from './ReportLink.svelte';
 	import SupportLink from './SupportLink.svelte';
 
 	const m = messages();
 
-	const TABS: SettingsTab[] = ['keys', 'offline', 'general', 'about'];
+	const TABS: SettingsTab[] = ['keys', 'offline', 'servers', 'general', 'about'];
 	const tab = $derived<SettingsTab>((app.view.name === 'settings' && app.view.tab) || 'keys');
 
 	function choose(next: SettingsTab) {
@@ -202,7 +204,8 @@
 			<section class="card block" aria-labelledby="keys-title">
 				<h2 id="keys-title">{m.settings.keysTitle}</h2>
 				<p class="muted small">{m.settings.keysHint(osNames().keychain)}</p>
-				{#each (app.catalog?.providers ?? []).filter((p) => !p.local) as p (p.id)}
+				<!-- A server's key is set with the server, under Other servers. -->
+				{#each (app.catalog?.providers ?? []).filter((p) => !p.local && !p.own) as p (p.id)}
 					<div class="key">
 						<div class="key-name">
 							<strong>{p.name}</strong>
@@ -271,6 +274,8 @@
 			</section>
 		{:else if tab === 'offline'}
 			<OfflineModels wanted={app.view.name === 'settings' ? (app.view.languages ?? []) : []} />
+		{:else if tab === 'servers'}
+			<OtherServers />
 		{:else if tab === 'general' && app.settings}
 			<section class="card block" aria-labelledby="jobs-settings">
 				<h2 id="jobs-settings">{m.settings.jobsTitle}</h2>

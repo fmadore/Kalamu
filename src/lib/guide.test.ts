@@ -15,4 +15,15 @@ describe('guideUrl', () => {
 		setLocale('fr');
 		expect(guideUrl()).toBe('https://fmadore.github.io/Kalamu/guide/fr/');
 	});
+
+	it('opens a page of the guide in the interface language', () => {
+		setLocale('en');
+		expect(guideUrl('other-servers')).toBe(
+			'https://fmadore.github.io/Kalamu/guide/other-servers.html'
+		);
+		setLocale('fr');
+		expect(guideUrl('other-servers')).toBe(
+			'https://fmadore.github.io/Kalamu/guide/fr/other-servers.html'
+		);
+	});
 });

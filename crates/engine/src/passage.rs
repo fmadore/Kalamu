@@ -287,6 +287,7 @@ impl Engine {
             .map(|p| kalamu_core::provenance::ProvenancePassage {
                 piece: p.ask.index + 1,
                 provider: p.ask.provider.clone(),
+                server: self.server_of(&p.ask.provider),
                 model: p.ask.model.clone(),
                 prompt: kalamu_core::provenance::ProvenancePrompt::from_snapshot(&p.prompt),
                 request: p.request.clone(),

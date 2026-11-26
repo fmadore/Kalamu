@@ -15,6 +15,7 @@ import type { ProvenanceSource } from "./ProvenanceSource";
 import type { ProvenanceWorkflow } from "./ProvenanceWorkflow";
 import type { ProviderId } from "./ProviderId";
 import type { RequestSetting } from "./RequestSetting";
+import type { ServerRecord } from "./ServerRecord";
 import type { SetupOptions } from "./SetupOptions";
 import type { Task } from "./Task";
 import type { Timestamp } from "./Timestamp";
@@ -38,9 +39,16 @@ schema_version: number, generator: GeneratorInfo, created_at: Timestamp, task: T
  */
 documents?: Array<ProvenanceDocument>, 
 /**
- * `cloud` or `offline`.
+ * Where the pages were read: `cloud` (a company's service), `offline` (an engine inside
+ * Kalamu) or `own` (a server of the researcher's own, named in `server`).
  */
-engine: string, provider: ProviderId, model: string, 
+engine: string, provider: ProviderId, 
+/**
+ * For a server of the researcher's own, its name and address as they stood when these
+ * files were written. Absent for a company's service, an engine inside Kalamu, and in
+ * files written before servers of one's own.
+ */
+server?: ServerRecord, model: string, 
 /**
  * The versions the provider reported, when they differ from `model`.
  */

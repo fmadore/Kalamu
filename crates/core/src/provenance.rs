@@ -5,7 +5,8 @@ use ts_rs::TS;
 
 use crate::{
     DescribedBy, DescriptionField, DocumentId, JobId, LanguageChoice, LanguageCode, ProjectId,
-    ProviderId, RequestSetting, SetupOptions, SourceId, StoreError, Task, Timestamp, Usage,
+    ProviderId, RequestSetting, ServerRecord, SetupOptions, SourceId, StoreError, Task, Timestamp,
+    Usage,
 };
 
 /// Written as `<source>.provenance.json` next to every output: enough to tell how a result was
@@ -26,9 +27,16 @@ pub struct Provenance {
     /// stood when the files were written. Absent for a job tied to no project.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub documents: Vec<ProvenanceDocument>,
-    /// `cloud` or `offline`.
+    /// Where the pages were read: `cloud` (a company's service), `offline` (an engine inside
+    /// Kalamu) or `own` (a server of the researcher's own, named in `server`).
     pub engine: String,
     pub provider: ProviderId,
+    /// For a server of the researcher's own, its name and address as they stood when these
+    /// files were written. Absent for a company's service, an engine inside Kalamu, and in
+    /// files written before servers of one's own.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub server: Option<ServerRecord>,
     pub model: String,
     /// The versions the provider reported, when they differ from `model`.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
@@ -232,6 +240,11 @@ pub struct ProvenancePassage {
     /// The page or segment, numbered as in the export.
     pub piece: u32,
     pub provider: ProviderId,
+    /// For a server of the researcher's own, its name and address, as for the document's
+    /// [`Provenance::server`].
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub server: Option<ServerRecord>,
     pub model: String,
     pub prompt: ProvenancePrompt,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
@@ -323,6 +336,11 @@ pub struct ProvenanceRegionReading {
     pub width: f32,
     pub height: f32,
     pub provider: ProviderId,
+    /// For a server of the researcher's own, its name and address, as for the document's
+    /// [`Provenance::server`].
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub server: Option<ServerRecord>,
     pub model: String,
     pub prompt: ProvenancePrompt,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
@@ -340,6 +358,11 @@ pub struct ProvenanceRegionReading {
 #[ts(export)]
 pub struct ProvenanceMerge {
     pub provider: ProviderId,
+    /// For a server of the researcher's own, its name and address, as for the document's
+    /// [`Provenance::server`].
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub server: Option<ServerRecord>,
     pub model: String,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub model_versions: Vec<String>,

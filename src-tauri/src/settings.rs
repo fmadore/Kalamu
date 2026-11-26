@@ -103,7 +103,7 @@ impl Settings {
 /// Where a settings file that cannot be read is moved: `settings.json.bad` beside it, or, when an
 /// earlier one is there (`taken`), the first free of `settings.json.2.bad`,
 /// `settings.json.3.bad`…, so no earlier file is lost either.
-fn set_aside_name(path: &Path, taken: impl Fn(&Path) -> bool) -> PathBuf {
+pub(crate) fn set_aside_name(path: &Path, taken: impl Fn(&Path) -> bool) -> PathBuf {
     let name = path
         .file_name()
         .map_or_else(|| "settings.json".into(), |n| n.to_string_lossy());

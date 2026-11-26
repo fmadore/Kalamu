@@ -8,7 +8,7 @@ import type { DiffSpan } from './bindings/DiffSpan.js';
 import type { PassageEstimate } from './bindings/PassageEstimate.js';
 import type { Preset } from './bindings/Preset.js';
 import type { ProposalStatus } from './bindings/ProposalStatus.js';
-import { providerName as providerNameOf } from './catalogText.js';
+import { ownOf, providerName as providerNameOf, staysHere } from './catalogText.js';
 import { askConsent } from './dialogs.js';
 import { describeError, isAppError } from './errors.js';
 import { messages } from './i18n/index.js';
@@ -60,9 +60,10 @@ export class ModelChoice {
 		(this.catalog ? findModel(this.catalog, this.provider, this.model)?.name : undefined) ??
 			this.model
 	);
-	readonly local = $derived(
-		this.catalog?.providers.find((pr) => pr.id === this.provider)?.local === true
-	);
+	/** What is asked stays on this computer: an engine inside Kalamu, or a server here. */
+	readonly local = $derived(staysHere(this.catalog, this.provider));
+	/** The provider is a server of the researcher's own: where it is and how it is reached. */
+	readonly server = $derived(ownOf(this.catalog, this.provider));
 	/** The provider can be asked: its key is saved (or, where `usable` says so, it is local). */
 	readonly keyed = $derived.by(() => this.#usable(this.provider));
 	readonly installed = $derived(isInstalled(this.provider, this.model));

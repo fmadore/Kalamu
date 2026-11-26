@@ -150,6 +150,7 @@ impl Engine {
                     width: ask.width,
                     height: ask.height,
                     provider: ask.provider.clone(),
+                    server: self.server_of(&ask.provider),
                     model: ask.model.clone(),
                     prompt: ProvenancePrompt::from_snapshot(&r.prompt),
                     request: r.request.clone(),

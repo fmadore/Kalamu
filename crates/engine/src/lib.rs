@@ -141,7 +141,9 @@ impl Default for EngineConfig {
 
 pub struct Engine {
     pub(crate) store: Arc<dyn JobStore>,
-    pub(crate) providers: Vec<Arc<dyn Provider>>,
+    /// Replaced whole when the researcher adds, changes or removes a server of their own
+    /// ([`Engine::set_providers`]); each lookup takes the list as it is then.
+    pub(crate) providers: RwLock<Arc<[Arc<dyn Provider>]>>,
     /// Shared, so a call reads it without copying it; replaced whole when refreshed.
     pub(crate) catalog: RwLock<Arc<Catalog>>,
     pub(crate) prompts: Mutex<PromptLibrary>,
@@ -184,7 +186,7 @@ impl Engine {
         let (events, _) = broadcast::channel(1024);
         Arc::new_cyclic(|me| Self {
             store,
-            providers,
+            providers: RwLock::new(providers.into()),
             catalog: RwLock::new(Arc::new(catalog)),
             prompts: Mutex::new(prompts),
             keys,
@@ -246,8 +248,26 @@ impl Engine {
         f(&mut guard)
     }
 
-    pub fn provider(&self, id: &ProviderId) -> Result<Arc<dyn Provider>, EngineError> {
+    /// Replaces the providers, as [`Engine::set_catalog`] replaces the catalogue: the shell
+    /// calls it with the fixed providers and one per server of the researcher's own whenever
+    /// a server is added, changed or removed, so a server is usable at once. A call already
+    /// sent keeps the provider it was sent to; every later lookup, a running job's next piece
+    /// included, finds the new list, and a provider no longer in it is an unknown provider.
+    pub fn set_providers(&self, providers: Vec<Arc<dyn Provider>>) {
+        let mut guard = self.providers.write().unwrap_or_else(|p| p.into_inner());
+        *guard = providers.into();
+    }
+
+    /// The providers in use, shared.
+    fn current_providers(&self) -> Arc<[Arc<dyn Provider>]> {
         self.providers
+            .read()
+            .map(|p| Arc::clone(&p))
+            .unwrap_or_else(|p| Arc::clone(&p.into_inner()))
+    }
+
+    pub fn provider(&self, id: &ProviderId) -> Result<Arc<dyn Provider>, EngineError> {
+        self.current_providers()
             .iter()
             .find(|p| &p.id() == id)
             .cloned()
