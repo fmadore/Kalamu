@@ -367,11 +367,11 @@ export function installMock(): void {
 						}))
 				};
 			}
-			// Every provider counts as agreed to, so the screens and their tests run unasked.
-			case 'providers_to_consent':
+			// Servers' consent is kept with their jobs (`mockServerJobs.ts`); a company's provider
+			// counts as agreed to, so the screens and their tests run unasked.
+			case 'providers_ahead':
+			case 'run_providers_ahead':
 				return [];
-			case 'consent_providers':
-				return null;
 			case 'folders_to_ask':
 				return [];
 			case 'keep_access':

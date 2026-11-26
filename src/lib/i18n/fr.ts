@@ -3247,7 +3247,7 @@ export const fr: Messages = {
 		edit: 'Modifier',
 		remove: 'Retirer',
 		removeAsk: (name: string) =>
-			`Retirer le serveur « ${name} » ? Ses traitements et leurs résultats restent. Les configurations et chaînes de traitement enregistrées qui l’utilisent échoueront jusqu’à ce qu’il soit ajouté de nouveau.`,
+			`Retirer le serveur « ${name} » ? Ses traitements et leurs résultats restent. Un traitement en pause ou interrompu sur ce serveur ne pourra pas être terminé, et les configurations et chaînes de traitement enregistrées qui l’utilisent échoueront : un serveur ajouté de nouveau est un nouveau serveur, dont on choisit de nouveau les modèles.`,
 		removed: (name: string) => `« ${name} » retiré.`,
 		gone: (model: string) => `${model} n’est plus sur ce serveur : il n’a donc pas été essayé.`,
 		triedAgain: (model: string) => `${model} essayé de nouveau.`,
@@ -3750,6 +3750,10 @@ export const fr: Messages = {
 		'server.write': 'La liste de vos serveurs n’a pas pu être enregistrée.',
 		'server.key_elsewhere':
 			'La clé d’un serveur se règle avec le serveur, dans Paramètres › Autres serveurs.',
-		'server.trial_stopped': (p: Record<string, string>) => `L’essai de ${p.model} a été arrêté.`
+		'server.trial_stopped': (p: Record<string, string>) => `L’essai de ${p.model} a été arrêté.`,
+		'server.in_use': (p: Record<string, string>) =>
+			`« ${p.server} » est utilisé par un traitement en cours. Mettez le traitement en pause, ou laissez-le se terminer, puis modifiez ou retirez le serveur.`,
+		'server.removed':
+			'Ceci utilise un serveur retiré dans Paramètres › Autres serveurs. Ajoutez le serveur de nouveau, puis lancez un nouveau traitement avec lui : un serveur ajouté de nouveau est un nouveau serveur, que les traitements précédents ne nomment pas.'
 	}
 };

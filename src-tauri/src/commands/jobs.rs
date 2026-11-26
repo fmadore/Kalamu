@@ -2,7 +2,9 @@
 
 use std::path::{Path, PathBuf};
 
-use kalamu_core::{InputKind, Job, JobId, JobSources, JobSummary, SourceFile, SourceId, Task};
+use kalamu_core::{
+    InputKind, Job, JobId, JobSources, JobSummary, ProviderId, SourceFile, SourceId, Task,
+};
 use kalamu_engine::{Estimate, EstimateRequest, NewJob};
 use serde::Serialize;
 use tauri::State;
@@ -440,10 +442,14 @@ pub fn prompt_fingerprints(state: State<'_, AppState>, job: NewJob) -> CmdResult
     Ok(state.engine.prompt_fingerprints(&job)?)
 }
 
+/// Starts or resumes a job, refused as a new job is without consent for every provider it, or
+/// a workflow step it may start, sends to: a server's consent is withdrawn when its address
+/// changes, and a job made by an older version or brought in a project file was never asked.
 // `async`, like every command that starts the engine: Tauri runs other commands on the main
 // thread, outside the Tokio runtime the job is spawned on.
 #[tauri::command]
 pub async fn start_job(state: State<'_, AppState>, id: JobId) -> CmdResult<()> {
+    super::require_agreed(&state, state.engine.providers_ahead(id)?)?;
     Ok(state.engine.start(id)?)
 }
 
@@ -462,8 +468,18 @@ pub fn cancel_job(state: State<'_, AppState>, id: JobId) {
     state.engine.cancel(id);
 }
 
+/// The providers starting a job now would send to, those of the workflow steps it may start
+/// included: what the interface asks consent for before it starts, resumes or retries the job.
+#[tauri::command]
+pub fn providers_ahead(state: State<'_, AppState>, id: JobId) -> CmdResult<Vec<ProviderId>> {
+    Ok(state.engine.providers_ahead(id)?)
+}
+
+/// Puts a job's failed pieces back and starts it, refused as [`start_job`] is before any piece
+/// is touched.
 #[tauri::command]
 pub async fn retry_failed(state: State<'_, AppState>, id: JobId) -> CmdResult<()> {
+    super::require_agreed(&state, state.engine.providers_ahead(id)?)?;
     Ok(state.engine.retry_failed(id)?)
 }
 

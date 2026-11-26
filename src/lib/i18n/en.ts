@@ -2823,7 +2823,7 @@ export const en = {
 		edit: 'Edit',
 		remove: 'Remove',
 		removeAsk: (name: string) =>
-			`Remove the server “${name}”? Its jobs and results stay. Saved pipelines and workflows that use it will fail until it is added again.`,
+			`Remove the server “${name}”? Its jobs and results stay. A job paused or interrupted on it cannot be finished, and saved pipelines and workflows that use it will fail: a server added again is a new server, whose models are chosen again.`,
 		removed: (name: string) => `“${name}” removed.`,
 		gone: (model: string) => `${model} is no longer on this server, so it was not tried.`,
 		triedAgain: (model: string) => `${model} tried again.`,
@@ -3335,7 +3335,11 @@ export const en = {
 			`The day ${p.model} on “${p.server}” was tried cannot be read. Try it again.`,
 		'server.write': 'The list of your servers could not be saved.',
 		'server.key_elsewhere': 'A server’s key is set with the server, in Settings › Other servers.',
-		'server.trial_stopped': (p: Record<string, string>) => `The trial of ${p.model} was stopped.`
+		'server.trial_stopped': (p: Record<string, string>) => `The trial of ${p.model} was stopped.`,
+		'server.in_use': (p: Record<string, string>) =>
+			`“${p.server}” is in use by a running job. Pause the job, or let it finish, then change or remove the server.`,
+		'server.removed':
+			'This uses a server that was removed in Settings › Other servers. Add the server again, then start a new job with it: a server added again is a new server, which earlier jobs do not name.'
 	}
 };
 

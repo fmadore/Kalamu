@@ -75,6 +75,11 @@ impl From<EngineError> for AppError {
                 ..Self::from(*source)
             },
             EngineError::Workflow(e) | EngineError::Prompt(PromptError::Workflow(e)) => e.into(),
+            // A server's id names no provider once the server is removed; saying "unknown
+            // provider" would leave the researcher guessing which.
+            EngineError::UnknownProvider(provider) if kalamu_catalog::is_own_id(&provider) => {
+                Self::with(id::SERVER_REMOVED, [])
+            }
             e => Self::new(e.code(), e),
         }
     }
@@ -210,6 +215,12 @@ pub mod id {
     pub const SERVER_KEY_ELSEWHERE: &str = "server.key_elsewhere";
     /// A trial stopped by the researcher before it ended; names `model`.
     pub const TRIAL_STOPPED: &str = "server.trial_stopped";
+    /// A server changed (another address or way of speaking, a model in use unticked) or
+    /// removed while a job or workflow run that sends to it runs; names `server`.
+    pub const SERVER_IN_USE: &str = "server.in_use";
+    /// Work that names a server removed in Settings › Other servers: a server added again is a
+    /// new one, under a new id, which the work does not name.
+    pub const SERVER_REMOVED: &str = "server.removed";
 }
 
 pub type CmdResult<T> = Result<T, AppError>;
@@ -275,6 +286,14 @@ mod tests {
                 "gemma3:12b".to_string()
             )]))
         );
+    }
+
+    #[test]
+    fn a_removed_server_is_said_as_removed_and_any_other_provider_as_unknown() {
+        let removed: AppError = EngineError::UnknownProvider("own-0000abcd".into()).into();
+        assert_eq!(removed, AppError::with(id::SERVER_REMOVED, []));
+        let unknown: AppError = EngineError::UnknownProvider("acme".into()).into();
+        assert_eq!(unknown.id, "provider.unknown");
     }
 
     #[test]

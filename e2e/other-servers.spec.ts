@@ -155,3 +155,117 @@ test('a slow trial can be stopped, and a server removed', async ({ page }) => {
 	await listed.getByRole('button', { name: 'Remove' }).click();
 	await expect(main.getByText('No server added yet.')).toBeVisible();
 });
+
+/** Adds the server `name` at `address` with gemma3:12b, which reads pages, from Settings. */
+async function addServer(page: Page, main: Locator, name: string, address: string) {
+	await connect(main, name, address);
+	await main.getByRole('checkbox', { name: /gemma3:12b/ }).check();
+	await main.getByRole('button', { name: 'Try and add' }).click();
+	await main.getByRole('button', { name: 'Done' }).click();
+	await expect(main.getByRole('heading', { name })).toBeVisible();
+}
+
+/** Starts a text extraction with the server's model, agreeing to send it the files; the job's
+ *  page opens, the job running (slowly, in the sample data). */
+async function startOnServer(page: Page, main: Locator, name: string, host: string) {
+	await page
+		.getByRole('navigation')
+		.getByRole('button', { name: /^New job/ })
+		.click();
+	await main.getByRole('button', { name: 'Add files' }).click();
+	const setups = main.getByRole('region', { name: /^Model and prompt/ });
+	await setups.getByRole('button', { name: 'Tier', exact: true }).click();
+	await setups.getByRole('combobox', { name: 'Model' }).first().click();
+	await page
+		.getByRole('listbox', { name: 'Model' })
+		.getByRole('group', { name: 'Other servers' })
+		.getByRole('option', { name: /^gemma3:12b/ })
+		.click();
+	page.once('dialog', (dialog) => {
+		expect(dialog.message()).toContain(`the server “${name}” at ${host}`);
+		void dialog.accept();
+	});
+	await page.getByRole('button', { name: /^Start(?! over)/ }).click();
+	await expect(main.getByRole('button', { name: 'Pause' })).toBeVisible();
+}
+
+/** Settings › Other servers, reached from the sidebar so the sample data is kept. */
+async function toServers(page: Page, main: Locator) {
+	await page.getByRole('navigation').getByRole('button', { name: 'Settings' }).click();
+	await main.getByRole('tab', { name: 'Other servers' }).click();
+}
+
+/** Changes the server's address in its form, its model tried again there. */
+async function move(main: Locator, name: string, address: string) {
+	const listed = main
+		.getByRole('listitem')
+		.filter({ has: main.page().getByRole('heading', { name }) });
+	await listed.getByRole('button', { name: 'Edit' }).click();
+	await main.getByRole('textbox', { name: 'Address' }).fill(address);
+	await main.getByRole('button', { name: 'Connect' }).click();
+	await main.getByRole('button', { name: 'Try and add' }).click();
+}
+
+test('a job resumed after its server moved asks again, naming the new host; declined, it waits', async ({
+	page
+}) => {
+	const main = await open(page);
+	await addServer(page, main, 'Lab Ollama', 'http://192.168.1.20:11434');
+	await startOnServer(page, main, 'Lab Ollama', '192.168.1.20');
+	await main.getByRole('button', { name: 'Pause' }).click();
+	await expect(main.getByRole('button', { name: 'Resume' })).toBeVisible();
+	const job = (await page.getByRole('heading', { level: 1 }).textContent())?.trim() ?? '';
+
+	// Moved while the job waits: allowed, and its consent withdrawn.
+	await toServers(page, main);
+	await move(main, 'Lab Ollama', 'http://10.0.0.5:11434');
+	await expect(main.getByText('“Lab Ollama” is saved.', { exact: false })).toBeVisible();
+	await main.getByRole('button', { name: 'Done' }).click();
+
+	// Resumed from the sidebar: asked again, about the new address; declined, nothing starts.
+	const foot = page
+		.getByRole('navigation', { name: 'Jobs' })
+		.getByRole('region', { name: /^To resume/ });
+	const resume = foot.getByRole('button', { name: `Resume “${job}”` });
+	let asked = '';
+	page.once('dialog', (dialog) => {
+		asked = dialog.message();
+		void dialog.dismiss();
+	});
+	await resume.click();
+	await expect.poll(() => asked).toContain('the server “Lab Ollama” at 10.0.0.5');
+	expect(asked).not.toContain('192.168.1.20');
+	await expect(resume).toBeVisible();
+	await expect(foot).toContainText('Paused');
+	await expect(page.getByText(`“${job}” resumed.`)).toHaveCount(0);
+
+	// Agreed to, it runs again.
+	page.once('dialog', (dialog) => void dialog.accept());
+	await resume.click();
+	await expect(page.getByText(`“${job}” resumed.`)).toBeVisible();
+});
+
+test('a server a running job uses cannot be moved or removed until the job is paused', async ({
+	page
+}) => {
+	const main = await open(page);
+	await addServer(page, main, 'Lab Ollama', 'http://192.168.1.20:11434');
+	await startOnServer(page, main, 'Lab Ollama', '192.168.1.20');
+	const busy =
+		'“Lab Ollama” is in use by a running job. Pause the job, or let it finish, then change or remove the server.';
+
+	await toServers(page, main);
+	const listed = main
+		.getByRole('listitem')
+		.filter({ has: page.getByRole('heading', { name: 'Lab Ollama' }) });
+	page.once('dialog', (dialog) => {
+		expect(dialog.message()).toContain('cannot be finished');
+		void dialog.accept();
+	});
+	await listed.getByRole('button', { name: 'Remove' }).click();
+	await expect(page.getByText(busy)).toBeVisible();
+	await expect(main.getByRole('heading', { name: 'Lab Ollama' })).toBeVisible();
+
+	await move(main, 'Lab Ollama', 'http://10.0.0.5:11434');
+	await expect(main.getByRole('alert')).toHaveText(busy);
+});

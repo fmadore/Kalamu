@@ -153,6 +153,21 @@ export async function mayStart(
 	return !beside || askForFolders(besidePlaces(sources));
 }
 
+/** What a job asks before it is started again, resumed or its failed pieces retried: consent for
+ *  each provider it sends to, and those of the workflow steps it may start, as New job asks
+ *  before a new one. A server's consent is withdrawn when its address changes, and a job brought
+ *  in a project file was never asked. False when the researcher declines; Rust refuses the job
+ *  until they agree. */
+export async function mayResume(job: string, catalog: Catalog | null): Promise<boolean> {
+	return askConsent(await api.providersAhead(job), catalog);
+}
+
+/** What approving a workflow step asks: consent for each provider the steps it may start send
+ *  to. False when the researcher declines, and the step is not approved. */
+export async function mayGoOn(run: string, catalog: Catalog | null): Promise<boolean> {
+	return askConsent(await api.runProvidersAhead(run), catalog);
+}
+
 /** A yes/no question in a native dialog, its buttons named by `labels` when given. */
 export async function ask(
 	message: string,

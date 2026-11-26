@@ -214,6 +214,9 @@ export const api = {
 	getRun: (id: string) => invoke<RunView>('get_run', { id }),
 	jobStep: (id: string) => invoke<JobStep | null>('job_step', { id }),
 	approveStep: (id: string, step: number) => invoke<void>('approve_step', { id, step }),
+	/** The providers the run's steps not yet started send to: asked consent for before a step
+	 * is approved. */
+	runProvidersAhead: (id: string) => invoke<string[]>('run_providers_ahead', { id }),
 	cancelRun: (id: string) => invoke<void>('cancel_run', { id }),
 	deleteRun: (id: string) => invoke<void>('delete_run', { id }),
 	savePreset: (preset: Preset) => invoke<Preset>('save_preset', { preset }),
@@ -243,6 +246,9 @@ export const api = {
 	/** The fingerprint of the prompt each set-up would freeze, nothing created. */
 	promptFingerprints: (job: NewJob) => invoke<string[]>('prompt_fingerprints', { job }),
 	startJob: (id: string) => invoke<void>('start_job', { id }),
+	/** The providers starting the job now would send to, the workflow steps it may start
+	 * included: asked consent for before it is started, resumed or retried. */
+	providersAhead: (id: string) => invoke<string[]>('providers_ahead', { id }),
 	/** After a sample (#215): every page with one of its set-ups, the pages it read from the
 	 * cache; and another model on its pages. Each job is made, not started. */
 	restEstimate: (job: string, setup: string) =>

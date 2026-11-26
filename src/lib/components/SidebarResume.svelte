@@ -4,12 +4,14 @@
 	// the others stopped too are one click away under it, each with its own Resume, so the foot
 	// stays short however many there are. Resuming asks the engine as the job's page does
 	// (`start_job`); once the job runs it leaves the foot, and the focus goes to the next one to
-	// resume, or to the job in the list, never to nothing. In the rail, only the latest, as an
+	// resume, or to the job in the list, never to nothing. Consent is asked first for every provider
+	// the job sends to (`mayResume`), as New job asks it. In the rail, only the latest, as an
 	// icon named by its tooltip.
 	import { tick } from 'svelte';
 	import Icon from './Icon.svelte';
 	import type { JobSummary } from '#lib/bindings/JobSummary.js';
 	import { Action } from '#lib/action.svelte.js';
+	import { mayResume } from '#lib/dialogs.js';
 	import { messages } from '#lib/i18n/index.js';
 	import { toResume } from '#lib/jobList.js';
 	import { api } from '#lib/tauri.js';
@@ -51,13 +53,19 @@
 		busy = job.id;
 		failure = null;
 		const next = jobs.find((j) => j.id !== job.id);
+		// Consent first, as for a new job: declined, the job waits as it was.
+		let declined = false;
 		const ok = await action.run(async () => {
+			if (!(await mayResume(job.id, app.catalog))) {
+				declined = true;
+				return;
+			}
 			liveJob(job.id);
 			await api.startJob(job.id);
 			await refreshJobs();
 		});
 		busy = null;
-		if (!ok) return;
+		if (!ok || declined) return;
 		toast(m.shell.resumed(job.name));
 		await tick();
 		// The row went with the job: its focus goes to the next to resume, the job in the list,

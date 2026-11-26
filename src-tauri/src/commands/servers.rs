@@ -157,6 +157,12 @@ fn forget_consent(state: &AppState, provider: &ProviderId) -> CmdResult<()> {
     Ok(())
 }
 
+/// A server changed or removed under running work: refused, naming it by the researcher's name
+/// as it stood.
+fn in_use(server: &OwnServer) -> AppError {
+    AppError::with(id::SERVER_IN_USE, [("server", server.name.clone())])
+}
+
 /// The researcher's servers, in the order they were added.
 #[tauri::command]
 pub fn list_servers(state: State<'_, AppState>) -> Vec<OwnServer> {
@@ -293,8 +299,10 @@ pub fn cancel_server_trial(state: State<'_, AppState>, trial: String) {
 /// Saves a server: a new one under a new id, or the server of the draft's id changed. Each
 /// model does what its trial showed. A key typed is saved in the system's keychain; *This
 /// server asks for a key* left off removes a key saved before. A server whose address changed
-/// is asked consent for again. The engine is handed the server at once, and every open screen
-/// told.
+/// is asked consent for again. Refused while running work sends to the server, when its
+/// address or way of speaking changes or a model that work uses is unticked
+/// ([`kalamu_catalog::Saved::changes_under`]). The engine is handed the server at once, and
+/// every open screen told.
 #[tauri::command]
 pub async fn save_server(
     app: AppHandle,
@@ -311,6 +319,13 @@ pub async fn save_server(
         next.apply(server, &trials)?
     };
     let provider = saved.server.id.clone();
+    // A job running on the server keeps sending to it page after page: its address, its way
+    // of speaking and the models it uses stay until the job is paused or ends.
+    if let Some(previous) = &saved.previous
+        && saved.changes_under(&state.engine.models_in_use(&provider)?)
+    {
+        return Err(in_use(previous));
+    }
     let had_key = saved.previous.as_ref().is_some_and(|p| p.key);
     let keys = state.keys.clone();
     match (asks_key, typed) {
@@ -341,8 +356,9 @@ pub async fn save_server(
     Ok(saved.server)
 }
 
-/// Removes a server, its key and the consent given to it. Its jobs and results stay; a job
-/// that still names it stops at its next piece, as for any provider no longer known.
+/// Removes a server, its key and the consent given to it; refused while a job or workflow run
+/// that sends to it runs. Its jobs and results stay; a job paused or interrupted on it cannot
+/// be finished (`server.removed`), since a server added again is a new one under a new id.
 #[tauri::command]
 pub async fn remove_server(
     app: AppHandle,
@@ -354,6 +370,9 @@ pub async fn remove_server(
     let Some(removed) = next.remove(&id) else {
         return Err(DraftError::NotFound { id: id.to_string() }.into());
     };
+    if !state.engine.models_in_use(&id)?.is_empty() {
+        return Err(in_use(&removed));
+    }
     write(&state, &next)?;
     *lock(&state.servers) = next;
     if removed.key {

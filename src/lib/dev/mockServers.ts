@@ -5,6 +5,10 @@
 // a moment unless stopped, saved only once tried, and merged into the catalogue as providers and
 // models the way `Catalog::with_servers` does. Development builds only.
 //
+// Consent to a server on the network, and the jobs New job makes with a server's model, are
+// kept in `mockServerJobs.ts`: a server whose address changes is asked about again, and one
+// that a running job uses cannot be moved, lose that job's model or be removed.
+//
 // Addresses: `nowhere` in the host answers nothing, `locked` asks for a key (and refuses
 // `wrong`), `web` is not a server Kalamu knows. `?trial-slow`: a trial takes long enough to be
 // stopped.
@@ -23,6 +27,7 @@ import type { TaskRules } from '../bindings/TaskRules.js';
 import type { Task } from '../bindings/Task.js';
 import type { TrialModel } from '../bindings/TrialModel.js';
 import type { TrialServer } from '../bindings/TrialServer.js';
+import { modelsInUse, serverJobCommand, withdraw } from './mockServerJobs.js';
 
 /** Refuses with the shell's error `id` and the values its sentence names. */
 const refuse = (id: string, params?: Record<string, string>): never => {
@@ -145,6 +150,16 @@ function save(draft: ServerDraft, key: string | null): OwnServer {
 	if (servers.some((s) => s.id !== draft.id && s.name.toLowerCase() === name.toLowerCase()))
 		refuse('server.same_name', { name });
 	if (draft.asks_key && !key && !earlier?.key) refuse('server.key_missing', { server: name });
+	// A running job keeps its server's address, way of speaking and models, as the shell has it.
+	const inUse = earlier ? modelsInUse(earlier.id) : [];
+	if (
+		earlier &&
+		inUse.length > 0 &&
+		(earlier.address !== address ||
+			earlier.dialect !== draft.dialect ||
+			inUse.some((model) => !draft.models.some((m) => m.id === model)))
+	)
+		refuse('server.in_use', { server: earlier.name });
 	const models: OwnModel[] = draft.models.map((m) => {
 		const stored =
 			earlier?.address === address ? earlier.models.find((o) => o.id === m.id) : undefined;
@@ -177,6 +192,8 @@ function save(draft: ServerDraft, key: string | null): OwnServer {
 	};
 	if (earlier) servers.splice(servers.indexOf(earlier), 1, server);
 	else servers.push(server);
+	// Moved: asked consent for again.
+	if (earlier && earlier.address !== address) withdraw(server.id);
 	return server;
 }
 
@@ -206,12 +223,15 @@ export function serverCommand(cmd: string, a: Record<string, unknown>): unknown 
 		case 'remove_server': {
 			const at = servers.findIndex((s) => s.id === a.id);
 			if (at < 0) refuse('server.not_found', { id: String(a.id) });
+			if (modelsInUse(servers[at].id).length > 0)
+				refuse('server.in_use', { server: servers[at].name });
+			withdraw(servers[at].id);
 			servers.splice(at, 1);
 			void emit('catalog-changed', null);
 			return null;
 		}
 		default:
-			return undefined;
+			return serverJobCommand(cmd, a, (id) => servers.find((s) => s.id === id));
 	}
 }
 
