@@ -24,8 +24,9 @@ pub use cost::{CostEstimate, Workload, embedding_cost};
 pub use length::{CHARS_PER_TOKEN, CHARS_PER_WORD, TooLong};
 pub use lineage::ModelAlias;
 pub use own::{
-    Dialect, ID_PREFIX, MOST_AT_ONCE, OwnInfo, OwnModel, OwnServer, OwnServers, OwnServersError,
-    is_own_id,
+    Dialect, DraftError, FoundServer, FoundServerModel, ID_PREFIX, MOST_AT_ONCE, ModelDraft,
+    ModelTrial, OwnInfo, OwnModel, OwnServer, OwnServers, OwnServersError, OwnTrial, Saved,
+    ServerDraft, ServerProblem, TrialModel, TrialServer, Trials, is_own_id,
 };
 pub use release::{Release, Version};
 

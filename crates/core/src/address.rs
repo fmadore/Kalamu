@@ -1,15 +1,90 @@
-//! What an address the researcher typed says about where it leads: its host, and whether that
-//! host is this computer. One rule, read by the catalogue (what the interface shows) and by the
-//! providers (what consent asks), so the two can never disagree
+//! What an address the researcher typed says about where it leads: whether Kalamu takes it
+//! ([`checked_address`]), its host, and whether that host is this computer. One rule, read by
+//! the catalogue (what `servers.json` may hold, what the interface shows) and by the providers
+//! (what discovery accepts, what consent asks), so the two can never disagree
 //! ([decision](../../../docs/decisions/2026-11-26-a-server-of-the-researchers-own.md)).
 //!
-//! Read by hand, without a URL library: only the host is wanted, and every doubt is resolved
-//! towards "on the network", which asks consent, never towards "on this computer", which does
-//! not. An address a URL library would read as a loopback address in an unusual spelling
-//! (`127.1`, a host written in percent escapes) is therefore taken for the network: consent is
-//! asked where it was not needed, never skipped where it was.
+//! The host is read by hand, without a URL library: only the host is wanted, and every doubt is
+//! resolved towards "on the network", which asks consent, never towards "on this computer",
+//! which does not. An address a URL library would read as a loopback address in an unusual
+//! spelling (`127.1`, a host written in percent escapes) is therefore taken for the network:
+//! consent is asked where it was not needed, never skipped where it was. [`checked_address`]
+//! writes such an address as the URL library reads it (`127.1` becomes `127.0.0.1`), so the
+//! address kept is the one requests go to.
 
 use std::net::{Ipv4Addr, Ipv6Addr};
+
+use thiserror::Error;
+use url::Url;
+
+/// Why an address typed by the researcher is not taken. Each has a stable [`code`](Self::code)
+/// the interface words.
+#[derive(Debug, Clone, PartialEq, Eq, Error)]
+pub enum AddressError {
+    #[error("Type the server's address, such as http://localhost:11434")]
+    Empty,
+    #[error("This is not an address Kalamu can read; write it as http://localhost:11434")]
+    NotAnAddress,
+    #[error("The address must start with http:// or https://")]
+    Scheme,
+    #[error(
+        "Leave the user name and password out of the address; if the server asks for a key, \
+         tick “This server asks for a key”"
+    )]
+    Credentials,
+    #[error("Leave out what follows ? or # in the address")]
+    Query,
+}
+
+impl AddressError {
+    /// The id the interface looks the sentence up by.
+    pub fn code(&self) -> &'static str {
+        match self {
+            Self::Empty => "server.address_empty",
+            Self::NotAnAddress => "server.address_unreadable",
+            Self::Scheme => "server.address_scheme",
+            Self::Credentials => "server.address_credentials",
+            Self::Query => "server.address_query",
+        }
+    }
+}
+
+/// An address as Kalamu keeps it: trimmed, `http` or `https` only, with a host, without a user
+/// name or password, a query or a fragment, without a space, a control character or a
+/// backslash inside it, and without a trailing slash. A path is kept, since a gateway may live
+/// under one. The host is written as the URL library reads it (in lower case, an IPv4 address
+/// in its usual form), the address requests go to.
+///
+/// What it returns, it takes again unchanged; and an address `servers.json` holds is refused
+/// by the catalogue exactly when this refuses it.
+pub fn checked_address(input: &str) -> Result<String, AddressError> {
+    let input = input.trim();
+    if input.is_empty() {
+        return Err(AddressError::Empty);
+    }
+    // The URL library would drop a tab or a line break, and turn a backslash into a slash:
+    // what is kept must be what was typed.
+    if input
+        .chars()
+        .any(|c| c.is_whitespace() || c.is_control() || c == '\\')
+    {
+        return Err(AddressError::NotAnAddress);
+    }
+    let url = Url::parse(input).map_err(|_| AddressError::NotAnAddress)?;
+    if !matches!(url.scheme(), "http" | "https") {
+        return Err(AddressError::Scheme);
+    }
+    if url.host_str().is_none_or(str::is_empty) {
+        return Err(AddressError::NotAnAddress);
+    }
+    if !url.username().is_empty() || url.password().is_some() {
+        return Err(AddressError::Credentials);
+    }
+    if url.query().is_some() || url.fragment().is_some() {
+        return Err(AddressError::Query);
+    }
+    Ok(url.as_str().trim_end_matches('/').to_string())
+}
 
 /// The host of an address, in lower case, without the brackets of an IPv6 address, its port, a
 /// user name before it or a path after it: `http://User@LocalHost:11434/v1` gives `localhost`,
@@ -61,6 +136,72 @@ pub fn on_this_computer(address: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn an_address_is_kept_trimmed_without_its_last_slash_and_as_requests_read_it() {
+        for (typed, kept) in [
+            ("  http://localhost:11434/ ", "http://localhost:11434"),
+            (
+                "https://gpu.example.edu/llm/v1/",
+                "https://gpu.example.edu/llm/v1",
+            ),
+            ("HTTP://LocalHost:11434", "http://localhost:11434"),
+            ("http://[::1]:11434", "http://[::1]:11434"),
+            ("http://127.1:11434", "http://127.0.0.1:11434"),
+            ("https://host:443/v1", "https://host/v1"),
+        ] {
+            assert_eq!(checked_address(typed).as_deref(), Ok(kept), "{typed}");
+        }
+    }
+
+    #[test]
+    fn an_address_kalamu_cannot_keep_is_refused_for_its_reason() {
+        for (typed, why) in [
+            ("", AddressError::Empty),
+            ("   ", AddressError::Empty),
+            ("ftp://host", AddressError::Scheme),
+            ("file:///etc/passwd", AddressError::Scheme),
+            ("localhost:11434", AddressError::Scheme),
+            ("http://me:secret@host:11434", AddressError::Credentials),
+            ("http://me@host", AddressError::Credentials),
+            ("http://host/?key=1", AddressError::Query),
+            ("http://host/#x", AddressError::Query),
+            ("not an address", AddressError::NotAnAddress),
+            ("http://", AddressError::NotAnAddress),
+            ("http://:11434", AddressError::NotAnAddress),
+            ("http://host:99999", AddressError::NotAnAddress),
+            ("http://server lan", AddressError::NotAnAddress),
+            ("http://local\nhost", AddressError::NotAnAddress),
+            ("http://server.lan\\@localhost/", AddressError::NotAnAddress),
+        ] {
+            assert_eq!(checked_address(typed), Err(why), "{typed:?}");
+        }
+    }
+
+    #[test]
+    fn what_is_kept_is_taken_again_unchanged_and_never_changes_where_it_leads() {
+        for typed in [
+            "http://localhost:11434/",
+            "HTTP://LOCALHOST:11434",
+            "http://127.1",
+            "http://[0:0:0:0:0:0:0:1]:11434",
+            "https://gpu.example.edu/llm/v1/",
+            "http://192.168.1.20:11434",
+        ] {
+            let kept = checked_address(typed).unwrap_or_default();
+            assert_eq!(
+                checked_address(&kept).as_deref(),
+                Ok(kept.as_str()),
+                "{typed}"
+            );
+            assert!(!kept.is_empty() && !host_of(&kept).is_empty(), "{typed}");
+        }
+        // Read by hand, `127.1` is the network; kept, it is the loopback address it leads to.
+        assert!(!on_this_computer("http://127.1"));
+        assert!(on_this_computer(
+            &checked_address("http://127.1").unwrap_or_default()
+        ));
+    }
 
     #[test]
     fn the_host_is_read_without_scheme_user_port_or_path() {

@@ -24,14 +24,23 @@ const ANSWER_TOKENS: u32 = 1_024;
 /// What a model did in its trial.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct TrialResult {
-    /// Whether it answered at all; why not, in the server's words, shortened.
-    pub answers: Result<(), String>,
+    /// Whether it answered at all; why not, when it did not.
+    pub answers: Result<(), TrialFailure>,
     /// It read the number in the picture: offered for reading pages.
     pub reads_pages: bool,
     /// It filled the form: offered for analyses, contents, corrections and translations.
     pub fills_forms: bool,
     /// What went wrong in the second or third request, for the researcher.
     pub note: Option<String>,
+}
+
+/// Why a model did not answer its trial's first request: the failure's id, as every
+/// provider's failures have one (`provider.invalid_request`, `provider.transient`…), and the
+/// server's own words, shortened.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct TrialFailure {
+    pub code: String,
+    pub words: String,
 }
 
 /// Tries `model` on `server`. `vision` is what the server said of the model: where it says the
@@ -56,7 +65,10 @@ pub async fn try_model(
     };
     if let Err(e) = trial.answers().await {
         return TrialResult {
-            answers: Err(shortened(&e.to_string())),
+            answers: Err(TrialFailure {
+                code: e.code().to_string(),
+                words: shortened(&e.to_string()),
+            }),
             reads_pages: false,
             fills_forms: false,
             note: None,

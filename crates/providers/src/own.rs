@@ -37,17 +37,10 @@ use address::host_is;
 
 pub use address::{AddressError, checked_address, host_of, on_this_computer};
 pub use discover::{DiscoverError, Found, FoundModel, discover};
-pub use trial::{TrialResult, try_model};
+pub use trial::{TrialFailure, TrialResult, try_model};
 
-/// How a server is spoken to.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum Dialect {
-    /// Ollama at its own address (`/api/chat`), never its `/v1`, which cannot refuse a cut.
-    Ollama,
-    /// Chat Completions at the address discovery settled (`…/v1` where the server lives there).
-    OpenAi,
-}
+/// How a server is spoken to, one type with the catalogue's stored entry.
+pub use kalamu_core::Dialect;
 
 /// A server as the shell hands it in, from the researcher's stored entry.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

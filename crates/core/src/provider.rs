@@ -287,6 +287,18 @@ pub struct ServerRecord {
     pub address: String,
 }
 
+/// How a server of the researcher's own is spoken to: Ollama at its own address (`/api/chat`),
+/// never its `/v1`, which cannot refuse a cut; or the OpenAI-style Chat Completions most other
+/// servers speak, at the address discovery settled. One type for the researcher's stored entry
+/// (`servers.json`, `"ollama"` or `"open_ai"`) and for the provider that speaks to it.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "snake_case")]
+#[ts(export)]
+pub enum Dialect {
+    Ollama,
+    OpenAi,
+}
+
 /// A cloud provider or offline engine. The engine only knows providers through this trait and
 /// never matches on a provider's name.
 #[async_trait]

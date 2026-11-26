@@ -65,6 +65,9 @@ unicode-normalization = "0.1.26"
 # Grapheme, word and sentence boundaries (UAX #29), where the search by meaning cuts a text into
 # chunks: already built for the tree (MIT or Apache-2.0).
 unicode-segmentation = "1.13.3"
+# Reads the address of a server of the researcher's own, in core, so the catalogue and the
+# providers check it alike: already built for reqwest (MIT or Apache-2.0).
+url = "2.5.9"
 uuid = { version = "1.29.0", features = ["v4", "serde"] }
 wiremock = "0.6.5"
 

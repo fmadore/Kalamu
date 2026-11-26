@@ -7,6 +7,7 @@
 //! answers once a real server has been tried.
 
 use std::net::SocketAddr;
+use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
 use kalamu_core::{
@@ -21,7 +22,7 @@ use kalamu_providers::own::{
 };
 use serde_json::{Value, json};
 use wiremock::matchers::{body_partial_json, header, method, path};
-use wiremock::{Mock, MockServer, Request, ResponseTemplate};
+use wiremock::{Mock, MockServer, Request, Respond, ResponseTemplate};
 
 fn fixture(name: &str) -> Value {
     let path = format!("{}/tests/fixtures/own/{name}", env!("CARGO_MANIFEST_DIR"));
@@ -502,41 +503,63 @@ async fn openrouter_alone_is_told_not_to_compress() {
 
 // Both --------------------------------------------------------------------------------------
 
+/// Answers after a delay, noting when each request reached the server: requests sent one at a
+/// time reach it at least the delay apart, however slow the machine running the test.
+struct Noted {
+    answer: ResponseTemplate,
+    received: Arc<Mutex<Vec<Instant>>>,
+}
+
+impl Respond for Noted {
+    fn respond(&self, _: &Request) -> ResponseTemplate {
+        self.received
+            .lock()
+            .unwrap_or_else(|p| p.into_inner())
+            .push(Instant::now());
+        self.answer.clone()
+    }
+}
+
 #[tokio::test]
 async fn requests_wait_for_the_server_s_turn() {
     let mock = MockServer::start().await;
     let delay = Duration::from_millis(400);
+    let received = Arc::new(Mutex::new(Vec::new()));
     Mock::given(method("POST"))
         .and(path("/api/chat"))
-        .respond_with(ok(fixture("ollama_page.json")).set_delay(delay))
+        .respond_with(Noted {
+            answer: ok(fixture("ollama_page.json")).set_delay(delay),
+            received: received.clone(),
+        })
         .mount(&mock)
         .await;
     let ollama = server(&mock.uri(), Dialect::Ollama);
     let input = page();
     let key = no_key();
-    let started = Instant::now();
     let (a, b) = tokio::join!(
         ollama.process(&key, request(Task::TextExtraction, &input, &NEVER)),
         ollama.process(&key, request(Task::TextExtraction, &input, &NEVER)),
     );
     assert!(a.is_ok() && b.is_ok());
+    let times = received.lock().unwrap_or_else(|p| p.into_inner()).clone();
+    assert_eq!(times.len(), 2);
+    // The second was sent only once the first was answered, never beside it.
     assert!(
-        started.elapsed() >= delay * 2,
-        "one at a time: {:?}",
-        started.elapsed()
+        times[1].duration_since(times[0]) >= delay,
+        "one at a time: {:?} apart",
+        times[1].duration_since(times[0])
     );
 
-    // A request waiting for its turn stops when the job does.
+    // A request waiting for its turn stops when the job does, and never reaches the server.
     let stop = StopSignal::default();
     stop.stop();
-    let started = Instant::now();
     let (first, waiting) = tokio::join!(
         ollama.process(&key, request(Task::TextExtraction, &input, &NEVER)),
         ollama.process(&key, request(Task::TextExtraction, &input, &stop)),
     );
     assert!(first.is_ok());
     assert_eq!(waiting.err(), Some(ProviderError::Interrupted));
-    assert!(started.elapsed() < delay * 2);
+    assert_eq!(received.lock().unwrap_or_else(|p| p.into_inner()).len(), 3);
 }
 
 #[tokio::test]
@@ -804,10 +827,45 @@ async fn each_failure_to_find_a_server_is_told_apart() {
         discover(&client(), &locked.uri(), Some(&ApiKey::new("wrong"))).await,
         Err(DiscoverError::KeyRefused { .. })
     ));
+    let refused = discover(&client(), "http://me:pw@localhost:11434", None).await;
     assert!(matches!(
-        discover(&client(), "http://me:pw@localhost:11434", None).await,
+        refused,
         Err(DiscoverError::Address(AddressError::Credentials))
     ));
+
+    // Each failure has its own id for the interface, and names the host where there is one.
+    let ids = [
+        (
+            DiscoverError::NothingAnswers { host: "h:1".into() },
+            "server.nothing_answers",
+        ),
+        (
+            DiscoverError::NotAServer { host: "h:1".into() },
+            "server.not_a_server",
+        ),
+        (
+            DiscoverError::KeyNeeded { host: "h:1".into() },
+            "server.key_needed",
+        ),
+        (
+            DiscoverError::KeyRefused { host: "h:1".into() },
+            "server.key_refused",
+        ),
+        (
+            DiscoverError::Other {
+                host: "h:1".into(),
+                message: "x".into(),
+            },
+            "server.unreadable",
+        ),
+    ];
+    for (error, id) in ids {
+        assert_eq!(error.code(), id);
+        assert_eq!(error.host(), Some("h:1"));
+    }
+    let refused = refused.err().unwrap_or_else(|| panic!("refused"));
+    assert_eq!(refused.code(), "server.address_credentials");
+    assert_eq!(refused.host(), None);
 }
 
 /// An address where nothing listens: a port the system gave, then closed.
@@ -953,6 +1011,20 @@ async fn a_model_that_does_not_answer_stops_the_trial_with_the_server_s_words() 
     let Err(why) = &result.answers else {
         panic!("{result:?}");
     };
-    assert!(why.contains("more system memory"), "{why}");
+    assert!(why.words.contains("more system memory"), "{why:?}");
+    assert_eq!(why.code, "provider.invalid_request");
     assert!(!result.reads_pages && !result.fills_forms);
+}
+
+/// The shell runs a discovery and a trial each on a task of its own, which a trial's
+/// cancellation aborts: both must be sendable to another thread.
+#[test]
+fn a_discovery_and_a_trial_can_run_on_a_task_of_their_own() {
+    fn sendable<T: Send>(_: &T) {}
+    let client = client();
+    let server = config("http://localhost:11434", Dialect::Ollama);
+    let model = trial_model();
+    let key = no_key();
+    sendable(&try_model(&client, &server, &model, None, Some(&key)));
+    sendable(&discover(&client, "http://localhost:11434", Some(&key)));
 }

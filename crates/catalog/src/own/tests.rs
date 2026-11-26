@@ -146,11 +146,16 @@ fn every_problem_refuses_the_file() {
     for (address, why) in [
         ("localhost:11434", "must start with http:// or https://"),
         ("ftp://localhost", "must start with http:// or https://"),
-        ("http://", "names no server"),
-        ("http://:11434", "names no server"),
-        ("http://me:secret@server.lan", "must not hold a user name"),
-        ("http://server lan", "holds a space"),
-        ("http://server.lan\\x", "holds a space"),
+        ("http://", "not an address Kalamu can read"),
+        ("http://:11434", "not an address Kalamu can read"),
+        (
+            "http://me:secret@server.lan",
+            "Leave the user name and password out",
+        ),
+        ("http://server lan", "not an address Kalamu can read"),
+        ("http://server.lan\\x", "not an address Kalamu can read"),
+        (" http://server.lan", "not an address Kalamu can read"),
+        ("http://server.lan/?x=1", "Leave out what follows ? or #"),
     ] {
         refused(why, |l| l.servers[0].address = address.into());
     }

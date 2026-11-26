@@ -9,6 +9,9 @@
 //! researcher's entries are checked by [`OwnServers::problems`], never by the checks a
 //! downloaded list goes through, and a downloaded list may never name a server of one's own.
 
+mod draft;
+mod problems;
+
 use std::collections::BTreeSet;
 
 use kalamu_core::{ProviderId, Task};
@@ -17,8 +20,14 @@ use thiserror::Error;
 use ts_rs::TS;
 
 use crate::{
-    Catalog, LanguageSupport, Limits, ModelInfo, ModelStatus, Pricing, ProviderInfo, Tier, checks,
+    Catalog, LanguageSupport, Limits, ModelInfo, ModelStatus, Pricing, ProviderInfo, Tier,
 };
+
+pub use draft::{
+    DraftError, FoundServer, FoundServerModel, ModelDraft, ModelTrial, OwnTrial, Saved,
+    ServerDraft, TrialModel, TrialServer, Trials,
+};
+pub use problems::ServerProblem;
 
 /// What every server's provider id starts with: `own-` and eight hexadecimal digits.
 pub const ID_PREFIX: &str = "own-";
@@ -30,15 +39,8 @@ pub const MOST_AT_ONCE: u32 = 8;
 /// and media make them for every model that reads images.
 const PICTURES: [&str; 2] = ["image/png", "image/jpeg"];
 
-/// How a server is spoken to: Ollama at its own address (`/api/chat`), or the OpenAI-style
-/// Chat Completions most other servers speak.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
-#[serde(rename_all = "snake_case")]
-#[ts(export)]
-pub enum Dialect {
-    Ollama,
-    OpenAi,
-}
+/// How a server is spoken to, one type with the provider's (`"ollama"`, `"open_ai"`).
+pub use kalamu_core::Dialect;
 
 /// A server the researcher added: one provider, under an id made once and kept through a
 /// rename or a changed address, so that results, the cache, consent and the key hang on it.
@@ -49,7 +51,8 @@ pub struct OwnServer {
     pub id: ProviderId,
     /// The researcher's name for it, shown wherever a provider's name is.
     pub name: String,
-    /// `http://` or `https://`, as typed (`http://localhost:11434`).
+    /// `http://` or `https://`, as `kalamu_core::address::checked_address` keeps it, with
+    /// `/v1` where an OpenAI-style server answered only there (`http://localhost:11434`).
     pub address: String,
     pub dialect: Dialect,
     /// A key is saved for it in the system's keychain.
@@ -162,7 +165,8 @@ impl OwnServers {
         if problems.is_empty() {
             Ok(servers)
         } else {
-            Err(OwnServersError::Refused(problems.join("; ")))
+            let words: Vec<String> = problems.iter().map(ToString::to_string).collect();
+            Err(OwnServersError::Refused(words.join("; ")))
         }
     }
 
@@ -184,106 +188,6 @@ impl OwnServers {
             }
         }
     }
-
-    /// Every problem found in the list, in words a researcher can read; empty when there is
-    /// none. Ids of the right form, unique and never a bundled provider's; names given and
-    /// unique; addresses `http://` or `https://` with a host and no user name; 1 to
-    /// [`MOST_AT_ONCE`] requests at once; each server's models named once, with an answer
-    /// shorter than what they read, prices not negative, and a trial day written
-    /// `YYYY-MM-DD`.
-    pub fn problems(&self) -> Vec<String> {
-        let mut problems = Vec::new();
-        let bundled: BTreeSet<String> = Catalog::read(crate::BUNDLED)
-            .map(|c| c.providers.into_iter().map(|p| p.id.0).collect())
-            .unwrap_or_default();
-        let mut ids = BTreeSet::new();
-        let mut names = BTreeSet::new();
-        for server in &self.servers {
-            let id = server.id.as_str();
-            let name = server.name.trim();
-            let at = if name.is_empty() {
-                format!("the server {id}")
-            } else {
-                format!("the server “{name}”")
-            };
-            if !is_own_id(id) || bundled.contains(id) {
-                problems.push(format!("{at} has an id that is not own- and 8 hex digits"));
-            }
-            if !ids.insert(id) {
-                problems.push(format!("{at} is listed twice under the id {id}"));
-            }
-            if name.is_empty() {
-                problems.push(format!("{at} has no name"));
-            } else if !names.insert(name.to_lowercase()) {
-                problems.push(format!("two servers are called “{name}”"));
-            }
-            if let Err(why) = address_problem(&server.address) {
-                problems.push(format!("{at}: {why}"));
-            }
-            if !(1..=MOST_AT_ONCE).contains(&server.at_once) {
-                problems.push(format!(
-                    "{at}: requests at the same time must be from 1 to {MOST_AT_ONCE}"
-                ));
-            }
-            let mut models = BTreeSet::new();
-            for model in &server.models {
-                let id = model.id.trim();
-                let of = format!("{at}, model “{id}”");
-                if id.is_empty() {
-                    problems.push(format!("{at} has a model without a name"));
-                } else if !models.insert(id) {
-                    problems.push(format!("{of} is listed twice"));
-                }
-                if model.max_output == 0 {
-                    problems.push(format!("{of}: the longest answer is 0 tokens"));
-                }
-                if model.context <= model.max_output {
-                    problems.push(format!(
-                        "{of}: it must read more tokens than its longest answer"
-                    ));
-                }
-                for price in [model.input_per_mtok, model.output_per_mtok] {
-                    if price.is_some_and(|p| !p.is_finite() || p < 0.0) {
-                        problems.push(format!("{of}: a price is negative or not a number"));
-                    }
-                }
-                if model
-                    .tried_at
-                    .as_deref()
-                    .is_some_and(|d| !checks::is_day(d))
-                {
-                    problems.push(format!("{of}: the day of its trial is not YYYY-MM-DD"));
-                }
-            }
-        }
-        problems
-    }
-}
-
-/// What is wrong with a server's address, if anything: only `http://` and `https://`, a host,
-/// no user name, no space or control character.
-fn address_problem(address: &str) -> Result<(), String> {
-    if address
-        .chars()
-        .any(|c| c.is_whitespace() || c.is_control() || c == '\\')
-    {
-        return Err("the address holds a space or a character addresses cannot".into());
-    }
-    let lower = address.to_ascii_lowercase();
-    let Some(rest) = lower
-        .strip_prefix("http://")
-        .or_else(|| lower.strip_prefix("https://"))
-    else {
-        return Err("the address must start with http:// or https://".into());
-    };
-    let authority = rest.split(['/', '?', '#']).next().unwrap_or_default();
-    if authority.contains('@') {
-        return Err("the address must not hold a user name".into());
-    }
-    if kalamu_core::address::host_of(address).is_empty() {
-        return Err("the address names no server".into());
-    }
-    Ok(())
 }
 
 impl OwnServer {

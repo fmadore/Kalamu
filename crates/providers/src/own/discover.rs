@@ -70,6 +70,33 @@ pub enum DiscoverError {
     Other { host: String, message: String },
 }
 
+impl DiscoverError {
+    /// The id the interface looks the sentence up by: the address's own where the address was
+    /// refused, else one per way of failing.
+    pub fn code(&self) -> &'static str {
+        match self {
+            Self::Address(e) => e.code(),
+            Self::NothingAnswers { .. } => "server.nothing_answers",
+            Self::NotAServer { .. } => "server.not_a_server",
+            Self::KeyNeeded { .. } => "server.key_needed",
+            Self::KeyRefused { .. } => "server.key_refused",
+            Self::Other { .. } => "server.unreadable",
+        }
+    }
+
+    /// The host the failure names, with its port; none where the address was refused.
+    pub fn host(&self) -> Option<&str> {
+        match self {
+            Self::Address(_) => None,
+            Self::NothingAnswers { host }
+            | Self::NotAServer { host }
+            | Self::KeyNeeded { host }
+            | Self::KeyRefused { host }
+            | Self::Other { host, .. } => Some(host),
+        }
+    }
+}
+
 /// Finds the server at `address` and lists its models. `key` is sent where the researcher gave
 /// one.
 pub async fn discover(

@@ -17,7 +17,8 @@ id: ProviderId,
  */
 name: string, 
 /**
- * `http://` or `https://`, as typed (`http://localhost:11434`).
+ * `http://` or `https://`, as `kalamu_core::address::checked_address` keeps it, with
+ * `/v1` where an OpenAI-style server answered only there (`http://localhost:11434`).
  */
 address: string, dialect: Dialect, 
 /**

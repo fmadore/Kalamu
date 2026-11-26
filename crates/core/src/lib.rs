@@ -108,7 +108,7 @@ pub use project_file::{
 pub use proposal::{Lifecycle, Proposal, ProposalStatus};
 pub use provenance::{Provenance, SourceDocuments};
 pub use provider::{
-    ApiKey, PCM_16K_MONO, PreparedInput, ProcessRequest, Provider, ProviderError, Reach,
+    ApiKey, Dialect, PCM_16K_MONO, PreparedInput, ProcessRequest, Provider, ProviderError, Reach,
     RequestSetting, ServerRecord, StopSignal, Tuning,
 };
 pub use records::{RowEdit, RowError};
