@@ -3,7 +3,7 @@
 	// what it costs (about $x, free on this computer, already answered, no published price). Each
 	// dialog says these in its own words.
 	import type { PassageEstimate } from '#lib/bindings/PassageEstimate.js';
-	import { formatUsd } from '#lib/i18n/index.js';
+	import { formatUsd, messages } from '#lib/i18n/index.js';
 	import type { ModelChoice } from '#lib/modelAsk.svelte.js';
 
 	let {
@@ -25,6 +25,7 @@
 		/** Names the cost line for tests. */
 		testid?: string;
 	} = $props();
+	const m = messages();
 </script>
 
 {#if !choice.keyed}
@@ -34,9 +35,11 @@
 {/if}
 {#if estimate}
 	<p class="num" data-testid={testid}>
-		{#if estimate.cached}{texts.costStored}{:else if estimate.offline}{texts.costOffline}{:else if estimate.usd !== null}{texts.costAbout(
+		<!-- A price first: a server on this computer has one where the researcher set it. -->
+		{#if estimate.cached}{texts.costStored}{:else if estimate.usd !== null}{texts.costAbout(
 				formatUsd(estimate.usd)
-			)}{:else}{texts.costUnknown}{/if}
+			)}{:else if choice.server}{m.servers
+				.noPrice}{:else if estimate.offline}{texts.costOffline}{:else}{texts.costUnknown}{/if}
 	</p>
 {/if}
 

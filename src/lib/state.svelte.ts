@@ -113,7 +113,7 @@ export type View =
 export type ProjectPane = 'documents' | 'search' | 'map' | 'queue' | 'dictionary' | 'activity';
 
 /** The sections of Settings, each a tab. */
-export type SettingsTab = 'keys' | 'offline' | 'general' | 'about';
+export type SettingsTab = 'keys' | 'offline' | 'servers' | 'general' | 'about';
 
 /** The list of what to check a review was opened from: the items shown, the one open, and how
  * the list was set, so stepping on and going back keep it as it was. */

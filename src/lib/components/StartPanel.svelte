@@ -6,7 +6,9 @@
 	// a pipeline.
 	import type { EstimateRow } from '#lib/bindings/EstimateRow.js';
 	import { formatUsd, messages } from '#lib/i18n/index.js';
+	import { ownOf } from '#lib/catalogText.js';
 	import { shortcut } from '#lib/platform.js';
+	import { app } from '#lib/state.svelte.js';
 
 	let {
 		estimates,
@@ -60,7 +62,11 @@
 					<li>
 						<span class="mono">{row.merge ? m.newJob.mergeRow(row.model) : row.model}</span>
 						<span class="mono">
-							{cost(row) !== null ? formatUsd(cost(row) ?? 0) : m.newJob.estimateUnknown}
+							{cost(row) !== null
+								? formatUsd(cost(row) ?? 0)
+								: ownOf(app.catalog, row.provider)
+									? m.newJob.estimateNotPriced
+									: m.newJob.estimateUnknown}
 						</span>
 					</li>
 				{/each}

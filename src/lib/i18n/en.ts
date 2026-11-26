@@ -386,7 +386,7 @@ export const en = {
 		costLater: (n: number) => `known once step ${n} has read the files`,
 		costUnknown: 'cost unknown',
 		cloudAfterOffline:
-			'A step reads on this computer, and a later one sends its text to a cloud provider. Remove the later step if the material must stay on this computer.',
+			'A step reads on this computer, and a later one sends its text off it, to a cloud provider or a server on the network. Remove the later step if the material must stay on this computer.',
 		start: 'Start',
 		fromProject: (name: string) => `Its jobs join the project “${name}”.`,
 		onText: (files: string) =>
@@ -1356,6 +1356,8 @@ export const en = {
 			/** Beside the chosen model. */
 			one: { top: 'Most capable', balanced: 'Balanced', light: 'Lightweight' },
 			local: 'On this computer',
+			/** The researcher's own servers, after the offline engines. */
+			servers: 'Other servers',
 			/** Under a model whose provider has no key yet. */
 			noKey: (provider: string) => `No ${provider} key yet: add one in Settings.`
 		},
@@ -1511,6 +1513,8 @@ export const en = {
 		chooseFolder: 'Choose…',
 		estimate: 'Estimated cost',
 		estimateUnknown: 'no published price',
+		/** A server's model without a price set in Settings › Other servers. */
+		estimateNotPriced: 'not priced',
 		estimateNote: 'An estimate from page counts and published prices; actual costs vary.',
 		paceTitle: 'Speed and price',
 		pace: {
@@ -2125,6 +2129,8 @@ export const en = {
 		sentCloud: (provider: string, context: number) =>
 			`Sent to ${provider}: the selected passage, and up to ${context} characters before and after it from the same page or part, marked as context the model must not change. Nothing else from the document is sent.`,
 		sentOffline: (model: string) => `Read on this computer by ${model}; nothing is sent.`,
+		sentServer: (server: string, host: string, context: number) =>
+			`Sent to the server “${server}” at ${host}: the selected passage, and up to ${context} characters before and after it from the same page or part, marked as context the model must not change. Nothing else from the document is sent.`,
 		cut: 'The selection went beyond the text of this page or part: only that text is taken.',
 		tooShort: (n: number) => `Select at least ${n} letters or figures.`,
 		tooLong: (n: number, max: number) =>
@@ -2174,6 +2180,8 @@ export const en = {
 		sentCloud: (provider: string) =>
 			`Only this part of the page is sent to ${provider}, as a picture. Nothing else from the document is sent.`,
 		sentOffline: 'Read on this computer; nothing is sent.',
+		sentServer: (server: string, host: string) =>
+			`Only this part of the page is sent to the server “${server}” at ${host}, as a picture. Nothing else from the document is sent.`,
 		costAbout: (usd: string) => `About ${usd}.`,
 		costOffline: 'Free, on this computer.',
 		costStored: 'Already read: no cost.',
@@ -2318,11 +2326,12 @@ export const en = {
 	},
 	settings: {
 		title: 'Settings',
-		lede: 'Keys, offline models, processing, appearance and language.',
+		lede: 'Keys, offline models, other servers, processing, appearance and language.',
 		tabsLabel: 'Settings sections',
 		tabs: {
 			keys: 'API keys',
 			offline: 'Offline models',
+			servers: 'Other servers',
 			general: 'General',
 			about: 'About'
 		},
@@ -2717,11 +2726,123 @@ export const en = {
 	},
 	/** Asked once for each cloud provider, before the first job, workflow run or dictionary
 	 *  proposal sends the researcher's files to it. */
+	/** Settings › Other servers: a server of the researcher's own (Ollama, a university's
+	 *  service), found at its address, each model tried before it is offered. */
+	servers: {
+		title: 'Other servers',
+		intro:
+			'Use the models of a server you or your institution run: a service your university or computing centre offers its members, or Ollama on this computer or another one in your office. Kalamu tries each model before offering it, and your files go only to the server you add.',
+		guide: 'How to add a server',
+		empty: 'No server added yet.',
+		add: 'Add a server',
+		addTitle: 'Add a server',
+		editTitle: (name: string) => `Change “${name}”`,
+		name: 'Name',
+		nameHint: 'Your own name for it, shown wherever a provider’s name is.',
+		address: 'Address',
+		addressHint:
+			'Where the server answers. Ollama on this computer answers at http://localhost:11434.',
+		asksKey: 'This server asks for a key',
+		key: 'Key',
+		keyHint: (keychain: string) => `Kept in ${keychain} and sent only to this server.`,
+		keyKept: (keychain: string) =>
+			`A key is saved in ${keychain}. Leave the field empty to keep it.`,
+		connect: 'Connect',
+		connecting: 'Connecting…',
+		/** What answered, in one line. `where` is `thisComputer` or `network`. */
+		foundOllama: (version: string, where: string) => `Ollama ${version}, ${where}.`,
+		foundOpenAi: (where: string) => `An OpenAI-style server, ${where}.`,
+		thisComputer: 'on this computer',
+		network: (host: string) => `on the network at ${host}`,
+		unencrypted:
+			'This address starts with http://: your files travel over the network unencrypted. Use it only on a network you trust, or ask whoever runs the server for an https:// address.',
+		unencryptedKey:
+			'This address starts with http://: your files and the key travel over the network unencrypted. Use it only on a network you trust, or ask whoever runs the server for an https:// address.',
+		modelsTitle: 'Models on this server',
+		modelsHint: 'Tick the models to use. Kalamu tries each one before offering it.',
+		noModels: 'This server has no models yet. Add one on the server, then connect again.',
+		/** What the server says of a model, beside its name. */
+		readsImages: 'reads images, the server says',
+		noImages: 'does not read images, the server says',
+		imagesUnknown: 'the server does not say whether it reads images',
+		elsewhere: (host: string) => `Runs at ${host}, not on this server, so it cannot be added.`,
+		added: 'Added',
+		more: 'More choices',
+		context: 'Reads up to',
+		maxOutput: 'Longest answer',
+		tokens: 'tokens',
+		contextHint: 'In tokens, the answer included. More takes more of the server’s memory.',
+		maxOutputHint: 'In tokens.',
+		priceIn: 'Price per million tokens read',
+		priceOut: 'Price per million tokens written',
+		priceHint: 'In US dollars. Left empty, a job’s cost reads as not priced.',
+		atOnce: 'Requests at the same time',
+		atOnceHint: `From 1 to 8. More is faster only if the server answers several at once.`,
+		tryAndAdd: 'Try and add',
+		trying: 'Trying… a model can take a few minutes to load the first time.',
+		waiting: 'Waits its turn.',
+		stop: 'Stop',
+		stopped: 'Stopped, so it is not added.',
+		/** The two results of a trial, each yes or no, with what follows. */
+		readsPages: 'Reads pages',
+		fillsForms: 'Fills an analysis’s form',
+		yes: 'Yes',
+		no: 'No',
+		readsPagesYes: 'offered for text extraction',
+		readsPagesNo: 'not offered for text extraction',
+		fillsFormsYes: 'offered for analyses, corrections and translations',
+		fillsFormsNo: 'not offered for analyses, corrections and translations',
+		both: 'With both, it is offered for tables of contents too.',
+		neither: 'Not offered: it did neither.',
+		noAnswer: (reason: string) => `No answer from the model. ${reason}`,
+		said: 'The server said:',
+		kept: (day: string) => `Tried on ${day} at this address: kept as it was.`,
+		notSaved:
+			'The server is not saved: none of its models read the trial’s picture or filled its form. Tick other models, or check them on the server, then try again.',
+		saved: (name: string) =>
+			`“${name}” is saved. Its models are offered in New job for what they did in their trial.`,
+		done: 'Done',
+		/** The list of servers saved. */
+		listTitle: 'Your servers',
+		onThisComputer: 'On this computer',
+		onNetwork: 'On the network',
+		keySaved: 'Key saved',
+		offered: {
+			pages: 'text extraction',
+			forms: 'analyses, corrections and translations',
+			both: 'text extraction, analyses, tables of contents, corrections and translations'
+		},
+		offeredFor: (what: string) => `Offered for ${what}`,
+		triedOn: (day: string) => `tried on ${day}`,
+		tryAgain: 'Try again',
+		tryAgainLabel: (model: string) => `Try ${model} again`,
+		edit: 'Edit',
+		remove: 'Remove',
+		removeAsk: (name: string) =>
+			`Remove the server “${name}”? Its jobs and results stay. Saved pipelines and workflows that use it will fail until it is added again.`,
+		removed: (name: string) => `“${name}” removed.`,
+		gone: (model: string) => `${model} is no longer on this server, so it was not tried.`,
+		triedAgain: (model: string) => `${model} tried again.`,
+		/** A server's model in the model lists, which give it no description. */
+		summaryOllama: (where: string) => `Ollama ${where}`,
+		summaryOpenAi: (where: string) => `An OpenAI-style server ${where}`,
+		/** Under a review's request to a server's model without a price. */
+		noPrice: 'Not priced: no price is set for this model.'
+	},
 	consent: {
 		title: 'Send your files to an AI provider?',
 		/** `providers` is a list of provider names; `policy` the privacy policy's address. */
 		ask: (providers: string, policy: string) =>
 			`Kalamu is about to send the content of your files to ${providers}: the pages, recordings or text, with the names and any other personal information they hold. Each provider reads them with its AI models under your own account and API key, and keeps them as its own terms say. Kalamu’s developer receives nothing.\n\nYou are asked once for each provider. Kalamu’s privacy policy: ${policy}`,
+		/** A server of the researcher's own on the network, as `askServers` and `askBoth` list it. */
+		serverNamed: (name: string, host: string) => `the server “${name}” at ${host}`,
+		titleServer: 'Send your files to another server?',
+		titleBoth: 'Send your files to an AI provider and a server?',
+		/** `servers` is a list of `serverNamed`. */
+		askServers: (servers: string, policy: string) =>
+			`Kalamu is about to send the content of your files to ${servers}: the pages, recordings or text, with the names and any other personal information they hold. They do not go to a company under your own account and key: whoever runs that server reads them with its models under their own rules, and decides what is kept. Kalamu’s developer receives nothing.\n\nYou are asked once for each server, and again if its address changes. Kalamu’s privacy policy: ${policy}`,
+		askBoth: (providers: string, servers: string, policy: string) =>
+			`Kalamu is about to send the content of your files to ${providers}, and to ${servers}: the pages, recordings or text, with the names and any other personal information they hold. Each provider reads them with its AI models under your own account and API key, and keeps them as its own terms say. A server is not a company under your account: whoever runs it reads them under their own rules, and decides what is kept. Kalamu’s developer receives nothing.\n\nYou are asked once for each provider and each server. Kalamu’s privacy policy: ${policy}`,
 		send: 'Send'
 	},
 	/** The Mac App Store's build, where macOS lets Kalamu write only in folders the researcher
@@ -3147,7 +3268,70 @@ export const en = {
 		'project.frozen_text_missing':
 			'The project was not saved: the corrected text a job read, which Kalamu kept as it was then, is no longer in Kalamu’s data folder. A file saved earlier under this name is unchanged.',
 		'project.frozen_text_changed':
-			'The project was not saved: the corrected text a job read, which Kalamu kept as it was then, has changed since. A file saved earlier under this name is unchanged.'
+			'The project was not saved: the corrected text a job read, which Kalamu kept as it was then, has changed since. A file saved earlier under this name is unchanged.',
+		/* Settings › Other servers. An address refused names `server` when it comes from the list
+		   saved, nothing when it was just typed. */
+		'server.address_empty': (p: Record<string, string>) =>
+			p.server
+				? `The server “${p.server}” has no address. Change it in Settings › Other servers.`
+				: 'Type the server’s address, such as http://localhost:11434.',
+		'server.address_unreadable': (p: Record<string, string>) =>
+			p.server
+				? `The address of the server “${p.server}” cannot be read. Change it in Settings › Other servers.`
+				: 'This is not an address Kalamu can read. Write it as http://localhost:11434.',
+		'server.address_scheme': (p: Record<string, string>) =>
+			p.server
+				? `The address of the server “${p.server}” must start with http:// or https://.`
+				: 'The address must start with http:// or https://.',
+		'server.address_credentials': (p: Record<string, string>) =>
+			p.server
+				? `The address of the server “${p.server}” holds a user name or password. Leave them out, and give a key under “This server asks for a key”.`
+				: 'Leave the user name and password out of the address. If the server asks for a key, tick “This server asks for a key” and give it there.',
+		'server.address_query': (p: Record<string, string>) =>
+			p.server
+				? `The address of the server “${p.server}” holds a ? or a #. Leave out what follows them.`
+				: 'Leave out what follows ? or # in the address.',
+		'server.nothing_answers': (p: Record<string, string>) =>
+			`Nothing answers at ${p.host}. Check the address, and that the server’s program (Ollama, for instance) is running on that computer. For another computer, check that it was set to accept connections from the network: Ollama accepts only its own computer’s until told otherwise.`,
+		'server.not_a_server': (p: Record<string, string>) =>
+			`Something answers at ${p.host}, but it is not a server Kalamu knows: Ollama, or a server that speaks like OpenAI’s. Check the address with whoever runs it.`,
+		'server.key_needed': (p: Record<string, string>) =>
+			`The server at ${p.host} asks for a key. Tick “This server asks for a key” and give it.`,
+		'server.key_refused': (p: Record<string, string>) =>
+			`The server at ${p.host} refused the key. Check it with whoever runs the server.`,
+		'server.unreadable': (p: Record<string, string>) =>
+			`The server at ${p.host} answered, but Kalamu could not read its answer.`,
+		'server.not_found': 'This server is no longer in the list. Close the form and look again.',
+		'server.not_tried': (p: Record<string, string>) =>
+			`${p.model} has not been tried at this address. Try it first.`,
+		'server.did_nothing': (p: Record<string, string>) =>
+			`${p.model} neither read the trial’s picture nor filled its form, so it is left out.`,
+		'server.key_missing': (p: Record<string, string>) =>
+			`“${p.server}” asks for a key: type it, or untick “This server asks for a key”.`,
+		'server.bad_id': (p: Record<string, string>) =>
+			`The server “${p.server}” is saved under an id Kalamu does not accept. Remove it and add it again.`,
+		'server.same_id': (p: Record<string, string>) =>
+			`The server “${p.server}” is saved twice under the same id. Remove it and add it again.`,
+		'server.no_name': 'Give the server a name.',
+		'server.same_name': (p: Record<string, string>) =>
+			`A server is already called “${p.name}”. Choose another name.`,
+		'server.at_once': (p: Record<string, string>) =>
+			`Requests at the same time for “${p.server}” must be from 1 to ${p.most}.`,
+		'server.model_no_name': (p: Record<string, string>) =>
+			`A model of the server “${p.server}” has no name.`,
+		'server.model_twice': (p: Record<string, string>) =>
+			`${p.model} is listed twice for the server “${p.server}”.`,
+		'server.no_answer_room': (p: Record<string, string>) =>
+			`The longest answer of ${p.model} on “${p.server}” must be more than 0 tokens.`,
+		'server.context_too_small': (p: Record<string, string>) =>
+			`${p.model} on “${p.server}” must read more tokens than its longest answer: raise “Reads up to”, or lower “Longest answer”.`,
+		'server.price': (p: Record<string, string>) =>
+			`A price of ${p.model} on “${p.server}” is not a number of 0 or more.`,
+		'server.trial_day': (p: Record<string, string>) =>
+			`The day ${p.model} on “${p.server}” was tried cannot be read. Try it again.`,
+		'server.write': 'The list of your servers could not be saved.',
+		'server.key_elsewhere': 'A server’s key is set with the server, in Settings › Other servers.',
+		'server.trial_stopped': (p: Record<string, string>) => `The trial of ${p.model} was stopped.`
 	}
 };
 

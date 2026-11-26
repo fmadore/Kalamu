@@ -35,7 +35,13 @@ import { photoCommand, READING_ROOM, READING_ROOM_PHOTOS } from './mockPhotos.js
 import { sampleCommand } from './mockSample.js';
 import { installClose, windowCommand } from './mockWindow.js';
 import { databaseCommand, unreadableJobs } from './mockDatabase.js';
-import { keyless, serverCommand, withServers } from './mockServers.js';
+import {
+	keyless,
+	serverCommand,
+	serverPrice,
+	withServerRules,
+	withServers
+} from './mockServers.js';
 
 const catalog = catalogJson as unknown as Catalog;
 /** The engine's rules for the bundled catalogue, written by `cargo test`. */
@@ -186,7 +192,7 @@ export function installMock(): void {
 			case 'catalog_refused':
 				return new URLSearchParams(location.search).has('catalog-refused');
 			case 'task_rules':
-				return taskRules;
+				return withServerRules(taskRules);
 			// `?release`: the model list names a release newer than this copy.
 			case 'newer_release':
 				return new URLSearchParams(location.search).has('release')
@@ -303,10 +309,13 @@ export function installMock(): void {
 					model: s.model,
 					pages: 120,
 					merge: false,
-					estimate: {
-						usd: s.provider === 'mistral' ? null : 0.42,
-						economy_usd: s.provider === 'mistral' ? null : 0.21
-					},
+					estimate:
+						serverPrice(s.provider, s.model) !== undefined
+							? { usd: serverPrice(s.provider, s.model) ?? null, economy_usd: null }
+							: {
+									usd: s.provider === 'mistral' ? null : 0.42,
+									economy_usd: s.provider === 'mistral' ? null : 0.21
+								},
 					...interviewLength(request, s, catalog),
 					...screeningLength(request, s),
 					...textLength(request, s)

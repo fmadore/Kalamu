@@ -1,7 +1,8 @@
 <script lang="ts">
 	// One model set-up of a new job: its model, prompt and settings, and in a comparison the
 	// siglum it will carry in the review.
-	import { modelDescription, providerNameOf } from '#lib/catalogText.js';
+	import { modelDescription, ownOf, providerNameOf } from '#lib/catalogText.js';
+	import { serverSummary } from '#lib/servers.js';
 	import TermLink from './TermLink.svelte';
 	import Icon from './Icon.svelte';
 	import ModelPicker from './ModelPicker.svelte';
@@ -229,10 +230,16 @@
 		{/if}
 	{/if}
 	{#if info}
-		<!-- Its tier in words (the field shows its bars), then what it is for. -->
+		{@const own = ownOf(catalog, info.provider)}
+		<!-- Its tier in words (the field shows its bars), then what it is for; for a server's model,
+		     which no tier describes, what serves it and where. -->
 		<p class="muted small desc">
-			<span class="tier">{m.newJob.tiers.one[info.tier]}</span>
-			{#if info.description}{modelDescription(info)}{/if}
+			{#if own}
+				{serverSummary(m, own)}
+			{:else}
+				<span class="tier">{m.newJob.tiers.one[info.tier]}</span>
+				{#if info.description}{modelDescription(info)}{/if}
+			{/if}
 		</p>
 	{/if}
 	{#if info && secondsPerPage(info.id) !== undefined}

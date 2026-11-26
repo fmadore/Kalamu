@@ -12,8 +12,8 @@ export type ModelsBy = 'provider' | 'tier';
 /** From the most capable to the lightest. */
 export const TIERS: readonly Tier[] = ['top', 'balanced', 'light'];
 
-/** A heading of a model list and the models under it: a tier's, or those that run on this
- * computer, which no tier compares with the providers' own. */
+/** A heading of a model list and the models under it: a tier's, those that run on this
+ * computer, which no tier compares with the providers' own, or the researcher's servers'. */
 export interface ModelGroup {
 	key: string;
 	tier: Tier | null;
@@ -37,13 +37,16 @@ export function byTier(models: ModelInfo[]): ModelGroup[] {
 
 /**
  * Every provider's models in one list: the cloud models under their tiers, then those that run
- * on this computer under one heading of their own, most capable first. A Whisper model is
- * classed among Whisper's, not against Claude's, so the two are never mixed.
+ * on this computer under one heading of their own, most capable first, then the researcher's
+ * servers' under one heading, server by server. A Whisper model is classed among Whisper's, not
+ * against Claude's, and a server's model, which no tier describes, against no one's.
  */
 export function acrossProviders(models: ModelInfo[], providers: ProviderInfo[]): ModelGroup[] {
 	const local = new Set(providers.filter((p) => p.local).map((p) => p.id));
+	const own = providers.filter((p) => p.own).map((p) => p.id);
 	const onComputer = models.filter((m) => local.has(m.provider));
-	const groups = byTier(models.filter((m) => !local.has(m.provider)));
+	const onServers = own.flatMap((id) => models.filter((m) => m.provider === id));
+	const groups = byTier(models.filter((m) => !local.has(m.provider) && !own.includes(m.provider)));
 	if (onComputer.length > 0) {
 		// A stable sort keeps each family together inside a tier.
 		groups.push({
@@ -52,6 +55,7 @@ export function acrossProviders(models: ModelInfo[], providers: ProviderInfo[]):
 			models: [...onComputer].sort((a, b) => rank(a) - rank(b))
 		});
 	}
+	if (onServers.length > 0) groups.push({ key: 'own', tier: null, models: onServers });
 	return groups;
 }
 

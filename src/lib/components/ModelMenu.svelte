@@ -19,6 +19,7 @@
 		headingOf,
 		nameOf,
 		providerOf = () => null,
+		summaryOf = (model) => (model.summary || model.description ? modelSummary(model) : ''),
 		unavailable = () => null,
 		onchoose
 	}: {
@@ -31,6 +32,8 @@
 		nameOf: (model: ModelInfo) => string;
 		/** The provider written beside a model's name, where several providers are listed. */
 		providerOf?: (model: ModelInfo) => string | null;
+		/** A model's one line under its name; empty for none. */
+		summaryOf?: (model: ModelInfo) => string;
 		/** Why a model cannot be chosen (its provider has no key), or nothing. */
 		unavailable?: (model: ModelInfo) => string | null;
 		onchoose: (model: ModelInfo) => void;
@@ -194,6 +197,7 @@
 				{#each group.models as model (keyOf(model))}
 					{@const why = unavailable(model)}
 					{@const selected = chosen !== undefined && keyOf(model) === keyOf(chosen)}
+					{@const summary = why ?? summaryOf(model)}
 					<!-- The list's keys are handled by the list itself, above. -->
 					<!-- svelte-ignore a11y_click_events_have_key_events -->
 					<div
@@ -213,10 +217,8 @@
 						{#if selected}<span class="check" aria-hidden="true">
 								<Icon name="check" size={14} />
 							</span>{/if}
-						{#if why}
-							<span class="desc">{why}</span>
-						{:else if model.summary || model.description}
-							<span class="desc">{modelSummary(model)}</span>
+						{#if summary}
+							<span class="desc">{summary}</span>
 						{/if}
 					</div>
 				{/each}
@@ -342,7 +344,10 @@
 	.option[aria-disabled='true']:hover {
 		background: none;
 	}
+	/* A server's model can have a long name (`hf.co/bartowski/…:Q4_K_M`): it wraps anywhere. */
 	.name {
+		min-width: 0;
+		overflow-wrap: anywhere;
 		font-weight: 500;
 		color: var(--text-bright);
 	}

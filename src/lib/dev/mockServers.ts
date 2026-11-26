@@ -1,6 +1,7 @@
 // Servers of the researcher's own in the browser preview, as the shell keeps them
-// (`commands/servers.rs`): a list in memory, an Ollama found at any address (three models: one
-// that reads pictures, one that reads only text, one run at ollama.com), each model tried after
+// (`commands/servers.rs`): a list in memory, an Ollama found at any address (four models: one
+// that reads pictures, one that reads only text, one run at ollama.com, one with a long name
+// whose server says nothing of pictures), each model tried after
 // a moment unless stopped, saved only once tried, and merged into the catalogue as providers and
 // models the way `Catalog::with_servers` does. Development builds only.
 //
@@ -18,6 +19,8 @@ import type { OwnModel } from '../bindings/OwnModel.js';
 import type { OwnServer } from '../bindings/OwnServer.js';
 import type { ProviderInfo } from '../bindings/ProviderInfo.js';
 import type { ServerDraft } from '../bindings/ServerDraft.js';
+import type { TaskRules } from '../bindings/TaskRules.js';
+import type { Task } from '../bindings/Task.js';
 import type { TrialModel } from '../bindings/TrialModel.js';
 import type { TrialServer } from '../bindings/TrialServer.js';
 
@@ -77,7 +80,12 @@ function found(address: string, key: string | null, editing: string | null): Fou
 	const models = [
 		model('gemma3:12b', { vision: true, size_bytes: 8_149_190_253 }),
 		model('llama3.1:8b', { size_bytes: 4_920_753_328 }),
-		model('gpt-oss:120b-cloud', { elsewhere: 'https://ollama.com:443', trained_context: null })
+		model('gpt-oss:120b-cloud', { elsewhere: 'https://ollama.com:443', trained_context: null }),
+		// A long name from Hugging Face, of which the server says nothing about pictures.
+		model('hf.co/bartowski/Qwen2.5-VL-7B-Instruct-GGUF:Q4_K_M', {
+			vision: null,
+			size_bytes: 4_683_074_016
+		})
 	];
 	const server = editing
 		? servers.find((s) => s.id === editing)
@@ -243,6 +251,7 @@ export function withServers(catalog: Catalog): Catalog {
 						...(m.reads_pages ? (['text_extraction'] as const) : []),
 						...(m.fills_forms ? (['analysis'] as const) : [])
 					],
+					tier: 'balanced',
 					inputs: [
 						...(m.fills_forms ? ['text/plain'] : []),
 						...(m.reads_pages ? ['image/png', 'image/jpeg'] : [])
@@ -283,3 +292,51 @@ export function withServers(catalog: Catalog): Catalog {
 /** Whether `provider` is a server that asks for no key: always usable, as the shell says. */
 export const keyless = (provider: string): boolean =>
 	servers.some((s) => s.id === provider && !s.key);
+
+/** The tasks a server's model is offered for, as the engine's rules read its entry: reading
+ *  pages, text extraction; filling a form, analyses, corrections and translations; both, tables
+ *  of contents too. */
+function tasksOf(m: OwnModel): Task[] {
+	return [
+		...(m.reads_pages ? (['text_extraction'] as const) : []),
+		...(m.fills_forms ? (['analysis', 'text_correction', 'translation'] as const) : []),
+		...(m.reads_pages && m.fills_forms ? (['contents'] as const) : [])
+	];
+}
+
+/** `rules` with the servers' models in them, as the shell's `task_rules` reads the merged
+ *  catalogue: each for what its trial showed, a model that fills forms combining a table of
+ *  contents' pages. */
+export function withServerRules(rules: TaskRules[]): TaskRules[] {
+	if (servers.length === 0) return rules;
+	const ref = (provider: string, model: string) => ({
+		provider,
+		model,
+		recommended: false,
+		provider_default: false
+	});
+	return rules.map((rule) => {
+		const models = servers.flatMap((s) =>
+			s.models.filter((m) => tasksOf(m).includes(rule.task)).map((m) => ref(s.id, m.id))
+		);
+		const merges =
+			rule.task === 'contents'
+				? servers.flatMap((s) => s.models.filter((m) => m.fills_forms).map((m) => ref(s.id, m.id)))
+				: [];
+		return {
+			...rule,
+			models: [...rule.models, ...models],
+			merge_models: [...rule.merge_models, ...merges]
+		};
+	});
+}
+
+/** A server's model, which has no batch service and costs only what the researcher set. */
+export function serverPrice(provider: string, model: string): number | null | undefined {
+	const server = servers.find((s) => s.id === provider);
+	if (!server) return undefined;
+	const found = server.models.find((m) => m.id === model);
+	if (found?.input_per_mtok == null || found.output_per_mtok == null) return null;
+	// 120 pages of about 1,500 tokens read and 600 written, as the sample job counts them.
+	return (120 * (1500 * found.input_per_mtok + 600 * found.output_per_mtok)) / 1e6;
+}

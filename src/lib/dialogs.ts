@@ -6,10 +6,10 @@ import type { Catalog } from './bindings/Catalog.js';
 import type { SetupRequest } from './bindings/SetupRequest.js';
 import type { SourceFile } from './bindings/SourceFile.js';
 import type { Task } from './bindings/Task.js';
-import { providerNameOf } from './catalogText.js';
 import { listNames, messages } from './i18n/index.js';
 import { documentExtensions, taskExtensions } from './newJob.js';
 import { baseName } from './paths.js';
+import { consentMessage } from './servers.js';
 import { api, isTauri, PRIVACY_URL } from './tauri.js';
 
 /** Files with these extensions, several at once. */
@@ -112,23 +112,22 @@ export function providersOf(setups: SetupRequest[]): string[] {
 }
 
 /**
- * Asks, once for each cloud provider, before the first job, run or proposal sends the
- * researcher's files to it (App Review Guideline 5.1.2(i), and plain courtesy on Windows too):
- * which provider, what is sent, and where the privacy policy is. Offline engines are never asked
- * about. False when the researcher declines; Rust refuses the work until they agree.
+ * Asks, once for each cloud provider or server on the network, before the first job, run or
+ * proposal sends the researcher's files to it (App Review Guideline 5.1.2(i), and plain courtesy
+ * on Windows too): which provider or server, what is sent, and where the privacy policy is.
+ * Offline engines and servers on this computer are never asked about. False when the researcher declines; Rust refuses the work until they agree.
  */
 export async function askConsent(providers: string[], catalog: Catalog | null): Promise<boolean> {
 	if (providers.length === 0) return true;
 	const needed = await api.providersToConsent(providers);
 	if (needed.length === 0) return true;
 	const m = messages();
-	const names = listNames(needed.map((id) => (catalog ? providerNameOf(catalog, id) : id)));
-	const message = m.consent.ask(names, PRIVACY_URL);
+	const { title, message } = consentMessage(needed, catalog, m, PRIVACY_URL);
 	let go: boolean;
 	if (isTauri()) {
 		const { ask } = await import('@tauri-apps/plugin-dialog');
 		go = await ask(message, {
-			title: m.consent.title,
+			title,
 			kind: 'warning',
 			okLabel: m.consent.send,
 			cancelLabel: m.common.cancel

@@ -67,6 +67,8 @@ export function mockView(): View | null {
 			return { name: 'settings' };
 		case 'settings-general':
 			return { name: 'settings', tab: 'general' };
+		case 'settings-servers':
+			return { name: 'settings', tab: 'servers' };
 		case 'settings-about':
 			return { name: 'settings', tab: 'about' };
 		case 'glossary':
