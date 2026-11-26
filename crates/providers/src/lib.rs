@@ -3,6 +3,9 @@
 //!
 //! Those that also turn texts into vectors, for the search by meaning, implement [`Embedder`];
 //! [`embedders`] lists them the same way.
+//!
+//! A server of the researcher's own (Ollama, or any OpenAI-style address) is [`own`]: one
+//! provider per server added, listed by [`own::providers`] from the values the shell hands in.
 
 mod analysis;
 mod anthropic;
@@ -12,6 +15,7 @@ mod gemini;
 mod http;
 mod mistral;
 mod openai;
+pub mod own;
 
 use std::collections::HashMap;
 use std::sync::Arc;

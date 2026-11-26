@@ -1,0 +1,21 @@
+{
+  "id": "chatcmpl-3",
+  "object": "chat.completion",
+  "created": 1764151300,
+  "model": "Qwen/Qwen3-VL-8B-Instruct",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "Bamako, le 3 mai 1957\n\nMonsieur le"
+      },
+      "finish_reason": "length"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 1210,
+    "completion_tokens": 16,
+    "total_tokens": 1226
+  }
+}

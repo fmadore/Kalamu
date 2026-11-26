@@ -1,0 +1,12 @@
+{
+  "model": "gemma3:12b",
+  "created_at": "2026-11-26T10:16:00.000000Z",
+  "message": {
+    "role": "assistant",
+    "content": "Bamako, le 3 mai 1957\n\nMonsieur le"
+  },
+  "done": true,
+  "done_reason": "length",
+  "prompt_eval_count": 812,
+  "eval_count": 16
+}
