@@ -9,4 +9,10 @@ id: string, detail?: string,
  * The step of a workflow at fault, numbered from 1: the interface names it before the
  * sentence, and clears the message once that step is changed.
  */
-step?: number, };
+step?: number, 
+/**
+ * The values the sentence names, by name (`server`, `host`, `model`): a server of the
+ * researcher's own, the address it was looked for at. The interface puts them in the
+ * sentence it looks up, so no English reaches it.
+ */
+params?: { [key in string]: string }, };

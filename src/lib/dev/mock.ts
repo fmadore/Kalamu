@@ -35,6 +35,7 @@ import { photoCommand, READING_ROOM, READING_ROOM_PHOTOS } from './mockPhotos.js
 import { sampleCommand } from './mockSample.js';
 import { installClose, windowCommand } from './mockWindow.js';
 import { databaseCommand, unreadableJobs } from './mockDatabase.js';
+import { keyless, serverCommand, withServers } from './mockServers.js';
 
 const catalog = catalogJson as unknown as Catalog;
 /** The engine's rules for the bundled catalogue, written by `cargo test`. */
@@ -119,6 +120,8 @@ export function installMock(): void {
 		if (windowed !== undefined) return windowed;
 		const database = databaseCommand(cmd, a);
 		if (database !== undefined) return database;
+		const server = serverCommand(cmd, a);
+		if (server !== undefined) return server;
 		const filed = projectFileCommand(cmd, a);
 		if (filed !== undefined) return filed;
 		// `?long` and `?sample` only: a sample first, its rest and its comparison.
@@ -178,7 +181,7 @@ export function installMock(): void {
 					unreadable_jobs: unreadableJobs()
 				};
 			case 'get_catalog':
-				return catalog;
+				return withServers(catalog);
 			// `?catalog-refused`: the last model list downloaded failed its checks.
 			case 'catalog_refused':
 				return new URLSearchParams(location.search).has('catalog-refused');
@@ -282,7 +285,10 @@ export function installMock(): void {
 				if (a.id === 'embeddinggemma-2') embedding.installed = false;
 				return null;
 			case 'key_status':
-				return catalog.providers.map((p) => ({ provider: p.id, saved: savedKeys.has(p.id) }));
+				return withServers(catalog).providers.map((p) => ({
+					provider: p.id,
+					saved: savedKeys.has(p.id) || keyless(p.id)
+				}));
 			case 'set_api_key':
 				savedKeys.add(a.provider as string);
 				return null;

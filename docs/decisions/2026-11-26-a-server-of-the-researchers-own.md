@@ -156,7 +156,15 @@ says where it was made.
 - **`engine`**: `Engine::set_providers`, as `set_catalog`, so a server is usable the moment it
   is added. A job in flight keeps the provider it started with.
 - **`app`**: `servers.json` read and written, the commands (find a server, try a model, save,
-  remove), and the wiring. A saved pipeline or workflow that names a server since removed
+  remove), and the wiring. As built: `core` also holds `Dialect` and `checked_address` (with
+  the `url` crate), so the address discovery keeps and the address `servers.json` may hold are
+  one rule; `catalog` holds what Settings sends and receives (`FoundServer`, `TrialServer`,
+  `ModelTrial`, `ServerDraft`) and `OwnServers::apply`, which takes each model's abilities from
+  a trial made in the session at that address, or the one stored while the address stays, never
+  from the draft. The shell maps the stored entries to the providers' configuration, one
+  function for the catalogue (`use_catalog`) and one for the providers. Consent is withdrawn
+  for a server whose address changed or that was removed, and `save_settings` no longer adds
+  consent back from the copy it is sent. A saved pipeline or workflow that names a server since removed
   fails as an unknown provider does today, in plain words.
 - **Interface**: the tab; in New job a server is a provider like the others, under its name.
   No expert mode.

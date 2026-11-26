@@ -6,6 +6,12 @@ import type { AnswerField } from './bindings/AnswerField.js';
 import type { AppError } from './bindings/AppError.js';
 import type { AppInfo } from './bindings/AppInfo.js';
 import type { Catalog } from './bindings/Catalog.js';
+import type { FoundServer } from './bindings/FoundServer.js';
+import type { ModelTrial } from './bindings/ModelTrial.js';
+import type { OwnServer } from './bindings/OwnServer.js';
+import type { ServerDraft } from './bindings/ServerDraft.js';
+import type { TrialModel } from './bindings/TrialModel.js';
+import type { TrialServer } from './bindings/TrialServer.js';
 import type { ComparisonReport } from './bindings/ComparisonReport.js';
 import type { AttachChoice } from './bindings/AttachChoice.js';
 import type { Collection } from './bindings/Collection.js';
@@ -166,6 +172,23 @@ export const api = {
 	setApiKey: (provider: string, key: string) => invoke<void>('set_api_key', { provider, key }),
 	clearApiKey: (provider: string) => invoke<void>('clear_api_key', { provider }),
 	testApiKey: (provider: string) => invoke<string[]>('test_api_key', { provider }),
+	/** The researcher's servers (Settings › Other servers), in the order they were added. */
+	listServers: () => invoke<OwnServer[]>('list_servers'),
+	/** Asks the server at `address` what it is and what models it has, with the key typed, or
+	 *  the one saved for the server `id` when it is being changed. */
+	findServer: (address: string, key: string | null, id: string | null) =>
+		invoke<FoundServer>('find_server', { address, key, id }),
+	/** Tries a model on a server as the draft stands, saved or not; may take minutes while the
+	 *  server loads it. `trial` names it for `cancelServerTrial`. */
+	tryServerModel: (trial: string, server: TrialServer, model: TrialModel, key: string | null) =>
+		invoke<ModelTrial>('try_server_model', { trial, server, model, key }),
+	cancelServerTrial: (trial: string) => invoke<void>('cancel_server_trial', { trial }),
+	/** Saves a server, each model doing what its trial showed; the catalogue changes with it
+	 *  (`catalogChanged`). A key typed is kept in the system's keychain. */
+	saveServer: (server: ServerDraft, key: string | null) =>
+		invoke<OwnServer>('save_server', { server, key }),
+	/** Removes a server, its key and the consent given to it; its jobs and results stay. */
+	removeServer: (id: string) => invoke<void>('remove_server', { id }),
 	offlineStatus: () => invoke<OfflineStatus>('offline_status'),
 	downloadModel: (id: string) => invoke<void>('download_model', { id }),
 	cancelModelDownload: () => invoke<void>('cancel_model_download'),

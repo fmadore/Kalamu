@@ -88,15 +88,15 @@ pub fn get_settings(state: State<'_, AppState>) -> Settings {
 #[tauri::command]
 pub fn save_settings(state: State<'_, AppState>, settings: Settings) -> CmdResult<()> {
     let mut settings = settings;
-    // Agreeing to a provider is never undone by saving a copy of the settings read before it.
-    {
-        let kept = state.settings.lock().unwrap_or_else(|p| p.into_inner());
-        for provider in &kept.ai_consent {
-            if !settings.ai_consent.contains(provider) {
-                settings.ai_consent.push(provider.clone());
-            }
-        }
-    }
+    // Consent is given by `consent_providers` alone, and withdrawn only when a server of the
+    // researcher's own changes address or is removed (`commands::servers`): saving a copy of
+    // the settings read before either never undoes the one nor brings back the other.
+    settings.ai_consent = state
+        .settings
+        .lock()
+        .unwrap_or_else(|p| p.into_inner())
+        .ai_consent
+        .clone();
     // The results folder, just picked, is needed again at later launches.
     let folders = [
         settings.last_folder.as_deref(),
@@ -116,6 +116,7 @@ pub fn save_settings(state: State<'_, AppState>, settings: Settings) -> CmdResul
     Ok(())
 }
 
+/// The catalogue in use: the model list with the researcher's servers merged in.
 #[tauri::command]
 pub fn get_catalog(state: State<'_, AppState>) -> Catalog {
     state.engine.catalog()
@@ -158,8 +159,9 @@ pub fn catalog_refused() -> bool {
 }
 
 /// Downloads the catalogue from the repository and keeps it when its revision is higher than
-/// the one in use. A list larger than [`kalamu_catalog::MAX_BYTES`] is not downloaded further,
-/// and one that fails its checks is dropped: the list in use stays, and Settings says so.
+/// the one in use, the researcher's servers merged in as always. A list larger than
+/// [`kalamu_catalog::MAX_BYTES`] is not downloaded further, and one that fails its checks is
+/// dropped: the list in use stays, and Settings says so.
 #[tauri::command]
 pub async fn refresh_catalog(state: State<'_, AppState>) -> CmdResult<Catalog> {
     let download = |e: &dyn std::fmt::Display| AppError::new(id::CATALOG_DOWNLOAD, e);
@@ -204,9 +206,10 @@ pub async fn refresh_catalog(state: State<'_, AppState>) -> CmdResult<Catalog> {
     catalog_refused_now(false);
     let current = state.engine.catalog();
     if downloaded.is_newer_than(&current) {
+        // Only the text downloaded is kept; the engine is handed it with the researcher's
+        // servers merged in, which no list on disk ever holds.
         let _ = std::fs::write(&state.paths.catalog_cache, &text);
-        state.engine.set_catalog(downloaded.clone());
-        return Ok(downloaded);
+        return Ok(super::servers::use_catalog(&state, &downloaded));
     }
     Ok(current)
 }

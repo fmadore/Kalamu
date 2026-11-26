@@ -357,6 +357,7 @@ pub async fn inspect_links(
                         id: refused.into(),
                         detail: None,
                         step: None,
+                        params: None,
                     }),
                 ),
                 (Err(e), _) => (None, Some(e.into())),

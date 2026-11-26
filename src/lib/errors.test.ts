@@ -53,6 +53,19 @@ describe('error sentences', () => {
 		expect(describeError(new Error('boom'), en)).toBe('boom');
 	});
 
+	it('put the values an error names into its sentence', () => {
+		const m = {
+			...en,
+			error: {
+				...en.error,
+				'server.nothing_answers': (p: Record<string, string>) => `No ${p.host}`
+			}
+		} as unknown as typeof en;
+		expect(
+			describeError({ id: 'server.nothing_answers', params: { host: '10.0.0.2:11434' } }, m)
+		).toBe('No 10.0.0.2:11434');
+	});
+
 	it('name the step of a workflow once, before the sentence', () => {
 		const refused = { id: 'job.no_language', step: 2 };
 		expect(describeError(refused, en)).toBe('Step 2: Choose the language to translate into.');

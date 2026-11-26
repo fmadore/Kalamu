@@ -14,9 +14,13 @@ export function isAppError(value: unknown): value is AppError {
 	);
 }
 
+/** A sentence of `m.error`: words, or words around the values the error names (`params`). */
+type Sentence = string | ((params: Record<string, string>) => string);
+
 export function describeError(value: unknown, m: Messages): string {
 	if (isAppError(value)) {
-		const known = (m.error as Record<string, string | undefined>)[value.id];
+		const entry = (m.error as Record<string, Sentence | undefined>)[value.id];
+		const known = typeof entry === 'function' ? entry(value.params ?? {}) : entry;
 		const sentence = known
 			? value.detail
 				? `${known} (${value.detail})`
