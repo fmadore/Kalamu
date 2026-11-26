@@ -4,7 +4,7 @@ What is built, what is next, and what is still open. The [specification](specifi
 what the app must do; [decisions](decisions/) record why it is built as it is. Each stage ends
 with an architecture review (see [AGENTS.md](../AGENTS.md)).
 
-## Status (25 November 2026)
+## Status (26 November 2026)
 
 **Version 1.10.1** ([notes](release-1.10.1.md)) is the latest release. Where each copy stands:
 
@@ -14,6 +14,12 @@ with an architecture review (see [AGENTS.md](../AGENTS.md)).
 | [Microsoft Store](https://apps.microsoft.com/detail/9MXT5555BZ1H) | 1.10.0 live (seen on 24 November); 1.10.1 submitted | 25 November 2026 |
 | Mac App Store | 1.10.1 (build 41) in App Review, the first version there | 24 November 2026 |
 
+- **1.11.0** is being prepared ([notes](release-1.11.0.md)), the first release under the
+  release gate: the six bugs of the review of 25 November, the safety nets, the model list's
+  search field, and a server of the researcher's own. Its candidate, `v1.11.0-rc1`, waits for
+  the test pass on Windows and the day on a Mac, which have new steps for it (Part G of
+  [windows-test-pass.md](windows-test-pass.md), B10 and B11 of
+  [mac-test-day.md](mac-test-day.md)).
 - **1.10.1** holds the eight bugs a review of the repository found on 23 November
   ([#237](https://github.com/fmadore/Kalamu/issues/237) to
   [#244](https://github.com/fmadore/Kalamu/issues/244)), a project file checked without opening
@@ -53,7 +59,8 @@ them and the two releases published untried
 [#291](https://github.com/fmadore/Kalamu/issues/291)). They open *Next* below. The first of
 the directions, a server of the researcher's own
 ([#283](https://github.com/fmadore/Kalamu/issues/283)), was written on 26 November on a branch
-of its own, not yet in `main` nor in a release, and has not met a real server (see *Done*).
+of its own and merged into `main` the same day for 1.11.0; it has not met a real server (see
+*Done*).
 
 **macOS** (Apple Silicon) is built and tested in CI and has a disk image from 1.1.2 on, signed
 with an Apple Developer ID and notarised from 1.4.0
@@ -99,8 +106,9 @@ order given there.
   transcription, economy mode, the search by meaning, reasoning levels, Ollama's models at
   ollama.com. Tested against answers written from Ollama's and the other servers' documentation
   and source (26 November, Ollama 0.40.18), on Linux; no real server has been called. The shell
-  was written where it cannot be compiled and waits for CI on Windows x64, Windows ARM64 and
-  macOS; nothing has run in the packaged app or on a Mac, and the interface is being written.
+  was written where it cannot be compiled and passed CI on Windows x64, Windows ARM64 and
+  macOS ([#298](https://github.com/fmadore/Kalamu/pull/298)); nothing has run in the packaged
+  app or on a Mac.
   The consent on resuming and the server held while a job runs were added the same day: what
   starting a job would send, and which models running work uses, are tested against the job
   database in memory, the refusal of a change in `catalog`, the question in Vitest and, against
@@ -583,12 +591,12 @@ In this order. Work that keeps what has shipped sound comes before new features.
 
 ### Priorities since 25 November
 
-From the [review of 25 November](decisions/2026-11-25-review-safety-nets.md). Only the
-first is written. No new feature is started before the first two are done, and what the rest of
+From the [review of 25 November](decisions/2026-11-25-review-safety-nets.md). The first two
+are written, the app driven in CI in part, and go out in 1.11.0. No new feature is started before the first two are done, and what the rest of
 *Next* lists (the test passes, the live runs, what is left of the reviews and of the research
 workflows) keeps its own order after them.
 
-1. **1.10.2, the bugs the review found**, each with a test. All six are written
+1. **1.11.0, the bugs the review found**, each with a test. All six are written
    ([decision](decisions/2026-11-25-fixes-of-the-review.md)), tested on Linux and in
    Chromium, and none yet tried in the packaged app or on a Mac; #270 stays open until a
    captured answer from each provider replaces the wordings it was written from:
@@ -646,13 +654,14 @@ workflows) keeps its own order after them.
      keychain) is driven on Windows x64 and ARM64 through five flows (a job to its exported
      files, a correction found after a restart, a project saved and opened, a paused job
      resumed, a batch collected after a restart) and started and ended on macOS, on pull
-     requests that touch the shell or the engine and on every release candidate. The flows
-     ran on Windows ARM64 only; the macOS check has run nowhere. Still to do: the packaged
+     requests that touch the shell or the engine and on every release candidate. All three
+     jobs have passed in CI since [#295](https://github.com/fmadore/Kalamu/pull/295). Still to do: the packaged
      forms driven (the installer or the MSIX installed on a runner), which waits on the
      stand-in speaking as Ollama and as an OpenAI-style server, so the packaged app reaches it
      as a server of the researcher's own ([#283](https://github.com/fmadore/Kalamu/issues/283),
      written; `Addresses` stays for the test build); and more flows, for most of Part C and the
-     keyboard half of Part D, since the pass by hand has lost one step of 72 so far.
+     keyboard half of Part D, since the pass by hand has lost one step of 72 so far. What is
+     left does not hold 1.11.0, whose pass by hand is owed either way.
    - **A scheduled live check** of each provider under a cost ceiling
      ([#278](https://github.com/fmadore/Kalamu/issues/278),
      [decision](decisions/2026-11-25-scheduled-live-check.md)), written: once a week on

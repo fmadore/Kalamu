@@ -1,7 +1,7 @@
 # Store listing text
 
 Paste-ready text for Kalamu's two store listings: the Microsoft Store (Partner Center) first,
-where 1.10.0 is live and 1.10.1 was submitted on 25 November, its *What's new* and certification notes
+where 1.10.0 is live, 1.10.1 was submitted on 25 November and 1.11.0's *What's new* is ready, its certification notes
 below (the first version, 1.0.0, was certified on 2 November 2026), in
 [English](#english-united-states) and [French](#french-france), then the
 [Mac App Store](#mac-app-store-app-store-connect) (App Store Connect), where 1.10.1, the first
@@ -57,7 +57,21 @@ Requires Windows 11 with the Microsoft Edge WebView2 Runtime (native x64 and ARM
 Google Gemini and YouTube are trademarks of Google LLC; OpenAI is a trademark of OpenAI OpCo, LLC; Claude is a trademark of Anthropic, PBC; Mistral AI is a trademark of Mistral AI; Microsoft Word is a trademark of the Microsoft group of companies. Kalamu is an independent project, not affiliated with or endorsed by any of them.
 ```
 
-### What's new in this version — 1.10.1
+### What's new in this version — 1.11.0
+
+```text
+A server of your own, safety copies of your work, and the fixes of a review of the whole app.
+
+Settings › Other servers: add Ollama on this computer or in your office, or your university's OpenAI-style service, by its address. Kalamu tries each model first and offers it only for what it showed it can do. A server on this computer sends nothing out.
+
+Safety copies: Kalamu copies its job database each day and before an update, keeps the last three, and offers a copy back if the database is ever damaged, so one bad file cannot cost you your corrections.
+
+Find a model by typing its name in the model list; each model shows a short summary.
+
+Fixed: pages are sent several at a time across a whole folder of photographs; a per-minute limit no longer stops a whole job; closing the window asks before unsaved changes are lost; Arabic and other right-to-left text reads in its own direction; the search by meaning keeps the embeddings you paid for; deleting a project removes the original files Kalamu copied in for it.
+```
+
+The 1.10.1 text, submitted on 25 November:
 
 ```text
 Bug fixes since 1.10.0, plus a new integrity check for saved projects.
@@ -236,7 +250,7 @@ changed files refused; files written despite a failing page; the third-party lic
 ### Features — one feature per line
 
 ```text
-Extract text from printed and handwritten PDFs and images with Gemini, OpenAI, Claude, or Mistral
+Extract text from printed and handwritten PDFs and images with Gemini, OpenAI, Claude, Mistral, or a server of your own such as Ollama
 Transcribe audio and video with timestamps, in the cloud with speaker labels or offline
 Work offline at zero cost with no account or key: Whisper transcription, Tesseract and local OCR models, and local language models
 Transcribe public YouTube videos directly from their link with Gemini without downloading them
@@ -328,7 +342,21 @@ Nécessite Windows 11 avec Microsoft Edge WebView2 Runtime (versions natives x64
 Google Gemini et YouTube sont des marques de Google LLC ; OpenAI est une marque d’OpenAI OpCo, LLC ; Claude est une marque d’Anthropic, PBC ; Mistral AI est une marque de Mistral AI ; Microsoft Word est une marque du groupe Microsoft. Kalamu est un projet indépendant, sans affiliation ni approbation de ces sociétés.
 ```
 
-### Nouveautés de cette version — 1.10.1
+### Nouveautés de cette version — 1.11.0
+
+```text
+Un serveur à vous, des copies de sécurité de votre travail et les corrections d’une revue de toute l’application.
+
+Paramètres › Autres serveurs : ajoutez Ollama sur cet ordinateur ou dans votre bureau, ou le service de type OpenAI de votre université, par son adresse. Kalamu essaie d’abord chaque modèle et ne le propose que pour ce qu’il a su faire. Un serveur sur cet ordinateur n’envoie rien au-dehors.
+
+Copies de sécurité : Kalamu copie sa base de données chaque jour et avant une mise à jour, garde les trois dernières copies et en propose une si la base est un jour endommagée, pour qu’un fichier abîmé ne vous coûte pas vos corrections.
+
+Cherchez un modèle en tapant son nom dans la liste des modèles ; chaque modèle s’y présente en une phrase.
+
+Corrigé : les pages sont envoyées plusieurs à la fois dans tout un dossier de photographies ; une limite par minute n’arrête plus tout un traitement ; fermer la fenêtre demande avant de perdre des modifications non enregistrées ; l’arabe et les autres écritures de droite à gauche se lisent dans leur sens ; la recherche par le sens garde les vecteurs que vous avez payés ; supprimer un projet retire les fichiers originaux que Kalamu y avait copiés.
+```
+
+Le texte de 1.10.1, soumis le 25 novembre :
 
 ```text
 Corrections depuis la version 1.10.0 et nouvelle vérification d’intégrité pour les fichiers de projet.
@@ -441,7 +469,7 @@ Aussi : une étape de chaîne à partir de n’importe quel prompt ; renommer un
 ### Fonctionnalités — une par ligne
 
 ```text
-Extraire le texte de PDF et d’images imprimés ou manuscrits avec Gemini, OpenAI, Claude ou Mistral
+Extraire le texte de PDF et d’images imprimés ou manuscrits avec Gemini, OpenAI, Claude, Mistral ou un serveur à vous comme Ollama
 Transcrire des enregistrements audio et vidéo avec horodatage, en ligne avec les locuteurs ou hors ligne
 Travailler hors ligne gratuitement, sans compte ni clé : Whisper, Tesseract, petits modèles OCR et petits modèles de langue
 Transcrire des vidéos YouTube publiques directement à partir de leur lien avec Gemini, sans les télécharger
@@ -517,9 +545,9 @@ Fill in the bracketed parts at submission. These notes are seen only by the cert
 team; a test key may be given here, never in the listing.
 
 ```text
-Product: Kalamu. Version: 1.10.1.0, native x64 and ARM64. Windows 11 with Edge WebView2 Runtime. Kalamu extracts text from documents, transcribes recordings and analyses texts with an AI provider the user configures with their own API key (Google Gemini, OpenAI, Anthropic Claude or Mistral), or works offline with Whisper (transcription), Tesseract and two small OCR models, LightOnOCR-3 and GLM-OCR (text extraction), and two small language models, Gemma 4 E4B and E2B (analyses, tables of contents, corrections). The app supplies no cloud account or credits; provider usage is billed to the user's own account, as the listing states.
+Product: Kalamu. Version: 1.11.0.0, native x64 and ARM64. Windows 11 with Edge WebView2 Runtime. Kalamu extracts text from documents, transcribes recordings and analyses texts with an AI provider the user configures with their own API key (Google Gemini, OpenAI, Anthropic Claude or Mistral), or works offline with Whisper (transcription), Tesseract and two small OCR models, LightOnOCR-3 and GLM-OCR (text extraction), and two small language models, Gemma 4 E4B and E2B (analyses, tables of contents, corrections). The app supplies no cloud account or credits; provider usage is billed to the user's own account, as the listing states. Settings › Other servers lets a user add a model server of their own (Ollama, or an OpenAI-style service at their institution) by its address; no such server is needed to review the app.
 
-Sample files for testing: https://github.com/fmadore/Kalamu/releases/download/v1.10.1/kalamu-samples.zip, with a README.txt: a 20-second spoken recording (interview.wav, made with Windows speech synthesis), a handwritten French report of 1755 (dodington-1755.jpg, Bibliothèque nationale de France, public domain), a 1911 university newspaper page with its machine-read text layer (daily-nebraskan-1911.pdf, Library of Congress, public domain), a whole four-page issue of the same paper, scans only, for a table of contents (daily-nebraskan-1911-issue.pdf), and an invented newspaper page with its text (bulletin-page.jpg, bulletin.txt).
+Sample files for testing: https://github.com/fmadore/Kalamu/releases/download/v1.11.0/kalamu-samples.zip, with a README.txt: a 20-second spoken recording (interview.wav, made with Windows speech synthesis), a handwritten French report of 1755 (dodington-1755.jpg, Bibliothèque nationale de France, public domain), a 1911 university newspaper page with its machine-read text layer (daily-nebraskan-1911.pdf, Library of Congress, public domain), a whole four-page issue of the same paper, scans only, for a table of contents (daily-nebraskan-1911-issue.pdf), and an invented newspaper page with its text (bulletin-page.jpg, bulletin.txt).
 
 Offline route, with no account or key:
 1. On a first launch, with no key and nothing installed, Kalamu opens on Settings with a welcome; choose Use a model on this computer, or the Offline tab, and under Transcription with Whisper download Whisper Base (about 60 MB; internet needed once). The download can be cancelled.
@@ -790,9 +818,11 @@ OCR,HTR,handwriting,transcription,speech to text,interview,archive,historian,dig
 ### What's New
 
 Not asked for the first version on the store, and App Store Connect did not ask for it when
-1.10.1, the first, was submitted. Kept for the record: what was added since 1.6.0, the version
-withdrawn before it (Apple allows 4,000 characters; this is 1,793). The next version's text
-starts from 1.10.1:
+1.10.1, the first, was submitted. For 1.11.0, the next, the Microsoft Store's
+[1.11.0 text](#whats-new-in-this-version--1110) serves as it stands: it names nothing only
+Windows has. Kept for the record:
+what was added since 1.6.0, the version withdrawn before 1.10.1 (Apple allows 4,000
+characters; this is 1,793):
 
 ```text
 Everything added since 1.6.0.
@@ -836,7 +866,7 @@ given here, never in the listing. Notes:
 ```text
 Kalamu extracts text from documents, transcribes recordings and analyses texts with an AI provider the user sets up with their own API key (Google Gemini, OpenAI, Anthropic Claude or Mistral), or offline with Whisper (transcription), Tesseract and two small OCR models, LightOnOCR-3 and GLM-OCR (printed text), and two small language models, Gemma 4 E4B and E2B (analyses). No sign-in: the app has no account of its own and sells nothing; provider usage is billed to the user's own account.
 
-Sample files: https://github.com/fmadore/Kalamu/releases/download/v1.10.1/kalamu-samples.zip (interview.wav, a recording; bulletin-page.jpg, an invented newspaper page; dodington-1755.jpg, a 1755 manuscript; daily-nebraskan-1911.pdf, a 1911 newspaper page; bulletin.txt).
+Sample files: https://github.com/fmadore/Kalamu/releases/download/v1.11.0/kalamu-samples.zip (interview.wav, a recording; bulletin-page.jpg, an invented newspaper page; dodington-1755.jpg, a 1755 manuscript; daily-nebraskan-1911.pdf, a 1911 newspaper page; bulletin.txt).
 
 Offline route, no key needed:
 1. Settings > Offline > Transcription with Whisper: download Whisper Base (about 60 MB, once).
