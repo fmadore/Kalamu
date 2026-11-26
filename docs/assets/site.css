@@ -281,6 +281,12 @@ p {
 	color: var(--band-text);
 }
 
+.page-head .byline {
+	margin-top: 10px;
+	font-size: 0.9375rem;
+	color: var(--band-text);
+}
+
 /* The page: what it holds beside the text (the guide's chapters, a page's sections), the text. */
 .doc {
 	display: grid;

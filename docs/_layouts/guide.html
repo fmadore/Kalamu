@@ -75,6 +75,7 @@
         <p class="kicker">{{ t_guide }} · {% if number < 10 %}0{% endif %}{{ number }} / {% if chapters.size < 10 %}0{% endif %}{{ chapters.size }}</p>
         <h1>{{ page.title }}</h1>
         {% if page.lede %}<p class="lede">{{ page.lede }}</p>{% endif %}
+        {% if here == 0 %}<p class="byline">{% if page.lang == 'fr' %}Créée par{% else %}Made by{% endif %} <a href="https://www.frederickmadore.com/">Frédérick Madore</a>, {% if page.lang == 'fr' %}Université de Bayreuth{% else %}University of Bayreuth{% endif %}.</p>{% endif %}
       </div>
     </div>
 
