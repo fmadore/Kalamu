@@ -140,6 +140,80 @@ fn a_server_changed_keeps_its_id_and_its_trials_while_its_address_stays() {
 }
 
 #[test]
+fn a_server_in_use_changes_under_its_jobs_only_where_they_rely_on_it() {
+    let (mut list, server) = saved();
+    let mut trials = Trials::default();
+    trials.record("http://192.168.1.20:11434", "gemma3:12b", trial(true, true));
+    trials.record("http://10.0.0.5:11434", "gemma3:12b", trial(true, true));
+    let edit = |name: &str, address: &str, models: Vec<ModelDraft>| ServerDraft {
+        id: Some(server.id.clone()),
+        ..draft(name, address, models)
+    };
+    let in_use = ["gemma3:12b".to_string()];
+
+    // Renamed, its limits changed, llama3 (not in use) unticked: nothing a job relies on.
+    let mut smaller = model("gemma3:12b");
+    smaller.context = 16_384;
+    let renamed = list
+        .clone()
+        .apply(
+            edit("Lab", "http://192.168.1.20:11434", vec![smaller]),
+            &trials,
+        )
+        .unwrap_or_else(|e| panic!("{e}"));
+    assert!(!renamed.changes_under(&in_use));
+
+    // The model in use unticked, or the server moved: refused while a job runs.
+    let unticked = list
+        .clone()
+        .apply(
+            edit(
+                "Office Mac",
+                "http://192.168.1.20:11434",
+                vec![model("llama3")],
+            ),
+            &{
+                let mut t = trials.clone();
+                t.record("http://192.168.1.20:11434", "llama3", trial(false, true));
+                t
+            },
+        )
+        .unwrap_or_else(|e| panic!("{e}"));
+    assert!(unticked.changes_under(&in_use));
+    let moved = list
+        .clone()
+        .apply(
+            edit(
+                "Office Mac",
+                "http://10.0.0.5:11434",
+                vec![model("gemma3:12b")],
+            ),
+            &trials,
+        )
+        .unwrap_or_else(|e| panic!("{e}"));
+    assert!(moved.changes_under(&in_use));
+    // Spoken to another way at the same address.
+    let mut other = edit(
+        "Office Mac",
+        "http://192.168.1.20:11434",
+        vec![model("gemma3:12b")],
+    );
+    other.dialect = Dialect::OpenAi;
+    let respoken = list.apply(other, &trials).unwrap_or_else(|e| panic!("{e}"));
+    assert!(respoken.changes_under(&in_use));
+
+    // Nothing running on it: every change is free; a new server is used by nothing.
+    assert!(!moved.changes_under(&[]));
+    let new = OwnServers::default()
+        .apply(
+            draft("New", "http://10.0.0.5:11434", vec![model("gemma3:12b")]),
+            &trials,
+        )
+        .unwrap_or_else(|e| panic!("{e}"));
+    assert!(!new.changes_under(&in_use));
+}
+
+#[test]
 fn a_draft_refused_leaves_the_list_as_it_was_and_says_why_with_its_values() {
     let (mut list, server) = saved();
     let before = list.clone();

@@ -253,6 +253,22 @@ impl Saved {
             .as_ref()
             .is_some_and(|p| p.address != self.server.address)
     }
+
+    /// Whether saving would change what running work sends to, given the models of this server
+    /// it uses (`in_use`, from the engine): another address or way of speaking, or a model in
+    /// use no longer listed. A rename, new limits or prices, or a model added change nothing a
+    /// job relies on. A new server is used by nothing.
+    pub fn changes_under(&self, in_use: &[String]) -> bool {
+        let Some(previous) = &self.previous else {
+            return false;
+        };
+        !in_use.is_empty()
+            && (previous.address != self.server.address
+                || previous.dialect != self.server.dialect
+                || in_use
+                    .iter()
+                    .any(|m| !self.server.models.iter().any(|o| &o.id == m)))
+    }
 }
 
 impl OwnModel {
