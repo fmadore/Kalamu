@@ -70,6 +70,8 @@ setting.
 - [ ] **When computer use first asks**, allow it under System Settings → Privacy & Security:
   *Accessibility* and *Screen Recording* for Claude. macOS asks for the administrator password:
   type it yourself.
+- [ ] **Ollama**, for B10 and B11: install it from [ollama.com](https://ollama.com) and pull two
+  small models, one that reads images and one that does not (several GB, so start early).
 
 **You do, when Claude asks during the day:**
 
@@ -100,7 +102,7 @@ Today is a test day for Kalamu, a desktop app for researchers (https://github.co
 
 1. Download the two checklists into this folder (the repository is public; do not log in to GitHub on this Mac):
    https://raw.githubusercontent.com/fmadore/Kalamu/main/docs/mac-test-day.md
-   https://raw.githubusercontent.com/fmadore/Kalamu/main/docs/windows-test-pass.md (Part B of the Mac's list sends you to its Parts B and C)
+   https://raw.githubusercontent.com/fmadore/Kalamu/main/docs/windows-test-pass.md (Part B of the Mac's list sends you to its Parts B, C and G)
 2. Work through mac-test-day.md, Parts A to E, in order. Skip "Before booking", "If Claude runs the day" and "Booking and first connection" except its display and quiet-desktop steps. Part F only if I ask.
 3. A file copied with scp is not quarantined, so before opening the disk image mark it as a browser would, to test Gatekeeper's first-open question:
    xattr -w com.apple.quarantine "0081;$(printf %x $(date +%s));Safari;" Kalamu_*_aarch64.dmg
@@ -181,7 +183,7 @@ most of this was never written down for the disk image.
 - [ ] **A15. French**: Settings → General → French. Every screen is in French; the macOS
   application menu stays in English (known). Back to English afterwards.
 
-## Part B: what was written since 1.6.0, in WebKit (5 hours)
+## Part B: what was written since 1.6.0, in WebKit (7 hours)
 
 - [ ] **B1. The Windows list's Part B**, steps B1 to B15 of
   [windows-test-pass.md](windows-test-pass.md), here: with ⌘ for Ctrl, the trackpad's pinch
@@ -191,8 +193,8 @@ most of this was never written down for the disk image.
 - [ ] **B3. Text regions**, first tried on Windows on 17 November: on A6's and A7's reviews
   and on a Mistral OCR page, blocks, lines and words at each zoom, chosen with the pointer and
   with the keyboard.
-- [ ] **B4. The model menu** follows its button when New job scrolls, and shows a model's
-  whole description under the pointer.
+- [ ] **B4. The model menu** follows its button when New job scrolls; its search field narrows
+  the list as you type and keeps the focus, and nothing in the list moves under the pointer.
 - [ ] **B5. Files dropped**: a folder dragged from Finder onto a project and onto New job; the
   drop target shows; an `.xlsx` is refused at once, with a reason.
 - [ ] **B6. A region drawn with the trackpad**, never tried in WKWebView: drag a box, move and
@@ -207,6 +209,16 @@ most of this was never written down for the disk image.
 - [ ] **B9. EmbeddingGemma 2 with Metal**: Windows' B10 here. Note the first five passages for
   each question and compare them with the Windows pass's for the same project: the model's card
   warns of half precision on a graphics processor. Note how long preparing took.
+- [ ] **B10. The Windows list's Part G**, steps G1 to G13, with Finder for File Explorer and ⌘Q
+  beside the red button in G3. In G4, the correction editor and a compared text above all: a
+  block of several Arabic paragraphs may start on the left in WebKit, its lines in the right
+  order. In G2, the native message before the window opens is the Mac's own dialog.
+- [ ] **B11. Ollama on this Mac** (#283), the run the roadmap asks for on a Mac: G8 and G10 here,
+  with Ollama installed above. Write down the three points the roadmap's *A server of the
+  researcher's own* says a first run settles: whether a model without thinking accepts the
+  request, whether a text too long is refused rather than cut, and Ollama's exact words when it
+  is. G9 needs a second computer on the same network, which a rented Mac does not have: it
+  stays with the Windows pass.
 
 ## Part C: keyboard and VoiceOver (1 hour)
 

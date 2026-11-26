@@ -4,9 +4,12 @@ A checklist for trying the packaged app on a Windows PC before a version is tagg
 roadmap's *Next* gathers as "to try by hand", what was written since the last pass, and the live
 runs that touch the researcher's own accounts. CI builds and tests everything here, but none of
 it has been opened in an installed copy. The first pass, before 1.8.0, is in
-[Results](#results); this is the second, for 1.10.0 on `v1.10.0-rc1` and then `v1.10.0-rc2`:
-what `main` holds after 1.8.0, 1.9.0 having been published on GitHub without it. The Mac's share is
-in [mac-test-day.md](mac-test-day.md).
+[Results](#results); the second, for 1.10.0 on `v1.10.0-rc1` and `rc2`, is there too. This is
+the third, for 1.11.0 on `v1.11.0-rc1`: [Part G](#part-g-what-1101-and-1110-added-3-hours) is
+what 1.10.1 (published without a pass) and 1.11.0 added, and Parts A to F stay as 1.10.0's
+pass left them. A step that passed on `v1.10.0-rc2` and that nothing since has touched may be
+left out, and Results says so; the steps 1.10.0's pass did not try are still owed. The Mac's
+share is in [mac-test-day.md](mac-test-day.md).
 
 Each step has a letter and a number, which the results name. Tick each box, and write what went
 wrong in [Results](#results) as you go: the screen, what was done, what was expected, what
@@ -19,8 +22,8 @@ that touches the shell or the engine and on every release candidate
 correction found after a restart, a project saved to a file and opened, a paused job resumed
 after a restart, a batch collected after a restart. It drives the built executable, not the
 installed copy. A step marked **CI** below is done there whole and need not be done by hand;
-one marked **CI, in part** says what CI does and what is still yours. Of the 72 steps, 1 is
-done whole by CI (A9) and 4 in part (A1, A3, F6, F22): **71 are left by hand**, 4 of them
+one marked **CI, in part** says what CI does and what is still yours. Of the 85 steps, 1 is
+done whole by CI (A9) and 4 in part (A1, A3, F6, F22): **84 are left by hand**, 4 of them
 shorter.
 
 ## Before starting
@@ -43,6 +46,8 @@ shorter.
   E2B (4.3 GB, about 5 GB of free memory while it runs) for B15 and F12.
 - [ ] **Keys**, each with a low spending cap, pasted by you into Settings → API keys: Gemini
   and Mistral for Parts B to E, OpenAI and Claude as well for Part F.
+- [ ] **Ollama**, for G8 to G10, installed by you with two small models pulled (one that reads
+  images, one that does not), and for G9 a second computer on the same network running it.
 - [ ] **A spreadsheet** (Excel or LibreOffice Calc), and for Part D **Narrator**
   (Ctrl + Windows + Enter).
 
@@ -68,6 +73,8 @@ Kalamu writes beside the sources, in `Downloads\kalamu-test-pass`, and the data 
 - **Keys and passwords.** You paste each key into Settings → API keys when Claude asks, and
   type any password Windows asks for. Claude never types either.
 - **System settings**: networking off and on for F8, another Windows account for F9.
+- **Your own job database**: damaging it and putting it back in G2, and Ollama on the second
+  computer in G9.
 - **Narrator's voice**, which Claude cannot hear: D6. It does the keyboard half of Part D.
 - **The providers' own pages** in Part F, unless you are signed in to them in Chrome and let
   Claude read them there with Claude in Chrome. Otherwise Claude reads what Kalamu's log says
@@ -86,11 +93,11 @@ This is a test pass of Kalamu, a desktop app for researchers (https://github.com
 2. Download the validation build <tag> into this folder with `gh release download <tag> --repo fmadore/Kalamu` (the installer for this PC's architecture, SHA256SUMS and kalamu-samples.zip), check the installer against SHA256SUMS, and unzip the samples into samples\.
 3. Install Kalamu by opening that installer in File Explorer with computer use, never from your terminal: your terminal sees a private copy of AppData, and an install from it would not reach the real Kalamu. Then check Settings → About gives the build's version.
 4. Ask me to paste the keys into Settings → API keys (Gemini and Mistral first; OpenAI and Claude before Part F). You never type a key or a password.
-5. Work through Parts A to F in order. Use only the files in samples\. Check results by reading the files Kalamu writes beside them and Kalamu's logs, never Kalamu's database.
+5. Work through Part G first, then Parts A to F in order, leaving out the steps that passed on v1.10.0-rc2 and that nothing since has touched (say which in results.md). Use only the files in samples\. Check results by reading the files Kalamu writes beside them and Kalamu's logs, never Kalamu's database.
 6. Write results.md in this folder after each step, not at the end: the step's letter and number, then passed, failed or not tried. For a failure: what you did, what you expected, what happened, and a screenshot in problems\. For "not tried": why.
 7. I agree now to: the consent dialog at the first send to Gemini, Mistral, OpenAI and Claude, for the sample files only; any job the checklist asks for whose estimate, which you read before starting, is under $0.25, up to $3 in all; and Clear unused results in step A4. Ask me for anything beyond that.
-8. Ask me for what the checklist keeps mine: system settings (networking, another account), Narrator's voice, and the providers' web pages.
-9. Change nothing outside this folder, Kalamu and its own data, and install nothing else.
+8. Ask me for what the checklist keeps mine: system settings (networking, another account), Narrator's voice, the providers' web pages, the damaged database of G2 and the second computer of G9.
+9. Change nothing outside this folder, Kalamu and its own data, and install nothing else: Ollama and its models are already installed for G8 to G10.
 At the end, summarise what failed, what you could not try, and what passed, in that order.
 ```
 
@@ -402,6 +409,75 @@ Chrome where you are signed in.
   saved with **Save to a file…**, without the originals, and opened again on the same computer as
   a second project, with its document and its job. Still yours: corrections, tags and the
   dictionary carried, the originals, the Mac, the same file twice, and the key.
+
+## Part G: what 1.10.1 and 1.11.0 added (3 hours)
+
+1.10.1 was published without a pass, so its share is here with 1.11.0's. G8 to G10 need
+[Ollama](https://ollama.com) and its models downloaded beforehand (several GB), and G9 a second
+computer on the same network; they cost nothing. The roadmap's *A server of the researcher's
+own* lists what the first run must settle: write it down as you go.
+
+- [ ] **G1. Safety copies** (#275): a moment after launch, **Settings › General › Safety
+  copies** lists a *Daily copy* with its date and size; **Show in File Explorer** opens the
+  `backups` folder. **Open this copy…** → **Open and restart**: Kalamu restarts on the copy, a
+  job made after it is gone, and the database it replaced is listed as *Set aside*. Open that
+  one the same way to come back: the job is there again.
+- [ ] **G2. A damaged job database** (#275): quit Kalamu, keep a copy of `jobs.sqlite` from the
+  data folder, then overwrite its first kilobyte with zeros (in the installer's copy: the Store
+  copy's data folder is virtualised). At launch, before the window opens, a message offers the
+  newest copy; accepting restarts on it, and the damaged file is in `backups`, set aside, not
+  deleted. Put your copy back afterwards.
+- [ ] **G3. Closing with changes not saved** (#271): a correction typed in a review and not
+  saved, then the window's close button: Kalamu asks first, and cancelling keeps the text. The
+  same with Alt+F4, with a preset's prompt edited, and with a workflow changed; and once with a
+  job running as well, where both questions must make sense together.
+- [ ] **G4. Right-to-left text** (#272): an Arabic page of your own read with Gemini, then its
+  review, a correction in the editor, a search in its project, and an Arabic recording's
+  transcript if you have one. Each line starts on the right and reads in order; Latin words and
+  numbers inside it keep their place.
+- [ ] **G5. Pages sent at the same time across files** (#269): **Settings › General › Pages
+  sent at the same time** at 4, then New job with a folder of ten photographs and a cloud model.
+  Several photographs are in flight at once (the progress moves by more than one), never more
+  than four.
+- [ ] **G6. A project deleted with its originals** (#274): open a project file saved with its
+  originals, then delete the project. The question names the original files Kalamu copied in;
+  afterwards they are gone from the data folder, and the jobs under Jobs show them as missing.
+  Your own files elsewhere are untouched.
+- [ ] **G7. Finding a model** (#297): in New job, open the model list and type `neon`, then
+  `mistral`, then a name with an accent typed without it. The list narrows as you type, a
+  heading with no model left goes, the arrow keys and Enter choose, Escape empties the field and
+  then closes the list. Each model's short summary is shown whole, and nothing moves under the
+  pointer; the chosen model's full description is under the field. The same in French.
+- [ ] **G8. Ollama on this computer** (#283): with Ollama running and a small model that reads
+  images and one that does not pulled, **Settings › Other servers** → **Add a server**, the
+  **Address** `http://localhost:11434`, **Connect**. It says *Ollama* with its version, *on this
+  computer*, and lists both models; tick them, **Try and add**. The model that read the trial's
+  picture is offered in New job for reading pages, the other only for analyses, corrections and
+  translations. Read `bulletin-page.jpg` and analyse `bulletin.txt`: no consent is asked, and
+  `provenance.json` names the server. Write down whether a model without thinking accepted the
+  request, and Ollama's exact words for a text too long (an analysis of
+  `daily-nebraskan-1911.pdf`'s text on a model given a small **Reads up to** under **More
+  choices**).
+- [ ] **G9. Ollama across the network** (#283): Ollama on a second computer, reachable on the
+  network (`OLLAMA_HOST=0.0.0.0`), added by its `http://` address. The warning about an
+  unencrypted address shows. The first job asks consent once, naming the server and its host.
+  Change the address: the next job asks again, and so does a job paused before the change when
+  resumed. While a job runs on it, removing the server or changing its address is refused.
+- [ ] **G10. A model too small, and a model updated** (#283): a model the trial refuses says
+  why and is not offered; `ollama pull` of a newer version of a model already added, then a new
+  job with it: write down what Kalamu says, if anything.
+- [ ] **G11. Check a project file** (#246, 1.10.1): **Check a project file…** on a `.kalamu`
+  file saved with its originals and on one without. It reads the file without opening it, says
+  which documents will have to be found again, and changes nothing. Then a file damaged by hand
+  (a few bytes changed in a copy): it is refused in a sentence.
+- [ ] **G12. An export beside a table of yours** (#237, 1.10.1): **Export descriptions** into a
+  folder, open the workbook in Excel, change a cell, save, and export again under the same name.
+  The new files are `name (2).xlsx` and `name (2).csv`, the message says so, and your edited
+  workbook is untouched.
+- [ ] **G13. Menus on a right click** (#233, 1.10.1): in a text review, a right click on a
+  region of the scan offers what its card offers and **Copy its text**; in a comparison, on a
+  difference, **Use this reading**. A region's card dragged by its grip moves out of the way,
+  and the caret shows in its text box. With a touchpad too.
 
 ## The sign-off
 
