@@ -859,7 +859,12 @@ test('typing in the model list narrows it, and the keys choose among what is lef
 	// Typed, then chosen with the keys: the first found, then the next.
 	await model.click();
 	await expect(find).toHaveValue('');
+	// The reopened list moves the focus into its field a moment later: keys typed before it
+	// are lost. Then read the second option only once the list has narrowed.
+	await expect(find).toBeFocused();
 	await page.keyboard.type('claude');
+	await expect(find).toHaveValue('claude');
+	await expect(list.getByRole('option', { name: /^Gemini/ })).toHaveCount(0);
 	const second = list.getByRole('option', { disabled: false }).nth(1);
 	const name = await second.evaluate(
 		(o) => o.querySelector('.name')?.firstChild?.textContent?.trim() ?? ''
