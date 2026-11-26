@@ -449,6 +449,9 @@
 		cost={(row) => rowCost(row, chosenPace)}
 		total={totalEstimate}
 		video={choices.mode === 'youtube' && sources.length > 0}
+		lengthUnknown={sources.some(
+			(s) => (s.kind === 'audio' || s.kind === 'video') && s.duration_ms === null
+		)}
 		{error}
 		{blocker}
 		{ready}

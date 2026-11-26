@@ -148,7 +148,8 @@ pub fn weekly(engine: &Engine, samples: &Path, providers: &[ProviderId]) -> Vec<
 
 /// The model a provider offers for new work (neither replaced, retired nor being retired) that
 /// does `task` on `file` at the lowest estimate, at `pace`; at economy pace, only a model whose
-/// work the provider sends as a batch.
+/// work the provider sends as a batch. A model without an estimate is never chosen: the ceiling
+/// holds a step to its estimate, so one it cannot price is not run.
 #[allow(clippy::too_many_arguments)]
 pub fn cheapest(
     engine: &Engine,
@@ -180,6 +181,7 @@ pub fn cheapest(
     };
     let catalog = engine.catalog();
     let mut best: Option<(f64, SetupRequest)> = None;
+    let mut unpriced = 0;
     for model in catalog.models.iter().filter(|m| {
         &m.provider == provider
             && m.is_offered()
@@ -205,14 +207,20 @@ pub fn cheapest(
         } else {
             estimate.total_usd
         };
-        if let Some(usd) = usd
-            && best.as_ref().is_none_or(|(b, _)| usd < *b)
-        {
-            best = Some((usd, candidate));
+        match usd {
+            Some(usd) if best.as_ref().is_none_or(|(b, _)| usd < *b) => {
+                best = Some((usd, candidate));
+            }
+            Some(_) => {}
+            // No price, or a sample whose length could not be read: nothing says it is cheap,
+            // and nothing would hold it to the ceiling.
+            None => unpriced += 1,
         }
     }
     let Some((_, chosen)) = best else {
-        return absent(if economy {
+        return absent(if unpriced > 0 {
+            format!("no estimate for its {unpriced} model(s): no price, or {file}'s length unknown")
+        } else if economy {
             "no batch service for this step".into()
         } else {
             "no model for this step".into()

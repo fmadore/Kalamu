@@ -3,8 +3,8 @@ import type { EstimateRow } from "./EstimateRow";
 
 export type Estimate = { rows: Array<EstimateRow>, 
 /**
- * The whole job at once; `None` when a row has no price, or a video's length is not yet
- * known.
+ * The whole job at once; `None` when a row has no price, or a video's or a recording's
+ * length is not known.
  */
 total_usd: number | null, 
 /**

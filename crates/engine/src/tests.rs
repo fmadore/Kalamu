@@ -1742,6 +1742,64 @@ fn an_interview_analysis_is_priced_with_its_longer_answer() {
     assert_eq!(Some(estimate("analysis.screening")), plain.usd);
 }
 
+/// The weekly live check, which runs without FFmpeg, estimated a 20-second recording at $0 on
+/// every provider and billed up to $0.0057: a length FFmpeg did not read counted as none. A
+/// WAV file's header now gives its length, and a recording whose length is still unknown has no
+/// price, so New job shows the cost as unknown rather than as nothing, and a limit on spending
+/// is never passed by a recording priced at $0.
+#[test]
+fn a_recording_whose_length_is_unknown_has_no_price_never_nothing() {
+    let f = fixture();
+    let price = |sources: &[SourceFile]| {
+        f.engine
+            .estimate(&EstimateRequest {
+                task: Task::AudioTranscription,
+                sources: sources.to_vec(),
+                setups: vec![SetupRequest {
+                    provider: ProviderId::new("gemini"),
+                    model: "gemini-4-hydrogen".into(),
+                    preset_id: None,
+                    label: None,
+                    options: Default::default(),
+                    merge: None,
+                }],
+                sample_pages: None,
+            })
+            .total_usd
+    };
+    // Twenty seconds of silence in a WAV file, read with no FFmpeg.
+    let wav = f.dir.path().join("interview.wav");
+    let samples: u32 = 16_000 * 2 * 20;
+    let mut bytes = Vec::new();
+    bytes.extend_from_slice(b"RIFF    WAVEfmt ");
+    bytes.extend_from_slice(&16u32.to_le_bytes());
+    bytes.extend_from_slice(&[1, 0, 1, 0]);
+    bytes.extend_from_slice(&16_000u32.to_le_bytes());
+    bytes.extend_from_slice(&32_000u32.to_le_bytes());
+    bytes.extend_from_slice(&[2, 0, 16, 0]);
+    bytes.extend_from_slice(b"data");
+    bytes.extend_from_slice(&samples.to_le_bytes());
+    bytes.resize(bytes.len() + samples as usize, 0);
+    std::fs::write(&wav, bytes).unwrap_or_else(|_| panic!("write"));
+    let read = kalamu_media::inspect(&wav, None).unwrap_or_else(|_| panic!("inspect"));
+    assert_eq!(read.duration_ms, Some(20_000));
+    let usd = price(std::slice::from_ref(&read)).unwrap_or_default();
+    assert!(usd > 0.0, "a WAV file read without FFmpeg: ${usd}");
+
+    // An MP3 file says its length only to FFmpeg.
+    let mp3 = f.dir.path().join("interview.mp3");
+    std::fs::write(&mp3, b"ID3       not a real recording").unwrap_or_else(|_| panic!("write"));
+    let unread = kalamu_media::inspect(&mp3, None).unwrap_or_else(|_| panic!("inspect"));
+    assert_eq!(unread.duration_ms, None);
+    assert_eq!(
+        price(std::slice::from_ref(&unread)),
+        None,
+        "unknown, not $0"
+    );
+    // Nor priced as part of a job with a recording whose length is known.
+    assert_eq!(price(&[read, unread]), None);
+}
+
 /// Two jobs on one file never write over each other's files (a Tesseract job then a
 /// LightOnOCR-3 job in the 1.10.0 test pass): the first keeps its plain names, a later job of
 /// one set-up takes its label as a comparison does. Settled when the job is recorded, from the

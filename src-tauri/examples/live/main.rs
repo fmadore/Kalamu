@@ -177,7 +177,7 @@ async fn main() -> anyhow::Result<()> {
         None => None,
     };
     let (providers, embedders) = cloud(relay.as_ref());
-    let (engine, store) = engine(&out, providers, keys.clone())?;
+    let (engine, store) = engine(&out, providers, keys.clone(), installed_ffmpeg())?;
 
     let tessdata = env("LIVE_TESSDATA").is_some();
     let whisper = env("LIVE_WHISPER").is_some();
@@ -411,17 +411,10 @@ fn today() -> String {
     format!("{year:04}-{month:02}-{day:02}")
 }
 
-fn engine(
-    out: &Path,
-    mut providers: Vec<Arc<dyn Provider>>,
-    keys: Arc<Keys>,
-) -> anyhow::Result<(Arc<Engine>, Arc<SqliteStore>)> {
-    let data = out.join("data");
-    std::fs::create_dir_all(&data)?;
-    let store = Arc::new(SqliteStore::open(&data.join("jobs.sqlite"))?);
-    let prompts = PromptLibrary::open(&data.join("presets"))?;
-    // The installed app's FFmpeg (in Kalamu's folder in Windows' local app data, or inside the
-    // Mac app in Applications), or KALAMU_FFMPEG_DIR.
+/// The installed app's FFmpeg (in Kalamu's folder in Windows' local app data, or inside the Mac
+/// app in Applications), or KALAMU_FFMPEG_DIR. The weekly run on GitHub has none: a recording
+/// is then sent whole, and a WAV file's length read from its header prices it.
+fn installed_ffmpeg() -> Option<kalamu_media::Ffmpeg> {
     let installed = [
         std::env::var_os("LOCALAPPDATA").map(|d| PathBuf::from(d).join("Kalamu")),
         Some(PathBuf::from("/Applications/Kalamu.app/Contents/MacOS")),
@@ -434,6 +427,19 @@ fn engine(
         "FFmpeg: {}",
         if ffmpeg.is_some() { "found" } else { "missing" }
     );
+    ffmpeg
+}
+
+fn engine(
+    out: &Path,
+    mut providers: Vec<Arc<dyn Provider>>,
+    keys: Arc<Keys>,
+    ffmpeg: Option<kalamu_media::Ffmpeg>,
+) -> anyhow::Result<(Arc<Engine>, Arc<SqliteStore>)> {
+    let data = out.join("data");
+    std::fs::create_dir_all(&data)?;
+    let store = Arc::new(SqliteStore::open(&data.join("jobs.sqlite"))?);
+    let prompts = PromptLibrary::open(&data.join("presets"))?;
     if let Some(dir) = std::env::var_os("LIVE_TESSDATA") {
         providers.push(Arc::new(kalamu_offline::Tesseract::new(
             kalamu_offline::ModelManager::new(dir.into(), &kalamu_offline::TESSDATA),

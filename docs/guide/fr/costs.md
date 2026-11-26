@@ -16,13 +16,15 @@ pour ce que vous envoyez et ce que le modèle écrit. Les prix varient beaucoup 
 l’autre : le plus petit modèle d’un fournisseur peut coûter dix fois moins que son plus grand,
 voire moins encore.
 
-Avant le lancement d’un traitement, le **Coût estimé** indique ce qu’il devrait coûter, à partir
-du nombre de pages et des prix publiés par le fournisseur. Une fois le traitement fini, vous
-voyez ce qui a été réellement consommé. La facture du fournisseur fait foi : les prix changent,
-et la liste de prix de Kalamu porte sa date. Au démarrage, Kalamu va chercher une liste plus
-récente sur son dépôt (**Vérifier au démarrage** dans **Paramètres**, sous **Modèles**) et la
-vérifie avant de s’en servir : si elle contient des erreurs, elle n’est pas utilisée,
-**Paramètres** l’indique sous la date de la liste, et Kalamu garde celle qu’il a.
+Avant le lancement d’un traitement, le **Coût estimé** indique ce qu’il devrait coûter, à partir du
+nombre de pages et des prix publiés par le fournisseur ; pour un enregistrement, à partir de sa
+durée. Quand Kalamu ne peut pas lire la durée d’un enregistrement, l’estimation indique « durée
+inconnue », et le coût s’affiche dans **Traitements** au fil du traitement. Une fois le traitement
+fini, vous voyez ce qui a été réellement consommé. La facture du fournisseur fait foi : les prix
+changent, et la liste de prix de Kalamu porte sa date. Au démarrage, Kalamu va chercher une liste
+plus récente sur son dépôt (**Vérifier au démarrage** dans **Paramètres**, sous **Modèles**) et la
+vérifie avant de s’en servir : si elle contient des erreurs, elle n’est pas utilisée, **Paramètres**
+l’indique sous la date de la liste, et Kalamu garde celle qu’il a.
 
 Un [serveur à vous](other-servers.md) ne coûte rien, sauf si la personne qui le gère facture :
 ses traitements se lisent « sans prix », à moins que vous n’ayez donné un prix à ses modèles dans

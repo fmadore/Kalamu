@@ -61,8 +61,8 @@ pub struct EstimateRow {
 #[ts(export)]
 pub struct Estimate {
     pub rows: Vec<EstimateRow>,
-    /// The whole job at once; `None` when a row has no price, or a video's length is not yet
-    /// known.
+    /// The whole job at once; `None` when a row has no price, or a video's or a recording's
+    /// length is not known.
     pub total_usd: Option<f64>,
     /// The whole job in economy mode: a model without a batch service, and the work the run
     /// sends at once whatever the pace ([`crate::batched`]), at the usual price.
@@ -185,12 +185,19 @@ impl Engine {
     /// contents still combines every page.
     pub(crate) fn estimate_beyond(&self, request: &EstimateRequest, cached: u32) -> Estimate {
         let catalog = self.current_catalog();
-        // A YouTube video's length is known only once the provider has read it.
-        let unknown_length = request.sources.iter().any(|s| s.kind == InputKind::YouTube);
+        // A YouTube video's length is known only once the provider has read it, and a recording's
+        // or a video's file whose length could not be read is priced at none rather than at no
+        // minutes: an estimate of nothing would let it pass any limit on spending.
+        let unknown_length = request.sources.iter().any(|s| {
+            s.kind == InputKind::YouTube
+                || (matches!(s.kind, InputKind::Audio | InputKind::Video)
+                    && s.duration_ms.is_none())
+        });
         let minutes: f64 = request
             .sources
             .iter()
-            .map(|s| s.duration_ms.unwrap_or(0) as f64 / 60_000.0)
+            .filter_map(|s| s.duration_ms)
+            .map(|ms| ms as f64 / 60_000.0)
             .sum();
         let unpriced = CostEstimate {
             usd: None,
