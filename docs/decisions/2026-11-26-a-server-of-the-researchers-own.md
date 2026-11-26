@@ -200,3 +200,37 @@ increment; `Addresses` stays for the test build, which redirects the four provid
 - Later, each with its own entry: transcription, embeddings, reasoning levels, Ollama's
   ollama.com models with consent, and the services that need their own sign-in (Azure OpenAI,
   Vertex AI, Bedrock).
+
+Built differently from the decision above, as found when the documents were written on
+26 November:
+
+- **Provenance records the server as it stands when the files are written**, not as it was
+  when each piece was read (`Engine::where_read`, `Engine::server_of`). A record per piece needs
+  a stored field on each result and a migration of the job database, with a fixture for CI;
+  it is left for later. Until then, a server renamed or moved between reading the pages and
+  writing the files is named in `provenance.json` by its new name and address. A server no
+  longer registered when the files are written (removed) leaves `engine` as `cloud` and no
+  `server`, as for any provider the engine does not know.
+- **The digest Ollama gives is not in provenance.** `/api/chat`'s answer carries none, so a
+  page read by Ollama records no model version; the digest `/api/tags` gave at the trial is
+  kept with the model in `servers.json` (`OwnModel::digest`), where it tells a model updated
+  under the same name, not in the files.
+- **A model's catalogue entry lists `TextExtraction` and `Analysis` only.** Contents,
+  corrections and translations follow from `Analysis` through `Task::request_task`, as for
+  every model; a table of contents' pages need pictures too, so its reading step is offered
+  only to a model that did both.
+- **A job in flight takes the providers as they are at each piece**, not as they were when it
+  started: the call already sent keeps its provider, and the next piece looks the list up
+  again. A server removed stops the job at its next page as interrupted, the pages read kept;
+  added again in Settings, it is a new server under a new id, which the job does not name. A
+  server whose address changed while its job runs sends the job's remaining pages to the new
+  address.
+- **Consent is asked when a job, a workflow run or a dictionary proposal is created**
+  (`require_consent`), not when a job is started, resumed or retried. With consent now
+  withdrawn when a server's address changes, a job made before the change, then resumed or
+  retried, sends to the new address without the question. To close before release: ask again,
+  or refuse, when a job that names a server not agreed to is started or retried.
+- **`save_settings` keeps the consent the shell holds** and ignores the copy it is sent:
+  consent is given by `consent_providers` alone and withdrawn only by a server's change of
+  address or removal. This holds for the four providers too: saving settings can neither add
+  nor remove an agreement any more.

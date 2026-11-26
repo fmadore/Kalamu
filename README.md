@@ -116,7 +116,10 @@ Whisper and the cheaper batch mode have had fewer live runs, so try a small job 
 
 Files travel directly from your computer to the provider you select, authenticated with your own
 API key stored in Windows Credential Manager or the macOS Keychain. In offline mode, nothing
-leaves your machine. AI output can sound fluent while being wrong, so always check a sample
+leaves your machine. Not yet in a release: a server of your own, such as Ollama or a
+university's OpenAI-style service, added in Settings by its address, each of its models tried
+before it is offered; it has not yet been tried against a real server
+([roadmap](docs/roadmap.md)). AI output can sound fluent while being wrong, so always check a sample
 against the original source before relying on it.
 
 ## Install
