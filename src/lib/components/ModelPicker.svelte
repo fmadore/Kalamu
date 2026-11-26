@@ -81,6 +81,7 @@
 		{headingOf}
 		{nameOf}
 		{summaryOf}
+		providerName={(mod) => providerNameOf(catalog, mod.provider)}
 		onchoose={(mod) => (model = mod.id)}
 	/>
 {:else}
@@ -91,6 +92,7 @@
 		{headingOf}
 		{nameOf}
 		{summaryOf}
+		providerName={(mod) => providerNameOf(catalog, mod.provider)}
 		providerOf={(mod) => (isLocal(mod) ? null : providerNameOf(catalog, mod.provider))}
 		unavailable={(mod) =>
 			hasKey(mod.provider) ? null : m.newJob.tiers.noKey(providerNameOf(catalog, mod.provider))}

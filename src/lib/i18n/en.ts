@@ -1318,6 +1318,10 @@ export const en = {
 			'Choosing helps with short or noisy material. Pick several for documents or recordings that mix languages.',
 		addLanguage: 'Add a language…',
 		findLanguage: 'Type to find a language',
+		/** The search field at the top of an open model list. */
+		findModel: 'Type to find a model',
+		findModelPlaceholder: 'Find by name or provider',
+		noModelFound: 'No model matches what you typed.',
 		favouriteLanguages: 'Favourites',
 		allLanguages: 'All languages',
 		noLanguageFound: 'No language by that name.',
