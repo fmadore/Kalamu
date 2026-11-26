@@ -17,11 +17,16 @@ mod checks;
 mod cost;
 mod length;
 mod lineage;
+mod own;
 mod release;
 pub use checks::MAX_BYTES;
 pub use cost::{CostEstimate, Workload, embedding_cost};
 pub use length::{CHARS_PER_TOKEN, CHARS_PER_WORD, TooLong};
 pub use lineage::ModelAlias;
+pub use own::{
+    Dialect, ID_PREFIX, MOST_AT_ONCE, OwnInfo, OwnModel, OwnServer, OwnServers, OwnServersError,
+    is_own_id,
+};
 pub use release::{Release, Version};
 
 /// The catalogue shipped with this build.
@@ -81,13 +86,19 @@ pub struct ProviderInfo {
     pub key_url: String,
     /// A prefix every key starts with, to catch keys pasted for the wrong provider.
     pub key_prefix: Option<String>,
-    /// Runs on this PC: needs no key and sends nothing anywhere.
+    /// Runs inside Kalamu on this PC: needs no key and sends nothing anywhere. False for a
+    /// server of the researcher's own, even at a local address: `own` says where it is.
     #[serde(default)]
     pub local: bool,
     /// The name in other interface languages, by language (`fr`); English is `name`.
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     #[ts(optional, as = "Option<BTreeMap<String, Translation>>")]
     pub translations: BTreeMap<String, Translation>,
+    /// A server of the researcher's own ([`Catalog::with_servers`]): its address and how it is
+    /// reached. Never in a list the app ships or downloads, which is refused if it names one.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub own: Option<OwnInfo>,
 }
 
 /// A provider's or model's words in another interface language; what is missing stays in
