@@ -859,8 +859,8 @@ test('typing in the model list narrows it, and the keys choose among what is lef
 	// Typed, then chosen with the keys: the first found, then the next.
 	await model.click();
 	await expect(find).toHaveValue('');
-	// The keys go to the field only once it has the focus: on a slower runner the first ones
-	// were lost, and what was left ("e") still found Gemini's models.
+	// The reopened list moves the focus into its field a moment later: keys typed before it
+	// are lost. Then read the second option only once the list has narrowed.
 	await expect(find).toBeFocused();
 	await page.keyboard.type('claude');
 	await expect(find).toHaveValue('claude');
