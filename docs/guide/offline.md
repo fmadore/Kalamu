@@ -56,5 +56,9 @@ to do the first reading offline where it is good enough (clean print, clear reco
 keep the cloud for what needs it. If your sources do not allow it, stay offline and review
 more.
 
+The offline models are small so that they run on most computers. If yours, or another in your
+office, has the memory for larger ones, Kalamu can use them through Ollama, or through a
+service your university runs: see [Other servers](other-servers.md).
+
 Whichever you use, Kalamu records it: an export's `provenance.json` says which model read the
 text, cloud or offline.

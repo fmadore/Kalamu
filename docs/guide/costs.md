@@ -1,7 +1,7 @@
 ---
 layout: guide
 title: Costs and privacy
-order: 7
+order: 8
 lede: What a job costs, how to pay less, and exactly where your files go.
 description: Estimated costs, the cheaper batch mode, caching and privacy in Kalamu.
 ---
@@ -20,6 +20,9 @@ provider's invoice is the reference; prices change, and Kalamu's price list carr
 Kalamu fetches a newer list from its repository at startup (**Check at startup** in **Settings**,
 under **Models**), and checks it before using it: a list that fails Kalamu's checks is not
 used, Settings says so under the list's date, and Kalamu keeps the list it has.
+
+A [server of your own](other-servers.md) costs nothing unless its owner charges: its jobs read
+*not priced* unless you gave its models a price in Settings.
 
 A rule of thumb: try the smallest model first on a few typical pages. Many collections of
 clean print do not need more.
@@ -49,6 +52,10 @@ clean print do not need more.
   their provider.
 - **Your results** are kept on your computer, in Kalamu's data folder, until you delete them.
 - **Offline**, nothing leaves the computer.
+- **A server of your own** receives your files at the address you gave: at `localhost` they
+  stay on your computer; on the network they go to a machine someone runs, under that person's
+  or institution's rules, and Kalamu asks first. See
+  [Other servers](other-servers.md#what-is-sent-and-where).
 
 What each provider does with what it receives (how long it keeps it, whether it may be used to
 improve its models) is set by that provider's terms for API use, which are generally stricter

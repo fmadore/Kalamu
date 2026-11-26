@@ -2,7 +2,7 @@
 layout: guide
 lang: fr
 title: Coûts et confidentialité
-order: 7
+order: 8
 lede: "Ce que coûte un traitement, comment payer moins, et où vont vos fichiers, exactement."
 description: "Coûts estimés, mode moins cher par lots, résultats réutilisés et confidentialité dans Kalamu."
 ---
@@ -23,6 +23,10 @@ et la liste de prix de Kalamu porte sa date. Au démarrage, Kalamu va chercher u
 récente sur son dépôt (**Vérifier au démarrage** dans **Paramètres**, sous **Modèles**) et la
 vérifie avant de s’en servir : si elle contient des erreurs, elle n’est pas utilisée,
 **Paramètres** l’indique sous la date de la liste, et Kalamu garde celle qu’il a.
+
+Un [serveur à vous](other-servers.md) ne coûte rien, sauf si la personne qui le gère facture :
+ses traitements se lisent « sans prix », à moins que vous n’ayez donné un prix à ses modèles dans
+les Paramètres.
 
 Un conseil simple : essayez d’abord le plus petit modèle sur quelques pages représentatives.
 Pour beaucoup de collections d’imprimés nets, il n’en faut pas plus.
@@ -57,6 +61,10 @@ Pour beaucoup de collections d’imprimés nets, il n’en faut pas plus.
 - **Vos résultats** sont gardés sur votre ordinateur, dans le dossier de données de Kalamu,
   jusqu’à ce que vous les supprimiez.
 - **Hors ligne**, rien ne quitte l’ordinateur.
+- **Un serveur à vous** reçoit vos fichiers à l’adresse que vous avez donnée : à `localhost`,
+  ils restent sur votre ordinateur ; sur le réseau, ils vont à une machine que quelqu’un fait
+  tourner, selon les règles de cette personne ou de cet établissement, et Kalamu vous le demande
+  d’abord. Voir [Autres serveurs](other-servers.md#ce-qui-est-envoye-et-ou).
 
 Ce que chaque fournisseur fait de ce qu’il reçoit (combien de temps il le garde, s’il peut s’en
 servir pour améliorer ses modèles) dépend de ses conditions d’utilisation de l’API, en général
