@@ -2,6 +2,7 @@
 import type { ProvenancePrompt } from "./ProvenancePrompt";
 import type { ProviderId } from "./ProviderId";
 import type { RequestSetting } from "./RequestSetting";
+import type { ServerRecord } from "./ServerRecord";
 import type { Timestamp } from "./Timestamp";
 
 /**
@@ -13,7 +14,12 @@ export type ProvenancePassage = {
 /**
  * The page or segment, numbered as in the export.
  */
-piece: number, provider: ProviderId, model: string, prompt: ProvenancePrompt, request?: Array<RequestSetting>, 
+piece: number, provider: ProviderId, 
+/**
+ * For a server of the researcher's own, its name and address, as for the document's
+ * [`Provenance::server`].
+ */
+server?: ServerRecord, model: string, prompt: ProvenancePrompt, request?: Array<RequestSetting>, 
 /**
  * Characters of the passage, and of the context sent on each side of it.
  */

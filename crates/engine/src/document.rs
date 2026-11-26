@@ -10,8 +10,8 @@ use kalamu_core::provenance::{
 use kalamu_core::speakers::{rename_segments, renamed_labels, text_as_left};
 use kalamu_core::{
     CacheKey, CutReason, ExportDocument, ExportPart, InputKind, Job, PieceRef, PieceState,
-    PieceStatus, Provenance, RequestSetting, Segment, SetupId, SourceFile, SourceId, Task,
-    Timestamp, Usage,
+    PieceStatus, Provenance, Reach, RequestSetting, Segment, ServerRecord, SetupId, SourceFile,
+    SourceId, Task, Timestamp, Usage,
 };
 
 use crate::output::preprocessing;
@@ -293,11 +293,7 @@ impl Engine {
             }
         }
 
-        // Offline engines are the providers that need no key.
-        let engine = match self.provider(&setup.provider) {
-            Ok(provider) if !provider.needs_key() => "offline",
-            _ => "cloud",
-        };
+        let (engine, server) = self.where_read(&setup.provider);
         let online = source.kind == InputKind::YouTube;
         let preprocessing = done_to(job, &source, &states);
         let provenance = Provenance {
@@ -334,6 +330,7 @@ impl Engine {
             documents: self.source_documents(job, source_id),
             engine: engine.into(),
             provider: setup.provider.clone(),
+            server,
             model: setup.model.clone(),
             model_versions: versions.into_iter().collect(),
             request,
@@ -344,6 +341,7 @@ impl Engine {
                 .filter(|_| job.task == Task::Contents || windowed)
                 .map(|m| ProvenanceMerge {
                     provider: m.provider.clone(),
+                    server: self.server_of(&m.provider),
                     model: m.model.clone(),
                     model_versions: merge_versions.into_iter().collect(),
                     request: merge_request,
@@ -385,6 +383,29 @@ impl Engine {
 }
 
 impl Engine {
+    /// Where a provider reads, as provenance names it: `own` for a server of the researcher's
+    /// own, with its name and address as they stand now; `offline` for an engine inside Kalamu;
+    /// `cloud` for a company's service, and for a provider no longer registered, as before
+    /// servers of one's own.
+    pub(crate) fn where_read(
+        &self,
+        provider: &kalamu_core::ProviderId,
+    ) -> (&'static str, Option<ServerRecord>) {
+        match self.provider(provider) {
+            Ok(p) => match p.server() {
+                Some(server) => ("own", Some(server)),
+                None if p.reach() == Reach::ThisComputer => ("offline", None),
+                None => ("cloud", None),
+            },
+            Err(_) => ("cloud", None),
+        }
+    }
+
+    /// The server of the researcher's own a provider is, as it stands now, for provenance.
+    pub(crate) fn server_of(&self, provider: &kalamu_core::ProviderId) -> Option<ServerRecord> {
+        self.provider(provider).ok().and_then(|p| p.server())
+    }
+
     /// The answers billed for this document but refused for breaking its fields.
     fn refused(
         &self,

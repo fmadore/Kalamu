@@ -156,9 +156,9 @@ impl Engine {
             return Ok(Outcome::Finished);
         }
 
-        state.status = PieceStatus::Running;
-        self.save(&mut state, None)?;
-
+        // Looked up for each piece, so a server the researcher removed while the job ran stops
+        // it here, with the piece left as it was, and the call below keeps the provider it
+        // found even if the list changes while it waits for the answer.
         let provider = self.provider(step.provider)?;
         let api_key = if provider.needs_key() {
             self.keys
@@ -167,6 +167,9 @@ impl Engine {
         } else {
             ApiKey::new("")
         };
+
+        state.status = PieceStatus::Running;
+        self.save(&mut state, None)?;
         let mut check: Option<Box<dyn AnswerCheck>> = None;
         let prepared = match input {
             Input::Ready(input) => Ok(input),
