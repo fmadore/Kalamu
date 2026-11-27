@@ -1240,16 +1240,17 @@ first workflow increment.
 | Archival metadata and export profiles | Supplied source descriptions and reusable local CSV/JSON mappings (done; closed). Normalised and inferred values moved to #54, item-level rows to #50 | [#55](https://github.com/fmadore/Kalamu/issues/55) |
 | Translation | A task of its own over existing text and frozen results, a workflow step after extraction or transcription, the source beside the translation in review, subtitles of a translated transcript (done); then a project glossary | [#167](https://github.com/fmadore/Kalamu/issues/167) |
 | Project file | A project saved as one file with its results and the researcher's layer, opened on another computer as a new project; a merge of a colleague's corrections later | [#213](https://github.com/fmadore/Kalamu/issues/213) |
-| Pseudonymisation | Replacements in the project dictionary and a pseudonymised copy of a text, a layer of its own; builds on #48 and #47 | [#214](https://github.com/fmadore/Kalamu/issues/214) |
+| Pseudonymisation | Replacements in the project dictionary and a pseudonymised copy of a text, a layer of its own (replacement table kept out of shares by default, audio/voice warning); builds on #48 and #47; later contextual identifiers, Quotation/Deposit levels, audio muting and corpus-level checks | [#214](https://github.com/fmadore/Kalamu/issues/214) |
 | A sample first | Three pages tried, two models compared, the rest run from the sample's page | [#215](https://github.com/fmadore/Kalamu/issues/215) |
 | Duplicate and blurred photographs | Flagged in the file list before anything is sent; with #53's checks | [#216](https://github.com/fmadore/Kalamu/issues/216) |
 | References from Zotero | A CSL-JSON file matched to a project's documents, filling their descriptions | [#217](https://github.com/fmadore/Kalamu/issues/217) |
 | Corrected OCR with ALTO | Tesseract, then a correction that sees the page, line for line, laid back onto the extraction's words so ALTO, PAGE XML and the searchable PDF are kept; for an OCR already readable ([decision](decisions/2026-11-24-correction-keeps-alto.md)) | [#262](https://github.com/fmadore/Kalamu/issues/262) |
-| An offline-only project | A project's documents offered only to the engines on the computer, enforced where consent is | [#282](https://github.com/fmadore/Kalamu/issues/282) |
+| An offline-only project | A project's documents offered only to the engines on the computer (or one named institutional server, #283), enforced where consent is; kept out of cloud-synced backups (#304) | [#282](https://github.com/fmadore/Kalamu/issues/282) |
 | Spending | A ledger that outlives the job, a ceiling per job, a stop past the estimate, a record by month | [#281](https://github.com/fmadore/Kalamu/issues/281) |
 | A library's IIIF manifest | Pages fetched in order as an ordered image document (#52), the manifest's description offered to the source description | [#286](https://github.com/fmadore/Kalamu/issues/286) |
 | Qualitative analysis software | A REFI-QDA project: texts, themes as codes, quotations as coded passages at their place; builds on #38 | [#285](https://github.com/fmadore/Kalamu/issues/285) |
-| A server of the researcher's own | Ollama at its own address and any OpenAI-style server, each model tried before it is offered (first increment written, not yet tried on a real server); covers OpenRouter; then transcription, embeddings and reasoning levels | [#283](https://github.com/fmadore/Kalamu/issues/283) |
+| A server of the researcher's own | Ollama at its own address and any OpenAI-style server, each model tried before it is offered (first increment written, not yet tried on a real server); covers OpenRouter; then embeddings (`/api/embed`), transcription/diarisation (#310) and reasoning levels | [#283](https://github.com/fmadore/Kalamu/issues/283) |
+| Offline and institutional speaker diarisation | Speaker labels without commercial clouds: weighing local diarisation beside Whisper vs. an institutional transcription and diarisation server (#283) | [#310](https://github.com/fmadore/Kalamu/issues/310) |
 
 Scope is local research preparation, review and export. External collection-system integration
 and publishing are excluded from this work. Implementation follows the architecture checkpoints
@@ -1269,11 +1270,12 @@ in AGENTS.md and updates the specification and user-facing documentation when fe
   #52 and #50 above.
 - Post-interview analysis with research profiles and evidence-linked themes/quotations:
   [#38](https://github.com/fmadore/Kalamu/issues/38), using the shared snapshot foundation.
-  Designed on 19 November ([decision](decisions/2026-11-19-interview-analysis-design.md)): an
-  analysis job with one new kind of field whose entries cite the transcript, each quotation
-  found in the frozen text by Kalamu before it is shown; turns in snapshots first (done, with
-  the answer check as a hook of the engine), then one interview read whole (done, a transcript
-  too long for the model said before Start), then windows and consolidation.
+  First and second slices shipped in 1.10.0
+  ([first slice](decisions/2026-11-19-interview-analysis-design.md),
+  [windows, guide and researcher-added quotes](decisions/2026-11-20-interview-windows-guide-themes.md)),
+  still to try in live runs on long interviews. Left: a brief-inverted / unguided exploratory pass,
+  cross-interview guide coverage and theme comparison, local structural/prosodic markers and
+  corpus keyness.
 - Explore assisted TEI encoding with reusable project profiles:
   [#37](https://github.com/fmadore/Kalamu/issues/37); feasibility work, not a committed feature,
   and last in line since 20 November: those Kalamu is for do not use TEI, and correcting
