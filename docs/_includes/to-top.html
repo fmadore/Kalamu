@@ -1,0 +1,16 @@
+{% comment %}
+  The button back to the top, as the home pages have it (its styles in assets/site.css). Takes
+  `t_top`, its label. A plain link to #top, so it works without script; the script shows it
+  once the reader is a screen down the page.
+{% endcomment %}
+<a class="to-top" href="#top" aria-label="{{ include.t_top }}" title="{{ include.t_top }}">
+  <svg viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 16V4M4.5 9.5 10 4l5.5 5.5" /></svg>
+</a>
+<script>
+  (() => {
+    const button = document.querySelector('.to-top');
+    const update = () => button.classList.toggle('shown', scrollY > innerHeight);
+    addEventListener('scroll', update, { passive: true });
+    update();
+  })();
+</script>

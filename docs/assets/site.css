@@ -660,6 +660,52 @@ pre code {
 	margin-bottom: 14px;
 }
 
+/* Back to the top: a round button in the corner, shown once the reader is a screen down. A
+   plain link to #top, so it works without script; the script only shows and hides it. */
+.to-top {
+	position: fixed;
+	right: max(var(--gutter), env(safe-area-inset-right));
+	bottom: max(var(--gutter), env(safe-area-inset-bottom));
+	z-index: 5;
+	display: grid;
+	place-items: center;
+	width: 44px;
+	height: 44px;
+	border-radius: 50%;
+	background: var(--ink);
+	color: var(--on-ink);
+	box-shadow: var(--shadow);
+	opacity: 0;
+	visibility: hidden;
+	transform: translateY(8px);
+	transition:
+		opacity 0.2s ease,
+		transform 0.2s ease,
+		visibility 0s linear 0.2s;
+}
+.to-top.shown {
+	opacity: 1;
+	visibility: visible;
+	transform: none;
+	transition:
+		opacity 0.2s ease,
+		transform 0.2s ease;
+}
+.to-top:hover {
+	background: var(--ink-hover);
+}
+.to-top svg {
+	width: 20px;
+	height: 20px;
+}
+@media (prefers-reduced-motion: reduce) {
+	.to-top,
+	.to-top.shown {
+		transition: none;
+		transform: none;
+	}
+}
+
 @media print {
 	.band {
 		background: none;
@@ -670,6 +716,7 @@ pre code {
 	.pager,
 	.skip,
 	.anchor,
+	.to-top,
 	.site-footer {
 		display: none;
 	}
