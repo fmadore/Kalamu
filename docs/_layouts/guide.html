@@ -62,8 +62,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="light dark" />
     <title>{{ page.title }} · {{ t_suffix }}</title>
-    <meta name="description" content="{{ page.description | default: t_description }}" />
-    <link rel="alternate" hreflang="{{ other_lang }}" href="{{ other }}" />
+    {% assign description = page.description | default: t_description %}
+    <meta name="description" content="{{ description }}" />
+    {% if page.lang == 'fr' %}{% assign en_path = page.url | replace_first: '/guide/fr/', '/guide/' %}{% assign fr_path = page.url %}{% else %}{% assign en_path = page.url %}{% assign fr_path = page.url | replace_first: '/guide/', '/guide/fr/' %}{% endif %}
+    {% capture seo_title %}{{ page.title }} · {{ t_suffix }}{% endcapture %}
+    {% include seo.html title=seo_title description=description lang=page.lang en=en_path fr=fr_path kind='guide' %}
     <link rel="icon" href="{{ root }}assets/home/mark.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="{{ root }}assets/site.css" />
   </head>

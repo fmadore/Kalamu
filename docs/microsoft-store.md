@@ -106,7 +106,7 @@ In this order; the [roadmap](roadmap.md#toward-the-store-release) tracks them.
 
 1. **Publish the privacy policy.** Turn on GitHub Pages for the repository (Settings → Pages →
    Deploy from a branch → `main`, `/docs`), so [privacy.md](privacy.md) is served at
-   `https://fmadore.github.io/Kalamu/privacy`, and check the page.
+   `https://kalamu.frederickmadore.com/privacy`, and check the page.
 2. **Live runs** from the installed package: every provider, economy mode, offline Whisper on
    `interview.wav`, extraction of `dodington-1755.jpg`, a table of contents, a correction of
    `daily-nebraskan-1911.pdf`, and the YouTube player under the
@@ -203,7 +203,7 @@ package identity changes where data is kept and how the window is drawn.
    | Field | Value |
    | --- | --- |
    | Category | Productivity (subcategory none); Education is the alternative |
-   | Privacy policy URL | `https://fmadore.github.io/Kalamu/privacy` |
+   | Privacy policy URL | `https://kalamu.frederickmadore.com/privacy` |
    | Website | `https://github.com/fmadore/Kalamu` |
    | Support contact | `https://github.com/fmadore/Kalamu/issues` |
    | Product declarations | Tick **This product allows users to make purchases, but does not use the Microsoft Store commerce system** (the Buy Me a Coffee link, policy 10.8.2) |

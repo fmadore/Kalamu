@@ -30,7 +30,7 @@ test('a server is added in three steps, and New job offers each model for what i
 	await expect(main.getByText('No server added yet.')).toBeVisible();
 	await expect(main.getByRole('link', { name: 'How to add a server' })).toHaveAttribute(
 		'href',
-		'https://fmadore.github.io/Kalamu/guide/other-servers.html'
+		'https://kalamu.frederickmadore.com/guide/other-servers.html'
 	);
 
 	await connect(main, 'Lab Ollama', 'http://192.168.1.20:11434');

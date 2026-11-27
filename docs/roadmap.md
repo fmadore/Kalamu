@@ -240,7 +240,7 @@ order given there.
   - **Add to a list answer** in an analysis's review: the name, keyword or theme a model
     missed, marked as the researcher's.
   - **A guide** to using Kalamu, published with the documentation
-    ([fmadore.github.io/Kalamu/guide](https://fmadore.github.io/Kalamu/guide/)).
+    ([kalamu.frederickmadore.com/guide](https://kalamu.frederickmadore.com/guide/)).
 - **Five items of 18 November** ([decision](decisions/2026-11-18-gemini-file-batches-set-aside-far-apart-names-resume.md)), each tested,
   none yet tried in the packaged app, on a Mac or in a live run:
   - **Gemini batches through a file**: an economy batch above the 20 MB Google takes in one
