@@ -1191,6 +1191,73 @@
 			footer p + p {
 				margin-top: 6px;
 			}
+
+			/* A link after each section's heading, as the guide's headings have. */
+			.anchor {
+				margin-left: 0.15em;
+				color: var(--text-muted);
+				font-weight: 400;
+				text-decoration: none;
+				opacity: 0;
+				transition: opacity 0.15s;
+			}
+			h2:hover .anchor,
+			.anchor:focus-visible {
+				opacity: 1;
+			}
+			.anchor:hover {
+				color: var(--hand);
+			}
+			@media (hover: none) {
+				.anchor {
+					opacity: 1;
+				}
+			}
+			/* Back to the top: a round button in the corner, shown once the reader is a screen down. A
+			   plain link to #top, so it works without script; the script only shows and hides it. */
+			.to-top {
+				position: fixed;
+				right: max(var(--gutter), env(safe-area-inset-right));
+				bottom: max(var(--gutter), env(safe-area-inset-bottom));
+				z-index: 5;
+				display: grid;
+				place-items: center;
+				width: 44px;
+				height: 44px;
+				border-radius: 50%;
+				background: var(--ink);
+				color: var(--on-ink);
+				box-shadow: var(--shadow);
+				opacity: 0;
+				visibility: hidden;
+				transform: translateY(8px);
+				transition:
+					opacity 0.2s ease,
+					transform 0.2s ease,
+					visibility 0s linear 0.2s;
+			}
+			.to-top.shown {
+				opacity: 1;
+				visibility: visible;
+				transform: none;
+				transition:
+					opacity 0.2s ease,
+					transform 0.2s ease;
+			}
+			.to-top:hover {
+				background: var(--ink-hover);
+			}
+			.to-top svg {
+				width: 20px;
+				height: 20px;
+			}
+			@media (prefers-reduced-motion: reduce) {
+				.to-top,
+				.to-top.shown {
+					transition: none;
+					transform: none;
+				}
+			}
 		</style>
 	</head>
 	<body>
@@ -2040,6 +2107,25 @@
 				</p>
 			</div>
 		</footer>
+		<a
+			class="to-top"
+			href="#top"
+			aria-label="Revenir en haut de la page"
+			title="Revenir en haut de la page"
+		>
+			<svg
+				viewBox="0 0 20 20"
+				aria-hidden="true"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="2"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+			>
+				<path d="M10 16V4M4.5 9.5 10 4l5.5 5.5" />
+			</svg>
+		</a>
+
 		<script>
 			// The comparison example: choosing the second reading corrects the word, as the review does,
 			// and the model's text stays listed. Without script, the example simply shows both readings.
@@ -2075,6 +2161,26 @@
 				use.addEventListener('click', choose);
 				word.addEventListener('click', () => use.hidden || use.focus());
 				reset.addEventListener('click', undo);
+			})();
+		</script>
+		<script>
+			// A link after each section's heading, to copy or share the address of that section, as the
+			// guide's headings have. Without script the headings simply have no link.
+			for (const heading of document.querySelectorAll('main section[id] h2[id$="-title"]')) {
+				const id = heading.closest('section').id;
+				const link = document.createElement('a');
+				link.className = 'anchor';
+				link.href = '#' + id;
+				link.setAttribute('aria-label', 'Lien vers cette section : ' + heading.textContent.trim());
+				link.textContent = '#';
+				heading.append(' ', link);
+			}
+			// The button back to the top appears once the reader is a screen down the page.
+			(() => {
+				const button = document.querySelector('.to-top');
+				const update = () => button.classList.toggle('shown', scrollY > innerHeight);
+				addEventListener('scroll', update, { passive: true });
+				update();
 			})();
 		</script>
 	</body>
