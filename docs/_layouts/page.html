@@ -3,9 +3,10 @@
   A page for visitors other than the guide (the privacy policy), in the home page's look
   (assets/site.css): its header on the cream band, the page's title under it, the page's
   sections beside the text, its footer. English only, at the site's root: a page in a folder
-  says how to reach the root in `root` (e.g. '../').
+  says how to reach the root in `root` (e.g. '../'). At the root it is './', never empty: an
+  empty link (the header's Home) would only reload the page itself.
 {% endcomment %}
-{% assign root = page.root | default: '' %}
+{% assign root = page.root | default: './' %}
 <html lang="en">
   <head>
     <meta charset="utf-8" />
