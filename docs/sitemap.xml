@@ -3,19 +3,25 @@ layout: null
 ---
 {% comment %}
   The pages search engines should know: the two home pages, every chapter of the guide in both
-  languages and the pages laid out as `page` (the privacy policy). The developers' documents
-  beside them (the specification, the roadmap, the release notes) are left out on purpose. The
+  languages and the pages laid out as `page` that name themselves in the header (`current`: the
+  privacy policy). The developers' documents beside them (the specification, the roadmap, the
+  release notes) are left out on purpose: GitHub Pages lays them out as `page` too, since they
+  have no front matter, but they set no `current`. The
   address is the site's custom domain (docs/CNAME), as in _includes/seo.html.
 {% endcomment %}{% assign base = 'https://kalamu.frederickmadore.com' %}<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
-  {% for home in "/,/fr/" | split: "," %}
   <url>
-    <loc>{{ base }}{{ home }}</loc>
+    <loc>{{ base }}/</loc>
     <xhtml:link rel="alternate" hreflang="en" href="{{ base }}/" />
     <xhtml:link rel="alternate" hreflang="fr" href="{{ base }}/fr/" />
     <xhtml:link rel="alternate" hreflang="x-default" href="{{ base }}/" />
   </url>
-  {% endfor %}
+  <url>
+    <loc>{{ base }}/fr/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="{{ base }}/" />
+    <xhtml:link rel="alternate" hreflang="fr" href="{{ base }}/fr/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="{{ base }}/" />
+  </url>
   {% assign chapters = site.pages | where: "layout", "guide" | sort: "url" %}
   {% for chapter in chapters %}
   {% if chapter.lang == 'fr' %}{% assign en_path = chapter.url | replace_first: '/guide/fr/', '/guide/' %}{% assign fr_path = chapter.url %}{% else %}{% assign en_path = chapter.url %}{% assign fr_path = chapter.url | replace_first: '/guide/', '/guide/fr/' %}{% endif %}
@@ -26,7 +32,7 @@ layout: null
     <xhtml:link rel="alternate" hreflang="x-default" href="{{ base }}{{ en_path }}" />
   </url>
   {% endfor %}
-  {% assign others = site.pages | where: "layout", "page" %}
+  {% assign others = site.pages | where: "layout", "page" | where_exp: "other", "other.current" %}
   {% for other in others %}
   <url>
     <loc>{{ base }}{{ other.url }}</loc>

@@ -67,7 +67,10 @@
     {% if page.lang == 'fr' %}{% assign en_path = page.url | replace_first: '/guide/fr/', '/guide/' %}{% assign fr_path = page.url %}{% else %}{% assign en_path = page.url %}{% assign fr_path = page.url | replace_first: '/guide/', '/guide/fr/' %}{% endif %}
     {% capture seo_title %}{{ page.title }} · {{ t_suffix }}{% endcapture %}
     {% include seo.html title=seo_title description=description lang=page.lang en=en_path fr=fr_path kind='guide' %}
+    <link rel="icon" href="{{ root }}favicon.ico" sizes="16x16 32x32 48x48 256x256" />
     <link rel="icon" href="{{ root }}assets/home/mark.svg" type="image/svg+xml" />
+    <link rel="icon" href="{{ root }}assets/home/icon-192.png" type="image/png" sizes="192x192" />
+    <link rel="apple-touch-icon" href="{{ root }}apple-touch-icon.png" />
     <link rel="stylesheet" href="{{ root }}assets/site.css" />
   </head>
   <body>
