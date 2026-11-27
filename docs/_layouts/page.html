@@ -13,6 +13,8 @@
     <meta name="color-scheme" content="light dark" />
     <title>{{ page.title }} · Kalamu</title>
     {% if page.description %}<meta name="description" content="{{ page.description }}" />{% endif %}
+    {% capture seo_title %}{{ page.title }} · Kalamu{% endcapture %}
+    {% include seo.html title=seo_title description=page.description lang='en' kind='page' %}
     <link rel="icon" href="{{ root }}assets/home/mark.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="{{ root }}assets/site.css" />
   </head>

@@ -4,7 +4,7 @@
 import { messages } from './i18n/index.js';
 
 /** The guide's English home page; each language's page is named, relative to it, in its catalog. */
-export const GUIDE_URL = 'https://fmadore.github.io/Kalamu/guide/';
+export const GUIDE_URL = 'https://kalamu.frederickmadore.com/guide/';
 
 /** The guide in the interface language, or in English for a language it is not written in;
  *  with `page`, that page of it (`other-servers`). */

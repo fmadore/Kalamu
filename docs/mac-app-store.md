@@ -117,7 +117,7 @@ provider the user chose, under the user's own account and API key and that provi
 the app asks before the first job sent to each. If App Review asks for the providers to be
 declared anyway, the cautious answer is *User Content → Other User Content*, not linked to the
 user, not used for tracking, purpose *App Functionality*. **Privacy Policy URL**:
-`https://fmadore.github.io/Kalamu/privacy`.
+`https://kalamu.frederickmadore.com/privacy`.
 
 **Age Rating**: answer *None* or *No* to every question: no violence, sexual content, profanity,
 drugs, gambling, horror or medical content of the app's own; no unrestricted web access (the one

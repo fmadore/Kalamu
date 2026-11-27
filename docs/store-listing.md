@@ -852,7 +852,7 @@ Fixed: a project is never saved to a file without a text its jobs read; exports 
 | --- | --- |
 | Support URL | `https://github.com/fmadore/Kalamu/issues` |
 | Marketing URL | `https://github.com/fmadore/Kalamu` |
-| Privacy Policy URL | `https://fmadore.github.io/Kalamu/privacy` |
+| Privacy Policy URL | `https://kalamu.frederickmadore.com/privacy` |
 | Copyright | `2026 Frédérick Madore` |
 | Primary category | Productivity |
 | Secondary category | Education |

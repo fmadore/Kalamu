@@ -115,7 +115,7 @@ import type { InterfaceError } from './bindings/InterfaceError.js';
 import { localisePreset } from './i18n/index.js';
 
 /** The published privacy policy, named wherever the app asks before sending files. */
-export const PRIVACY_URL = 'https://fmadore.github.io/Kalamu/privacy';
+export const PRIVACY_URL = 'https://kalamu.frederickmadore.com/privacy';
 
 export const isTauri = (): boolean =>
 	typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;

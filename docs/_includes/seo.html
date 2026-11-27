@@ -1,0 +1,45 @@
+{% comment %}
+  What search engines and link previews read, for the pages Jekyll lays out (the guide, the
+  privacy policy): the page's own address, the same page in the other language, the preview's
+  title, words and picture, and a short description of the page in schema.org terms. Takes
+  `title`, `description`, `lang` ('en' or 'fr'), `en` and `fr` (the page's path in each
+  language, from the site's root, when it has both) and `kind` ('guide' or 'page').
+  docs/index.html and docs/fr/index.html write the same tags in their own markup. The address
+  is the site's custom domain (docs/CNAME): change both together.
+{% endcomment %}
+{% assign base = 'https://kalamu.frederickmadore.com' %}
+{% assign lang = include.lang | default: 'en' %}
+<link rel="canonical" href="{{ base }}{{ page.url }}" />
+{% if include.en and include.fr %}
+<link rel="alternate" hreflang="en" href="{{ base }}{{ include.en }}" />
+<link rel="alternate" hreflang="fr" href="{{ base }}{{ include.fr }}" />
+<link rel="alternate" hreflang="x-default" href="{{ base }}{{ include.en }}" />
+{% endif %}
+<meta property="og:type" content="article" />
+<meta property="og:site_name" content="Kalamu" />
+<meta property="og:title" content="{{ include.title | escape }}" />
+<meta property="og:description" content="{{ include.description | escape }}" />
+<meta property="og:url" content="{{ base }}{{ page.url }}" />
+<meta property="og:image" content="{{ base }}/assets/home/hero.jpg" />
+<meta property="og:image:width" content="1600" />
+<meta property="og:image:height" content="900" />
+<meta property="og:locale" content="{% if lang == 'fr' %}fr_FR{% else %}en_GB{% endif %}" />
+<meta name="twitter:card" content="summary_large_image" />
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "{% if include.kind == 'guide' %}TechArticle{% else %}WebPage{% endif %}",
+  "headline": {{ include.title | jsonify }},
+  "description": {{ include.description | jsonify }},
+  "inLanguage": "{{ lang }}",
+  "url": "{{ base }}{{ page.url }}",
+  "image": "{{ base }}/assets/home/hero.jpg",
+  "isPartOf": { "@type": "WebSite", "@id": "{{ base }}/#website", "name": "Kalamu", "url": "{{ base }}/" },
+  "about": { "@type": "SoftwareApplication", "@id": "{{ base }}/#app", "name": "Kalamu" },
+  "author": {
+    "@type": "Person",
+    "name": "Frédérick Madore",
+    "url": "https://www.frederickmadore.com/"
+  }
+}
+</script>

@@ -20,7 +20,7 @@ test('with no key and nothing offline, Settings opens on a welcome offering both
 	await expect(welcome(page)).toBeVisible();
 	await expect(welcome(page).getByRole('link', { name: /Read the guide/ })).toHaveAttribute(
 		'href',
-		'https://fmadore.github.io/Kalamu/guide/'
+		'https://kalamu.frederickmadore.com/guide/'
 	);
 	// Nothing installed: the sidebar does not say models are ready.
 	await expect(page.getByText('Models ready on this computer')).toHaveCount(0);
@@ -67,7 +67,7 @@ test('the guide opens in the interface language', async ({ page }) => {
 	await launch(page, 'view=glossary');
 	await expect(
 		page.getByRole('main').getByRole('link', { name: /Read the guide/ })
-	).toHaveAttribute('href', 'https://fmadore.github.io/Kalamu/guide/');
+	).toHaveAttribute('href', 'https://kalamu.frederickmadore.com/guide/');
 });
 
 test.describe('in French', () => {
@@ -76,6 +76,6 @@ test.describe('in French', () => {
 		await launch(page, 'view=glossary');
 		await expect(
 			page.getByRole('main').getByRole('link', { name: /Lire le guide/ })
-		).toHaveAttribute('href', 'https://fmadore.github.io/Kalamu/guide/fr/');
+		).toHaveAttribute('href', 'https://kalamu.frederickmadore.com/guide/fr/');
 	});
 });
